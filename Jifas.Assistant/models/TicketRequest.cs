@@ -1,4 +1,4 @@
-namespace Jifas.Chatbot.Models
+namespace Jifas.Assistant.Models
 {
     /// <summary>
     /// Request model for creating a JIFAS support ticket

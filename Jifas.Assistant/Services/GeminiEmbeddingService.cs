@@ -4,46 +4,64 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
+    /// Embedding service interface for generating and comparing embeddings
+    /// </summary>
+    public interface IEmbeddingService
+    {
+        Task<List<float>> GenerateEmbeddingAsync(string text);
+        Task<List<List<float>>> GenerateBatchEmbeddingsAsync(List<string> texts);
+        double CalculateCosineSimilarity(List<float> embedding1, List<float> embedding2);
+    }
+
+    /// <summary>
     /// Gemini Embedding Service - Uses Google Gemini API for embeddings
-    /// Compatible with .NET Framework 4.8
     /// FREE tier available!
+    /// Compatible with .NET 10
     /// </summary>
     public class GeminiEmbeddingService : IEmbeddingService
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly ILoggerService _logger;
         private readonly string _apiKey;
         private readonly string _model;
         private readonly string _baseUrl;
 
-        public GeminiEmbeddingService()
+        public GeminiEmbeddingService(
+            HttpClient httpClient,
+            IConfiguration configuration,
+            ILoggerService logger)
         {
-            _httpClient = new HttpClient();
-            
-            // Get API key from Web.config
-            _apiKey = System.Configuration.ConfigurationManager.AppSettings["Gemini:ApiKey"];
+            _httpClient = httpClient;
+            _configuration = configuration;
+            _logger = logger;
+
+            // Get API key from configuration
+            _apiKey = _configuration["Gemini:ApiKey"];
             
             if (string.IsNullOrEmpty(_apiKey))
             {
+                _logger.LogError("[GeminiEmbedding] Gemini API key not configured", null);
                 throw new InvalidOperationException(
-                    "Gemini API key not found. Please set Gemini:ApiKey in Web.config"
+                    "Gemini API key not found. Please set Gemini:ApiKey in appsettings.json"
                 );
             }
 
-            // Use Gemini gemini-embedding-001 model (3072-dim, high accuracy)
-            // gemini-embedding-001: 3072 dimensions (RECOMMENDED for JIFAS - matches pre-loaded KB)
-            // Note: Model name is "gemini-embedding-001" not "embedding-001"
-            _model = "gemini-embedding-001"; // 3072-dim embeddings - matches our KB load
+            // Use Gemini embedding model
+            // gemini-embedding-001: 3072 dimensions (recommended for high accuracy)
+            _model = "gemini-embedding-001";
             _baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
             
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
             
-            System.Diagnostics.Debug.WriteLine("[GeminiEmbedding] ? Service initialized with model: " + _model);
+            _logger.LogInformation("[GeminiEmbedding] Service initialized with model: {0}", _model);
         }
 
         public async Task<List<float>> GenerateEmbeddingAsync(string text)
@@ -51,14 +69,20 @@ namespace Jifas.Chatbot.Services
             try
             {
                 if (string.IsNullOrWhiteSpace(text))
+                {
+                    _logger.LogWarning("[GeminiEmbedding] Empty text provided for embedding");
                     return new List<float>();
+                }
 
                 // Clean text
                 text = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
 
                 // Truncate if too long (Gemini max ~10,000 chars)
                 if (text.Length > 10000)
+                {
                     text = text.Substring(0, 10000);
+                    _logger.LogDebug("[GeminiEmbedding] Text truncated to 10000 characters");
+                }
 
                 // Gemini API endpoint
                 var url = $"{_baseUrl}/{_model}:embedContent?key={_apiKey}";
@@ -84,8 +108,7 @@ namespace Jifas.Chatbot.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[GeminiEmbedding] Error: {response.StatusCode}");
-                    System.Diagnostics.Debug.WriteLine($"[GeminiEmbedding] Response: {responseText}");
+                    _logger.LogError("[GeminiEmbedding] API Error {0}: {1}", null, response.StatusCode, responseText);
                     return new List<float>();
                 }
 
@@ -95,49 +118,73 @@ namespace Jifas.Chatbot.Services
 
                 if (embeddingArray == null || embeddingArray.Count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("[GeminiEmbedding] No embedding returned");
+                    _logger.LogWarning("[GeminiEmbedding] No embedding returned from API");
                     return new List<float>();
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[GeminiEmbedding] ? Generated {embeddingArray.Count}-dim embedding (Gemini {_model})");
+                _logger.LogDebug("[GeminiEmbedding] Generated {0}-dimensional embedding", embeddingArray.Count);
                 return embeddingArray;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[GeminiEmbedding] Error: {ex.Message}");
+                _logger.LogError("[GeminiEmbedding] Error generating embedding: {0}", ex, ex.Message);
                 return new List<float>();
             }
         }
 
         public async Task<List<List<float>>> GenerateBatchEmbeddingsAsync(List<string> texts)
         {
-            var embeddings = new List<List<float>>();
-
-            // Gemini supports batch, but for simplicity process one by one
-            // with rate limiting
-            foreach (var text in texts)
+            if (texts == null || texts.Count == 0)
             {
-                var embedding = await GenerateEmbeddingAsync(text);
-                embeddings.Add(embedding);
-                
-                // Small delay to respect rate limits
-                await Task.Delay(100);
+                _logger.LogWarning("[GeminiEmbedding] Empty text list provided for batch embedding");
+                return new List<List<float>>();
             }
 
-            System.Diagnostics.Debug.WriteLine($"[GeminiEmbedding] ? Generated {embeddings.Count} embeddings");
-            return embeddings;
+            var embeddings = new List<List<float>>();
+
+            try
+            {
+                _logger.LogInformation("[GeminiEmbedding] Starting batch embedding for {0} texts", texts.Count);
+
+                // Process texts with rate limiting
+                foreach (var text in texts)
+                {
+                    var embedding = await GenerateEmbeddingAsync(text);
+                    embeddings.Add(embedding);
+                    
+                    // Small delay to respect rate limits
+                    await Task.Delay(100);
+                }
+
+                _logger.LogInformation("[GeminiEmbedding] Batch embedding completed: {0} embeddings generated", embeddings.Count);
+                return embeddings;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[GeminiEmbedding] Error in batch embedding: {0}", ex, ex.Message);
+                return embeddings;
+            }
         }
 
         public double CalculateCosineSimilarity(List<float> embedding1, List<float> embedding2)
         {
             if (embedding1 == null || embedding2 == null)
+            {
+                _logger.LogWarning("[GeminiEmbedding] Null embedding provided for similarity calculation");
                 return 0;
+            }
 
             if (embedding1.Count != embedding2.Count)
+            {
+                _logger.LogWarning("[GeminiEmbedding] Embedding dimension mismatch: {0} vs {1}", embedding1.Count, embedding2.Count);
                 return 0;
+            }
 
             if (embedding1.Count == 0)
+            {
+                _logger.LogWarning("[GeminiEmbedding] Empty embeddings for similarity calculation");
                 return 0;
+            }
 
             try
             {
@@ -153,16 +200,20 @@ namespace Jifas.Chatbot.Services
                 double magnitude2 = Math.Sqrt(embedding2.Sum(x => x * x));
 
                 if (magnitude1 == 0 || magnitude2 == 0)
+                {
+                    _logger.LogWarning("[GeminiEmbedding] Zero magnitude embedding in similarity calculation");
                     return 0;
+                }
 
                 // Cosine similarity
                 double similarity = dotProduct / (magnitude1 * magnitude2);
                 
-                return Math.Max(0, Math.Min(1, similarity)); // Clamp to [0, 1]
+                // Clamp to [0, 1]
+                return Math.Max(0, Math.Min(1, similarity));
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[GeminiEmbedding] Similarity error: {ex.Message}");
+                _logger.LogError("[GeminiEmbedding] Similarity calculation error: {0}", ex, ex.Message);
                 return 0;
             }
         }

@@ -1,6 +1,6 @@
 using System;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Interface for application logging

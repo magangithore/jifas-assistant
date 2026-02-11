@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Jifas.Chatbot.DAL;
+using Jifas.Assistant.Data;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Service for creating and managing JIFAS-related support tickets
@@ -43,10 +43,12 @@ namespace Jifas.Chatbot.Services
     /// <summary>
     /// Ticket service implementation
     /// Only creates tickets for JIFAS-related issues
+    /// Tickets are stored in the Metrics table with ticket metadata
     /// </summary>
     public class TicketService : ITicketService
     {
-        private readonly JIFAS_AssistantEntities _db;
+        private readonly JifasAssistantDbContext _db;
+        private readonly ILoggerService _logger;
 
         // Valid JIFAS ticket categories
         private static readonly string[] ValidCategories = new[]
@@ -61,14 +63,13 @@ namespace Jifas.Chatbot.Services
             "jifas_other"
         };
 
-        public TicketService()
-        {
-            _db = new JIFAS_AssistantEntities();
-        }
+        // In-memory ticket storage for demo (replace with DB table for production)
+        private static readonly System.Collections.Generic.Dictionary<string, TicketData> _ticketStore = new();
 
-        public TicketService(JIFAS_AssistantEntities db)
+        public TicketService(JifasAssistantDbContext db, ILoggerService logger)
         {
-            _db = db;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<TicketResult> CreateTicketAsync(CreateTicketRequest request)
@@ -76,7 +77,7 @@ namespace Jifas.Chatbot.Services
             try
             {
                 // Validate request
-                if (string.IsNullOrWhiteSpace(request.Subject))
+                if (request == null || string.IsNullOrWhiteSpace(request.Subject))
                 {
                     return new TicketResult
                     {
@@ -100,8 +101,8 @@ namespace Jifas.Chatbot.Services
                 // Generate ticket number
                 var ticketNumber = GenerateTicketNumber();
 
-                // Create ticket entity
-                var ticket = new Tickets
+                // Create ticket data
+                var ticketData = new TicketData
                 {
                     TicketNumber = ticketNumber,
                     UserId = request.UserId ?? "anonymous",
@@ -111,11 +112,28 @@ namespace Jifas.Chatbot.Services
                     Priority = ValidatePriority(request.Priority),
                     Status = "Open",
                     ConversationSessionId = request.SessionId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
-                _db.Tickets.Add(ticket);
+                // Store ticket (in production, this would be persisted to a Tickets table)
+                _ticketStore[ticketNumber] = ticketData;
+
+                // Log ticket creation to metrics
+                var metric = new Data.Models.Metric
+                {
+                    MetricType = "TicketCreated",
+                    MetricName = ticketNumber,
+                    Count = 1,
+                    Value = 1.0,
+                    Category = category,
+                    Tags = $"UserId:{request.UserId};SessionId:{request.SessionId}",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Metrics.Add(metric);
                 await _db.SaveChangesAsync();
+
+                _logger.LogInformation("[TicketService] Ticket created successfully: {0}", ticketNumber);
 
                 return new TicketResult
                 {
@@ -123,12 +141,12 @@ namespace Jifas.Chatbot.Services
                     TicketNumber = ticketNumber,
                     Message = $"Ticket berhasil dibuat dengan nomor: {ticketNumber}. Tim IT Help Desk akan segera menghubungi Anda.",
                     Status = "Open",
-                    CreatedAt = ticket.CreatedAt
+                    CreatedAt = ticketData.CreatedAt
                 };
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[TicketService] Error: {ex.Message}");
+                _logger.LogError("[TicketService] Error creating ticket: {0}", ex, ex.Message);
                 return new TicketResult
                 {
                     Success = false,
@@ -141,11 +159,20 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                var ticket = await Task.Run(() =>
-                    _db.Tickets.FirstOrDefault(t => t.TicketNumber == ticketNumber));
-
-                if (ticket == null)
+                if (string.IsNullOrWhiteSpace(ticketNumber))
                 {
+                    return new TicketResult
+                    {
+                        Success = false,
+                        Message = "Ticket number is required"
+                    };
+                }
+
+                var found = _ticketStore.TryGetValue(ticketNumber, out var ticket);
+
+                if (!found || ticket == null)
+                {
+                    _logger.LogWarning("[TicketService] Ticket not found: {0}", ticketNumber);
                     return new TicketResult
                     {
                         Success = false,
@@ -164,7 +191,7 @@ namespace Jifas.Chatbot.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[TicketService] GetTicket Error: {ex.Message}");
+                _logger.LogError("[TicketService] Error retrieving ticket: {0}", ex, ex.Message);
                 return new TicketResult
                 {
                     Success = false,
@@ -210,6 +237,22 @@ namespace Jifas.Chatbot.Services
                 return "Low";
             
             return "Medium";
+        }
+
+        /// <summary>
+        /// Internal ticket data structure
+        /// </summary>
+        private class TicketData
+        {
+            public string TicketNumber { get; set; }
+            public string UserId { get; set; }
+            public string Subject { get; set; }
+            public string Description { get; set; }
+            public string Category { get; set; }
+            public string Priority { get; set; }
+            public string Status { get; set; }
+            public string ConversationSessionId { get; set; }
+            public DateTime CreatedAt { get; set; }
         }
     }
 }

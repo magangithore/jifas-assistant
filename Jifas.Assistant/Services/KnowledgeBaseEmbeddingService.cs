@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Jifas.Chatbot.DAL;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Jifas.Assistant.Data;
+using Jifas.Assistant.Data.Models;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Service untuk embedding Knowledge Base documents dan upload ke database
-    /// Handles: Read MD files ? Chunk content ? Generate embeddings ? Insert to DB
+    /// Service for embedding Knowledge Base documents and uploading to database
+    /// Handles: Read MD files ? Generate embeddings ? Insert to DB
     /// </summary>
     public interface IKnowledgeBaseEmbeddingService
     {
@@ -24,56 +24,38 @@ namespace Jifas.Chatbot.Services
     }
 
     /// <summary>
-    /// Result dari embedding process
+    /// Result of embedding process
     /// </summary>
     public class EmbeddingResult
     {
         public bool Success { get; set; }
-        public string FileName { get; set; }
+        public string FileName { get; set; } = string.Empty;
         public int DocumentId { get; set; }
-        public int ChunksInserted { get; set; }
-        public string Message { get; set; }
-        public Exception Exception { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public Exception? Exception { get; set; }
     }
 
     /// <summary>
-    /// Chunk of text untuk embedding
-    /// </summary>
-    public class TextChunk
-    {
-        public int Index { get; set; }
-        public string Text { get; set; }
-        public int StartPosition { get; set; }
-        public int EndPosition { get; set; }
-    }
-
-    /// <summary>
-    /// Main service implementation
+    /// Main service implementation for Knowledge Base embedding
+    /// Reads MD files, generates embeddings using Gemini, and stores in database
     /// </summary>
     public class KnowledgeBaseEmbeddingService : IKnowledgeBaseEmbeddingService
     {
-        private readonly JIFAS_AssistantEntities _db;
         private readonly ILoggerService _logger;
-        private readonly string _geminiApiKey;
-        private readonly string _geminiBaseUrl;
-        private readonly int _chunkSize;
-        private readonly int _chunkOverlap;
-        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly JifasAssistantDbContext _db;
+        private readonly IEmbeddingService _embeddingService;
 
-        // Configuration
-        private const string GEMINI_EMBEDDING_URL = "https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=";
-        private const int DEFAULT_CHUNK_SIZE = 500;
-        private const int DEFAULT_CHUNK_OVERLAP = 50;
-
-        public KnowledgeBaseEmbeddingService()
+        public KnowledgeBaseEmbeddingService(
+            ILoggerService logger,
+            IConfiguration configuration,
+            JifasAssistantDbContext db,
+            IEmbeddingService embeddingService)
         {
-            _db = new JIFAS_AssistantEntities();
-            _logger = LoggerFactory.GetLogger();
-            _geminiApiKey = System.Configuration.ConfigurationManager.AppSettings["Gemini:ApiKey"] ?? "";
-            _geminiBaseUrl = System.Configuration.ConfigurationManager.AppSettings["Gemini:BaseUrl"] ?? "";
-            _chunkSize = int.TryParse(System.Configuration.ConfigurationManager.AppSettings["KnowledgeBase:ChunkSize"] ?? "", out var size) ? size : DEFAULT_CHUNK_SIZE;
-            _chunkOverlap = int.TryParse(System.Configuration.ConfigurationManager.AppSettings["KnowledgeBase:ChunkOverlap"] ?? "", out var overlap) ? overlap : DEFAULT_CHUNK_OVERLAP;
-            _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
         }
 
         /// <summary>
@@ -83,30 +65,22 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Clearing old knowledge base data...");
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Clearing old knowledge base data");
 
                 // Get count before deletion
-                var docCountBefore = _db.KnowledgeBaseDocuments.Count();
-                var chunkCountBefore = _db.KnowledgeBaseChunks.Count();
+                var docCountBefore = await _db.KnowledgeBaseDocuments.CountAsync();
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Before: {0} documents", docCountBefore);
 
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Before: {docCountBefore} documents, {chunkCountBefore} chunks");
-
-                // Delete chunks first (foreign key constraint)
-                _db.KnowledgeBaseChunks.RemoveRange(_db.KnowledgeBaseChunks);
-                await _db.SaveChangesAsync();
-                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Deleted all chunks");
-
-                // Delete documents
+                // Delete all documents
                 _db.KnowledgeBaseDocuments.RemoveRange(_db.KnowledgeBaseDocuments);
                 await _db.SaveChangesAsync();
-                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Deleted all documents");
 
                 _logger.LogInformation("[KnowledgeBaseEmbeddingService] Knowledge base cleared successfully");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[KnowledgeBaseEmbeddingService] Error clearing knowledge base: {ex.Message}");
+                _logger.LogError("[KnowledgeBaseEmbeddingService] Error clearing knowledge base: {0}", ex, ex.Message);
                 return false;
             }
         }
@@ -122,15 +96,15 @@ namespace Jifas.Chatbot.Services
             {
                 if (!Directory.Exists(knowledgeBasePath))
                 {
-                    _logger.LogError($"[KnowledgeBaseEmbeddingService] Knowledge base path not found: {knowledgeBasePath}");
+                    _logger.LogInformation("[KnowledgeBaseEmbeddingService] Knowledge base path not found: {0}", knowledgeBasePath);
                     return results;
                 }
 
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Processing knowledge base at: {knowledgeBasePath}");
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Processing knowledge base at: {0}", knowledgeBasePath);
 
                 // Get all MD files
                 var mdFiles = Directory.GetFiles(knowledgeBasePath, "*.md", SearchOption.AllDirectories);
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Found {mdFiles.Length} MD files");
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Found {0} MD files", mdFiles.Length);
 
                 // Process each file
                 foreach (var filePath in mdFiles)
@@ -139,130 +113,85 @@ namespace Jifas.Chatbot.Services
                     results.Add(result);
                 }
 
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Completed processing {results.Count} files");
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Completed processing {0} files", results.Count);
                 return results;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[KnowledgeBaseEmbeddingService] Error processing knowledge base: {ex.Message}");
+                _logger.LogError("[KnowledgeBaseEmbeddingService] Error processing knowledge base: {0}", ex, ex.Message);
                 return results;
             }
         }
 
         /// <summary>
-        /// Process single MD file
+        /// Process single MD file: read content, generate embedding, insert to database
         /// </summary>
         public async Task<EmbeddingResult> ProcessSingleFileAsync(string filePath)
         {
             var result = new EmbeddingResult
             {
                 FileName = Path.GetFileName(filePath),
-                Success = false,
-                ChunksInserted = 0
+                Success = false
             };
 
             try
             {
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Processing file: {result.FileName}");
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Processing file: {0}", result.FileName);
 
-                // Read file content
+                // Validate file exists
                 if (!File.Exists(filePath))
                 {
                     result.Message = "File not found";
                     return result;
                 }
 
-                // .NET Framework 4.8 doesn't have ReadAllTextAsync, use synchronous version
-                var content = File.ReadAllText(filePath, Encoding.UTF8);
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Read {content.Length} characters");
-
-                // Determine module and category
-                var module = GetModuleFromPath(filePath);
-                var category = GetCategoryFromPath(filePath);
-
-                // Insert document metadata
-                // Map to actual entity properties: Id, Title, Content, Category, SourceFile, Version, CreatedAt, UpdatedAt
-                var document = new KnowledgeBaseDocuments
+                // Read file content
+                var content = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
+                if (string.IsNullOrWhiteSpace(content))
                 {
-                    Title = Path.GetFileNameWithoutExtension(filePath),
+                    result.Message = "File is empty";
+                    return result;
+                }
+
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] Read {0} characters from file", content.Length);
+
+                // Determine category from file path
+                var category = GetCategoryFromPath(filePath);
+                var title = Path.GetFileNameWithoutExtension(filePath);
+
+                // Generate embedding for entire document
+                var embedding = await _embeddingService.GenerateEmbeddingAsync(content);
+
+                if (embedding == null || embedding.Count == 0)
+                {
+                    _logger.LogWarning("[KnowledgeBaseEmbeddingService] Failed to generate embedding for document");
+                    result.Message = "Failed to generate embedding";
+                    return result;
+                }
+
+                // Create and save document with embedding
+                var document = new KnowledgeBaseDocument
+                {
+                    Title = title,
                     Content = content,
                     Category = category,
-                    Department = module,
-                    SourceFile = filePath,
-                    Version = "1",
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    IsActive = true
+                    Embedding = JsonConvert.SerializeObject(embedding),
+                    EmbeddingDimensions = embedding.Count,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    ViewCount = 0,
+                    RelevanceScore = 1.0
                 };
 
                 _db.KnowledgeBaseDocuments.Add(document);
                 await _db.SaveChangesAsync();
+
                 result.DocumentId = document.Id;
-
-
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Inserted document metadata (ID: {document.Id})");
-
-                // Split content into chunks
-                var chunks = SplitIntoChunks(content);
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Split into {chunks.Count} chunks");
-
-                // Generate embeddings and insert chunks
-                var insertedChunks = 0;
-                foreach (var chunk in chunks)
-                {
-                    try
-                    {
-                        // Generate embedding
-                        var embedding = await GenerateEmbeddingAsync(chunk.Text);
-
-                        if (embedding == null || embedding.Length == 0)
-                        {
-                            _logger.LogWarning($"[KnowledgeBaseEmbeddingService] No embedding generated for chunk {chunk.Index}");
-                            continue;
-                        }
-
-                        // Create chunk record
-                        // Map to actual entity properties: Id, DocumentId, ChunkIndex, Content, EmbeddingVector, TokenCount, CreatedAt
-                        var dbChunk = new KnowledgeBaseChunks
-                        {
-                            DocumentId = document.Id,
-                            Content = chunk.Text,
-                            EmbeddingVector = JsonConvert.SerializeObject(embedding),
-                            ChunkIndex = chunk.Index,
-                            TokenCount = chunk.Text.Split(' ').Length,
-                            CreatedAt = DateTime.Now
-                        };
-
-                        _db.KnowledgeBaseChunks.Add(dbChunk);
-                        insertedChunks++;
-
-                        // Save every 5 chunks to avoid memory issues
-                        if (insertedChunks % 5 == 0)
-                        {
-                            await _db.SaveChangesAsync();
-                            _logger.LogInformation($"[KnowledgeBaseEmbeddingService] Saved {insertedChunks} chunks");
-                        }
-
-                        // Rate limiting
-                        await Task.Delay(100);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"[KnowledgeBaseEmbeddingService] Error processing chunk {chunk.Index}: {ex.Message}");
-                    }
-                }
-
-                // Save remaining chunks
-                if (insertedChunks % 5 != 0)
-                {
-                    await _db.SaveChangesAsync();
-                }
-
-                result.ChunksInserted = insertedChunks;
                 result.Success = true;
-                result.Message = $"Successfully processed {insertedChunks} chunks";
+                result.Message = $"Successfully processed document with embedding";
 
-                _logger.LogInformation($"[KnowledgeBaseEmbeddingService] ? File processed: {result.FileName} ({result.ChunksInserted} chunks)");
+                _logger.LogInformation("[KnowledgeBaseEmbeddingService] ? File processed: {0} (Document ID: {1})", result.FileName, result.DocumentId);
                 return result;
             }
             catch (Exception ex)
@@ -270,121 +199,9 @@ namespace Jifas.Chatbot.Services
                 result.Success = false;
                 result.Message = ex.Message;
                 result.Exception = ex;
-                _logger.LogError($"[KnowledgeBaseEmbeddingService] Error processing file {result.FileName}: {ex.Message}");
+                _logger.LogError("[KnowledgeBaseEmbeddingService] Error processing file {0}: {1}", ex, result.FileName, ex.Message);
                 return result;
             }
-        }
-
-        /// <summary>
-        /// Generate embedding for text using Gemini API
-        /// </summary>
-        private async Task<float[]> GenerateEmbeddingAsync(string text)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(_geminiApiKey))
-                {
-                    return null;
-                }
-
-                // Prepare request
-                var requestBody = new
-                {
-                    content = new
-                    {
-                        parts = new[] { new { text = text } }
-                    }
-                };
-
-                var json = JsonConvert.SerializeObject(requestBody);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                // Call API
-                var url = $"{GEMINI_EMBEDDING_URL}{_geminiApiKey}";
-                var response = await _httpClient.PostAsync(url, content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogWarning($"[KnowledgeBaseEmbeddingService] Embedding API error: {response.StatusCode} - {errorContent}");
-                    return null;
-                }
-
-                // Parse response
-                var responseContent = await response.Content.ReadAsStringAsync();
-                var responseObject = JObject.Parse(responseContent);
-
-                var embeddingValues = responseObject["embedding"]?["values"];
-                if (embeddingValues == null)
-                {
-                    return null;
-                }
-
-                // Convert to float array
-                var embedding = embeddingValues.ToObject<float[]>();
-                return embedding;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"[KnowledgeBaseEmbeddingService] Error generating embedding: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Split content into overlapping chunks
-        /// </summary>
-        private List<TextChunk> SplitIntoChunks(string content)
-        {
-            var chunks = new List<TextChunk>();
-
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return chunks;
-            }
-
-            int startIndex = 0;
-            int chunkIndex = 0;
-
-            while (startIndex < content.Length)
-            {
-                int endIndex = Math.Min(startIndex + _chunkSize, content.Length);
-                string chunkText = content.Substring(startIndex, endIndex - startIndex).Trim();
-
-                if (chunkText.Length > 0)
-                {
-                    chunks.Add(new TextChunk
-                    {
-                        Index = chunkIndex,
-                        Text = chunkText,
-                        StartPosition = startIndex,
-                        EndPosition = endIndex
-                    });
-
-                    chunkIndex++;
-                }
-
-                // Move to next position with overlap
-                startIndex += (_chunkSize - _chunkOverlap);
-            }
-
-            return chunks;
-        }
-
-        /// <summary>
-        /// Detect module from file path
-        /// </summary>
-        private string GetModuleFromPath(string filePath)
-        {
-            var fileName = Path.GetFileName(filePath).ToLower();
-
-            if (fileName.Contains("userguidehalf") || fileName.Contains("jifas.md"))
-                return "General";
-            
-            if (filePath.Contains("Master"))
-                return "Master Data";
-
-            return "General";
         }
 
         /// <summary>
@@ -392,11 +209,22 @@ namespace Jifas.Chatbot.Services
         /// </summary>
         private string GetCategoryFromPath(string filePath)
         {
-            if (filePath.Contains("Master"))
+            var fileName = Path.GetFileName(filePath).ToLower();
+
+            if (fileName.Contains("master"))
                 return "Master Data";
-            
-            if (filePath.Contains("userguidehalf"))
+
+            if (fileName.Contains("guide") || fileName.Contains("user"))
                 return "User Guide";
+
+            if (fileName.Contains("invoice"))
+                return "Invoice";
+
+            if (fileName.Contains("payment"))
+                return "Payment";
+
+            if (fileName.Contains("pum"))
+                return "PUM";
 
             return "General";
         }

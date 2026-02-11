@@ -1,12 +1,12 @@
-using Jifas.Chatbot.DAL;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Jifas.Assistant.Data;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Service for monitoring and reporting health status of all system components
@@ -17,22 +17,24 @@ namespace Jifas.Chatbot.Services
         private readonly IGeminiService _geminiService;
         private readonly IKnowledgeBaseService _knowledgeBaseService;
         private readonly ICacheService _cacheService;
+        private readonly JifasAssistantDbContext _db;
+        private readonly IConfiguration _configuration;
+        private static readonly DateTime _startTime = DateTime.UtcNow;
 
-        public HealthCheckService(IGeminiService geminiService, IKnowledgeBaseService knowledgeBaseService)
+        public HealthCheckService(
+            ILoggerService logger,
+            IGeminiService geminiService,
+            IKnowledgeBaseService knowledgeBaseService,
+            ICacheService cacheService,
+            JifasAssistantDbContext db,
+            IConfiguration configuration)
         {
-            _logger = LoggerFactory.GetLogger();
-            _geminiService = geminiService;
-            _knowledgeBaseService = knowledgeBaseService;
-            _cacheService = new MemoryCacheService();
-        }
-
-        public HealthCheckService(ILoggerService logger, IGeminiService geminiService, 
-            IKnowledgeBaseService knowledgeBaseService, ICacheService cacheService)
-        {
-            _logger = logger;
-            _geminiService = geminiService;
-            _knowledgeBaseService = knowledgeBaseService;
-            _cacheService = cacheService;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _geminiService = geminiService ?? throw new ArgumentNullException(nameof(geminiService));
+            _knowledgeBaseService = knowledgeBaseService ?? throw new ArgumentNullException(nameof(knowledgeBaseService));
+            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
@@ -62,7 +64,7 @@ namespace Jifas.Chatbot.Services
                 {
                     { "status", overallStatus },
                     { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") },
-                    { "uptime_seconds", (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds },
+                    { "uptime_seconds", (int)DateTime.UtcNow.Subtract(_startTime).TotalSeconds },
                     { "services", new Dictionary<string, object>
                     {
                         { "database", new { status = dbHealth ? "healthy" : "unhealthy" } },
@@ -78,7 +80,7 @@ namespace Jifas.Chatbot.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[HealthCheckService] Error checking health", ex);
+                _logger.LogError("[HealthCheckService] Error checking health: {0}", ex, ex.Message);
                 return new Dictionary<string, object>
                 {
                     { "status", "unhealthy" },
@@ -95,13 +97,10 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                using (var db = new JIFAS_AssistantEntities())
-                {
-                    // Simple query to test database connection
-                    var test = db.KnowledgeBaseDocuments.FirstOrDefault();
-                    _logger.LogInformation("[HealthCheckService] Database: HEALTHY");
-                    return true;
-                }
+                // Simple query to test database connection
+                var test = await _db.KnowledgeBaseDocuments.FirstOrDefaultAsync();
+                _logger.LogInformation("[HealthCheckService] Database: HEALTHY");
+                return true;
             }
             catch (Exception ex)
             {
@@ -118,16 +117,14 @@ namespace Jifas.Chatbot.Services
             try
             {
                 // Verify API key is configured
-                var apiKey = ConfigurationManager.AppSettings["Gemini:ApiKey"];
+                var apiKey = _configuration["Gemini:ApiKey"];
                 if (string.IsNullOrWhiteSpace(apiKey))
                 {
                     _logger.LogWarning("[HealthCheckService] Gemini API key not configured");
                     return false;
                 }
 
-                // Try a simple test call to Gemini (in real implementation, could do a test embedding)
-                var testMessage = "test";
-                // We won't actually call the API to avoid quota usage, just verify it's configured
+                // API is configured (we won't make actual calls to avoid quota usage)
                 _logger.LogInformation("[HealthCheckService] Gemini API: HEALTHY (configured)");
                 return true;
             }
@@ -145,23 +142,18 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                using (var db = new JIFAS_AssistantEntities())
-                {
-                    // Check if KB documents exist and are accessible
-                    var docCount = db.KnowledgeBaseDocuments.Count(d => d.IsActive == true);
-                    var chunkCount = db.KnowledgeBaseChunks.Count();
+                // Check if KB documents exist and are accessible
+                var docCount = await _db.KnowledgeBaseDocuments.CountAsync(d => d.IsActive == true);
 
-                    if (docCount > 0 && chunkCount > 0)
-                    {
-                        _logger.LogInformation("[HealthCheckService] Knowledge Base: HEALTHY ({0} docs, {1} chunks)", 
-                            docCount, chunkCount);
-                        return true;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("[HealthCheckService] Knowledge Base: Degraded (no documents or chunks)");
-                        return false;
-                    }
+                if (docCount > 0)
+                {
+                    _logger.LogInformation("[HealthCheckService] Knowledge Base: HEALTHY ({0} active documents)", docCount);
+                    return true;
+                }
+                else
+                {
+                    _logger.LogWarning("[HealthCheckService] Knowledge Base: Degraded (no active documents)");
+                    return false;
                 }
             }
             catch (Exception ex)
@@ -179,7 +171,7 @@ namespace Jifas.Chatbot.Services
             try
             {
                 // Test cache operations
-                string testKey = "health_check_test";
+                string testKey = $"health_check_test_{Guid.NewGuid()}";
                 string testValue = Guid.NewGuid().ToString();
 
                 _cacheService.Set(testKey, testValue, 1);
@@ -214,55 +206,83 @@ namespace Jifas.Chatbot.Services
                 var detailed = new Dictionary<string, Dictionary<string, object>>();
 
                 // Database details
-                using (var db = new JIFAS_AssistantEntities())
+                try
                 {
-                    var docCount = db.KnowledgeBaseDocuments.Count(d => d.IsActive == true);
-                    var chunkCount = db.KnowledgeBaseChunks.Count();
-                    var convCount = db.Conversations.Count();
+                    var docCount = await _db.KnowledgeBaseDocuments.CountAsync(d => d.IsActive == true);
+                    var chatCount = await _db.Chats.CountAsync();
+                    var lastDoc = await _db.KnowledgeBaseDocuments
+                        .OrderByDescending(d => d.CreatedAt)
+                        .FirstOrDefaultAsync();
 
                     detailed["database"] = new Dictionary<string, object>
                     {
                         { "status", "healthy" },
                         { "connection_string", "configured" },
                         { "kb_documents", docCount },
-                        { "kb_chunks", chunkCount },
-                        { "conversations", convCount },
+                        { "chats", chatCount },
                         { "checked_at", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss Z") }
+                    };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("[HealthCheckService] Error getting database details: {0}", ex.Message);
+                    detailed["database"] = new Dictionary<string, object>
+                    {
+                        { "status", "unhealthy" },
+                        { "error", ex.Message }
                     };
                 }
 
                 // Gemini API details
+                var geminiConfigured = !string.IsNullOrWhiteSpace(_configuration["Gemini:ApiKey"]);
                 detailed["gemini"] = new Dictionary<string, object>
                 {
                     { "status", await CheckGeminiHealthAsync() ? "healthy" : "unhealthy" },
-                    { "model", ConfigurationManager.AppSettings["Gemini:Model"] ?? "unknown" },
-                    { "configured", !string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings["Gemini:ApiKey"]) },
+                    { "model", _configuration["Gemini:Model"] ?? "unknown" },
+                    { "configured", geminiConfigured },
                     { "checked_at", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") }
                 };
 
                 // Knowledge Base details
-                using (var db = new JIFAS_AssistantEntities())
+                try
                 {
-                    var lastDoc = db.KnowledgeBaseDocuments
+                    var totalDocs = await _db.KnowledgeBaseDocuments.CountAsync();
+                    var activeDocs = await _db.KnowledgeBaseDocuments.CountAsync(d => d.IsActive == true);
+                    var lastDoc = await _db.KnowledgeBaseDocuments
                         .OrderByDescending(d => d.CreatedAt)
-                        .FirstOrDefault();
+                        .FirstOrDefaultAsync();
 
                     detailed["knowledge_base"] = new Dictionary<string, object>
                     {
                         { "status", await CheckKnowledgeBaseHealthAsync() ? "healthy" : "unhealthy" },
-                        { "total_documents", db.KnowledgeBaseDocuments.Count() },
-                        { "active_documents", db.KnowledgeBaseDocuments.Count(d => d.IsActive == true) },
-                        { "last_document_added", lastDoc != null ? lastDoc.CreatedAt.ToString() : "never" },
+                        { "total_documents", totalDocs },
+                        { "active_documents", activeDocs },
+                        { "last_document_added", lastDoc?.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss") ?? "never" },
                         { "checked_at", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") }
+                    };
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("[HealthCheckService] Error getting KB details: {0}", ex.Message);
+                    detailed["knowledge_base"] = new Dictionary<string, object>
+                    {
+                        { "status", "unhealthy" },
+                        { "error", ex.Message }
                     };
                 }
 
                 // Cache details
+                var cacheTtlMinutes = 30; // Default
+                if (int.TryParse(_configuration["Caching:DefaultDurationMinutes"], out var mins))
+                {
+                    cacheTtlMinutes = mins;
+                }
+
                 detailed["cache"] = new Dictionary<string, object>
                 {
                     { "status", await CheckCacheHealthAsync() ? "healthy" : "unhealthy" },
                     { "type", "in-memory" },
-                    { "ttl_seconds", int.TryParse(ConfigurationManager.AppSettings["Caching:DefaultDurationMinutes"], out var mins) ? mins * 60 : 1800 },
+                    { "ttl_seconds", cacheTtlMinutes * 60 },
                     { "checked_at", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") }
                 };
 
@@ -271,7 +291,7 @@ namespace Jifas.Chatbot.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[HealthCheckService] Error getting detailed status", ex);
+                _logger.LogError("[HealthCheckService] Error getting detailed status: {0}", ex, ex.Message);
                 return new Dictionary<string, Dictionary<string, object>>();
             }
         }

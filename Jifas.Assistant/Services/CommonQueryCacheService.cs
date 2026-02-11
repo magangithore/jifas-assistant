@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Web;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Option 1 Optimization: Common Query Cache Service
@@ -33,18 +34,19 @@ namespace Jifas.Chatbot.Services
     {
         private Dictionary<string, string> _cachedQueries;
         private readonly ILoggerService _logger;
+        private readonly IConfiguration _configuration;
         private readonly string _cacheFilePath;
         private DateTime _lastLoadTime;
-        private const int RELOAD_INTERVAL_MINUTES = 60; // Reload cache every hour
+        private const int RELOAD_INTERVAL_MINUTES = 60;
 
-        public CommonQueryCacheService()
+        public CommonQueryCacheService(ILoggerService logger, IConfiguration configuration)
         {
-            _logger = LoggerFactory.GetLogger();
+            _logger = logger;
+            _configuration = configuration;
             _cacheFilePath = GetCacheFilePath();
             _cachedQueries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             _lastLoadTime = DateTime.MinValue;
             
-            // Load cache on initialization
             ReloadCache();
         }
 
@@ -82,7 +84,7 @@ namespace Jifas.Chatbot.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[CommonQueryCache] Error getting cached response: " + ex.Message);
+                _logger.LogError("[CommonQueryCache] Error getting cached response: {0}", ex, ex.Message);
                 return null;
             }
         }
@@ -105,6 +107,7 @@ namespace Jifas.Chatbot.Services
                 if (!File.Exists(_cacheFilePath))
                 {
                     _logger.LogWarning("[CommonQueryCache] Cache file not found at: {0}", _cacheFilePath);
+                    _cachedQueries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     return;
                 }
 
@@ -114,6 +117,7 @@ namespace Jifas.Chatbot.Services
                 if (data?.CommonQueries == null || data.CommonQueries.Count == 0)
                 {
                     _logger.LogWarning("[CommonQueryCache] No common queries found in cache file");
+                    _cachedQueries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                     return;
                 }
 
@@ -133,25 +137,43 @@ namespace Jifas.Chatbot.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[CommonQueryCache] Error loading cache from file: " + ex.Message);
+                _logger.LogError("[CommonQueryCache] Error loading cache from file: {0}", ex, ex.Message);
                 _cachedQueries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             }
         }
 
         private string GetCacheFilePath()
         {
-            // First try: App_Data/Data folder (for production)
-            var appDataPath = Path.Combine(HttpRuntime.AppDomainAppPath, "Data", "CommonQueries.json");
-            if (File.Exists(appDataPath))
-                return appDataPath;
+            // Try to get path from configuration first
+            var configPath = _configuration["CommonQueries:FilePath"];
+            if (!string.IsNullOrWhiteSpace(configPath) && File.Exists(configPath))
+            {
+                _logger.LogInformation("[CommonQueryCache] Using configured cache file path: {0}", configPath);
+                return configPath;
+            }
 
-            // Fallback: Project root Data folder (for development)
-            var rootPath = Path.Combine(HttpRuntime.AppDomainAppPath, "Data", "CommonQueries.json");
-            if (File.Exists(rootPath))
-                return rootPath;
+            // Try standard locations in order
+            var currentDirectory = Directory.GetCurrentDirectory();
+            var possiblePaths = new[]
+            {
+                Path.Combine(currentDirectory, "Data", "CommonQueries.json"),
+                Path.Combine(currentDirectory, "Data", "common-queries.json"),
+                Path.Combine(currentDirectory, "Data", "common_queries.json"),
+            };
 
-            // Return default path (will show warning if not exists)
-            return appDataPath;
+            foreach (var path in possiblePaths)
+            {
+                if (File.Exists(path))
+                {
+                    _logger.LogInformation("[CommonQueryCache] Found cache file at: {0}", path);
+                    return path;
+                }
+            }
+
+            // Return default path
+            var defaultPath = Path.Combine(currentDirectory, "Data", "CommonQueries.json");
+            _logger.LogWarning("[CommonQueryCache] Cache file not found, using default path: {0}", defaultPath);
+            return defaultPath;
         }
 
         /// <summary>
@@ -160,7 +182,7 @@ namespace Jifas.Chatbot.Services
         private class CommonQueriesData
         {
             [JsonProperty("commonQueries")]
-            public List<CommonQueryItem> CommonQueries { get; set; }
+            public List<CommonQueryItem> CommonQueries { get; set; } = new List<CommonQueryItem>();
         }
 
         private class CommonQueryItem

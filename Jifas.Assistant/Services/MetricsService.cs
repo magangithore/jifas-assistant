@@ -1,30 +1,42 @@
-using Jifas.Chatbot.Models;
+using Jifas.Assistant.Models;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Service for tracking suggestion metrics and analytics
+    /// 
+    /// Logs suggestion displays, clicks, and user feedback.
+    /// Stores metrics in cache for fast access with configurable tracking.
     /// </summary>
     public class MetricsService : IMetricsService
     {
         private readonly ILoggerService _logger;
         private readonly ICacheService _cacheService;
+        private readonly IConfiguration _configuration;
+        private readonly bool _enableMetrics;
 
-        public MetricsService()
+        /// <summary>
+        /// Initialize metrics service with dependency injection
+        /// </summary>
+        public MetricsService(
+            ILoggerService logger,
+            ICacheService cacheService,
+            IConfiguration configuration)
         {
-            _logger = LoggerFactory.GetLogger();
-            _cacheService = new MemoryCacheService();
-        }
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-        public MetricsService(ILoggerService logger, ICacheService cacheService)
-        {
-            _logger = logger;
-            _cacheService = cacheService;
+            // Read configuration setting for metrics tracking
+            _enableMetrics = _configuration.GetValue("Metrics:EnableTracking", true);
+            
+            _logger.LogInformation("[MetricsService] Initialized with metrics tracking: {0}", 
+                _enableMetrics ? "ENABLED" : "DISABLED");
         }
 
         /// <summary>
@@ -34,17 +46,14 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                if (suggestions == null || suggestions.Count == 0)
+                if (!_enableMetrics)
                 {
-                    _logger.LogWarning("[MetricsService] No suggestions to log for session {0}", sessionId);
                     return;
                 }
 
-                bool enableMetrics = bool.TryParse(
-                    ConfigurationManager.AppSettings["Metrics:EnableTracking"] ?? "true", out bool result) && result;
-
-                if (!enableMetrics)
+                if (suggestions == null || suggestions.Count == 0)
                 {
+                    _logger.LogWarning("[MetricsService] No suggestions to log for session {0}", sessionId);
                     return;
                 }
 
@@ -65,9 +74,10 @@ namespace Jifas.Chatbot.Services
 
                     // Store in cache with session ID as key
                     string cacheKey = $"METRIC_{sessionId}_{suggestion.GetHashCode()}";
-                    _cacheService.Set(cacheKey, metric, 1440); // 24 hours cache
+                    var cacheDurationMinutes = _configuration.GetValue("Metrics:CacheDurationMinutes", 1440);
+                    _cacheService.Set(cacheKey, metric, cacheDurationMinutes);
 
-                    _logger.LogInformation("[MetricsService] Logged suggestion display for session {0}: {1}", 
+                    _logger.LogDebug("[MetricsService] Logged suggestion display for session {0}: {1}", 
                         sessionId, suggestion.Substring(0, Math.Min(50, suggestion.Length)));
                 }
 
@@ -75,7 +85,7 @@ namespace Jifas.Chatbot.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error logging suggestion display", ex);
+                _logger.LogError("[MetricsService] Error logging suggestion display: {0}", ex, ex.Message);
             }
         }
 
@@ -86,10 +96,7 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                bool enableMetrics = bool.TryParse(
-                    ConfigurationManager.AppSettings["Metrics:EnableTracking"] ?? "true", out bool result) && result;
-
-                if (!enableMetrics)
+                if (!_enableMetrics)
                 {
                     return;
                 }
@@ -100,19 +107,27 @@ namespace Jifas.Chatbot.Services
                 if (metric != null)
                 {
                     metric.ClickCount++;
-                    metric.ClickThroughRate = (decimal)metric.ClickCount / metric.DisplayCount;
+                    metric.ClickThroughRate = metric.DisplayCount > 0 
+                        ? (decimal)metric.ClickCount / metric.DisplayCount 
+                        : 0;
                     metric.UpdatedAt = DateTime.UtcNow;
-                    _cacheService.Set(cacheKey, metric, 1440);
+                    
+                    var cacheDurationMinutes = _configuration.GetValue("Metrics:CacheDurationMinutes", 1440);
+                    _cacheService.Set(cacheKey, metric, cacheDurationMinutes);
 
-                    _logger.LogInformation("[MetricsService] Logged suggestion click for session {0}, CTR: {1:P}", 
+                    _logger.LogDebug("[MetricsService] Logged suggestion click for session {0}, CTR: {1:P}", 
                         sessionId, metric.ClickThroughRate);
+                }
+                else
+                {
+                    _logger.LogWarning("[MetricsService] Metric not found for click event: {0}", cacheKey);
                 }
 
                 await Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error logging suggestion click", ex);
+                _logger.LogError("[MetricsService] Error logging suggestion click: {0}", ex, ex.Message);
             }
         }
 
@@ -123,10 +138,7 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                bool enableMetrics = bool.TryParse(
-                    ConfigurationManager.AppSettings["Metrics:EnableTracking"] ?? "true", out bool result) && result;
-
-                if (!enableMetrics)
+                if (!_enableMetrics)
                 {
                     return;
                 }
@@ -138,17 +150,23 @@ namespace Jifas.Chatbot.Services
                 {
                     metric.IsHelpful = isHelpful;
                     metric.UpdatedAt = DateTime.UtcNow;
-                    _cacheService.Set(cacheKey, metric, 1440);
+                    
+                    var cacheDurationMinutes = _configuration.GetValue("Metrics:CacheDurationMinutes", 1440);
+                    _cacheService.Set(cacheKey, metric, cacheDurationMinutes);
 
                     _logger.LogInformation("[MetricsService] Logged feedback for session {0}: {1}", 
                         sessionId, isHelpful ? "Helpful" : "Not Helpful");
+                }
+                else
+                {
+                    _logger.LogWarning("[MetricsService] Metric not found for feedback event: {0}", cacheKey);
                 }
 
                 await Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error logging feedback", ex);
+                _logger.LogError("[MetricsService] Error logging feedback: {0}", ex, ex.Message);
             }
         }
 
@@ -159,13 +177,20 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(suggestion))
+                {
+                    _logger.LogWarning("[MetricsService] Empty suggestion provided for metric retrieval");
+                    return null;
+                }
+
                 // In real implementation, would query from database
                 // For now, return null as we're using cache
+                _logger.LogDebug("[MetricsService] Retrieving metric for suggestion (length: {0})", suggestion.Length);
                 return await Task.FromResult<SuggestionMetric>(null);
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error getting suggestion metric", ex);
+                _logger.LogError("[MetricsService] Error getting suggestion metric: {0}", ex, ex.Message);
                 return null;
             }
         }
@@ -177,33 +202,45 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(sessionId))
+                {
+                    _logger.LogWarning("[MetricsService] Empty session ID provided");
+                    return new List<SuggestionMetric>();
+                }
+
                 // In real implementation, would query from database
                 var metrics = new List<SuggestionMetric>();
-                _logger.LogInformation("[MetricsService] Retrieved metrics for session {0}", sessionId);
+                _logger.LogDebug("[MetricsService] Retrieved metrics for session {0}", sessionId);
                 return await Task.FromResult(metrics);
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error getting session metrics", ex);
+                _logger.LogError("[MetricsService] Error getting session metrics: {0}", ex, ex.Message);
                 return new List<SuggestionMetric>();
             }
         }
 
         /// <summary>
-        /// Get top suggestions by CTR
+        /// Get top suggestions by CTR (Click-Through Rate)
         /// </summary>
         public async Task<List<SuggestionMetric>> GetTopSuggestionsAsync(int topCount = 10)
         {
             try
             {
+                if (topCount <= 0)
+                {
+                    _logger.LogWarning("[MetricsService] Invalid top count: {0}", topCount);
+                    topCount = 10;
+                }
+
                 // In real implementation, would query from database and order by CTR
                 var suggestions = new List<SuggestionMetric>();
-                _logger.LogInformation("[MetricsService] Retrieved top {0} suggestions", topCount);
+                _logger.LogDebug("[MetricsService] Retrieved top {0} suggestions", topCount);
                 return await Task.FromResult(suggestions);
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error getting top suggestions", ex);
+                _logger.LogError("[MetricsService] Error getting top suggestions: {0}", ex, ex.Message);
                 return new List<SuggestionMetric>();
             }
         }
@@ -221,15 +258,16 @@ namespace Jifas.Chatbot.Services
                     { "average_ctr", 0m },
                     { "helpful_suggestions", 0 },
                     { "unhelpful_suggestions", 0 },
+                    { "metrics_enabled", _enableMetrics },
                     { "last_updated", DateTime.UtcNow }
                 };
 
-                _logger.LogInformation("[MetricsService] Retrieved metrics summary");
+                _logger.LogDebug("[MetricsService] Retrieved metrics summary");
                 return await Task.FromResult(summary);
             }
             catch (Exception ex)
             {
-                _logger.LogError("[MetricsService] Error getting metrics summary", ex);
+                _logger.LogError("[MetricsService] Error getting metrics summary: {0}", ex, ex.Message);
                 return new Dictionary<string, object>();
             }
         }

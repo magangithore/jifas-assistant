@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Service to provide JIFAS domain context and understanding
@@ -49,12 +49,16 @@ namespace Jifas.Chatbot.Services
     public class WorkflowStage
     {
         public int StageNumber { get; set; }
-        public string Status { get; set; }
-        public string Description { get; set; }
-        public List<string> AllowedRoles { get; set; }
-        public string Action { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public List<string> AllowedRoles { get; set; } = new List<string>();
+        public string Action { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Service providing JIFAS domain knowledge
+    /// Contains workflows, permissions, business rules, and troubleshooting guides
+    /// </summary>
     public class JifasContextService : IJifasContextService
     {
         private readonly ILoggerService _logger;
@@ -1011,9 +1015,9 @@ namespace Jifas.Chatbot.Services
                 }
             };
 
-        public JifasContextService()
+        public JifasContextService(ILoggerService logger)
         {
-            _logger = LoggerFactory.GetLogger();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public List<WorkflowStage> GetWorkflowStages(string module)
@@ -1037,10 +1041,12 @@ namespace Jifas.Chatbot.Services
             var workflow = GetWorkflowStages(module);
             var currentStage = workflow.FirstOrDefault(s => s.Status.Equals(currentStatus, StringComparison.OrdinalIgnoreCase));
             
-            if (currentStage == null) return "Unknown";
+            if (currentStage == null) 
+                return "Unknown";
 
             var nextStage = workflow.FirstOrDefault(s => s.StageNumber == currentStage.StageNumber + 1);
-            if (nextStage == null) return "Completed";
+            if (nextStage == null) 
+                return "Completed";
 
             if (nextStage.AllowedRoles.Contains(userRole) || nextStage.AllowedRoles.Contains("All"))
             {

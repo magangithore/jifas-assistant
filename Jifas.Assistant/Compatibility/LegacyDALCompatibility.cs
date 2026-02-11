@@ -2,7 +2,7 @@
 // This file provides stub implementations for old Entity Framework 6 references
 // during the migration from .NET Framework to .NET 10
 
-namespace Jifas.Chatbot.DAL
+namespace Jifas.Assistant.Data
 {
     public class JIFAS_AssistantEntities
     {
@@ -10,12 +10,12 @@ namespace Jifas.Chatbot.DAL
     }
 }
 
-namespace Jifas.DAL.Models
+namespace Jifas.Assistant.Data.Models
 {
     // Stub namespace
 }
 
-namespace Jifas.DAL
+namespace Jifas.Assistant.Data
 {
     // Stub namespace
 }

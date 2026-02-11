@@ -1,9 +1,9 @@
-using Jifas.Chatbot.Models;
+using Jifas.Assistant.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Interface for metrics and analytics tracking

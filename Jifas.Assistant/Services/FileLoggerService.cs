@@ -1,51 +1,56 @@
 using System;
-using System.Configuration;
 using System.IO;
+using System.Text;
+using Microsoft.Extensions.Configuration;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Fallback file-based logger implementation
-    /// Used when Serilog is not available
-    /// Provides basic structured logging to file
+    /// Provides basic structured logging to file with daily rotation
+    /// Thread-safe logging with graceful fallback mechanisms
     /// </summary>
     public class FileLoggerService : ILoggerService
     {
         private readonly string _logFilePath;
         private readonly string _minLevelConfig;
         private static readonly object _lockObject = new object();
+        private readonly IConfiguration _configuration;
 
-        public FileLoggerService()
+        public FileLoggerService(IConfiguration configuration)
         {
-            // Try to use config path first, fallback to AppData if unavailable
-            var configPath = ConfigurationManager.AppSettings["Logging:LogFilePath"];
+            _configuration = configuration;
+
+            // Try to get log path from configuration first
+            var configPath = _configuration["Logging:LogFilePath"];
+            
             if (!string.IsNullOrEmpty(configPath))
             {
                 _logFilePath = configPath;
             }
             else
             {
-                // Use AppData\Local\JIFAS\Logs for guaranteed write permissions
+                // Use LocalApplicationData for guaranteed write permissions (cross-platform)
                 var appDataPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "JIFAS", "Chatbot", "Logs");
+                    "JIFAS", "Assistant", "Logs");
                 _logFilePath = Path.Combine(appDataPath, "jifas.log");
             }
             
-            _minLevelConfig = ConfigurationManager.AppSettings["Logging:MinLevel"] ?? "Information";
+            _minLevelConfig = _configuration["Logging:MinLevel"] ?? "Information";
 
             // Ensure log directory exists
             try
             {
                 var logDir = Path.GetDirectoryName(_logFilePath);
-                if (!Directory.Exists(logDir))
+                if (!Directory.Exists(logDir) && !string.IsNullOrEmpty(logDir))
                 {
                     Directory.CreateDirectory(logDir);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FileLoggerService] Warning: Could not create log directory: {ex.Message}");
+                Console.WriteLine($"[FileLoggerService] Warning: Could not create log directory: {ex.Message}");
             }
 
             try
@@ -70,17 +75,32 @@ namespace Jifas.Chatbot.Services
 
         public void LogError(string message, Exception ex = null, params object[] args)
         {
-            var fullMessage = message;
+            var fullMessage = new StringBuilder(message);
+            
             if (ex != null)
             {
-                fullMessage += Environment.NewLine + $"Exception: {ex.Message}" + Environment.NewLine + $"StackTrace: {ex.StackTrace}";
+                fullMessage.AppendLine();
+                fullMessage.Append($"Exception: {ex.GetType().Name}: {ex.Message}");
+                fullMessage.AppendLine();
+                fullMessage.Append($"StackTrace: {ex.StackTrace}");
+                
+                if (ex.InnerException != null)
+                {
+                    fullMessage.AppendLine();
+                    fullMessage.Append($"InnerException: {ex.InnerException.Message}");
+                }
             }
-            WriteLog("ERROR", fullMessage, args);
+            
+            WriteLog("ERROR", fullMessage.ToString(), args);
         }
 
         public void LogDebug(string message, params object[] args)
         {
-            WriteLog("DEBUG", message, args);
+            // Only log debug if enabled in config
+            if (_minLevelConfig.Equals("Debug", StringComparison.OrdinalIgnoreCase))
+            {
+                WriteLog("DEBUG", message, args);
+            }
         }
 
         private void WriteLog(string level, string message, params object[] args)
@@ -98,25 +118,38 @@ namespace Jifas.Chatbot.Services
                     
                     try
                     {
-                        File.AppendAllText(dateBasedPath, logEntry + Environment.NewLine);
+                        EnsureLogDirectoryExists(dateBasedPath);
+                        File.AppendAllText(dateBasedPath, logEntry + Environment.NewLine, Encoding.UTF8);
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        // If AppData path fails, try temp folder as last resort
-                        var tempPath = Path.Combine(Path.GetTempPath(), "JIFAS_Chatbot_Logs");
-                        if (!Directory.Exists(tempPath))
-                        {
-                            Directory.CreateDirectory(tempPath);
-                        }
+                        // Fallback: Use temp folder as last resort
+                        var tempPath = Path.Combine(Path.GetTempPath(), "JIFAS_Assistant_Logs");
+                        EnsureLogDirectoryExists(tempPath);
                         
                         var tempLogPath = Path.Combine(tempPath, $"jifas-{DateTime.Now:yyyy-MM-dd}.log");
-                        File.AppendAllText(tempLogPath, logEntry + Environment.NewLine);
+                        File.AppendAllText(tempLogPath, logEntry + Environment.NewLine, Encoding.UTF8);
+                    }
+                    catch (Exception writeEx)
+                    {
+                        // Last resort: write to console
+                        Console.WriteLine($"[FileLoggerService] Failed to write log: {writeEx.Message}");
+                        Console.WriteLine(logEntry);
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FileLoggerService] Error writing log: {ex.Message}");
+                Console.WriteLine($"[FileLoggerService] Critical error in WriteLog: {ex.Message}");
+            }
+        }
+
+        private void EnsureLogDirectoryExists(string filePath)
+        {
+            var logDir = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(logDir) && !Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
             }
         }
     }

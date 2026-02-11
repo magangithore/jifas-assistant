@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Interface for out-of-scope detection
@@ -31,12 +31,16 @@ namespace Jifas.Chatbot.Services
     /// 1. Hard rejection: clearly out-of-scope keywords
     /// 2. Knowledge base matching
     /// 3. Dynamic JIFAS workflow detection (from JifasContextService)
+    /// 
+    /// Compatible with .NET 10 and uses proper dependency injection.
     /// </summary>
     public class OutOfScopeDetector : IOutOfScopeDetector
     {
         private readonly IKnowledgeBaseService _knowledgeBaseService;
         private readonly IJifasContextService _jifasContext;
         private readonly ILoggerService _logger;
+        private readonly IConfiguration _configuration;
+        private readonly string _outOfScopeMessage;
 
         // Keywords that indicate out-of-scope questions
         private readonly HashSet<string> _outOfScopeKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -65,7 +69,7 @@ namespace Jifas.Chatbot.Services
             
             // JIFAS Key Concepts
             "ar", "ap", "gl", "general ledger", "piutang", "utang", "ledger", "buku",
-            "journal entry", "jurnal", "posting", "posting", "approval", "persetujuan",
+            "journal entry", "jurnal", "posting", "approval", "persetujuan",
             "invoice number", "nomor invoice", "pd form", "pd approval",
             "tax approval", "pajak", "pph", "ppn", "over budget", "melebihi budget",
             
@@ -75,9 +79,9 @@ namespace Jifas.Chatbot.Services
             "realization", "realisasi", "correction", "koreksi", "verification", "verifikasi",
             
             // JIFAS Access/Troubleshooting
-            "login", "akses", "access", "password", "username", "Windows login",
+            "login", "akses", "access", "password", "username", "windows login",
             "error", "masalah", "problem", "troubleshooting", "tidak bisa", "nggak bisa",
-            "help", "bantuan", "support", "pertanyaan", "question", "pertanyaan"
+            "help", "bantuan", "support", "pertanyaan", "question"
         };
 
         private const string OUT_OF_SCOPE_MESSAGE_DEFAULT = 
@@ -86,48 +90,67 @@ namespace Jifas.Chatbot.Services
             "seperti akses login, troubleshooting, penggunaan modul AR/AP/GL, dan fitur-fitur JIFAS lainnya. " +
             "Apakah ada pertanyaan lain tentang JIFAS yang bisa saya bantu?";
 
-        public OutOfScopeDetector(IKnowledgeBaseService knowledgeBaseService, IJifasContextService jifasContext = null)
+        /// <summary>
+        /// Initialize out-of-scope detector with dependency injection
+        /// All dependencies required - no optional parameters
+        /// </summary>
+        public OutOfScopeDetector(
+            IKnowledgeBaseService knowledgeBaseService,
+            IJifasContextService jifasContext,
+            ILoggerService logger,
+            IConfiguration configuration)
         {
-            _knowledgeBaseService = knowledgeBaseService;
-            _jifasContext = jifasContext ?? new JifasContextService();
-            _logger = LoggerFactory.GetLogger();
+            _knowledgeBaseService = knowledgeBaseService ?? throw new ArgumentNullException(nameof(knowledgeBaseService));
+            _jifasContext = jifasContext ?? throw new ArgumentNullException(nameof(jifasContext));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+
+            // Read custom out-of-scope message from configuration, fallback to default
+            _outOfScopeMessage = _configuration.GetValue("Chat:OutOfScopeMessage", OUT_OF_SCOPE_MESSAGE_DEFAULT);
+
+            _logger.LogInformation("[OutOfScopeDetector] Initialized with {0} out-of-scope keywords and {1} JIFAS keywords",
+                _outOfScopeKeywords.Count, _jifasKeywords.Count);
         }
 
+        /// <summary>
+        /// Check if user query is within JIFAS scope
+        /// Uses multi-layered detection for accuracy
+        /// </summary>
         public async Task<ScopeCheckResult> CheckScopeAsync(string userQuery)
         {
             try
             {
-                var outOfScopeMessage = ConfigurationManager.AppSettings["Chat:OutOfScopeMessage"] ?? OUT_OF_SCOPE_MESSAGE_DEFAULT;
-                
                 if (string.IsNullOrWhiteSpace(userQuery))
                 {
+                    _logger.LogWarning("[OutOfScopeDetector] Empty query provided");
                     return new ScopeCheckResult
                     {
                         IsInScope = false,
                         ConfidenceScore = 0,
-                        Message = outOfScopeMessage
+                        Message = _outOfScopeMessage
                     };
                 }
 
                 var lowerQuery = userQuery.ToLower();
 
-                // Hard reject: clearly out-of-scope keywords
+                // Layer 1: Hard reject - clearly out-of-scope keywords
                 if (HasOutOfScopeKeywords(lowerQuery))
                 {
+                    _logger.LogDebug("[OutOfScopeDetector] Query rejected (out-of-scope keywords detected): {0}", 
+                        userQuery.Substring(0, Math.Min(50, userQuery.Length)));
                     return new ScopeCheckResult
                     {
                         IsInScope = false,
                         ConfidenceScore = 0.1,
-                        Message = outOfScopeMessage
+                        Message = _outOfScopeMessage
                     };
                 }
 
-                // Soft check: search KB to see if query has matches
+                // Layer 2: Knowledge base search
                 var kbResults = await _knowledgeBaseService.SearchAsync(userQuery, topK: 1);
-
-                // If KB has relevant results with minimum score, it's in scope
                 if (kbResults.Count > 0 && kbResults[0].Score > 0.25)
                 {
+                    _logger.LogDebug("[OutOfScopeDetector] Query approved (KB match score: {0:F2})", kbResults[0].Score);
                     return new ScopeCheckResult
                     {
                         IsInScope = true,
@@ -136,9 +159,10 @@ namespace Jifas.Chatbot.Services
                     };
                 }
 
-                // Check for JIFAS keywords
+                // Layer 3: JIFAS keywords check
                 if (HasJifasKeywords(lowerQuery))
                 {
+                    _logger.LogDebug("[OutOfScopeDetector] Query approved (JIFAS keywords detected)");
                     return new ScopeCheckResult
                     {
                         IsInScope = true,
@@ -147,9 +171,10 @@ namespace Jifas.Chatbot.Services
                     };
                 }
 
-                // Dynamic check: search for module/workflow mentions from JifasContextService
+                // Layer 4: Dynamic JIFAS content detection
                 if (HasDynamicJifasContent(lowerQuery))
                 {
+                    _logger.LogDebug("[OutOfScopeDetector] Query approved (dynamic JIFAS content detected)");
                     return new ScopeCheckResult
                     {
                         IsInScope = true,
@@ -158,19 +183,21 @@ namespace Jifas.Chatbot.Services
                     };
                 }
 
-                // Default: assume out of scope if no KB match and no JIFAS keywords
+                // Default: out of scope
+                _logger.LogDebug("[OutOfScopeDetector] Query rejected (no JIFAS markers detected): {0}", 
+                    userQuery.Substring(0, Math.Min(50, userQuery.Length)));
                 return new ScopeCheckResult
                 {
                     IsInScope = false,
                     ConfidenceScore = 0.2,
-                    Message = outOfScopeMessage
+                    Message = _outOfScopeMessage
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError("[OutOfScopeDetector] Error checking scope", ex);
+                _logger.LogError("[OutOfScopeDetector] Error checking scope: {0}", ex, ex.Message);
                 
-                // Default to in-scope if detection fails (fail-safe)
+                // Fail-safe: assume in-scope if detection fails
                 return new ScopeCheckResult
                 {
                     IsInScope = true,
@@ -180,18 +207,30 @@ namespace Jifas.Chatbot.Services
             }
         }
 
+        /// <summary>
+        /// Check if query contains out-of-scope keywords
+        /// </summary>
         private bool HasOutOfScopeKeywords(string query)
         {
+            if (string.IsNullOrWhiteSpace(query))
+                return false;
+
             return _outOfScopeKeywords.Any(keyword => query.Contains(keyword));
         }
 
+        /// <summary>
+        /// Check if query contains JIFAS-related keywords
+        /// </summary>
         private bool HasJifasKeywords(string query)
         {
+            if (string.IsNullOrWhiteSpace(query))
+                return false;
+
             return _jifasKeywords.Any(keyword => query.Contains(keyword));
         }
 
         /// <summary>
-        /// Dynamic check using JifasContextService
+        /// Dynamic detection using workflow patterns
         /// Searches for workflow actions mentioned in the query
         /// This allows auto-detection of new modules without hardcoding
         /// </summary>
@@ -199,26 +238,34 @@ namespace Jifas.Chatbot.Services
         {
             try
             {
-                // Check for workflow actions (Create, Edit, View, Delete, etc.)
+                if (string.IsNullOrWhiteSpace(lowerQuery))
+                    return false;
+
+                // Workflow action keywords
                 var workflowActions = new[] 
                 { 
                     "create", "edit", "delete", "view", "remove", "expand",
                     "upload", "post", "approval", "approve", "reject", "void"
                 };
 
+                // JIFAS context keywords
+                var contextKeywords = new[]
+                {
+                    "master", "data", "workflow", "module", "company", 
+                    "division", "department", "status", "approval"
+                };
+
                 // If query contains action + JIFAS-related terms, likely in scope
                 var hasAction = workflowActions.Any(action => lowerQuery.Contains(action));
-                if (hasAction && (lowerQuery.Contains("master") || lowerQuery.Contains("data") || 
-                                  lowerQuery.Contains("workflow") || lowerQuery.Contains("module") ||
-                                  lowerQuery.Contains("company") || lowerQuery.Contains("division")))
-                    return true;
+                var hasContext = contextKeywords.Any(ctx => lowerQuery.Contains(ctx));
+
+                return hasAction && hasContext;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[OutOfScopeDetector] HasDynamicJifasContent error: {ex.Message}");
+                _logger.LogWarning("[OutOfScopeDetector] Error in dynamic content detection: {0}", ex.Message);
+                return false;
             }
-
-            return false;
         }
     }
 }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Jifas.Chatbot.Utilities
+namespace Jifas.Assistant.Utilities
 {
     /// <summary>
     /// Validation constants and limits for API inputs

@@ -59,29 +59,8 @@
 
   <!-- Exclude files that are in transition during migration -->
   <ItemGroup>
-    <Compile Remove="Services\KnowledgeBaseService.cs" />
-    <Compile Remove="Services\KnowledgeBaseEmbeddingService.cs" />
-    <Compile Remove="Services\QdrantSeedingService.cs" />
-    <Compile Remove="Services\QdrantInitializer.cs" />
-    <Compile Remove="Services\ConversationService.cs" />
-    <Compile Remove="Services\AnalyticsService.cs" />
-    <Compile Remove="Services\TicketService.cs" />
-    <Compile Remove="Services\HealthCheckService.cs" />
-    <Compile Remove="Services\ChatService.cs" />
     <Compile Remove="Services\IQdrantSeedingService.cs" />
-    <Compile Remove="Services\SuggestionService.cs" />
-    <Compile Remove="Services\GeminiEmbeddingService.cs" />
-    <Compile Remove="Services\FileLoggerService.cs" />
-    <Compile Remove="Services\QdrantVectorService.cs" />
     <Compile Remove="Services\EmbeddingService.cs" />
-    <Compile Remove="Services\MetricsService.cs" />
-    <Compile Remove="Services\GeminiService.cs" />
-    <Compile Remove="Services\CommonQueryCacheService.cs" />
-    <Compile Remove="Services\OutOfScopeDetector.cs" />
-    <Compile Remove="Services\LoggerFactory.cs" />
-    <Compile Remove="Services\PerformanceMonitorService.cs" />
-    <Compile Remove="Services\JifasContextService.cs" />
-    <Compile Remove="Services\MemoryCacheService.cs" />
     <Compile Remove="utilities\InputValidator.cs" />
     <Compile Remove="Controller\ChatbotController.cs" />
     <Compile Remove="Controller\KnowledgeBaseController.cs" />

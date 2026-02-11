@@ -1,6 +1,6 @@
 using System;
 
-namespace Jifas.Chatbot.Models
+namespace Jifas.Assistant.Models
 {
     /// <summary>
     /// Model for tracking suggestion quality metrics

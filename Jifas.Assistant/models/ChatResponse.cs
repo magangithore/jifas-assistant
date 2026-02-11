@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Jifas.Chatbot.Services;
+using Jifas.Assistant.Services;
 
-namespace Jifas.Chatbot.Models
+namespace Jifas.Assistant.Models
 {
     /// <summary>
     /// Response model for JIFAS AI Assistant

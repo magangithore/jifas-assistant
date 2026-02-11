@@ -1,81 +1,48 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
-using Jifas.Chatbot.DAL;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Jifas.Assistant.Data;
+using Jifas.Assistant.Data.Models;
 
-namespace Jifas.Chatbot.Services
+namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Knowledge Base service for JIFAS AI Assistant
-    /// Performs semantic search on KB documents and chunks
-    /// Uses Qdrant vector DB as primary (if enabled), SQL Server as fallback
-    /// Phase 6C: Added Qdrant integration with SQL fallback
+    /// Performs semantic search on KB documents using embeddings
+    /// Supports hybrid search (semantic + keyword), re-ranking, and popularity boosting
     /// </summary>
     public class KnowledgeBaseService : IKnowledgeBaseService
     {
-        private readonly JIFAS_AssistantEntities _db;
-        private readonly IEmbeddingService _embeddingService;
         private readonly ILoggerService _logger;
+        private readonly IConfiguration _configuration;
+        private readonly JifasAssistantDbContext _db;
+        private readonly IEmbeddingService _embeddingService;
         private readonly ICacheService _cacheService;
-        private readonly IQdrantVectorService _qdrantService;
+
+        public KnowledgeBaseService(
+            ILoggerService logger,
+            IConfiguration configuration,
+            JifasAssistantDbContext db,
+            IEmbeddingService embeddingService,
+            ICacheService cacheService)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _db = db ?? throw new ArgumentNullException(nameof(db));
+            _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
+            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+
+            _logger.LogInformation("[KnowledgeBaseService] Initialized with Gemini embeddings");
+        }
 
         /// <summary>
-        /// Initialize embedding service based on configuration
-        /// Prefers Gemini (if API key available), falls back to OpenAI
+        /// Search knowledge base with semantic search + keyword matching
+        /// Supports caching and fallback to keyword search if semantic fails
         /// </summary>
-        private static IEmbeddingService InitializeEmbeddingService()
-        {
-            var geminiKey = System.Configuration.ConfigurationManager.AppSettings["Gemini:ApiKey"];
-            if (!string.IsNullOrEmpty(geminiKey))
-            {
-                return new GeminiEmbeddingService();
-            }
-            return new OpenAIEmbeddingService();
-        }
-
-        public KnowledgeBaseService()
-        {
-            _db = new JIFAS_AssistantEntities();
-            _logger = LoggerFactory.GetLogger();
-            _cacheService = new MemoryCacheService();
-            _embeddingService = InitializeEmbeddingService();
-            _qdrantService = new QdrantVectorService(_embeddingService);
-            
-            _logger.LogInformation("[KnowledgeBaseService] Initialized with {0} embeddings", 
-                _embeddingService.GetType().Name.Contains("Gemini") ? "Gemini" : "OpenAI");
-        }
-
-        public KnowledgeBaseService(JIFAS_AssistantEntities db)
-        {
-            _db = db;
-            _logger = LoggerFactory.GetLogger();
-            _cacheService = new MemoryCacheService();
-            _embeddingService = InitializeEmbeddingService();
-            _qdrantService = new QdrantVectorService(_embeddingService);
-        }
-
-        public KnowledgeBaseService(JIFAS_AssistantEntities db, IEmbeddingService embeddingService)
-        {
-            _db = db;
-            _embeddingService = embeddingService;
-            _logger = LoggerFactory.GetLogger();
-            _cacheService = new MemoryCacheService();
-            _qdrantService = new QdrantVectorService(embeddingService);
-        }
-
-        public KnowledgeBaseService(JIFAS_AssistantEntities db, IEmbeddingService embeddingService, IQdrantVectorService qdrantService)
-        {
-            _db = db;
-            _embeddingService = embeddingService;
-            _qdrantService = qdrantService;
-            _logger = LoggerFactory.GetLogger();
-            _cacheService = new MemoryCacheService();
-        }
-
         public async Task<List<KnowledgeBaseResult>> SearchAsync(string query, int topK = 3)
         {
             try
@@ -83,12 +50,8 @@ namespace Jifas.Chatbot.Services
                 if (string.IsNullOrWhiteSpace(query))
                     return new List<KnowledgeBaseResult>();
 
-                // Check if cache is enabled
-                var enableCache = bool.TryParse(System.Configuration.ConfigurationManager.AppSettings["Caching:EnableKBCache"], out var cacheEnabled) 
-                    ? cacheEnabled 
-                    : true;
-
                 // Check cache first
+                var enableCache = _configuration.GetValue("Caching:EnableKBCache", true);
                 if (enableCache)
                 {
                     var cacheKey = $"KB_Search_{query.GetHashCode()}_{topK}";
@@ -101,233 +64,124 @@ namespace Jifas.Chatbot.Services
                     }
                 }
 
-                _logger.LogInformation("[KB Search] Query: {0}", query);
+                _logger.LogInformation("[KB Search] Searching for: {0}", query);
 
-                // Phase 6C: Try Qdrant first (if enabled)
-                var useQdrant = bool.TryParse(System.Configuration.ConfigurationManager.AppSettings["Search:UseQdrant"], out var qdrantEnabled) 
-                    ? qdrantEnabled 
-                    : false;
+                // Try semantic search with embeddings
+                var results = await SearchWithEmbeddingsAsync(query, topK);
 
-                List<KnowledgeBaseResult> results = null;
-
-                if (useQdrant)
+                // If no results, fallback to keyword search
+                if (results.Count == 0)
                 {
-                    try
-                    {
-                        _logger.LogInformation("[KB Search] Attempting Qdrant search");
-                        var qdrantTopK = int.TryParse(ConfigurationManager.AppSettings["Search:QdrantTopK"], out var k) ? k : 5;
-                        results = await _qdrantService.SearchAsync(query, qdrantTopK);
-                        
-                        if (results != null && results.Count > 0)
-                        {
-                            _logger.LogInformation("[KB Search] Qdrant returned {0} results", results.Count);
-                            // Apply re-ranking and other options to Qdrant results
-                            results = await ApplyPostSearchEnhancementsAsync(results, query, topK);
-                            
-                            // Cache results before returning
-                            if (enableCache)
-                            {
-                                var cacheKey = $"KB_Search_{query.GetHashCode()}_{topK}";
-                                var cacheDuration = int.TryParse(ConfigurationManager.AppSettings["Caching:KBSearchCacheDurationMinutes"], out var duration) 
-                                    ? duration 
-                                    : 30;
-                                _cacheService.Set(cacheKey, results, cacheDuration);
-                            }
-                            
-                            return results;
-                        }
-                        else
-                        {
-                            _logger.LogWarning("[KB Search] Qdrant returned no results, falling back to SQL");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning("[KB Search] Qdrant search failed: {0}, falling back to SQL", ex.Message);
-                    }
+                    _logger.LogWarning("[KB Search] No semantic results, falling back to keyword search");
+                    results = await KeywordSearchAsync(query, topK);
                 }
-
-                // SQL fallback: Use original semantic search logic
-                results = await SearchSQLAsync(query, topK);
 
                 // Cache results before returning
                 if (enableCache && results.Count > 0)
                 {
                     var cacheKey = $"KB_Search_{query.GetHashCode()}_{topK}";
-                    var cacheDuration = int.TryParse(ConfigurationManager.AppSettings["Caching:KBSearchCacheDurationMinutes"], out var duration) 
-                        ? duration 
-                        : 30;
-                    _cacheService.Set(cacheKey, results, cacheDuration);
+                    var cacheDurationMinutes = _configuration.GetValue("Caching:KBSearchCacheDurationMinutes", 30);
+                    _cacheService.Set(cacheKey, results, cacheDurationMinutes);
                 }
 
                 return results;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KB Search] Error in search", ex);
+                _logger.LogError("[KB Search] Error in search: {0}", ex, ex.Message);
                 return await KeywordSearchAsync(query, topK);
             }
         }
 
         /// <summary>
-        /// Apply post-search enhancements (re-ranking with metadata/popularity boost) to any result set
-        /// Reusable for both Qdrant and SQL results
+        /// Semantic search using embeddings and cosine similarity
         /// </summary>
-        private async Task<List<KnowledgeBaseResult>> ApplyPostSearchEnhancementsAsync(List<KnowledgeBaseResult> initialResults, string query, int topK)
-        {
-            try
-            {
-                if (initialResults == null || initialResults.Count == 0)
-                    return initialResults;
-
-                // Extract keywords for re-ranking
-                var keywords = ExtractKeywords(query);
-
-                // Get document popularity scores for reranking
-                var docPopularity = await CalculateDocumentPopularityAsync();
-
-                // Apply re-ranking boost to results
-                var rerankedResults = new List<KnowledgeBaseResult>();
-                foreach (var result in initialResults)
-                {
-                    var boost = CalculateRerankerBoost(result, keywords, docPopularity);
-                    result.Score += boost;
-                    rerankedResults.Add(result);
-                }
-
-                // Re-sort by adjusted score and return top K
-                return rerankedResults
-                    .OrderByDescending(r => r.Score)
-                    .Take(topK)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("[KB Search] Error applying post-search enhancements: {0}", ex.Message);
-                return initialResults.Take(topK).ToList();
-            }
-        }
-
-        /// <summary>
-        /// Phase 6C: Original SQL-based semantic search (now a separate method for clarity)
-        /// Called as fallback when Qdrant is disabled or unavailable
-        /// </summary>
-        private async Task<List<KnowledgeBaseResult>> SearchSQLAsync(string query, int topK = 3)
+        private async Task<List<KnowledgeBaseResult>> SearchWithEmbeddingsAsync(string query, int topK = 3)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(query))
                     return new List<KnowledgeBaseResult>();
 
-                _logger.LogInformation("[KB Search SQL] Query: {0}", query);
+                _logger.LogInformation("[KB Search Embeddings] Generating query embedding");
 
-                // Generate query embedding for semantic search
+                // Generate query embedding
                 var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(query);
-                
                 if (queryEmbedding == null || queryEmbedding.Count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("[KB Search SQL] Failed to generate query embedding, falling back to keyword search");
-                    return await KeywordSearchAsync(query, topK);
+                    _logger.LogWarning("[KB Search Embeddings] Failed to generate query embedding");
+                    return new List<KnowledgeBaseResult>();
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[KB Search SQL] Generated {queryEmbedding.Count}-dim query embedding");
+                _logger.LogInformation("[KB Search Embeddings] Generated {0}-dimensional embedding", queryEmbedding.Count);
+
+                // Get all active documents with embeddings
+                var documents = await _db.KnowledgeBaseDocuments
+                    .Where(d => d.IsActive == true && d.Embedding != null)
+                    .ToListAsync();
+
+                _logger.LogInformation("[KB Search Embeddings] Found {0} documents with embeddings", documents.Count);
+
+                if (documents.Count == 0)
+                    return new List<KnowledgeBaseResult>();
 
                 // Extract keywords for hybrid scoring
                 var keywords = ExtractKeywords(query);
-                System.Diagnostics.Debug.WriteLine($"[KB Search SQL] Extracted keywords: {string.Join(", ", keywords)}");
+                _logger.LogInformation("[KB Search Embeddings] Extracted {0} keywords", keywords.Count);
 
-                // Get all chunks with embeddings
-                var chunks = await _db.KnowledgeBaseChunks
-                    .Include(c => c.KnowledgeBaseDocuments)
-                    .Where(c => c.KnowledgeBaseDocuments.IsActive == true && c.EmbeddingVector != null)
-                    .ToListAsync();
+                // Calculate scores for each document
+                var scoredDocuments = new List<(KnowledgeBaseDocument doc, double semanticScore, double keywordScore, double finalScore)>();
 
-                System.Diagnostics.Debug.WriteLine($"[KB Search SQL] Found {chunks.Count} chunks with embeddings");
-
-                if (chunks.Count == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine("[KB Search SQL] No embeddings found, falling back to keyword search");
-                    return await KeywordSearchAsync(query, topK);
-                }
-
-                // Get document popularity scores for reranking
-                var docPopularity = await CalculateDocumentPopularityAsync();
-
-                // Calculate hybrid + reranked scores (semantic + keyword + metadata + popularity)
-                var rankedChunks = new List<(KnowledgeBaseChunks chunk, double semanticScore, double keywordScore, double hybridScore, double finalScore)>();
-
-                foreach (var chunk in chunks)
+                foreach (var doc in documents)
                 {
                     try
                     {
-                        var chunkEmbedding = JsonConvert.DeserializeObject<List<float>>(chunk.EmbeddingVector);
-                        if (chunkEmbedding != null && chunkEmbedding.Count > 0)
-                        {
-                            // Semantic score (vector similarity)
-                            var semanticScore = _embeddingService.CalculateCosineSimilarity(queryEmbedding, chunkEmbedding);
-                            
-                            // Keyword score (text-based relevance)
-                            var keywordScore = CalculateChunkRelevanceScore(chunk, keywords);
-                            
-                            // Hybrid score: 60% semantic, 40% keyword (balanced approach)
-                            var hybridScore = (semanticScore * 0.6) + (keywordScore * 0.4);
-                            
-                            // Reranking boost: metadata + popularity
-                            var rerankerBoost = CalculateRerankerBoost(chunk, keywords, docPopularity, query);
-                            
-                            // Final score: hybrid + reranking boost
-                            var finalScore = hybridScore + rerankerBoost;
-                            
-                            rankedChunks.Add((chunk, semanticScore, keywordScore, hybridScore, finalScore));
-                        }
+                        var docEmbedding = JsonConvert.DeserializeObject<List<float>>(doc.Embedding);
+                        if (docEmbedding == null || docEmbedding.Count == 0)
+                            continue;
+
+                        // Semantic score (cosine similarity)
+                        var semanticScore = _embeddingService.CalculateCosineSimilarity(queryEmbedding, docEmbedding);
+
+                        // Keyword score
+                        var keywordScore = CalculateRelevanceScore(doc, keywords);
+
+                        // Hybrid score: 70% semantic, 30% keyword
+                        var hybridScore = (semanticScore * 0.7) + (keywordScore * 0.3);
+
+                        scoredDocuments.Add((doc, semanticScore, keywordScore, hybridScore));
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[KB Search SQL] Error parsing embedding for chunk {chunk.Id}: {ex.Message}");
+                        _logger.LogWarning("[KB Search Embeddings] Error scoring document {0}: {1}", doc.Id, ex.Message);
                     }
                 }
 
-                // Rank by final score (hybrid + reranking)
-                var topChunks = rankedChunks
+                // Get top results by hybrid score
+                var minRelevance = _configuration.GetValue("KnowledgeBase:MinRelevanceScore", 0.3);
+                var topDocuments = scoredDocuments
+                    .Where(x => x.finalScore >= minRelevance)
                     .OrderByDescending(x => x.finalScore)
                     .Take(topK)
                     .ToList();
 
-                System.Diagnostics.Debug.WriteLine($"[KB Search SQL] Top {topChunks.Count} reranked results:");
-                foreach (var (chunk, semScore, kwScore, hybridScore, finalScore) in topChunks)
-                {
-                    System.Diagnostics.Debug.WriteLine($"  - Final: {finalScore:F3} (Hybrid: {hybridScore:F3} [Semantic: {semScore:F3}, Keyword: {kwScore:F3}]) | Doc: {chunk.KnowledgeBaseDocuments?.Title}");
-                }
+                _logger.LogInformation("[KB Search Embeddings] Returning {0} results", topDocuments.Count);
 
-                // Convert to results using final scores
-                var minRelevanceScore = double.TryParse(ConfigurationManager.AppSettings["KnowledgeBase:MinRelevanceScore"], out var threshold) ? threshold : 0.3;
-                var results = topChunks
-                    .Where(x => x.finalScore > minRelevanceScore)
+                return topDocuments
                     .Select(x => new KnowledgeBaseResult
                     {
-                        DocumentId = x.chunk.DocumentId,
-                        Title = x.chunk.KnowledgeBaseDocuments?.Title ?? "JIFAS Document",
-                        Content = x.chunk.Content,
-                        Category = x.chunk.KnowledgeBaseDocuments?.Category ?? "General",
-                        Department = x.chunk.KnowledgeBaseDocuments?.Department ?? "JIFAS",
+                        DocumentId = x.doc.Id,
+                        Title = x.doc.Title,
+                        Content = x.doc.Content,
+                        Category = x.doc.Category ?? "General",
                         Score = x.finalScore
                     })
                     .ToList();
-
-                // If no good matches, fallback to keyword search
-                if (results.Count == 0)
-                {
-                    _logger.LogWarning("[KB Search SQL] No reranked matches, falling back to keyword search");
-                    return await KeywordSearchAsync(query, topK);
-                }
-
-                _logger.LogInformation("[KB Search SQL] Returning {0} reranked results", results.Count);
-                return results;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KB Search SQL] Error in search", ex);
-                return await KeywordSearchAsync(query, topK);
+                _logger.LogError("[KB Search Embeddings] Error in embedding search: {0}", ex, ex.Message);
+                return new List<KnowledgeBaseResult>();
             }
         }
 
@@ -344,80 +198,48 @@ namespace Jifas.Chatbot.Services
                 var keywords = ExtractKeywords(query);
                 var results = new List<KnowledgeBaseResult>();
 
-                // Search chunks first (more granular results)
-                var chunks = await _db.KnowledgeBaseChunks
-                    .Include(c => c.KnowledgeBaseDocuments)
-                    .Where(c => c.KnowledgeBaseDocuments.IsActive == true)
+                // Get all active documents
+                var documents = await _db.KnowledgeBaseDocuments
+                    .Where(d => d.IsActive == true)
                     .ToListAsync();
 
-                foreach (var chunk in chunks)
-                {
-                    var score = CalculateChunkRelevanceScore(chunk, keywords);
-                    if (score > 0.3)  // Minimum relevance threshold
-                    {
-                        var existingResult = results.FirstOrDefault(r => r.DocumentId == chunk.DocumentId);
-                        if (existingResult != null)
-                        {
-                            // Keep highest score
-                            if (score > existingResult.Score)
-                            {
-                                existingResult.Content = chunk.Content;
-                                existingResult.Score = score;
-                            }
-                        }
-                        else
-                        {
-                            results.Add(new KnowledgeBaseResult
-                            {
-                                DocumentId = chunk.DocumentId,
-                                Title = chunk.KnowledgeBaseDocuments?.Title ?? "JIFAS Document",
-                                Content = chunk.Content,
-                                Category = chunk.KnowledgeBaseDocuments?.Category ?? "General",
-                                Department = chunk.KnowledgeBaseDocuments?.Department ?? "JIFAS",
-                                Score = score
-                            });
-                        }
-                    }
-                }
+                _logger.LogInformation("[KB Keyword Search] Searching {0} documents for keywords", documents.Count);
 
-                // If no chunks found, search full documents
-                if (results.Count == 0)
+                foreach (var doc in documents)
                 {
-                    var documents = await _db.KnowledgeBaseDocuments
-                        .Where(d => d.IsActive == true)
-                        .ToListAsync();
-
-                    foreach (var doc in documents)
+                    var score = CalculateRelevanceScore(doc, keywords);
+                    if (score > 0.2)  // Minimum relevance threshold
                     {
-                        var score = CalculateRelevanceScore(doc, keywords);
-                        if (score > 0.3)
+                        results.Add(new KnowledgeBaseResult
                         {
-                            results.Add(new KnowledgeBaseResult
-                            {
-                                DocumentId = doc.Id,
-                                Title = doc.Title,
-                                Content = doc.Content,
-                                Category = doc.Category,
-                                Department = doc.Department,
-                                Score = score
-                            });
-                        }
+                            DocumentId = doc.Id,
+                            Title = doc.Title,
+                            Content = doc.Content,
+                            Category = doc.Category ?? "General",
+                            Score = score
+                        });
                     }
                 }
 
                 // Sort by score and return top K
-                return results
+                var topResults = results
                     .OrderByDescending(r => r.Score)
                     .Take(topK)
                     .ToList();
+
+                _logger.LogInformation("[KB Keyword Search] Found {0} results", topResults.Count);
+                return topResults;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[KnowledgeBaseService] Search Error: {ex.Message}");
+                _logger.LogError("[KB Keyword Search] Error in keyword search: {0}", ex, ex.Message);
                 return new List<KnowledgeBaseResult>();
             }
         }
 
+        /// <summary>
+        /// Get all active knowledge base documents
+        /// </summary>
         public async Task<List<KnowledgeBaseResult>> GetAllDocumentsAsync()
         {
             try
@@ -431,18 +253,20 @@ namespace Jifas.Chatbot.Services
                     DocumentId = d.Id,
                     Title = d.Title,
                     Content = d.Content,
-                    Category = d.Category,
-                    Department = d.Department,
+                    Category = d.Category ?? "General",
                     Score = 1.0
                 }).ToList();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[KnowledgeBaseService] GetAll Error: {ex.Message}");
+                _logger.LogError("[KB GetAll] Error retrieving all documents: {0}", ex, ex.Message);
                 return new List<KnowledgeBaseResult>();
             }
         }
 
+        /// <summary>
+        /// Get specific document by ID
+        /// </summary>
         public async Task<KnowledgeBaseResult> GetDocumentByIdAsync(int id)
         {
             try
@@ -458,36 +282,35 @@ namespace Jifas.Chatbot.Services
                     DocumentId = doc.Id,
                     Title = doc.Title,
                     Content = doc.Content,
-                    Category = doc.Category,
-                    Department = doc.Department,
+                    Category = doc.Category ?? "General",
                     Score = 1.0
                 };
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[KnowledgeBaseService] GetById Error: {ex.Message}");
+                _logger.LogError("[KB GetById] Error retrieving document {0}: {1}", ex, id, ex.Message);
                 return null;
             }
         }
 
+        /// <summary>
+        /// Extract keywords from query, removing common stop words
+        /// </summary>
         private List<string> ExtractKeywords(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
                 return new List<string>();
 
-            // Remove common stop words
+            // Common stop words in Indonesian and English
             var stopWords = new HashSet<string>
             {
-                "yang", "dan", "di", "ke", "dari", "untuk", "dengan", "pada",
-                "adalah", "ini", "itu", "atau", "juga", "saya", "aku", "kamu",
-                "bagaimana", "apa", "dimana", "kapan", "siapa", "mengapa",
-                "cara", "bisa", "tidak", "ada", "mau", "ingin", "the", "a", "an",
-                "is", "are", "was", "were", "be", "been", "being", "have", "has",
-                "how", "what", "where", "when", "who", "why", "can", "could"
+                "yang", "dan", "di", "ke", "dari", "untuk", "dengan", "pada", "adalah", "ini", "itu", "atau", "juga",
+                "the", "a", "an", "is", "are", "was", "were", "be", "have", "has", "do", "does", "did",
+                "how", "what", "where", "when", "who", "why", "can", "could", "would", "should", "will"
             };
 
             var words = query.ToLower()
-                .Split(new[] { ' ', ',', '.', '?', '!', ';', ':', '-', '(', ')', '[', ']' }, 
+                .Split(new[] { ' ', ',', '.', '?', '!', ';', ':', '-', '(', ')', '[', ']', '\n', '\t' }, 
                        StringSplitOptions.RemoveEmptyEntries)
                 .Where(w => w.Length > 2 && !stopWords.Contains(w))
                 .Distinct()
@@ -496,7 +319,11 @@ namespace Jifas.Chatbot.Services
             return words;
         }
 
-        private double CalculateRelevanceScore(KnowledgeBaseDocuments doc, List<string> keywords)
+        /// <summary>
+        /// Calculate relevance score for document based on keyword matching
+        /// Uses title, content, and category for scoring
+        /// </summary>
+        private double CalculateRelevanceScore(KnowledgeBaseDocument doc, List<string> keywords)
         {
             if (doc == null || keywords == null || keywords.Count == 0)
                 return 0;
@@ -524,44 +351,27 @@ namespace Jifas.Chatbot.Services
                 if (tags.Contains(keyword))
                     score += 2.0;
 
-                // Content match
+                // Content match with frequency boost
                 if (content.Contains(keyword))
+                {
                     score += 1.0;
-
-                // Count occurrences in content (limited boost)
-                var occurrences = CountOccurrences(content, keyword);
-                score += Math.Min(occurrences * 0.1, 1.0);
+                    var occurrences = CountOccurrences(content, keyword);
+                    score += Math.Min(occurrences * 0.1, 1.0);
+                }
             }
 
             // Normalize by keyword count
-            return score / keywords.Count;
+            return keywords.Count > 0 ? score / keywords.Count : 0;
         }
 
-        private double CalculateChunkRelevanceScore(KnowledgeBaseChunks chunk, List<string> keywords)
-        {
-            if (chunk == null || keywords == null || keywords.Count == 0)
-                return 0;
-
-            double score = 0;
-            var content = (chunk.Content ?? "").ToLower();
-
-            foreach (var keyword in keywords)
-            {
-                if (string.IsNullOrEmpty(keyword))
-                    continue;
-
-                if (content.Contains(keyword))
-                    score += 1.0;
-
-                var occurrences = CountOccurrences(content, keyword);
-                score += Math.Min(occurrences * 0.2, 2.0);
-            }
-
-            return score / keywords.Count;
-        }
-
+        /// <summary>
+        /// Count occurrences of keyword in text (case-insensitive)
+        /// </summary>
         private int CountOccurrences(string text, string keyword)
         {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(keyword))
+                return 0;
+
             int count = 0;
             int index = 0;
             while ((index = text.IndexOf(keyword, index, StringComparison.OrdinalIgnoreCase)) != -1)
@@ -570,186 +380,6 @@ namespace Jifas.Chatbot.Services
                 index += keyword.Length;
             }
             return count;
-        }
-
-        /// <summary>
-        /// Calculate reranking boost for KnowledgeBaseResult objects (used with Qdrant results)
-        /// </summary>
-        private double CalculateRerankerBoost(KnowledgeBaseResult result, List<string> keywords, 
-            Dictionary<int, DocumentPopularity> docPopularity)
-        {
-            double boost = 0;
-
-            if (result == null || keywords == null || keywords.Count == 0)
-                return boost;
-
-            // 1. Category/Department match boost (0.0-0.15)
-            if (!string.IsNullOrEmpty(result.Category))
-            {
-                var categoryLower = result.Category.ToLower();
-                if (keywords.Any(k => !string.IsNullOrEmpty(k) && categoryLower.Contains(k)))
-                {
-                    boost += 0.10;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(result.Department))
-            {
-                var deptLower = result.Department.ToLower();
-                if (keywords.Any(k => !string.IsNullOrEmpty(k) && deptLower.Contains(k)))
-                {
-                    boost += 0.05;
-                }
-            }
-
-            // 2. Popularity boost (0.0-0.20)
-            if (docPopularity.ContainsKey(result.DocumentId))
-            {
-                var popularity = docPopularity[result.DocumentId];
-                
-                var frequencyBoost = Math.Min(popularity.HitCount * 0.01, 0.10);
-                boost += frequencyBoost;
-
-                var daysSinceLastAccess = (DateTime.Now - popularity.LastAccessedAt).TotalDays;
-                if (daysSinceLastAccess < 7)
-                    boost += 0.05;
-                else if (daysSinceLastAccess < 30)
-                    boost += 0.025;
-
-                if (popularity.AverageConfidence > 0.75)
-                    boost += 0.05;
-                else if (popularity.AverageConfidence > 0.60)
-                    boost += 0.025;
-            }
-
-            return boost;
-        }
-
-        /// <summary>
-        /// Calculate reranking boost based on metadata and popularity (for SQL chunks)
-        /// Boosts results that match category/department and have high usage
-        /// </summary>
-        private double CalculateRerankerBoost(KnowledgeBaseChunks chunk, List<string> keywords, 
-            Dictionary<int, DocumentPopularity> docPopularity, string query)
-        {
-            double boost = 0;
-            var doc = chunk?.KnowledgeBaseDocuments;
-
-            if (doc == null || keywords == null || keywords.Count == 0)
-                return boost;
-
-            // 1. Category/Department match boost (0.0-0.15)
-            if (!string.IsNullOrEmpty(doc.Category))
-            {
-                var categoryLower = doc.Category.ToLower();
-                if (keywords.Any(k => !string.IsNullOrEmpty(k) && categoryLower.Contains(k)))
-                {
-                    boost += 0.10; // Category contains query keyword
-                }
-            }
-
-            if (!string.IsNullOrEmpty(doc.Department))
-            {
-                var deptLower = doc.Department.ToLower();
-                if (keywords.Any(k => !string.IsNullOrEmpty(k) && deptLower.Contains(k)))
-                {
-                    boost += 0.05; // Department contains query keyword
-                }
-            }
-
-            // 2. Popularity boost (0.0-0.20)
-            if (docPopularity.ContainsKey(doc.Id))
-            {
-                var popularity = docPopularity[doc.Id];
-                
-                // Usage frequency boost (normalized to 0-0.10)
-                var frequencyBoost = Math.Min(popularity.HitCount * 0.01, 0.10);
-                boost += frequencyBoost;
-
-                // Recency boost (0-0.05) - prefer recently accessed docs
-                var daysSinceLastAccess = (DateTime.Now - popularity.LastAccessedAt).TotalDays;
-                if (daysSinceLastAccess < 7) // Last week = max boost
-                    boost += 0.05;
-                else if (daysSinceLastAccess < 30) // Last month = half boost
-                    boost += 0.025;
-
-                // Confidence boost (0-0.05) - prefer docs with consistent high confidence
-                if (popularity.AverageConfidence > 0.75)
-                    boost += 0.05;
-                else if (popularity.AverageConfidence > 0.60)
-                    boost += 0.025;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"[KB Search] Reranker boost for doc '{doc.Title}': +{boost:F3}");
-            return boost;
-        }
-
-        /// <summary>
-        /// Calculate popularity scores for all documents based on conversation history
-        /// Returns dict of DocumentId -> Popularity metrics
-        /// </summary>
-        private async Task<Dictionary<int, DocumentPopularity>> CalculateDocumentPopularityAsync()
-        {
-            var result = new Dictionary<int, DocumentPopularity>();
-
-            try
-            {
-                // Fix N+1 query problem: Get all conversations at once
-                var conversations = await _db.Conversations
-                    .Where(c => c.IsFromKnowledgeBase == true)
-                    .ToListAsync();
-
-                // Get all active documents once
-                var allDocuments = await _db.KnowledgeBaseDocuments
-                    .Where(d => d.IsActive == true)
-                    .ToListAsync();
-
-                // Group by category to infer document hits
-                var categoryGroups = conversations.GroupBy(c => c.Category ?? "general");
-
-                foreach (var group in categoryGroups)
-                {
-                    // Find matching document based on category (using in-memory search)
-                    var doc = allDocuments.FirstOrDefault(d => 
-                        d.Category == group.Key || 
-                        (d.Title != null && d.Title.ToLower().Contains(group.Key.ToLower())));
-
-                    if (doc != null && !result.ContainsKey(doc.Id))
-                    {
-                        var hitCount = group.Count();
-                        var avgConfidence = group.Average(c => c.ConfidenceScore ?? 0);
-                        var lastAccessed = group.OrderByDescending(c => c.CreatedAt).FirstOrDefault()?.CreatedAt ?? DateTime.Now;
-
-                        result[doc.Id] = new DocumentPopularity
-                        {
-                            DocumentId = doc.Id,
-                            HitCount = hitCount,
-                            AverageConfidence = avgConfidence,
-                            LastAccessedAt = lastAccessed
-                        };
-
-                        System.Diagnostics.Debug.WriteLine(
-                            $"[KB Search] Doc popularity: ID={doc.Id}, Title='{doc.Title}', Hits={hitCount}, AvgConf={avgConfidence:F2}, LastAccess={lastAccessed:g}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[KB Search] Error calculating popularity: {ex.Message}");
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Helper class for tracking document popularity metrics
-        /// </summary>
-        private class DocumentPopularity
-        {
-            public int DocumentId { get; set; }
-            public int HitCount { get; set; }
-            public double AverageConfidence { get; set; }
-            public DateTime LastAccessedAt { get; set; }
         }
     }
 }

@@ -8,6 +8,7 @@ using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Data;
 using Jifas.Assistant.Data.Repositories;
 using Jifas.Assistant.Data.UnitOfWork;
+using Jifas.Assistant.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,7 +77,38 @@ builder.Services.AddCors(options =>
 // 7. Add In-Memory Caching
 builder.Services.AddMemoryCache();
 
-// 8. Add Health Checks
+// 7.5 Add HttpClient Factory
+builder.Services.AddHttpClient();
+
+// 8. Add Application Services
+// ========== Core Services ==========
+builder.Services.AddScoped<ILoggerService, FileLoggerService>();
+builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+builder.Services.AddScoped<IGeminiService, GeminiService>();
+builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+builder.Services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<ISuggestionService, SuggestionService>();
+builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+
+// ========== Vector Database Services ==========
+builder.Services.AddScoped<IQdrantInitializer, QdrantInitializer>();
+builder.Services.AddScoped<IQdrantVectorService, QdrantVectorService>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
+builder.Services.AddScoped<IKnowledgeBaseEmbeddingService, KnowledgeBaseEmbeddingService>();
+
+// ========== Infrastructure Services ==========
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IPerformanceMonitorService, PerformanceMonitorService>();
+builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
+builder.Services.AddScoped<IMetricsService, MetricsService>();
+builder.Services.AddScoped<IJifasContextService, JifasContextService>();
+
+// ========== Utilities ==========
+builder.Services.AddScoped<CommonQueryCacheService>();
+
+// 9. Add Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<JifasAssistantDbContext>(
         name: "database",
@@ -101,15 +133,27 @@ using (var scope = app.Services.CreateScope())
         
         if (context.Database.IsSqlServer())
         {
-            // Apply any pending migrations
-            context.Database.Migrate();
+            // Apply any pending migrations (if connection is available)
+            try
+            {
+                context.Database.Migrate();
+                var logger = services.GetService<ILogger<Program>>();
+                if (logger != null)
+                    logger.LogInformation("Database migration completed successfully.");
+            }
+            catch (Exception migrateEx)
+            {
+                var logger = services.GetService<ILogger<Program>>();
+                if (logger != null)
+                    logger.LogWarning("Database migration skipped (may have been applied manually). Error: {0}", migrateEx.Message);
+            }
         }
     }
     catch (Exception ex)
     {
         var logger = services.GetService<ILogger<Program>>();
         if (logger != null)
-            logger.LogError(ex, "An error occurred while migrating the database.");
+            logger.LogError(ex, "An error occurred while initializing the database.");
     }
 }
 
