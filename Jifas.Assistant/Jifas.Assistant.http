@@ -1,0 +1,6 @@
+@Jifas.Assistant_HostAddress = http://localhost:5180
+
+GET {{Jifas.Assistant_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
