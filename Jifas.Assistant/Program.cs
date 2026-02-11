@@ -98,6 +98,9 @@ builder.Services.AddScoped<IQdrantVectorService, QdrantVectorService>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IKnowledgeBaseEmbeddingService, KnowledgeBaseEmbeddingService>();
 
+// ========== Knowledge Base Seeding ==========
+builder.Services.AddScoped<IKBSeedingService, KBSeedingService>();
+
 // ========== Infrastructure Services ==========
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IPerformanceMonitorService, PerformanceMonitorService>();

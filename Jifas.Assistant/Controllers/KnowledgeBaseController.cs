@@ -13,7 +13,7 @@ namespace Jifas.Assistant.Controllers
 {
     /// <summary>
     /// Admin controller for managing JIFAS Knowledge Base
-    /// Handles CRUD operations for KB documents and Qdrant seeding
+    /// Handles CRUD operations for KB documents and seeding from MD files
     /// </summary>
     [Route("api/kb")]
     [ApiController]
@@ -21,17 +21,20 @@ namespace Jifas.Assistant.Controllers
     {
         private readonly JifasAssistantDbContext _db;
         private readonly IKnowledgeBaseService _kbService;
+        private readonly IKBSeedingService _seedingService;
         private readonly ILoggerService _logger;
         private readonly HttpClient _httpClient;
 
         public KnowledgeBaseController(
             JifasAssistantDbContext db,
             IKnowledgeBaseService kbService,
+            IKBSeedingService seedingService,
             ILoggerService logger,
             HttpClient httpClient)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _kbService = kbService ?? throw new ArgumentNullException(nameof(kbService));
+            _seedingService = seedingService ?? throw new ArgumentNullException(nameof(seedingService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
@@ -297,6 +300,70 @@ namespace Jifas.Assistant.Controllers
                     healthy = false,
                     message = $"Qdrant health check failed: {ex.Message}"
                 });
+            }
+        }
+
+        /// <summary>
+        /// Seed knowledge base from MD files in knowledge-base/ folder
+        /// Reads all .md files, generates embeddings, and saves to database
+        /// </summary>
+        [HttpPost("admin/seed")]
+        public async Task<IActionResult> SeedKnowledgeBase([FromQuery] string folderPath = "")
+        {
+            try
+            {
+                _logger.LogInformation("[KnowledgeBaseController] Starting KB seeding...");
+
+                var results = await _seedingService.SeedKnowledgeBaseAsync(folderPath);
+
+                var summary = new
+                {
+                    total = results.Count,
+                    success = results.Count(r => r.Success),
+                    failed = results.Count(r => !r.Success),
+                    documents = results.Select(r => new
+                    {
+                        r.FileName,
+                        r.Success,
+                        r.DocumentId,
+                        r.Message
+                    })
+                };
+
+                _logger.LogInformation("[KnowledgeBaseController] Seeding complete: {0} success, {1} failed",
+                    summary.success, summary.failed);
+
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[KnowledgeBaseController] Seeding error: {0}", ex, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Clear all KB documents from database
+        /// </summary>
+        [HttpDelete("admin/clear")]
+        public async Task<IActionResult> ClearKnowledgeBase()
+        {
+            try
+            {
+                _logger.LogWarning("[KnowledgeBaseController] Clearing all KB documents...");
+
+                var success = await _seedingService.ClearKnowledgeBaseAsync();
+
+                return Ok(new
+                {
+                    success = success,
+                    message = success ? "Knowledge base cleared" : "Failed to clear knowledge base"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[KnowledgeBaseController] Clear error: {0}", ex, ex.Message);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
     }
