@@ -92,12 +92,6 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 
-// ========== Vector Database Services ==========
-builder.Services.AddScoped<IQdrantInitializer, QdrantInitializer>();
-builder.Services.AddScoped<IQdrantVectorService, QdrantVectorService>();
-builder.Services.AddScoped<IConversationService, ConversationService>();
-builder.Services.AddScoped<IKnowledgeBaseEmbeddingService, KnowledgeBaseEmbeddingService>();
-
 // ========== Knowledge Base Seeding ==========
 builder.Services.AddScoped<IKBSeedingService, KBSeedingService>();  // Simplified: SQL Server only
 
@@ -107,9 +101,6 @@ builder.Services.AddScoped<IPerformanceMonitorService, PerformanceMonitorService
 builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
 builder.Services.AddScoped<IMetricsService, MetricsService>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
-
-// ========== Utilities ==========
-builder.Services.AddScoped<CommonQueryCacheService>();
 
 // 9. Add Health Checks
 builder.Services.AddHealthChecks()
