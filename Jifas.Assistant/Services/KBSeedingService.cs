@@ -41,11 +41,11 @@ namespace Jifas.Assistant.Services
     /// 1. Read MD file dari knowledge-base/ folder
     /// 2. Generate embedding using GeminiEmbeddingService
     /// 3. Simpan document + embedding ke KnowledgeBaseDocuments table (SQL Server)
-    /// 4. Optional: Push ke Qdrant untuk vector similarity search
+    /// 4. Push embedding ke QDRANT untuk vector similarity search
     ///
     /// STORAGE:
-    /// ? SQL Server: Full content + embedding (JSON)
-    /// ? Qdrant: Vector embeddings only (for fast search)
+    /// ? SQL Server: Full content + embedding (JSON) - PRIMARY
+    /// ? QDRANT: Vector embeddings only - VECTOR SEARCH (mandatory now!)
     /// </summary>
     public class KBSeedingService : IKBSeedingService
     {
@@ -53,17 +53,20 @@ namespace Jifas.Assistant.Services
         private readonly IConfiguration _configuration;
         private readonly JifasAssistantDbContext _db;
         private readonly IEmbeddingService _embeddingService;
+        private readonly IQdrantVectorService _qdrantService;
 
         public KBSeedingService(
             ILoggerService logger,
             IConfiguration configuration,
             JifasAssistantDbContext db,
-            IEmbeddingService embeddingService)
+            IEmbeddingService embeddingService,
+            IQdrantVectorService qdrantService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
+            _qdrantService = qdrantService ?? throw new ArgumentNullException(nameof(qdrantService));
         }
 
         /// <summary>
@@ -120,7 +123,7 @@ namespace Jifas.Assistant.Services
 
         /// <summary>
         /// Seed single MD document
-        /// 1. Read file -> 2. Generate embedding -> 3. Save to DB
+        /// 1. Read file -> 2. Generate embedding -> 3. Save to DB -> 4. Push to Qdrant
         /// </summary>
         public async Task<KBSeedingResult> SeedDocumentAsync(string filePath)
         {
@@ -160,7 +163,7 @@ namespace Jifas.Assistant.Services
                     return result;
                 }
 
-                // Create & save document to KnowledgeBaseDocuments table
+                // Create & save document to KnowledgeBaseDocuments table (SQL Server)
                 var document = new KnowledgeBaseDocument
                 {
                     Title = title,
@@ -182,8 +185,34 @@ namespace Jifas.Assistant.Services
                 await _db.SaveChangesAsync();
 
                 result.DocumentId = document.Id;
-                result.Success = true;
-                result.Message = "Saved to database";
+
+                _logger.LogInformation("[KBSeedingService] ? Saved to DB: {0} (ID: {1})", title, document.Id);
+
+                // Push to QDRANT for vector search
+                try
+                {
+                    await _qdrantService.IndexDocumentAsync(
+                        pointId: document.Id.ToString(),
+                        embedding: embedding,
+                        metadata: new Dictionary<string, object>
+                        {
+                            { "document_id", document.Id },
+                            { "title", title },
+                            { "category", category },
+                            { "content", content }
+                        }
+                    );
+
+                    _logger.LogInformation("[KBSeedingService] ? Pushed to Qdrant: {0}", title);
+                    result.Success = true;
+                    result.Message = "Saved to DB + Qdrant";
+                }
+                catch (Exception qdrantEx)
+                {
+                    _logger.LogWarning("[KBSeedingService] ?? Qdrant push failed for {0}: {1}", title, qdrantEx.Message);
+                    result.Success = true;
+                    result.Message = "Saved to DB only (Qdrant error)";
+                }
 
                 _logger.LogInformation("[KBSeedingService] ? {0} (ID: {1}, Embedding: {2} dims)",
                     title, document.Id, embedding.Count);
