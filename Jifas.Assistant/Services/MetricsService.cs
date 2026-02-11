@@ -273,3 +273,4 @@ namespace Jifas.Assistant.Services
         }
     }
 }
+    

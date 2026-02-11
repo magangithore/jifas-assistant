@@ -21,7 +21,6 @@ namespace Jifas.Assistant.Services
         public string FileName { get; set; }
         public int DocumentId { get; set; }
         public string Message { get; set; }
-        public Exception Exception { get; set; }
     }
 
     /// <summary>
@@ -29,23 +28,23 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public interface IKBSeedingService
     {
-        Task<List<KBSeedingResult>> SeedKnowledgeBaseAsync(string kbFolderPath);
+        Task<List<KBSeedingResult>> SeedKnowledgeBaseAsync(string kbFolderPath = null);
         Task<KBSeedingResult> SeedDocumentAsync(string filePath);
         Task<bool> ClearKnowledgeBaseAsync();
     }
 
     /// <summary>
-    /// Simple service untuk seed knowledge base documents dari MD files ke database
+    /// SIMPLIFIED KB Seeding Service
     /// 
     /// FLOW:
-    /// 1. Read MD file dari knowledge-base/ folder
+    /// 1. Read .txt/.md files dari knowledge-base/ folder (recursive)
     /// 2. Generate embedding using GeminiEmbeddingService
-    /// 3. Simpan document + embedding ke KnowledgeBaseDocuments table (SQL Server)
-    /// 4. Push embedding ke QDRANT untuk vector similarity search
+    /// 3. Simpan document + embedding ke KnowledgeBaseDocuments table
+    /// 4. Auto-detect category dari folder name (master/ ? "Master Data", etc)
     ///
     /// STORAGE:
-    /// ? SQL Server: Full content + embedding (JSON) - PRIMARY
-    /// ? QDRANT: Vector embeddings only - VECTOR SEARCH (mandatory now!)
+    /// ? SQL Server ONLY: Full content + embedding (JSON)
+    /// ? NO Qdrant: Removed - keep it simple!
     /// </summary>
     public class KBSeedingService : IKBSeedingService
     {
@@ -53,26 +52,23 @@ namespace Jifas.Assistant.Services
         private readonly IConfiguration _configuration;
         private readonly JifasAssistantDbContext _db;
         private readonly IEmbeddingService _embeddingService;
-        private readonly IQdrantVectorService _qdrantService;
 
         public KBSeedingService(
             ILoggerService logger,
             IConfiguration configuration,
             JifasAssistantDbContext db,
-            IEmbeddingService embeddingService,
-            IQdrantVectorService qdrantService)
+            IEmbeddingService embeddingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
-            _qdrantService = qdrantService ?? throw new ArgumentNullException(nameof(qdrantService));
         }
 
         /// <summary>
-        /// Seed all MD files dari knowledge-base folder
+        /// Seed all .txt/.md files dari knowledge-base folder
         /// </summary>
-        public async Task<List<KBSeedingResult>> SeedKnowledgeBaseAsync(string kbFolderPath)
+        public async Task<List<KBSeedingResult>> SeedKnowledgeBaseAsync(string kbFolderPath = null)
         {
             var results = new List<KBSeedingResult>();
 
@@ -85,45 +81,49 @@ namespace Jifas.Assistant.Services
 
                 if (!Directory.Exists(kbFolderPath))
                 {
-                    _logger.LogWarning("[KBSeedingService] Knowledge base folder not found: {0}", kbFolderPath);
+                    _logger.LogWarning("[KB] Folder not found: {0}", kbFolderPath);
                     return results;
                 }
 
-                _logger.LogInformation("[KBSeedingService] Starting KB seeding from: {0}", kbFolderPath);
+                _logger.LogInformation("[KB] Starting seeding from: {0}", kbFolderPath);
 
-                var mdFiles = Directory.GetFiles(kbFolderPath, "*.md", SearchOption.AllDirectories);
-                _logger.LogInformation("[KBSeedingService] Found {0} MD files", mdFiles.Length);
+                // Get both .txt AND .md files (recursive)
+                var allFiles = Directory.GetFiles(kbFolderPath, "*.*", SearchOption.AllDirectories)
+                    .Where(f => f.EndsWith(".txt") || f.EndsWith(".md"))
+                    .ToArray();
 
-                foreach (var filePath in mdFiles)
+                _logger.LogInformation("[KB] Found {0} files to seed", allFiles.Length);
+
+                // Process each file
+                foreach (var filePath in allFiles)
                 {
                     var result = await SeedDocumentAsync(filePath);
                     results.Add(result);
 
                     if (result.Success)
                     {
-                        _logger.LogInformation("[KBSeedingService] ? {0}", result.FileName);
+                        _logger.LogInformation("[KB] ? {0}", result.FileName);
                     }
                     else
                     {
-                        _logger.LogWarning("[KBSeedingService] ?? {0}: {1}", result.FileName, result.Message);
+                        _logger.LogWarning("[KB] ? {0}: {1}", result.FileName, result.Message);
                     }
                 }
 
-                _logger.LogInformation("[KBSeedingService] Done. Success: {0}/{1}",
-                    results.Count(r => r.Success), results.Count);
+                var successCount = results.Count(r => r.Success);
+                _logger.LogInformation("[KB] Done: {0}/{1} success", successCount, results.Count);
 
                 return results;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KBSeedingService] Error: {0}", ex, ex.Message);
+                _logger.LogError("[KB] Seeding error: {0}", ex, ex.Message);
                 return results;
             }
         }
 
         /// <summary>
-        /// Seed single MD document
-        /// 1. Read file -> 2. Generate embedding -> 3. Save to DB -> 4. Push to Qdrant
+        /// Seed single document: Read ? Embed ? Save
         /// </summary>
         public async Task<KBSeedingResult> SeedDocumentAsync(string filePath)
         {
@@ -141,6 +141,7 @@ namespace Jifas.Assistant.Services
                     return result;
                 }
 
+                // Read file content
                 var content = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
                 if (string.IsNullOrWhiteSpace(content))
                 {
@@ -149,82 +150,71 @@ namespace Jifas.Assistant.Services
                 }
 
                 var title = Path.GetFileNameWithoutExtension(filePath);
-                var category = GetCategory(filePath);
+                var category = GetCategoryFromPath(filePath);
+                var tags = GetTags(title, category);
 
-                _logger.LogInformation("[KBSeedingService] Processing {0}...", title);
+                _logger.LogInformation("[KB] Processing: {0} ({1})...", title, category);
 
-                // Generate embedding using GeminiEmbeddingService
+                // Generate embedding using Gemini
                 var embedding = await _embeddingService.GenerateEmbeddingAsync(content);
-
                 if (embedding == null || embedding.Count == 0)
                 {
-                    result.Message = "Embedding failed";
-                    _logger.LogWarning("[KBSeedingService] Cannot generate embedding for {0}", title);
+                    result.Message = "Embedding generation failed";
                     return result;
                 }
 
-                // Create & save document to KnowledgeBaseDocuments table (SQL Server)
-                var document = new KnowledgeBaseDocument
-                {
-                    Title = title,
-                    Content = content,
-                    Category = category,
-                    Tags = GetTags(title),
-                    Embedding = JsonConvert.SerializeObject(embedding),
-                    EmbeddingDimensions = embedding.Count,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    ViewCount = 0,
-                    RelevanceScore = 1.0,
-                    CreatedBy = "System",
-                    UpdatedBy = "System"
-                };
+                // Check if document already exists
+                var existingDoc = await _db.KnowledgeBaseDocuments
+                    .FirstOrDefaultAsync(x => x.Title == title && x.Category == category);
 
-                _db.KnowledgeBaseDocuments.Add(document);
+                if (existingDoc != null)
+                {
+                    // Update existing
+                    existingDoc.Content = content;
+                    existingDoc.Embedding = JsonConvert.SerializeObject(embedding);
+                    existingDoc.EmbeddingDimensions = embedding.Count;
+                    existingDoc.Tags = tags;
+                    existingDoc.UpdatedAt = DateTime.UtcNow;
+                    existingDoc.UpdatedBy = "System";
+
+                    _db.KnowledgeBaseDocuments.Update(existingDoc);
+                    result.DocumentId = existingDoc.Id;
+                    result.Message = "Updated";
+                }
+                else
+                {
+                    // Create new
+                    var document = new KnowledgeBaseDocument
+                    {
+                        Title = title,
+                        Content = content,
+                        Category = category,
+                        Tags = tags,
+                        Embedding = JsonConvert.SerializeObject(embedding),
+                        EmbeddingDimensions = embedding.Count,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        CreatedBy = "System",
+                        UpdatedBy = "System"
+                    };
+
+                    _db.KnowledgeBaseDocuments.Add(document);
+                    result.Message = "Created";
+                }
+
+                // Save to database
                 await _db.SaveChangesAsync();
+                result.Success = true;
 
-                result.DocumentId = document.Id;
-
-                _logger.LogInformation("[KBSeedingService] ? Saved to DB: {0} (ID: {1})", title, document.Id);
-
-                // Push to QDRANT for vector search
-                try
-                {
-                    await _qdrantService.IndexDocumentAsync(
-                        pointId: document.Id.ToString(),
-                        embedding: embedding,
-                        metadata: new Dictionary<string, object>
-                        {
-                            { "document_id", document.Id },
-                            { "title", title },
-                            { "category", category },
-                            { "content", content }
-                        }
-                    );
-
-                    _logger.LogInformation("[KBSeedingService] ? Pushed to Qdrant: {0}", title);
-                    result.Success = true;
-                    result.Message = "Saved to DB + Qdrant";
-                }
-                catch (Exception qdrantEx)
-                {
-                    _logger.LogWarning("[KBSeedingService] ?? Qdrant push failed for {0}: {1}", title, qdrantEx.Message);
-                    result.Success = true;
-                    result.Message = "Saved to DB only (Qdrant error)";
-                }
-
-                _logger.LogInformation("[KBSeedingService] ? {0} (ID: {1}, Embedding: {2} dims)",
-                    title, document.Id, embedding.Count);
+                _logger.LogInformation("[KB] ? {0} ({1} dims, {2})", title, embedding.Count, result.Message);
 
                 return result;
             }
             catch (Exception ex)
             {
-                result.Success = false;
                 result.Message = ex.Message;
-                result.Exception = ex;
-                _logger.LogError("[KBSeedingService] Error processing {0}: {1}", ex, result.FileName, ex.Message);
+                _logger.LogError("[KB] Error: {0}", ex, ex.Message);
                 return result;
             }
         }
@@ -236,40 +226,63 @@ namespace Jifas.Assistant.Services
         {
             try
             {
-                _logger.LogWarning("[KBSeedingService] Clearing KB...");
-                var count = await _db.KnowledgeBaseDocuments.CountAsync();
+                _logger.LogWarning("[KB] Clearing all documents...");
+                var count = _db.KnowledgeBaseDocuments.Count();
                 _db.KnowledgeBaseDocuments.RemoveRange(_db.KnowledgeBaseDocuments);
                 await _db.SaveChangesAsync();
-                _logger.LogInformation("[KBSeedingService] Cleared {0} documents", count);
+                _logger.LogInformation("[KB] Cleared {0} documents", count);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KBSeedingService] Clear error: {0}", ex, ex.Message);
+                _logger.LogError("[KB] Clear error: {0}", ex, ex.Message);
                 return false;
             }
         }
 
-        private string GetCategory(string filePath)
+        /// <summary>
+        /// Extract category from folder path
+        /// Example: C:\kb\master\file.txt ? "Master Data"
+        /// </summary>
+        private string GetCategoryFromPath(string filePath)
         {
-            var f = Path.GetFileName(filePath).ToLower();
-            if (f.Contains("master")) return "Master Data";
-            if (f.Contains("guide") || f.Contains("user")) return "User Guide";
-            if (f.Contains("invoice")) return "Invoice";
-            if (f.Contains("payment")) return "Payment";
-            if (f.Contains("report")) return "Reports";
-            if (f.Contains("troubleshoot") || f.Contains("faq")) return "Troubleshooting";
-            return "General";
+            var folderName = Path.GetDirectoryName(filePath)
+                ?.Split(Path.DirectorySeparatorChar)
+                .LastOrDefault()
+                ?.ToLower() ?? "";
+
+            // Map folder names to categories
+            return folderName switch
+            {
+                var f when f.Contains("master") => "Master Data",
+                var f when f.Contains("pum") => "PUM",
+                var f when f.Contains("invoice") => "Invoice",
+                var f when f.Contains("payment") => "Payment",
+                var f when f.Contains("guide") => "User Guide",
+                var f when f.Contains("report") => "Reports",
+                var f when f.Contains("faq") || f.Contains("troubleshoot") => "Troubleshooting",
+                _ => "General"
+            };
         }
 
-        private string GetTags(string fileName)
+        /// <summary>
+        /// Generate tags from title and category
+        /// </summary>
+        private string GetTags(string title, string category)
         {
             var tags = new List<string> { "jifas", "kb" };
-            var f = fileName.ToLower();
-            if (f.Contains("invoice")) tags.Add("invoice");
-            if (f.Contains("payment")) tags.Add("payment");
-            if (f.Contains("guide")) tags.Add("guide");
-            return string.Join(",", tags);
+
+            // Add category as tag (lowercase, replace spaces)
+            tags.Add(category.ToLower().Replace(" ", "_"));
+
+            // Add tags from title
+            var titleLower = title.ToLower();
+            if (titleLower.Contains("invoice")) tags.Add("invoice");
+            if (titleLower.Contains("payment")) tags.Add("payment");
+            if (titleLower.Contains("guide")) tags.Add("guide");
+            if (titleLower.Contains("master")) tags.Add("master");
+
+            return string.Join(",", tags.Distinct());
         }
     }
 }

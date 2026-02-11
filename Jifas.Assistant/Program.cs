@@ -99,7 +99,7 @@ builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IKnowledgeBaseEmbeddingService, KnowledgeBaseEmbeddingService>();
 
 // ========== Knowledge Base Seeding ==========
-builder.Services.AddScoped<IKBSeedingService, KBSeedingService>();
+builder.Services.AddScoped<IKBSeedingService, KBSeedingService>();  // Simplified: SQL Server only
 
 // ========== Infrastructure Services ==========
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
