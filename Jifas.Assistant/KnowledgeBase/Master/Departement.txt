@@ -1,0 +1,89 @@
+﻿Master Departement
+
+Deskripsi
+
+Modul Master Departement digunakan untuk mencatat dan mengelola struktur fungsi organisasi (departemen) di bawah setiap division dan company. Data ini penting untuk menentukan alur otorisasi, pelaporan, dan pemetaan tugas antar unit bisnis.
+
+Fungsi
+Menyediakan database terpusat untuk seluruh data departemen di perusahaan.
+Menjadi referensi utama untuk pengelolaan struktur organisasi, pelaporan, dan pemetaan data master lain (employee, role, dsb).
+Mendukung validasi dan konsistensi data departemen pada seluruh modul JIFAS.
+
+Tujuan
+Mencegah duplikasi data departemen di sistem.
+Memudahkan proses pencarian, pelaporan, dan integrasi data antar modul.
+Menjamin akurasi dan legalitas data departemen yang digunakan dalam transaksi dan pelaporan.
+
+Berikut adalah rincian role yang memiliki akses untuk membuat atau mengubah data Department:
+WMTR: Webmaster
+FINA: Finance
+SPVR: Supervisor Finance
+HDFA: Head Finance
+MGFA: Magang Finance
+
+Create (Menambah Departement Baru)
+1. Klik tombol Create (ikon "+") di bagian kiri atas grid.
+2. Jendela input akan muncul.
+3. Lengkapi seluruh field yang diperlukan sesuai petunjuk.
+4. Setelah data terisi benar, klik tombol Create untuk menyimpan.
+
+Update (Memperbarui Data Departement)
+1. Cari departement yang ingin diubah pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Edit (pena).
+3. Jendela edit akan muncul.
+4. Perbarui field yang diperlukan.
+5. Klik tombol Update untuk menyimpan perubahan.
+
+Delete (Menghapus Departement)
+1. Cari departement yang ingin dihapus pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Delete (tempat sampah).
+3. Akan muncul jendela konfirmasi penghapusan.
+4. Jika yakin ingin menghapus, klik Yes untuk melanjutkan.
+
+Berikut adalah rincian field yang tersedia untuk pengelolaan data Department beserta spesifikasi kontrol dan validasinya:
+Department Code: Menggunakan Kolom Teks. Wajib diisi (Required) dan harus bersifat Unik. Digunakan untuk memasukkan kode unik departemen dengan batas maksimal 4 karakter.
+Department Name: Menggunakan Kolom Teks. Wajib diisi (Required). Digunakan untuk memasukkan nama departemen sesuai dengan dokumen internal perusahaan.
+Company: Menggunakan Dropdown Pilihan. Wajib diisi (Required). Digunakan untuk memilih perusahaan induk tempat departemen tersebut bernaung.
+Division: Menggunakan Dropdown Berjenjang (Cascade). Wajib diisi (Required). Pilihan divisi ini terhubung secara otomatis (terfilter) berdasarkan Company yang dipilih sebelumnya.
+Is Active: Menggunakan Tombol On/Off (Switch). Berfungsi untuk menentukan status aktif departemen dengan nilai bawaan (Default) adalah On.
+
+Kolom Teks Biasa: Tempat mengetik data secara bebas (kode, nama departemen, dll).
+Dropdown Pilihan: Daftar perusahaan dari Master Company, tinggal klik pilih.
+Dropdown Berjenjang: Divisi yang ditampilkan tergantung company yang dipilih. Harus pilih Company dulu, baru bisa pilih Division.
+Tombol On/Off: Untuk mengaktifkan atau menonaktifkan departemen.
+
+Fitur-fitur Tabel Data
+
+Mengurutkan Data
+Klik pada judul kolom untuk mengurutkan data dari A-Z atau Z-A.
+Standar: data diurutkan berdasarkan nama departemen dari Z-A.
+
+Mencari Data
+Setiap kolom memiliki kolom pencarian di baris pertama tabel.
+Ketik kata kunci untuk mencari departement.
+Contoh: ketik "ACC" untuk mencari semua departement dengan kode "ACC".
+
+Membaca Data Per Halaman
+Data ditampilkan per halaman (standar: 10 data per halaman).
+Gunakan tombol navigasi di bawah tabel untuk pindah halaman.
+Bisa juga pilih jumlah data yang ingin ditampilkan per halaman.
+
+Mengubah Lebar Kolom
+Arahkan mouse ke garis pemisah kolom, lalu drag untuk mengubah lebar kolom.
+
+Tombol Tambah Data
+Tombol Create ada di atas tabel untuk menambah departement baru.
+
+Pesan dan Konfirmasi
+
+Pesan Sukses: Setelah berhasil tambah/ubah/hapus, akan muncul notifikasi sukses.
+Pesan Error: Jika ada masalah, akan tampil pesan error yang menjelaskan masalahnya beserta kode error dari server.
+Konfirmasi Sebelum Hapus: Sebelum menghapus data, sistem akan menanyakan "Apakah Anda yakin ingin menghapus?" dengan menampilkan kode dan nama departement yang akan dihapus untuk mencegah kesalahan.
+
+Catatan Tambahan
+
+Pastikan setiap departement terhubung dengan company dan division yang aktif di Master Company dan Master Division.
+Gunakan konsistensi penamaan agar pencarian dan pelaporan lintas departement tetap akurat.
+Departement Code bersifat read-only (tidak bisa diubah) setelah data dibuat untuk menjaga integritas data.
+Pilih Company terlebih dahulu, kemudian Division akan otomatis menampilkan divisi yang sesuai dengan company yang dipilih.
+Setiap perubahan departement akan langsung tersimpan dan dapat digunakan untuk employee dan transaksi di bawahnya.

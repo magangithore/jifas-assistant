@@ -1,0 +1,20 @@
+﻿Apa itu Modul Master
+
+Modul Master adalah pusat master data yang menyimpan informasi inti secara konsisten, valid, dan stabil untuk seluruh modul operasional JIFAS. Contoh data yang dikelola antara lain company, division, department, employees, vendor, COA, budget, account period, list COA, report setup, dan roles.
+
+Manfaat Modul Master
+
+Mencegah duplikasi data dengan satu sumber kebenaran untuk referensi utama.
+Menjamin efisiensi proses dengan menyediakan data master yang selalu tersedia dan tervalidasi.
+Menjaga akurasi transaksi operasional pada seluruh modul JIFAS.
+
+Role Terkait
+
+WMTR (Webmaster) hanya diberikan kepada tim IT sehingga dapat mengelola konfigurasi teknis data master.
+Pengguna lain seperti USER akan terbatas sesuai peran modul masing-masing.
+
+Catatan Tambahan
+
+Role USRL memiliki akses untuk memilih department/divisi saat membuat PUM/PD (Pengajuan Umum/ Pengajuan Dana), sedangkan USER tidak.
+
+

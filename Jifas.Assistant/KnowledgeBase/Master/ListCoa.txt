@@ -1,0 +1,191 @@
+﻿Master List COA
+
+Master List COA adalah modul tampilan (view-only) untuk melihat seluruh daftar Chart of Account (COA) yang tersedia di sistem JIFAS. Berbeda dengan Master COA yang memungkinkan pengelolaan (create, edit, delete), List COA hanya menampilkan informasi COA dalam format hierarki pohon yang mudah ditelusuri.
+
+Deskripsi
+
+List COA menyajikan struktur akun perusahaan dalam format pohon (tree) yang menunjukkan hubungan hierarki antara akun induk dan akun detail. Tampilan ini membantu pengguna memahami struktur organisasi akun dan menemukan akun spesifik dengan cepat tanpa risiko mengubah data.
+
+Fungsi
+
+1. Menampilkan Struktur Akun Lengkap: Menampilkan semua akun dari parent account hingga child account terdalamnya
+2. Penelusuran Hierarki: Memudahkan pengguna melacak hubungan parent-child antara akun
+3. Pencarian Akun Cepat: Fitur filter untuk menemukan akun berdasarkan nama atau kode
+4. Verifikasi Struktur: Membantu pengguna memverifikasi struktur COA sebelum transaksi
+5. Referensi Akun: Digunakan sebagai referensi saat mengisi kode akun di transaksi (Jurnal, Pembelian, dll)
+
+Tujuan
+
+Menyediakan akses read-only ke struktur COA untuk semua pengguna yang membutuhkan referensi
+Memfasilitasi pencarian akun yang cepat dan efisien
+Memastikan integritas data dengan membatasi hak akses (tidak bisa edit/delete)
+Menjadi alat bantu saat pengguna mencari akun yang tepat untuk transaksi
+Memberikan gambaran visual tentang pengelompokan akun di perusahaan
+
+Berikut adalah daftar role yang memiliki akses untuk melihat List COA:
+WMTR: Webmaster
+USER: Users
+USRL: Users All
+FINA: Finance
+SPVR: Supervisor Finance
+HDFA: Head Finance
+MGFA: Magang Finance
+FRPT: Finance Report
+TAXS: Tax
+HOAC: Holding Accounting
+ACCT: Accounting
+SPAC: Supervisor Accounting
+HDAC: Head Accounting
+MGAC: Magang Accounting
+
+Membuka Modul List COA
+1. Klik menu Master → List COA
+2. Sistem akan menampilkan struktur pohon COA lengkap
+3. Tampilan awal menampilkan semua akun parent (8 kategori utama)
+4. Akun parent dapat di-expand/collapse untuk melihat child account
+
+Navigasi Struktur Pohon (Expand/Collapse)
+1. Klik ikon [+] di sebelah nama akun untuk melihat akun detail di bawahnya (expand)
+2. Klik ikon [-] untuk menutup tampilan akun detail (collapse)
+3. Setiap akun dapat di-expand/collapse secara independen
+
+Mencari Akun Spesifik
+1. Gunakan kolom pencarian di atas setiap kolom:
+   Description: Cari berdasarkan nama/deskripsi akun
+   Code: Cari berdasarkan kode akun
+   Status: Cari berdasarkan status (Active/Inactive)
+2. Ketik kata kunci akan langsung memfilter hasil
+3. Hasil filter akan menampilkan hanya akun yang cocok dengan kriteria
+4. Klik tombol X di kolom pencarian untuk menghapus filter
+
+Melihat Detail Akun
+1. Klik pada baris akun untuk memilih
+2. Baris yang dipilih akan highlight
+3. Informasi lengkap akun akan terlihat: Nama, Kode, Status
+4. Untuk melihat parent account, lihat level di atas dalam struktur pohon
+
+Struktur Tampilan List COA
+Struktur Hierarki 8 Akun Induk
+
+Berikut adalah rincian delapan kategori utama (Level 1) yang digunakan sebagai fondasi dalam List Chart of Accounts (COA):
+ASET (ASSETS) – Kode 10000.0000: Berfungsi untuk mencatat semua bentuk kepemilikan atau kekayaan perusahaan.
+LIABILITAS (LIABILITIES) – Kode 20000.0000: Berfungsi untuk mencatat semua kewajiban atau hutang perusahaan kepada pihak lain.
+EKUITAS (EQUITY) – Kode 30000.0000: Berfungsi untuk mencatat modal pemilik, investasi, serta saldo laba ditahan.
+PENDAPATAN (REVENUE) – Kode 40000.0000: Berfungsi untuk mencatat semua penerimaan yang berasal dari kegiatan operasional utama.
+BEBAN POKOK PENJUALAN (COGS) – Kode 50000.0000: Berfungsi untuk mencatat biaya-biaya langsung yang timbul akibat produksi atau pembelian barang yang dijual.
+BEBAN OPERASIONAL (EXPENSES) – Kode 60000.0000: Berfungsi untuk mencatat biaya-biaya yang dikeluarkan guna menjalankan kegiatan operasional sehari-hari.
+PENDAPATAN/BEBAN LAIN (OTHER) – Kode 70000.0000: Berfungsi untuk mencatat pendapatan atau beban yang tidak terkait langsung dengan operasional utama.
+PAJAK (TAXES) – Kode 80000.0000: Berfungsi untuk mencatat kewajiban beban pajak perusahaan.
+
+Setiap parent account dapat memiliki banyak child account (akun detail), contoh:
+ASET (10000.0000)
+  Kas (10100.0000)
+    Kas Kecil Kantor Pusat (10101.0000)
+    Kas Besar Kantor Pusat (10102.0000)
+  Bank (10200.0000)
+    Bank Central Asia (10201.0000)
+    Bank Mandiri (10202.0000)
+
+Berikut adalah rincian daftar field yang ditampilkan pada List COA beserta deskripsi dan pengaturan lebar kolomnya:
+Chart of Account (Description): Menampilkan nama lengkap dari akun tersebut dengan lebar tampilan 40%.
+Code: Menampilkan kode unik akun untuk identifikasi dengan lebar tampilan 40%.
+Status: Menampilkan kondisi akun saat ini, apakah Active (Aktif) atau Inactive (Tidak Aktif), dengan lebar tampilan 20%.
+
+1. Chart of Account (Deskripsi Akun)
+Menampilkan nama lengkap akun
+Ditampilkan dengan font tebal untuk keterbacaan
+Dengan ikon expand/collapse untuk hierarki
+Contoh: "ASET", "Kas Kecil Kantor Pusat", "Bank Central Asia"
+
+2. Code (Kode Akun)
+Menampilkan kode unik akun
+Dicentering dan bold untuk keterbacaan
+Digunakan untuk referensi ketika entry akun di transaksi
+Format: Numerik dengan titik pemisah (contoh: 10101.0000)
+
+3. Status (Status Akun)
+Menampilkan status penggunaan akun: "Active" atau "Inactive"
+Dicentering untuk keterbacaan
+Akun "Inactive" tidak dapat digunakan di transaksi baru
+
+Fitur-fitur Tampilan List COA
+
+1. Struktur Pohon (Tree View)
+Tampilan hierarki yang memudahkan navigasi:
+Parent Account: Ditampilkan di level atas dengan ikon [+] untuk expand
+Child Account: Muncul setelah parent di-expand
+Sub-child Account: Dapat di-expand lebih lanjut jika ada
+Ikon [-] menunjukkan bahwa node sudah di-expand dan dapat di-collapse
+Indentasi visual menunjukkan level kedalaman akun
+
+2. Pengurutan (Sorting)
+Klik pada nama kolom untuk mengurutkan data:
+Chart of Account: Urutkan A ke Z atau Z ke A
+Code: Urutkan numerik kecil ke besar atau sebaliknya
+Status: Urutkan berdasarkan Active/Inactive
+Urutan berlaku untuk seluruh struktur
+
+3. Pencarian/Filter (Filter)
+Pada setiap kolom terdapat kolom pencarian tersendiri:
+Description Search: Ketik nama atau sebagian nama akun
+  Contoh: Ketik "Kas" akan menampilkan semua akun dengan "Kas" di namanya
+Code Search: Ketik kode atau sebagian kode
+  Contoh: Ketik "1010" akan menampilkan semua akun dengan kode dimulai 1010
+Status Search: Ketik "Active" atau "Inactive"
+Filter real-time (langsung terlihat saat mengetik)
+Dapat menggabungkan filter di multiple kolom
+
+4. Resizable Columns (Kolom Dapat Diubah Ukurannya)
+Geser garis vertikal antara header kolom untuk mengubah lebar
+Sistem akan mengingat ukuran kolom yang dipilih
+Lebar default: Description 40%, Code 40%, Status 20%
+
+5. Selectable Rows (Baris Dapat Dipilih)
+Klik pada baris untuk memilih akun
+Baris yang dipilih akan highlight
+Informasi akun yang dipilih tetap terlihat untuk referensi
+
+6. Responsive Design (Menyesuaikan dengan Ukuran Layar)
+TreeList otomatis menyesuaikan ukuran saat window di-resize
+Cocok untuk berbagai ukuran monitor
+Scroll horizontal jika konten melebihi lebar layar
+
+7. Loading Progress Indicator
+Saat data dimuat dari server, akan ada indikator loading
+Menunjukkan bahwa sistem sedang mengambil data COA terbaru
+Otomatis hilang saat data selesai dimuat
+
+8. Zebra Striping (Garis Alternating)
+Baris data berganti warna (putih dan abu-abu) untuk readability
+Memudahkan mata mengikuti baris data
+Hover effect: baris yang di-hover menjadi highlight
+
+Apa yang TIDAK Bisa Dilakukan di List COA
+
+Operasi yang Tidak Tersedia:
+❌ Create (Tambah): Tidak ada tombol "Create" tidak bisa menambah akun baru
+❌ Edit (Edit): Tidak ada tombol "Edit" tidak bisa mengubah data akun
+❌ Delete (Hapus): Tidak ada tombol "Delete" tidak bisa menghapus akun
+❌ Copy: Tidak bisa meng-copy data akun
+❌ Export: Tidak ada fitur export ke Excel (read-only view)
+
+Jika Perlu Mengelola COA:
+Untuk membuat, mengubah, atau menghapus COA, gunakan modul Master COA (bukan List COA)
+
+Catatan Tambahan
+
+Read-Only View: Modul ini hanya untuk melihat, semua tombol aksi tidak aktif
+Real-Time Data: Data ditampilkan dari database terbaru; refresh otomatis saat page di-load
+Hierarki Lengkap: Menampilkan struktur complete dari akun induk hingga akun detail paling bawah
+Parent-Child Relationship: Ikon indentasi menunjukkan level hierarki akun
+Status Penting: Perhatikan status akun hanya akun "Active" yang dapat digunakan di transaksi
+Search Tips: 
+  Gunakan pencarian untuk akun yang sering digunakan
+  Kombinasikan filter di multiple kolom untuk hasil lebih spesifik
+  Pencarian tidak case-sensitive (besar/kecil huruf tidak masalah)
+Expand All: Tidak ada tombol "Expand All" expand secara manual atau gunakan search untuk filter
+Reference Only: Gunakan modul ini sebagai referensi atau guidance saat entry akun di transaksi
+Performance: Jika banyak expand sekaligus, tampilan mungkin agak lambat expand sesuai kebutuhan saja
+Data Integrity: Data tercatat dari master COA; pastikan master COA sudah benar sebelum transaksi
+Authorization: Akses terbatas sesuai role; tidak semua role memiliki akses ke modul ini
+Token Security: Setiap request dilindungi dengan authorization token untuk keamanan data

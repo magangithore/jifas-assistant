@@ -1,0 +1,125 @@
+﻿Master Employee
+
+Deskripsi
+
+Modul Master Employee digunakan untuk mencatat dan memelihara data karyawan yang menjadi pengguna sistem atau terlibat dalam proses operasional JIFAS. Data ini menjadi acuan utama untuk pengaturan hak akses, pelaporan berbasis role, dan audit trail di seluruh modul.
+
+Fungsi
+Menyediakan database terpusat untuk seluruh data karyawan di perusahaan.
+Menjadi referensi utama untuk pengelolaan hak akses, pelaporan, dan pemetaan data master lain (division, departement, dsb).
+Mendukung validasi dan konsistensi data karyawan pada seluruh modul JIFAS.
+
+Tujuan
+Mencegah duplikasi data karyawan di sistem.
+Memudahkan proses pencarian, pelaporan, dan integrasi data antar modul.
+Menjamin akurasi dan legalitas data karyawan yang digunakan dalam transaksi dan pelaporan.
+
+Berikut adalah rincian field yang tersedia untuk pengelolaan data Employee beserta spesifikasi kontrol dan validasinya:
+Employee Code: Menggunakan Kolom Teks (Read-only). Kode unik karyawan yang dibuat otomatis oleh sistem (Auto).
+NIP: Menggunakan Kolom Teks. Digunakan untuk mencatat Nomor Induk Pegawai secara manual
+Nama Depan: Menggunakan Kolom Teks. Wajib diisi (Required).
+Nama Belakang: Menggunakan Kolom Teks. Digunakan untuk nama belakang karyawan.
+Username: Menggunakan Kolom Teks (Auto dari Email). Nama pengguna untuk akses login sistem yang terisi otomatis berdasarkan alamat email.
+Email: Menggunakan Kolom Teks. Wajib diisi (Required) dengan alamat email aktif karyawan.
+Atasan Langsung: Menggunakan Dropdown Pilihan. Digunakan untuk memilih nama atau kode atasan dari daftar karyawan yang ada.
+Company: Menggunakan Dropdown Pilihan. Wajib diisi (Required). Perusahaan tempat karyawan bekerja.
+Division: Menggunakan Dropdown Berjenjang (Cascade). Wajib diisi (Required). Pilihan terfilter berdasarkan Company yang dipilih.
+Department: Menggunakan Dropdown Berjenjang (Cascade). Wajib diisi (Required). Pilihan terfilter berdasarkan Division yang dipilih.
+Nomor Telepon Utama: Menggunakan Kolom dengan Format Khusus. Memiliki format validasi: 9999 0000 0000.
+Nomor Telepon Alternatif: Menggunakan Kolom dengan Format Khusus. Memiliki format validasi: 9999 0000 0000.
+Ext. Telepon: Menggunakan Kolom Teks. Digunakan untuk mencatat nomor extension telepon kantor.
+PUM Limit: Menggunakan Kolom Teks. Batas maksimal untuk pengajuan uang muka (Pick Up Money).
+PUM 1: Menggunakan Kolom Teks. Jumlah PUM dengan nilai bawaan (Default) adalah 14.
+PUM 2: Menggunakan Kolom Teks. Jumlah PUM dengan nilai bawaan (Default) adalah 30.
+PUM 3: Menggunakan Kolom Teks. Jumlah PUM dengan nilai bawaan (Default) adalah 30.
+Status Aktif: Menggunakan Tombol On/Off (Switch). Menentukan status keaktifan karyawan di dalam sistem.
+Role/Hak Akses: Menggunakan Sub-Grid (Roles). Digunakan untuk mengelola daftar peran (permisson) yang diberikan kepada karyawan.
+
+Create (Menambah Employee Baru)
+1. Klik tombol Create (ikon "+") di bagian kiri atas grid.
+2. Jendela input akan muncul.
+3. Lengkapi seluruh field yang diperlukan sesuai petunjuk.
+4. Setelah data terisi benar, klik tombol Create untuk menyimpan.
+
+Update (Memperbarui Data Employee)
+1. Cari employee yang ingin diubah pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Edit (pena).
+3. Jendela edit akan muncul.
+4. Perbarui field yang diperlukan.
+5. Klik tombol Update untuk menyimpan perubahan.
+
+Delete (Menghapus Employee)
+1. Cari employee yang ingin dihapus pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Delete (tempat sampah).
+3. Akan muncul jendela konfirmasi penghapusan.
+4. Jika yakin ingin menghapus, klik Yes untuk melanjutkan.
+
+Berikut adalah daftar role yang memiliki akses untuk membuat atau mengubah data employee:
+WMTR: Webmaster
+
+Kolom Teks: Tempat mengetik data secara bebas.
+Kolom Teks Read-only: Tidak bisa diedit, hanya bisa dilihat.
+Dropdown Pilihan: Daftar pilihan yang tersedia, tinggal klik pilih.
+Dropdown Berjenjang: Pilihan tergantung pada pilihan sebelumnya (Company → Division → Department).
+Kolom dengan Format Khusus: Nomor telepon otomatis terformat dengan benar.
+Sub-Grid (Roles): Tabel khusus untuk menambah/hapus role karyawan dengan company.
+
+Fitur-fitur Tabel Data
+
+Mengurutkan Data
+Klik pada judul kolom untuk mengurutkan data dari A-Z atau Z-A.
+
+Mencari Data
+Setiap kolom memiliki kolom pencarian di baris pertama tabel.
+Ketik kata kunci untuk mencari employee.
+Contoh: ketik "Ahmad" untuk mencari semua employee dengan nama "Ahmad".
+
+Membaca Data Per Halaman
+Data ditampilkan per halaman.
+Gunakan tombol navigasi di bawah tabel untuk pindah halaman.
+Bisa juga pilih jumlah data yang ingin ditampilkan per halaman.
+
+Mengubah Lebar Kolom
+Arahkan mouse ke garis pemisah kolom, lalu drag untuk mengubah lebar kolom.
+
+Tombol Tambah Data
+Tombol Create ada di atas tabel untuk menambah employee baru.
+
+Fitur Khusus Employee
+
+Cascade Dropdown (Company → Division → Department)
+Pilih Company terlebih dahulu.
+Division akan otomatis menampilkan divisi yang sesuai dengan company yang dipilih.
+Department akan otomatis menampilkan departemen yang sesuai dengan division yang dipilih.
+
+Auto-Generate Username dari Email
+Ketika email diisi, username akan otomatis tergenerate dari bagian sebelum tanda "@".
+Contoh: email "ahmad.rp@jifas.com" → username "ahmad.rp".
+
+Manajemen Role/Hak Akses
+Saat membuat atau mengubah employee, ada sub-grid untuk menambah role yang diberikan kepada employee.
+Setiap role dikaitkan dengan company tertentu.
+Klik tombol "Add Role" untuk menambah role baru.
+Klik ikon trash untuk menghapus role yang tidak diperlukan.
+
+Nilai Default Untuk PUM
+Saat membuat employee baru, sistem otomatis mengisi:
+  PUM 1: 14
+  PUM 2: 30
+  PUM 3: 30
+  PUM Limit: 2
+
+Pesan dan Konfirmasi
+
+Pesan Sukses: Setelah berhasil tambah/ubah/hapus, akan muncul notifikasi sukses dengan pesan lengkap.
+Pesan Error: Jika ada masalah, akan tampil pesan error yang menjelaskan masalahnya beserta kode error dari server.
+Konfirmasi Sebelum Hapus: Sebelum menghapus data, sistem akan menanyakan "Apakah Anda yakin ingin menghapus?" dengan menampilkan kode dan nama employee yang akan dihapus untuk mencegah kesalahan.
+
+Catatan Tambahan
+
+Pastikan seluruh field wajib terisi dengan benar agar karyawan dapat mengakses sistem dengan lancar.
+Untuk perubahan data employee, hubungi Departemen IT atau WMTR agar proses audit trail tercatat.
+Employee Code bersifat read-only (tidak bisa diubah) setelah data dibuat untuk menjaga integritas data.
+Email harus unik untuk setiap employee, karena akan dijadikan basis untuk username.
+Role harus ditambahkan agar employee dapat mengakses sistem sesuai dengan hak akses yang diberikan.
+Atasan (Head) harus dipilih dari employee yang sudah terdaftar di sistem.

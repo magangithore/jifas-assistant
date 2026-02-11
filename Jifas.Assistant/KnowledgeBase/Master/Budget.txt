@@ -1,0 +1,238 @@
+﻿Master Budget
+
+Master Budget digunakan untuk mengelola anggaran tahunan perusahaan pada setiap tingkat organisasi (perusahaan, divisi, departemen) dan per akun COA (Chart of Accounts). Budget merupakan alat perencanaan keuangan yang mengalokasikan dana untuk setiap akun dan unit kerja, membantu monitoring pengeluaran, dan memastikan transaksi tidak melebihi anggaran yang telah ditetapkan.
+
+Deskripsi
+
+Master Budget adalah fondasi perencanaan keuangan JIFAS yang menentukan alokasi dana untuk setiap akun di setiap unit organisasi selama satu tahun anggaran. Dengan struktur hierarki (Perusahaan → Divisi → Departemen → Akun COA), budget memungkinkan kontrol pengeluaran yang detail dan pelaporan yang akurat.
+
+Fungsi
+
+1. Merencanakan Anggaran Tahunan: Menetapkan target alokasi dana untuk setiap akun dan departemen
+2. Membagi Anggaran Bulanan: Mendistribusikan anggaran tahunan ke 12 bulan untuk manajemen kas yang lebih baik
+3. Mengontrol Pengeluaran: Sistem akan memvalidasi transaksi agar tidak melebihi anggaran yang ditetapkan
+4. Memfasilitasi Pelaporan: Membandingkan realisasi dengan budget untuk analisis kinerja
+5. Menyediakan Upload Massal: Memungkinkan import budget dari file Excel untuk efisiensi input data
+
+Tujuan
+
+Memastikan alokasi dana yang terstruktur dan terkontrol di setiap tingkat organisasi
+Mencegah pemborosan dan overbudget melalui sistem validasi
+Menyediakan basis perbandingan (budget vs realisasi) untuk evaluasi kinerja
+Mempercepat proses input budget melalui fitur upload massal
+Memfasilitasi perencanaan cash flow yang lebih akurat
+
+Berikut adalah daftar role yang memiliki akses untuk membuat atau mengubah data Budget:
+WMTR: Webmaster
+FINA: Finance
+SPVR: Supervisor Finance
+HDFA: Head Finance
+
+Create (Menambah Budget Baru)
+1. Klik tombol Create Budget di toolbar bagian atas grid.
+2. Jendela input akan muncul dengan form kosong.
+3. Lengkapi seluruh field yang wajib diisi:
+   Company: Pilih perusahaan (cascade: akan memfilter divisi)
+   Division: Pilih divisi (cascade: akan memfilter departemen)
+   Department: Pilih departemen (cascade: akan memfilter COA)
+   Year: Pilih tahun anggaran
+   COA: Pilih akun COA yang akan dianggarkan
+   Description: Otomatis terisi berdasarkan COA yang dipilih
+   Budget Amount: Masukkan jumlah anggaran tahunan
+4. Setelah mengisi Budget Amount, klik tombol Generate Budget untuk membagi anggaran ke 12 bulan.
+5. Grid detail akan menampilkan alokasi bulanan; periksa pembagian bulanan sudah sesuai.
+6. Klik tombol Save untuk menyimpan budget.
+7. Akan muncul konfirmasi klik OK untuk melanjutkan.
+
+Upload Budget Massal (Batch)
+1. Klik tombol Upload Budget di toolbar bagian atas grid.
+2. Jendela upload akan muncul dengan dua bagian: Company selector dan Spreadsheet editor.
+3. Pilih perusahaan untuk budget yang akan di-upload.
+4. Klik tombol Open (ikon folder) untuk membuka file Excel dengan template budget.
+5. Template Excel harus memiliki kolom: FYEAR, BUDGETCODE, DIVCODE, DEPTCODE, BUDGETTOTAL, MONTH1 s/d MONTH12.
+6. Isi data pada spreadsheet sesuai kebutuhan.
+7. Klik tombol Save untuk menyimpan budget dari file Excel ke sistem.
+8. Sistem akan memvalidasi data jika ada error, akan ditampilkan pesan.
+9. Jika berhasil, akan muncul pesan sukses dan list budget akan ter-update.
+
+Preview/Edit Budget
+1. Cari budget yang ingin dipreview pada grid list budget.
+2. Klik tombol Preview (ikon preview) di kolom aksi.
+3. Jendela preview akan muncul menampilkan detail budget (tidak dapat diubah).
+4. Lihat grid detail yang menampilkan alokasi bulanan.
+5. Klik tombol Cancel untuk menutup preview.
+
+Daftar Lengkap Field yang Tersedia
+
+1. Header Fields (Bagian Atas Form)
+Company: Menggunakan input Dropdown Cascade. Wajib diisi. Berfungsi untuk mengaktifkan filter pada pilihan Division.
+Division: Menggunakan input Dropdown Cascade. Wajib diisi. Pilihan terfilter berdasarkan Company yang dipilih; berfungsi mengaktifkan filter Department.
+Department: Menggunakan input Dropdown Cascade. Wajib diisi. Pilihan terfilter berdasarkan Division yang dipilih; berfungsi mengaktifkan filter COA.
+Year: Menggunakan input Date Picker. Wajib diisi. Digunakan untuk memilih tahun anggaran dengan format YYYY (hanya tahun yang dapat dipilih).
+COA: Menggunakan input Dropdown. Wajib diisi. Digunakan untuk memilih akun COA yang akan dianggarkan, pilihan terfilter berdasarkan Department.
+Description: Menggunakan input Textarea (Readonly). Tidak wajib diisi secara manual karena akan terisi otomatis dari deskripsi COA dan bersifat tidak dapat diubah.
+Budget Amount: Menggunakan Numeric Input. Wajib diisi. Digunakan untuk memasukkan jumlah anggaran tahunan dan mendukung format desimal.
+
+2. Detail Grid Fields (Grid Rincian Bulanan)
+Period: Input berupa Teks. Tidak wajib diisi secara manual. Menampilkan nama bulan (Januari s/d Desember) yang muncul otomatis dari sistem alokasi bulanan.
+Budget: Input berupa Numeric. Wajib diisi. Menampilkan jumlah anggaran per bulan yang dihitung otomatis dari pembagian total anggaran tahunan.
+
+3. Upload Grid Fields (Spreadsheet Upload)
+FYEAR: Input Angka. Wajib diisi dalam file Excel. Merupakan kolom untuk tahun anggaran (contoh: 2024).
+BUDGETCODE: Input Teks. Wajib diisi dalam file Excel. Merupakan kode akun COA yang dianggarkan.
+DIVCODE: Input Teks. Wajib diisi dalam file Excel. Merupakan kode divisi terkait.
+DEPTCODE: Input Teks. Wajib diisi dalam file Excel. Merupakan kode departemen terkait.
+BUDGETTOTAL: Input Angka. Wajib diisi dalam file Excel. Merupakan total jumlah anggaran tahunan.
+MONTH1 s/d MONTH12: Input Angka. Tidak wajib diisi dalam file Excel. Merupakan kolom untuk alokasi anggaran bulanan dari Januari sampai Desember.
+
+1. Dropdown Cascade (Bertingkat)
+Pilihan yang saling tergantung satu sama lain:
+Company → Setelah dipilih, akan mengaktifkan filter Division (hanya divisi di perusahaan tersebut)
+Division → Setelah dipilih, akan mengaktifkan filter Department (hanya departemen di divisi tersebut)
+Department → Setelah dipilih, akan mengaktifkan filter COA (hanya COA untuk departemen tersebut)
+
+Contoh: Jika memilih "PT. Kawasan Industri Jababeka", maka Division hanya akan menampilkan divisi yang ada di PT. Kawasan Industri Jababeka.
+
+2. Dropdown (Pilihan Tetap)
+Pilihan dari daftar yang sudah tersedia:
+COA: Menampilkan daftar akun COA yang tersedia untuk departemen terpilih
+Search Period: Tahun untuk memfilter data budget yang ditampilkan
+
+3. Date Picker (Pemilih Tanggal)
+Input untuk memilih tanggal atau periode:
+Year: Hanya memperbolehkan pemilihan tahun (format YYYY), misalnya: 2024, 2025
+Search Period: Memilih tahun untuk pencarian budget
+
+4. Numeric Input (Input Angka)
+Input untuk nilai numerik:
+Budget Amount: Jumlah anggaran (dapat berisi desimal, contoh: 1000000.50)
+Monthly Budget: Alokasi per bulan pada grid detail
+
+5. Textarea (Teks Panjang, Readonly)
+Field untuk teks panjang yang tidak dapat diubah:
+Description: Otomatis terisi dari COA yang dipilih; hanya untuk referensi
+
+6. Spreadsheet Editor (Editor Excel)
+Alat untuk membuka, edit, dan impor data dari file Excel:
+Mendukung buka file .xlsx
+Dapat mengedit data secara langsung dalam spreadsheet
+Format kolom harus sesuai template
+
+Fitur-fitur Tabel Data
+
+1. Pengurutan (Sorting)
+Klik pada nama kolom untuk mengurutkan data:
+Klik sekali: Urutan A ke Z (atau angka kecil ke besar)
+Klik dua kali: Urutan Z ke A (atau angka besar ke kecil)
+Default: Diurutkan berdasarkan Kode COA dari A ke Z
+
+2. Pencarian/Filter (Filter)
+Pada setiap kolom terdapat kolom pencarian tersendiri:
+Mengetik kata kunci akan menampilkan budget yang cocok
+Filter berfungsi pada semua kolom: Year, Division, Department, COA Code, Description, In/Out, Budget Amount
+
+3. Pencarian Periode (Date Filter)
+Di bagian atas grid terdapat fitur pencarian berdasarkan tahun:
+Budget Year: Pilih tahun untuk menampilkan budget tahun tersebut
+Search: Klik tombol Search untuk refresh data
+
+4. Pagination (Pembagian Halaman)
+Jika ada banyak budget, data akan dibagi per halaman:
+Default: 10 baris per halaman
+Gunakan tombol < Sebelumnya dan Selanjutnya > untuk pindah halaman
+Atau pilih halaman langsung dari nomor halaman yang tersedia
+
+5. Export ke Excel
+Tombol Excel di toolbar memungkinkan export data:
+File akan dinamai: "BudgetCOAYYYY.xlsx" (YYYY = tahun yang dipilih)
+Mencakup semua data budget tahun tersebut
+Format memudahkan untuk analisis lebih lanjut atau sharing
+
+Fitur Khusus Budget
+
+1. Cascade Dropdown Hierarki
+Pemilihan hierarki dengan sistem bertingkat:
+Company → Division → Department → COA
+Setiap level hanya menampilkan pilihan yang valid untuk level sebelumnya
+Sistem ini memastikan data yang dipilih konsisten dengan struktur organisasi
+
+2. Generate Budget Bulanan (Automatic Distribution)
+Sistem otomatis membagi anggaran tahunan ke 12 bulan:
+Tekan tombol Generate Budget setelah mengisi Budget Amount
+Sistem akan membagi rata anggaran tahunan ke 12 bulan
+Contoh: Anggaran 12 juta → setiap bulan 1 juta
+Pembagian dapat disesuaikan manual jika diperlukan
+
+3. Validasi Keseimbangan Budget
+Sistem memvalidasi bahwa total budget bulanan sama dengan budget tahunan:
+Jika tidak sama, tidak bisa menyimpan
+Pesan error: "Total budget detail MUST BE EQUAL dengan budget amount header!"
+Gunakan untuk memastikan tidak ada kesalahan input
+
+4. Upload Budget Massal dari Excel
+Fitur impor data budget dalam jumlah besar:
+Mendukung upload multiple company, division, department, COA sekaligus
+Memvalidasi data sebelum disimpan (COA, DIVCODE, DEPTCODE wajib diisi)
+Jika ada duplikat, sistem akan update data yang sudah ada
+Sistem melakukan validasi: total 12 bulan harus sama dengan BUDGETTOTAL
+
+5. Format Tampilan In/Out
+Kolom "In/Out" menampilkan jenis arus kas dari COA:
+I (Cash In): Ditampilkan sebagai "IN" akun untuk penerimaan uang
+O (Cash Out): Ditampilkan sebagai "OUT" akun untuk pengeluaran uang
+(Tidak ada): Ditampilkan sebagai "ALL" akun untuk keduanya
+
+6. Format Angka Budget
+Budget Amount ditampilkan dengan format rupiah:
+Menggunakan pemisah ribuan (contoh: 1.000.000 untuk 1 juta)
+Dapat menggunakan 0 (nol) sampai 99 juta sebagai limit dalam form (walau untuk entry bisa lebih)
+Format ekspor: dengan desimal untuk tingkat presisi
+
+7. Disabled Input pada Preview
+Saat membuka budget untuk preview:
+Semua field di bagian header menjadi tidak dapat diubah (disabled)
+Grid detail hanya menampilkan informasi (read-only)
+Hanya tersedia tombol Cancel untuk menutup
+
+8. Search Period dengan Date Picker
+Fitur pencarian budget berdasarkan tahun:
+Hanya bisa memilih tahun (tidak ada pilihan bulan/hari)
+Range tahun yang bisa dipilih: tahun lalu hingga tahun depan
+Tombol Search untuk meng-update data sesuai tahun yang dipilih
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+Saat Create: "Success on creating Budget"
+Saat Upload Baru: "Success on uploading Budget!"
+Saat Upload Update: "Success on updating Budget!"
+
+Pesan Error/Validasi
+Jika field wajib kosong: "Harap isi semua field yang diperlukan sebelum melanjutkan"
+Jika total budget tidak sesuai: "Total budget detail MUST BE EQUAL dengan budget amount header!"
+Jika belum generate: "Cannot continue! Please generate budget before!"
+Jika grid kosong saat save: "Cannot create budget! Please select at least one COA to continue the process"
+Upload Jika Company belum dipilih: "Please select the company for uploaded budget!"
+Upload Jika total tidak sesuai: "Total budget on budget code: [KODE] division: [DIV] department: [DEPT] not equal with budget amount!"
+Upload Jika field wajib kosong: "Budget Code/Div Code/Dept Code from row: [NOMOR] must be filled!"
+Upload Jika spreadsheet kosong: "Cannot save an empty grid!"
+Error koneksi: "[Status Code] Status Text: [Teks Error]"
+
+Pesan Konfirmasi
+Saat Save Budget: "Apakah Anda yakin ingin MEMBUAT budget untuk COA [KODECOA]?"
+Saat Upload: "Apakah Anda yakin ingin menyimpan budget ini?"
+
+Catatan Tambahan
+
+Cascade Selection: Pastikan memilih Company → Division → Department secara urut; jika Company diubah, Division dan Department akan direset
+Year Selection: Tahun hanya bisa dipilih dari tahun lalu hingga tahun depan; untuk tahun lama/depan, hubungi Admin
+Budget Generation: Klik tombol "Generate Budget" SEBELUM menyimpan untuk memastikan alokasi bulanan terisi
+Validation: Total 12 bulan harus persis sama dengan Budget Amount; jika berbeda, periksa kembali pembagian bulanan
+Upload Template: Template Excel harus memiliki header yang tepat (FYEAR, BUDGETCODE, DIVCODE, DEPTCODE, BUDGETTOTAL, MONTH1-MONTH_12)
+Monthly Distribution: Sistem otomatis membagi rata; jika ingin distribusi tidak rata, edit manual di grid detail
+Duplicate on Upload: Jika upload budget yang sudah ada (same Company+COA+Year), sistem akan UPDATE bukan CREATE
+Export Data: File Excel export dapat digunakan untuk analisis lanjutan atau sharing dengan tim
+Authorization: Setiap request dilindungi dengan token akses; hanya user yang login dapat mengakses
+Bulk Upload: Fitur upload efisien untuk ratusan data budget sekaligus
+In/Out Field: Penting untuk membedakan jenis arus kas; gunakan untuk filter laporan cash flow
+Budget Review: Sebelum final approval, lakukan review total budget vs rencana kerja tahunan

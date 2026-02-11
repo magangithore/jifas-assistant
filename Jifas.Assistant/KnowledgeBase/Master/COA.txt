@@ -1,0 +1,190 @@
+﻿Master COA
+
+Master COA (Chart of Accounts) adalah struktur akun yang mengorganisir semua transaksi keuangan dalam JIFAS. COA disusun secara hierarki dengan akun induk (parent account) dan akun detail (child account), memastikan setiap transaksi tercatat pada akun yang tepat.
+
+Deskripsi
+
+Master COA berfungsi sebagai kerangka kerja akuntansi yang menentukan bagaimana transaksi keuangan dikategorikan dan dilaporkan. Struktur hierarki memudahkan pemantauan aliran kas dan penyusunan laporan keuangan (neraca, laba-rugi, arus kas).
+
+Fungsi
+
+1. Mengatur Kategori Akun Induk: Menetapkan delapan kategori utama (Aset, Liabilitas, Ekuitas, Pendapatan, Beban Pokok Penjualan, Beban, Pendapatan Lain, Pajak)
+2. Membuat Akun Detail: Menambahkan akun spesifik di bawah masing-masing kategori induk untuk pelacakan transaksi detail
+3. Mengelola Status Akun: Mengaktifkan atau menonaktifkan akun sesuai kebutuhan operasional
+4. Mengatur Fixed Asset: Menandai akun yang terkait dengan aset tetap dan status approvalnnya
+5. Menyiapkan Laporan: Menghubungkan akun dengan berbagai laporan (Profit & Loss, Balance Sheet, Cash Flow)
+
+Tujuan
+
+Memastikan setiap transaksi keuangan tercatat pada akun yang benar dan konsisten
+Memfasilitasi penyusunan laporan keuangan yang akurat dan tepat waktu
+Mendukung analisis keuangan dan pengambilan keputusan bisnis
+Menjaga integritas data akuntansi melalui struktur yang terorganisir
+
+Berikut adalah rincian role yang memiliki akses untuk melakukan pembuatan atau perubahan data COA:
+WMTR: Webmaster
+HOAC: Holding Accounting
+
+Kategori Utama COA
+ASET (ASSETS) - Kode 10000.0000: Berfungsi mencatat semua kepemilikan perusahaan seperti kas, piutang, dan aset tetap.
+LIABILITAS (LIABILITIES) - Kode 20000.0000: Berfungsi mencatat semua hutang perusahaan, termasuk utang usaha dan utang bank.
+EKUITAS (EQUITY) - Kode 30000.0000: Berfungsi mencatat modal atau investasi pemilik serta laba ditahan.
+PENDAPATAN (REVENUE) - Kode 40000.0000: Berfungsi mencatat semua penerimaan dari pendapatan operasional.
+BEBAN POKOK PENJUALAN (COST OF REVENUE) - Kode 50000.0000: Berfungsi mencatat biaya langsung yang terkait dengan produksi atau pembelian barang.
+BEBAN OPERASIONAL (EXPENSES) - Kode 60000.0000: Berfungsi mencatat biaya rutin untuk menjalankan operasional, seperti gaji dan utilitas.
+PENDAPATAN/BEBAN LAIN (OTHER INCOME/EXPENSES) - Kode 70000.0000: Berfungsi mencatat pendapatan atau beban yang terjadi di luar operasional utama perusahaan.
+
+PAJAK (TAXES) - Kode 80000.0000: Berfungsi mencatat seluruh beban pajak perusahaan.
+Create (Menambah COA Baru)
+1. Klik pada akun induk (parent account) tempat Anda ingin menambah akun detail.
+2. Klik tombol Add (Tambah) di sebelah kanan baris akun tersebut.
+3. Jendela input akan muncul, menampilkan kode parent account dan deskripsinya.
+4. Lengkapi field "Description" (nama akun baru), "FA Type", "FA Status", "Budget Approval", dan "COA Status".
+5. Klik tombol Save (Simpan) untuk menyimpan akun baru.
+6. Akan muncul pesan konfirmasi klik OK untuk melanjutkan.
+
+Update (Memperbarui Data COA)
+1. Cari akun yang ingin diubah pada tampilan pohon struktur.
+2. Klik tombol Edit (Edit) di sebelah kanan baris akun tersebut.
+3. Jendela edit akan muncul menampilkan detail akun (kode dan nama akun tidak dapat diubah).
+4. Perbarui field yang diperlukan (Description, FA Type, FA Status, Budget Approval, COA Status).
+5. Klik tombol Update (Perbarui) untuk menyimpan perubahan.
+6. Akan muncul pesan konfirmasi klik OK untuk melanjutkan.
+
+Delete (Menghapus COA)
+1. Cari akun yang ingin dihapus pada tampilan pohon struktur.
+2. Klik tombol Remove (Hapus) di sebelah kanan baris akun tersebut.
+3. Akan muncul jendela konfirmasi penghapusan "Apakah Anda yakin ingin menghapus COA: (Kode)?"
+4. Jika yakin, klik tombol OK untuk melanjutkan penghapusan.
+5. Jika tidak, klik tombol Cancel (Batal).
+
+Berikut adalah rincian daftar lengkap field yang tersedia untuk pengelolaan Chart of Accounts (COA) berdasarkan poin-poin yang Anda berikan:
+Akun Induk (Parent Account): Menggunakan input Teks (Readonly). Wajib diisi. Merupakan kode induk akun yang dipilih saat proses pembuatan dan bersifat tidak dapat diubah.
+Deskripsi Induk: Menggunakan input Textarea (Readonly). Tidak wajib diisi secara manual karena menampilkan nama/deskripsi parent account secara otomatis dan tidak dapat diubah.
+Deskripsi: Menggunakan input Textarea. Wajib diisi. Digunakan untuk memasukkan nama lengkap akun rincian (contoh: "Kas Kecil Kantor Pusat").
+Tipe FA (Fixed Asset Type): Menggunakan input Dropdown. Wajib diisi. Tersedia pilihan: "Cash In" (arus kas masuk) atau "Cash Out" (arus kas keluar).
+Status FA (Fixed Asset Status): Menggunakan input Dropdown. Wajib diisi. Tersedia pilihan: "Yes" (adalah fixed asset) atau "No" (bukan fixed asset).
+Persetujuan Anggaran (Budget Approval): Menggunakan input Dropdown. Wajib diisi. Tersedia pilihan: "Yes" (memerlukan approval anggaran) atau "No" (tidak perlu approval).
+Kode PNL (Hidden): Menggunakan input Teks (Readonly). Bersifat Hidden (tersembunyi). Merupakan kode untuk laporan Profit & Loss; data tersimpan di sistem namun tidak ditampilkan di UI.
+Kode BS (Hidden): Menggunakan input Teks (Readonly). Bersifat Hidden (tersembunyi). Merupakan kode untuk laporan Balance Sheet; data tersimpan di sistem namun tidak ditampilkan di UI.
+Kode CF (Hidden): Menggunakan input Teks (Readonly). Bersifat Hidden (tersembunyi). Merupakan kode untuk laporan Cash Flow; data tersimpan di sistem namun tidak ditampilkan di UI.
+Status COA: Menggunakan input Dropdown. Wajib diisi. Tersedia pilihan: "Active" (akun aktif digunakan) atau "Inactive" (akun dinonaktifkan).
+
+1. Textarea (Teks Panjang)
+Input untuk teks yang mungkin lebih panjang (deskripsi akun). Dapat berisi huruf, angka, dan karakter tertentu. Contoh: "Kas di Bank Central Asia Giro Operasional"
+
+2. Dropdown (Pilihan Tetap)
+Tombol pilihan yang sudah ditentukan sebelumnya dengan pilihan terbatas:
+Tipe FA: "Cash In" atau "Cash Out"
+Status FA: "Yes" atau "No"
+Persetujuan Anggaran: "Yes" atau "No"
+Status COA: "Active" atau "Inactive"
+
+Contoh: Untuk akun "Kas", pilih "Yes" karena itu adalah fixed asset.
+
+3. Readonly (Tidak Dapat Diubah)
+Field yang tidak dapat diubah karena sudah ditentukan atau otomatis. Contoh:
+Akun Induk: Ditentukan saat membuat akun (tidak bisa diubah saat edit)
+Deskripsi Induk: Deskripsi parent account (hanya untuk referensi)
+
+Fitur-fitur Tabel Data
+
+1. Struktur Pohon (Tree View)
+Tampilan data dalam bentuk pohon hierarki:
+Parent Account (Akun Induk) ditampilkan di level atas dengan tanda [+] atau [-] untuk expand/collapse
+Child Account (Akun Detail) muncul di bawah parent account saat di-expand
+Contoh: Klik [+] di sebelah "ASET (10000.0000)" untuk melihat semua akun detail di bawahnya
+
+2. Pengurutan (Sorting)
+Klik pada nama kolom untuk mengurutkan data:
+Klik sekali: Urutan A ke Z
+Klik dua kali: Urutan Z ke A
+Data akan diurutkan berdasarkan kolom yang dipilih
+
+3. Pencarian/Filter (Filter)
+Pada setiap kolom terdapat kolom pencarian tersendiri:
+Pencarian Teks: Mengetik kata kunci akan menampilkan akun yang cocok
+Filter berfungsi pada: Description, Code, FA Status, Budget Approval, COA Status
+Pencarian real-time saat mengetik
+
+4. Kolom Tersembunyi (Hidden Columns)
+Beberapa kolom tersimpan tapi tidak ditampilkan di layar normal (untuk keperluan laporan):
+PNL Code: Kode untuk Profit & Loss report
+BS Code: Kode untuk Balance Sheet report
+CF Code: Kode untuk Cash Flow report
+
+Kolom ini dapat ditampilkan jika diperlukan melalui pengaturan tampilan grid.
+
+5. Tombol Aksi (Action Buttons)
+Setiap baris memiliki tiga tombol aksi:
+Add (Tambah): Membuat akun detail baru di bawah akun tersebut
+Edit (Edit): Mengubah detail akun yang dipilih
+Remove (Hapus): Menghapus akun yang dipilih
+
+Fitur Khusus COA
+
+1. Struktur Hierarki (Parent-Child)
+COA disusun secara bertingkat:
+Level 1: 8 kategori utama (ASET, LIABILITAS, EKUITAS, PENDAPATAN, COGS, BEBAN, PENDAPATAN LAIN, PAJAK)
+Level 2+: Akun detail di bawah masing-masing kategori
+Setiap akun detail dapat memiliki sub-akun sendiri
+Contoh: ASET (10000.0000) → Kas (10100.0000) → Kas Kecil (10101.0000)
+
+2. Validasi Deskripsi Akun
+Hanya memperbolehkan huruf, angka, spasi, tanda kurung, dan garis miring (/)
+Tidak memperbolehkan karakter khusus seperti @, #, $, %, &, dll
+Sistem akan memberikan peringatan jika mencoba memasukkan karakter terlarang
+Tidak boleh copy-paste text yang mengandung karakter khusus
+
+3. Batasan Panjang Kode
+Kode COA tidak boleh lebih dari 20 karakter
+Jika mencoba memasukkan lebih dari 20 karakter, sistem akan menampilkan pesan: "Maximum length for COA code is 20 characters!"
+
+4. Konversi Otomatis Display
+FA Status: "Y" otomatis ditampilkan sebagai "Yes", "N" sebagai "No"
+Budget Approval: "Y" otomatis ditampilkan sebagai "Yes", "N" sebagai "No"
+Ini hanya untuk tampilan; data di server tetap Y/N
+Saat membaca dari server, sistem mengkonversi kembali ke Y/N
+
+5. Kode Akun Otomatis
+Kode COA dibuat otomatis oleh sistem berdasarkan parent account dan urutan pembuatan
+Pengguna tidak dapat memasukkan/mengubah kode secara manual
+Setiap akun baru akan mendapat kode unik yang tidak duplikat
+
+6. Fixed Asset dan Budget Approval
+Fixed Asset (FA Status): Menandai apakah akun ini untuk aset tetap (Yes) atau bukan (No)
+FA Type: Jika adalah fixed asset, tentukan tipe arus kas: "Cash In" (pembelian) atau "Cash Out" (penjualan)
+Budget Approval: Menunjukkan apakah akun ini memerlukan persetujuan anggaran terlebih dahulu sebelum transaksi
+Contoh: Akun "Pembelian Aset Tetap" → FA Status: Yes, FA Type: Cash Out, Budget Approval: Yes
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+Saat Create: "COA berhasil ditambahkan" + penawaran untuk lanjut ke Report Setup
+Saat Update: "COA berhasil diperbarui" + penawaran untuk lanjut ke Report Setup
+Saat Delete: "COA berhasil dihapus"
+
+Pesan Error
+Jika field wajib kosong: "Harap isi semua field yang diperlukan sebelum melanjutkan"
+Jika deskripsi mengandung karakter khusus: "Special characters aren't allowed!"
+Jika paste text dengan karakter khusus: "Cannot paste a letter containing special characters."
+Jika kode lebih dari 20 karakter: "Maximum length for COA code is 20 characters!"
+Jika ada kesalahan server: Menampilkan pesan error dari server
+
+Pesan Konfirmasi
+Saat Create: "Apakah Anda yakin ingin MEMBUAT COA: (Nama)?"
+Saat Update: "Apakah Anda yakin ingin MEMPERBARUI COA: (Kode)?"
+Saat Delete: "Apakah Anda yakin ingin MENGHAPUS COA: (Kode)?"
+Setelah Create/Update Sukses: "COA berhasil [dibuat/diperbarui]. Apakah Anda ingin melanjutkan ke pengaturan laporan?" (Klik Ya untuk ke Report Setup, Tidak untuk refresh COA list)
+
+Catatan Tambahan
+
+Struktur Parent-Child: Jangan membuat akun induk yang duplikat; pastikan setiap induk hanya dibuat sekali
+Aktivasi Akun: Sebelum menggunakan akun di transaksi, pastikan status COA diatur ke "Active"
+Fixed Asset Tracking: Gunakan FA Status dan FA Type untuk melacak aset tetap dan arus kasnya
+Budget Approval: Aktifkan jika akun memerlukan approval untuk mengontrol pengeluaran
+Report Mapping: Setiap akun dapat dipetakan ke tiga jenis laporan (PNL, Balance Sheet, Cash Flow) melalui kode tersembunyi
+Integritas Data: Jangan hapus akun yang masih digunakan dalam transaksi; nonaktifkan saja dengan mengubah status ke "Inactive"
+Konsistensi Naming: Gunakan nama yang konsisten dan deskriptif sehingga mudah diidentifikasi dalam laporan
+Validasi Sebelum Simpan: Sistem akan otomatis mengkonversi Yes/No ke Y/N saat menyimpan, dan sebaliknya saat membuka
+Lanjutan ke Report Setup: Setelah membuat/mengubah COA, sistem akan menawarkan untuk langsung ke Report Setup untuk memetakan akun ke laporan

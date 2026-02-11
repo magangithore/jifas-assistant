@@ -1,0 +1,90 @@
+JIFAS Budget Status Codes - Comprehensive Reference
+
+==== BUDGET STATUS CODES ====
+
+Budget Status adalah indikator yang menunjukkan kondisi budget setelah melakukan pengecekan alokasi budget untuk setiap item pengajuan. Status ini akan muncul saat Anda membuat pengajuan atau item baru di sistem JIFAS.
+
+DEFINISI STATUS BUDGET:
+
+1. OK (Budget Available)
+   - Pengertian: Budget untuk COA tersebut masih tersedia dan mencukupi untuk nominal item yang diajukan.
+   - Status: ? NORMAL - Pengajuan dapat dilanjutkan
+   - Aksi: Lanjutkan proses approval normal
+   - Contoh: Anda mengajukan Rp 10.000.000 ke COA "Biaya Operasional", sisa budget untuk COA tersebut adalah Rp 50.000.000, sehingga status menjadi OK.
+
+2. CM (Cross Month)
+   - Pengertian: Nominal item melebihi budget bulanan untuk COA tersebut, namun masih ada budget di bulan-bulan berikutnya dalam tahun yang sama.
+   - Status: ? WARNING - Perlu perhatian khusus
+   - Aksi: 
+     * Reviewer dapat memberikan persetujuan khusus untuk melanjutkan
+     * Dapat disetujui dengan catatan bahwa item akan menggunakan budget dari bulan berikutnya
+     * Memerlukan approval tambahan dari supervisor atau finance
+   - Contoh: Budget bulanan untuk COA "Biaya Marketing" adalah Rp 5.000.000, tetapi Anda mengajukan Rp 8.000.000. Sisa budget di bulan berikutnya masih tersedia, sehingga muncul status CM.
+
+3. CA (Cross Accumulation)
+   - Pengertian: Nominal item melebihi akumulasi budget yang tersedia dalam beberapa bulan ke depan, namun masih dalam tahun yang sama.
+   - Status: ? WARNING - Perlu persetujuan
+   - Aksi:
+     * Membutuhkan approval lebih ketat dari management
+     * Mungkin perlu negosiasi alokasi budget ulang
+     * Perlu approval dari finance head dan/atau CFO
+   - Contoh: Anda mengajukan Rp 25.000.000 tetapi akumulasi budget bulanan untuk COA tersebut hanya Rp 20.000.000 dalam 3 bulan ke depan, maka status menjadi CA.
+
+4. CY (Cross Year)
+   - Pengertian: Nominal item melebihi total budget tahunan untuk COA tersebut, atau melebihi sisa budget hingga akhir tahun fiskal.
+   - Status: ? BLOCKED - Tidak dapat dilanjutkan tanpa persetujuan khusus
+   - Aksi:
+     * TIDAK BISA dilanjutkan tanpa persetujuan dari CFO atau director level
+     * Sistem akan memblokir penyimpanan pengajuan
+     * Perlu permintaan persetujuan exception dari top management
+     * Atau perlu melakukan amendment/perubahan pada budget master
+   - Contoh: Anda mengajukan Rp 100.000.000 tetapi sisa budget tahun ini untuk COA tersebut hanya Rp 50.000.000, sehingga sistem menolak pengajuan dengan status CY.
+
+==== PENANGANAN SETIAP STATUS ====
+
+Penanganan CM (Cross Month):
+- Hubungi supervisor atau finance untuk mendapatkan persetujuan khusus
+- Kurangi nominal pengajuan jika memungkinkan
+- Atau ajukan pengajuan pada bulan berikutnya
+- Status ini biasanya dapat disetujui dengan catatan alokasi antar-bulan
+
+Penanganan CA (Cross Accumulation):
+- Hubungi head finance untuk negosiasi
+- Mungkin perlu mengatur ulang alokasi COA
+- Pertimbangkan untuk split pengajuan ke beberapa periode
+- Memerlukan approval management level
+
+Penanganan CY (Cross Year):
+- PENTING: Status ini MENGHALANGI penyimpanan
+- Langkah yang diperlukan:
+  1. Hubungi CFO atau director untuk persetujuan exception
+  2. Kurangi signifikan nominal pengajuan
+  3. Gunakan COA alternative jika tersedia dengan budget yang mencukupi
+  4. Tunda pengajuan hingga tahun fiskal baru jika memungkinkan
+  5. Mohon amendment pada master budget ke finance
+- Tidak ada jalan untuk bypass status CY dari user level
+
+==== TABEL PERBANDINGAN ====
+
+Status | Severity | Can Proceed? | Approval Level | Aksi Rekomendasi
+OK     | NONE     | ? Yes        | Standard       | Lanjutkan normal
+CM     | WARNING  | ? Maybe      | Supervisor+    | Minta persetujuan khusus
+CA     | HIGH     | ? Maybe      | Management     | Hubungi Finance Head
+CY     | CRITICAL | ? No         | CFO/Director   | Perlu approval exception
+
+==== FAQ ====
+
+Q: Jika status CM, apakah pengajuan saya ditolak?
+A: Tidak otomatis ditolak, tetapi memerlukan persetujuan khusus dari supervisor atau finance. Sistem tidak akan memblokir seperti status CY.
+
+Q: Bagaimana membedakan CM dan CA?
+A: CM adalah cross-monthly budget (melebihi 1-2 bulan), CA adalah cross accumulation (melebihi beberapa bulan tetapi masih dalam tahun yang sama). CY adalah cross year (melebihi tahun).
+
+Q: Bisakah saya mengubah COA untuk menghindari status CY?
+A: Bisa, asal ada COA alternative dengan budget yang mencukupi untuk nominal yang Anda ajukan.
+
+Q: Siapa yang bisa memberikan persetujuan untuk status CY?
+A: Hanya CFO atau director level yang bisa memberikan exception approval untuk CY. Contact finance leadership untuk meminta persetujuan.
+
+Q: Status saya CY, apa yang harus saya lakukan?
+A: Hubungi IT Help Desk untuk contact info CFO atau director, jelaskan kebutuhan Anda, dan minta persetujuan exception. Alternatif lain adalah mengurangi nominal atau menunggu tahun fiskal berikutnya.

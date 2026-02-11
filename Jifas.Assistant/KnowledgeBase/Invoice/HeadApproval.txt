@@ -1,0 +1,630 @@
+KNOWLEDGE BASE - HEAD APPROVAL MODULE
+=====================================
+
+DESKRIPSI UMUM
+==============
+Head Approval Module adalah fitur untuk Department Head atau Pejabat Pemimpin untuk melakukan review dan approval terhadap Purchase Delivery (PD) yang telah diajukan oleh staff. Modul ini memungkinkan head untuk melihat detail invoice, budget information, dan membuat keputusan untuk approve atau reject dengan alasan yang jelas.
+
+SASARAN PENGGUNA
+================
+- Department Head / Pejabat Pemimpin
+- Division Head / Kepala Divisi
+- Staff dengan wewenang head approval
+- Finance Manager (view purpose)
+
+FITUR UTAMA
+===========
+
+1. DAFTAR INVOICE MENUNGGU APPROVAL
+   
+   Grid utama menampilkan invoice yang status PD Need Head Approval dengan:
+   
+   A. Kolom yang ditampilkan:
+      - Date: Tanggal dokumen dibuat (format sesuai setting)
+      - Document No: Nomor PD unik dari sistem
+      - Category: Kategori PD (Pembelian Barang, Outsourcing, dll)
+      - Description: Deskripsi singkat invoice
+      - Currency: Mata uang transaksi (IDR, USD, dll)
+      - Amount: Total nilai invoice
+      - Vendor: Nama supplier atau penyedia barang jasa
+      - Invoice No: Nomor referensi invoice dari vendor
+      - PV No: Nomor PV Payment Voucher jika sudah dibuat
+      - Status: Status approval saat ini
+      - Approval: Tombol untuk buka detail dan lakukan approval
+   
+   B. Fitur Grid:
+      - Export ke Excel: Klik Export to Excel untuk download data
+      - Pagination: Data per 10 item per halaman (bisa diatur)
+      - Filter: Dapat memfilter berdasarkan kolom apapun
+      - Sorting: Dapat diurutkan dengan klik header kolom
+      - Default sort: Berdasarkan Date descending terbaru duluan
+      - Row Color: Invoice dengan status NEED HEAD APPROVAL ditampilkan warna hijau
+   
+   C. Status Filter:
+      Hanya menampilkan invoice dengan status PD Need Head Approval
+      Sistem otomatis filter pada saat load halaman
+
+2. DETAIL APPROVAL FORM
+
+   Ketika head klik tombol Approval, popup window membuka ukuran 90vw x 70vh yang centered.
+   Form terdiri dari 2 tab: Approval dan File
+
+   TAB APPROVAL Default
+   
+   A. REQUEST DETAIL Bagian Atas
+      
+      Header Information:
+      - Request Number: Nomor PD read-only
+      - Requested By: Nama karyawan yang membuat request read-only
+      - Date: Tanggal dokumen read-only
+      - Description: Deskripsi invoice read-only
+      - Vendor: Nama supplier read-only
+      - Foreign Amount: Nilai dalam currency asli jika bukan IDR
+      - Local Amount: Nilai dalam mata uang lokal IDR
+      - Status: Status approval saat ini ditampilkan warna, merah jika need approval
+      
+      Warna Status:
+      - Merah Red: PD Need Head Approval atau PD Reject
+      - Hijau Green: OK atau sudah approved
+   
+   B. BUDGET INFORMATION Bagian Tengah
+      
+      Grid yang menampilkan breakdown budget per line item:
+      
+      Kolom:
+      - Division: Divisi yang mengeluarkan biaya
+      - Department: Department yang mengeluarkan biaya
+      - Budget: Kode dan deskripsi budget COA yang digunakan
+      - Amount: Jumlah yang dialokasikan untuk line item ini
+      - Budget Status: Status budget
+        * OK Available: Budget masih cukup
+        * Cross-Year: Budget sudah terlampaui batas tahun
+        * Over Budget: Jumlah melebihi sisa budget
+      
+      Fitur Grid:
+      - Row color: Hijau untuk OK, Merah untuk Over Budget atau Cross-Year
+      - Tombol View: Klik untuk melihat detail budget breakdown
+      
+      Ketika klik View button:
+      - Popup membuka detail budget
+      - Menampilkan company name, bulan, tahun
+      - Division dan Department info
+      - Budget code dan deskripsi
+      - Detail breakdown:
+        * Current: Status current budget
+        * Month: Budget yang digunakan bulan ini
+        * Accumulation: Budget yang sudah digunakan secara kumulatif
+        * Year: Budget year to date
+      - Budget Status ditampilkan warna red jika ada issue
+   
+   C. CHECKBOX PERSETUJUAN Kondisional
+      
+      Jika ada item dengan status Over Budget:
+      - Checkbox "I have understood the over budget issue and agree to use the budget" muncul
+      - Tombol Approve akan disabled sampai checkbox dicheck
+      - Ketika checkbox dicheck, tombol Approve menjadi enabled
+      - Ini adalah cara sistem memastikan head sudah aware tentang over budget
+   
+   D. TOMBOL ACTION Bagian Bawah
+      
+      Dua tombol tersedia:
+      1. Reject Tombol Merah
+         - Klik untuk menolak invoice
+         - Sistem akan meminta alasan rejeksi
+         - Popup dialog muncul dengan pertanyaan mengapa dokumen ditolak
+         - Format pertanyaan: Why is the request DocNo worth Amount not approved
+         - Head harus mengisi alasan minimal 1 karakter
+         - Jika tidak ada alasan, tombol OK tidak bisa diklik
+         - Setelah diklik OK, sistem menampilkan persetujuan rejeksi
+         - Jika dikonfirmasi, invoice status jadi PD Reject by Head
+      
+      2. Approve Tombol Hijau
+         - Klik untuk approve invoice
+         - Sistem akan meminta konfirmasi final
+         - Pesan konfirmasi: Are you sure want to APPROVE document DocNo
+         - Jika ada over budget, checkbox HARUS dicheck terlebih dahulu
+         - Setelah dikonfirmasi, invoice status berubah ke PD Need Over Budget Approval
+         - Invoice akan masuk ke tahap approval berikutnya Finance Manager atau Over Budget Specialist
+   
+   TAB FILE Dokumen Pendukung
+   
+   - Grid menampilkan dokumen-dokumen yang di-upload saat create invoice
+   - Kolom:
+     * Document Type: Jenis dokumen Invoice, Faktur Pajak, BAST, PO, dll
+     * Code: Kode sistem dokumen
+     * Document No: Nomor referensi dokumen
+     * Information: Keterangan tambahan dari uploader
+     * File: Nama file atau link ke file
+     * Status: Checkbox untuk status verifikasi dokumen
+   
+   - Fitur: Read-only untuk head hanya lihat, tidak bisa edit atau delete
+
+WORKFLOW ALUR KERJA HEAD APPROVAL
+==================================
+
+1. TAHAP PERSIAPAN
+   - Head login ke sistem
+   - Masuk ke modul Head Approval
+   - Sistem otomatis load daftar invoice yang need head approval
+   - Hanya invoice dengan status PD Need Head Approval yang ditampilkan
+
+2. TAHAP REVIEW INVOICE
+   - Head lihat daftar invoice di grid
+   - Head dapat filter search invoice yang ingin di-review
+   - Double-check informasi seperti vendor, amount, description
+   - Head dapat export daftar ke Excel jika perlu untuk cross-check
+
+3. TAHAP PEMBUKAAN DETAIL
+   - Head klik tombol Approval pada invoice yang ingin diapprove
+   - Popup membuka dengan tab Approval tampil pertama
+   - Sistem menampilkan request detail
+   - Sistem otomatis load budget information
+   - Sistem mengecek apakah ada over budget dari detail
+   - Jika ada over budget: checkbox "I have understood over budget" muncul dan tombol Approve menjadi disabled
+
+4. TAHAP REVIEW BUDGET
+   - Head lihat grid Budget Information
+   - Head dapat klik tombol View untuk melihat detail breakdown budget
+   - Check apakah budget status OK atau ada issue
+   - Jika ada Cross-Year atau Over Budget:
+     * Head perlu mempertimbangkan untuk approve atau reject
+     * Jika approve, head HARUS check checkbox persetujuan
+     * Jika reject, head harus memberikan alasan jelas
+
+5. TAHAP REVIEW DOKUMEN PENDUKUNG
+   - Head klik tab File
+   - Review dokumen-dokumen yang sudah di-upload
+   - Pastikan dokumen lengkap dan sesuai
+   - Jika dokumen kurang atau tidak sesuai, head dapat reject dengan alasan
+
+6. TAHAP PENGAMBILAN KEPUTUSAN
+   
+   OPSI A: APPROVE INVOICE
+   - Head satisfied dengan data dan budget
+   - Klik tombol Approve
+   - Jika ada over budget: HARUS check checkbox dulu
+   - Sistem tampilkan konfirmasi final
+   - Klik OK untuk confirm
+   - Invoice status berubah ke PD Need Over Budget Approval atau PD Need Finance Approval
+   - Head kembali ke grid daftar
+   
+   OPSI B: REJECT INVOICE
+   - Head menemukan masalah atau tidak setuju
+   - Klik tombol Reject
+   - Sistem meminta alasan rejeksi via dialog
+   - Head harus isi alasan minimal 1 karakter
+   - Klik OK
+   - Sistem tampilkan preview alasan
+   - Klik OK lagi untuk confirm rejeksi
+   - Invoice status berubah ke PD Reject by Head
+   - Email notifikasi terkirim ke requester
+
+7. POST-APPROVAL
+   - Head bisa lihat update status di grid
+   - Approved invoice akan hilang dari list status sudah berubah
+   - Rejected invoice juga akan hilang requester perlu edit dan resubmit
+   - Head dapat filter atau search untuk lihat history
+
+FLOW OVER BUDGET HANDLING
+==========================
+
+Ketika head approval dengan ada item over budget:
+
+1. DETECTION STAGE
+   - Sistem saat load detail invoice, check setiap line item
+   - Jika ada line item dengan bg_status bukan OK:
+     * Set button Approve menjadi disabled
+     * Tampilkan section overBgExist checkbox section
+     * Stop loading sampai head acknowledge
+
+2. ACKNOWLEDGMENT STAGE
+   - Head HARUS check checkbox I have understood the over budget issue and agree to use the budget
+   - Saat checkbox diklik, button Approve menjadi enabled
+   - Ini memastikan head fully aware tentang budget issue
+
+3. DECISION STAGE
+   - Head dapat memilih untuk:
+     * TERIMA: Klik Approve setelah check checkbox
+     * TOLAK: Klik Reject dan berikan alasan
+
+4. BACKEND PROCESSING
+   - Jika approve: Over budget info disimpan untuk approval berikutnya
+   - Jika reject: Alasan rejeksi disimpan, requester bisa edit dan resubmit
+
+SPECIAL STATUS
+==============
+
+PD Need Head Approval
+- Status awal setelah user create invoice
+- Head atau Department Head harus approve atau reject
+- Jika approve dengan no over budget: lanjut ke PD Need Finance Approval
+- Jika approve dengan over budget: lanjut ke PD Need Over Budget Approval
+- Jika reject: status jadi PD Reject by Head
+
+PD Reject by Head
+- Head telah menolak invoice
+- Requester akan menerima notifikasi dengan alasan
+- Requester dapat membuka invoice, lihat rejection reason
+- Requester dapat edit dan resubmit untuk approval ulang
+- Atau requester dapat cancel invoice jika fitur tersedia
+
+FIELD REFERENCE
+===============
+
+REQUEST DETAIL SECTION:
+- lblDocNo: Nomor PD from doc_no field
+- lblStaff: Nama staff pengirim from staff field
+- lblDate: Tanggal dokumen from doc_date, format sesuai setting
+- lblDescs: Deskripsi invoice from descs
+- lblVendor: Nama vendor from vendor_Name
+- lblForeignAmount: Jumlah dalam currency asli from amount, if currency != IDR
+- lblLocalAmount: Jumlah dalam IDR from local_amount, if available or from amount
+- lblStatus: Status approval from status, with conditional coloring
+
+BUDGET INFORMATION SECTION:
+- gridDetailInv: Menampilkan breakdown invoice per line item dengan:
+  - div_descs: Division
+  - dept_descs: Department
+  - coa_code + coa_descs: Budget code dan deskripsi
+  - amount: Amount per line
+  - bg_status_descs: Status budget deskripsi
+
+GRID DETAIL COA Saat klik View:
+- category: Category Type current
+- t_month: Amount yang digunakan bulan ini
+- t_accum: Amount accumulation
+- t_year: Amount year to date
+
+GRID DETAIL PD Tab File:
+- SubCategory: Jenis dokumen
+- PdCodeNo: Kode dokumen
+- PdPathNo: Nomor dokumen
+- PdDesc: Deskripsi dokumen
+- FileName: Nama file
+- IsCheck: Status checkbox
+
+API ENDPOINTS YANG DIGUNAKAN
+=============================
+
+GET Invoice Head Index
+- Mengambil list invoice dengan status PD Need Head Approval
+- Parameter: compCode
+
+GET Invoice Head Detail
+- Mengambil detail breakdown invoice
+- Parameter: docNo
+- Menampilkan per line item dengan budget status
+
+GET Invoice Head DetailCoa
+- Mengambil detail budget breakdown untuk satu item
+- Parameter: docNo, recNo
+- Menampilkan current, month, accumulation, year
+
+GET Invoice Head PdDoc
+- Mengambil daftar dokumen pendukung
+- Parameter: pdNo
+
+POST Invoice Head Approve
+- Mengirim approval atau rejection
+- Parameter body:
+  {
+    action: A approve atau X reject,
+    docNo: nomor dokumen,
+    headAppr: true false,
+    headApprNote: alasan untuk rejeksi
+  }
+
+GET Master Company GetFACompany
+- Mengambil data company untuk header display
+- Parameter: companyCode
+
+VALIDASI RULES
+==============
+
+1. MANDATORY FIELDS
+   - Request Number: Read-only, tidak perlu diisi
+   - Amount: Read-only, tidak perlu diisi
+   - Semua field di request detail adalah read-only
+
+2. OVER BUDGET VALIDATION
+   - Sistem otomatis check setiap line item
+   - Jika ada item dengan status bukan OK:
+     * Checkbox section muncul
+     * Approve button disabled
+   - Head HARUS check checkbox baru boleh approve
+   - Reject tidak ada batasan tanpa check checkbox
+
+3. REJECTION VALIDATION
+   - Alasan rejeksi harus minimal 1 karakter tidak boleh kosong
+   - Jika kosong, system show alert Please fill in the rejection reason
+   - Sistem akan tampilkan preview alasan sebelum final confirm
+
+4. DATA CONSISTENCY
+   - Status filter hanya show PD Need Head Approval
+   - Setelah approve reject, data berubah dan otomatis refresh
+   - Jika user masih di popup approval saat ada reject, popup akan close
+   - Detail tidak bisa di-edit, hanya view dan approve reject
+
+BEST PRACTICES HEAD APPROVAL
+=============================
+
+1. REVIEW CHECKLIST
+   Sebelum approve invoice, check:
+   - Vendor name: Apakah vendor sudah terdaftar dan sesuai
+   - Description: Apakah deskripsi jelas dan sesuai kebutuhan
+   - Amount: Apakah jumlah reasonable dan sesuai quotation
+   - Budget: Apakah budget code sesuai divisi department
+   - Dokumen: Apakah dokumen lengkap dan sah
+
+2. BUDGET REVIEW
+   - Jika ada over budget, tanyakan pada requester sebelum approve
+   - Pastikan funding atau reallocation sudah clear
+   - Dokumentasikan keputusan approval over budget
+
+3. REJECTION REASON
+   - Berikan alasan yang jelas dan specific
+   - Contoh: Vendor tidak sesuai, harap gunakan vendor yang sudah disetujui
+   - Contoh: Amount terlalu tinggi, harap cross-check dengan quotation
+   - Jangan hanya tulis Reject tanpa alasan
+
+4. TIMING
+   - Approve invoice dalam timeframe yang reasonable jangan terlalu lama
+   - Koordinasi dengan finance untuk budget approval jika needed
+   - Monitor invoice yang sudah di-reject untuk resubmission
+
+5. FOLLOW-UP
+   - Jika ada rejected invoice, follow-up dengan requester
+   - Pastikan requester melakukan perbaikan
+   - Pastikan requester resubmit jika sudah diperbaiki
+
+TROUBLESHOOTING
+===============
+
+Issue: Grid invoice tidak menampilkan data
+Solusi: 
+- Refresh halaman F5 atau Ctrl F5
+- Check internet connection
+- Login ulang
+- Hubungi IT jika masih tidak muncul
+
+Issue: Tombol Approve tidak bisa diklik
+Solusi:
+- Check apakah ada over budget lihat checkbox section
+- Jika ada over budget, HARUS check checkbox terlebih dahulu
+- Jika tidak ada over budget, try refresh browser
+
+Issue: Tombol Reject tidak response
+Solusi:
+- Pastikan sudah fill alasan rejeksi
+- Alasan harus minimal 1 karakter tidak boleh kosong
+- Try click lagi setelah clear field
+
+Issue: Approval gagal dengan error message
+Solusi:
+- Screenshot error dan catat nomor dokumen
+- Hubungi IT Support dengan error message lengkap
+- Jangan close browser, coba approve ulang
+
+Issue: Invoice masih ada di list setelah approve
+Solusi:
+- Refresh grid klik refresh button atau F5
+- Invoice yang sudah approve akan hilang dari PD Need Head Approval list
+
+Issue: Budget Detail tidak bisa dibuka
+Solusi:
+- Check apakah row sudah terpilih
+- Double-click pada row untuk open detail
+- Atau klik View button di row tersebut
+
+Issue: Dokumen di Tab File tidak tampil lengkap
+Solusi:
+- Scroll ke kanan untuk lihat kolom lainnya
+- Check apakah dokumen sudah di-upload saat create invoice
+- Tab File adalah read-only, tidak bisa edit dari sini
+
+SCREEN DESCRIPTION
+==================
+
+MAIN GRID Default View
+- Ukuran: Full width, height 80vh
+- Background: Blue header dengan white content area
+- Color coding: Green rows untuk PD Need Head Approval
+- Pagination: 1-10 items per page default 10
+
+DETAIL POPUP Saat Approval
+- Ukuran: 90vw x 70vh
+- Position: Center auto-centered
+- Title bar: Head Approval
+- Draggable: No fixed position
+- Close button: X di top-right
+- Maximize Minimize: Tidak ada fixed size
+
+REQUEST DETAIL SECTION
+- Label + Value format
+- White background
+- Bold font untuk label
+- Organized dalam 3 kolom
+
+BUDGET INFORMATION SECTION
+- Grid format
+- Header: Blue background
+- Rows: Alternating white dan light gray
+- Color coding: Green untuk OK, Red untuk Over Budget
+
+ACTION BUTTONS
+- Reject: Red button, align kiri
+- Approve: Green button, align kiri
+- Position: Bottom of tab content
+- Spacing: Margin top 5 mt-5
+
+COLUMN DESCRIPTION
+==================
+
+DATE COLUMN
+- Format: DD MM YYYY sesuai setting
+- Sortable: Yes
+- Filterable: Yes date picker
+- Alignment: Center
+- Width: Auto
+
+DOCUMENT NO COLUMN
+- Format: Text e.g., PDKI260101001
+- Sortable: Yes
+- Filterable: Yes text contains
+- Alignment: Center
+- Width: Auto
+
+CATEGORY COLUMN
+- Format: Text e.g., Pembelian Barang, Outsourcing
+- Sortable: Yes
+- Filterable: Yes dropdown dari master
+- Alignment: Center
+- Width: 250
+
+DESCRIPTION COLUMN
+- Format: Text
+- Sortable: Yes
+- Filterable: Yes text contains
+- Alignment: Left
+- Width: 630
+
+CURRENCY COLUMN
+- Format: Text IDR, USD, SGD, dll
+- Sortable: Yes
+- Filterable: Yes
+- Alignment: Center
+- Width: 65
+
+AMOUNT COLUMN
+- Format: Number dengan 2 decimal n2
+- Sortable: Yes
+- Filterable: Yes
+- Alignment: Right
+- Width: 130
+
+VENDOR COLUMN
+- Format: Text full vendor name
+- Sortable: Yes
+- Filterable: Yes text contains
+- Alignment: Center
+- Width: 280
+
+INVOICE NO COLUMN
+- Format: Text
+- Sortable: Yes
+- Filterable: Yes
+- Alignment: Center
+- Width: 115
+
+PV NO COLUMN
+- Format: Text
+- Sortable: Yes
+- Filterable: Yes
+- Alignment: Center
+- Width: 115
+
+STATUS COLUMN
+- Format: Text dengan color coding
+- Sortable: Yes
+- Filterable: Yes dropdown with all status options
+- Alignment: Center
+- Width: Auto
+
+APPROVAL COLUMN
+- Format: Button Approval blue
+- Sortable: No
+- Filterable: No
+- Alignment: Center
+- Width: Auto
+- Action: Open detail approval form
+
+FILTERING SORTING
+=================
+
+Default Filter:
+- Status = PD Need Head Approval otomatis applied
+
+Available Filters:
+- Date: Dengan date range picker
+- Document No: Text search
+- Category: Dropdown dari master
+- Description: Text search
+- Currency: Text search atau dropdown
+- Amount: Numeric filter
+- Vendor: Text search
+- Invoice No: Text search
+- PV No: Text search
+- Status: Dropdown dengan semua available status
+
+Multiple Filters:
+- Dapat apply multiple filters sekaligus
+- Filter di-combine dengan AND logic
+- Contoh: Category = Pembelian Barang AND Status = PD Need Head Approval
+
+Sorting:
+- Default: Sort by Date descending terbaru duluan
+- Dapat diubah dengan click header kolom
+- Arrow indicator di header menunjukkan sort direction
+- Hanya 1 kolom bisa di-sort pada saat yang sama
+
+EXPORT FUNCTIONALITY
+====================
+
+Export to Excel:
+- Button label: Export to Excel
+- Format: .xlsx Excel format
+- Filename: Head-Invoice-Export.xlsx
+- Include: Semua data all pages
+- Include header: Yes
+- Include filter: No export all data regardless of filter
+
+Cara export:
+1. Klik Export to Excel button di toolbar
+2. Browser akan download file Head-Invoice-Export.xlsx
+3. File akan berisi:
+   - Header row dengan kolom names
+   - Data row untuk setiap invoice
+   - Format number sudah sesuai currency dll
+   - Format date sesuai setting
+
+KEYBOARD SHORTCUTS
+==================
+
+F5: Refresh grid data
+Ctrl F5: Hard refresh clear cache
+Escape: Close detail popup jika tidak ada unsaved change
+Enter: Tidak applicable di form ini gunakan mouse
+
+NOTIFICATION SYSTEM
+====================
+
+Success Messages:
+- Setelah approve: Invoice approved and forwarded to next stage
+- Setelah reject: Invoice rejected successfully
+
+Alert Messages:
+- Over budget warning: Tampil otomatis saat ada over budget
+- Missing rejection reason: Please fill in the rejection reason to continue
+
+Error Messages:
+- Connection error: Request Status XXX Status Text YYY
+- Data not found: No records available
+
+PERMISSION SECURITY
+===================
+
+Field Access:
+- Request Detail: Read-only tidak bisa edit
+- Budget Information: Read-only tidak bisa edit
+- Dokumen Tab: Read-only tidak bisa edit
+- Approval buttons: Enabled jika user adalah authorized head
+
+Authorization Check:
+- Sistem check apakah user adalah department head untuk invoice
+- Jika bukan authorized head, grid akan kosong
+- Hanya invoice yang seharusnya di-approve oleh user yang ditampilkan
+
+Data Security:
+- Semua data encrypted dalam transit HTTPS
+- API call di-secure dengan Authorization header
+- Token based authentication

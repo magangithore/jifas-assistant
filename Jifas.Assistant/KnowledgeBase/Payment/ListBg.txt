@@ -1,0 +1,207 @@
+================================================================================
+DOKUMENTASI FITUR: DAFTAR CEK DAN BILYET GIRO (LIST CEK/BG)
+================================================================================
+
+PENGERTIAN UMUM:
+Fitur ini merupakan halaman untuk menampilkan dan mengelola daftar semua Cek dan 
+Bilyet Giro (BG) yang telah dibuat dalam sistem. Halaman ini memungkinkan tim Finance 
+dan Accounting untuk memantau status pembayaran melalui instrumen Cek dan BG.
+
+================================================================================
+INFORMASI YANG DITAMPILKAN:
+================================================================================
+
+Halaman ini menampilkan tabel dengan kolom-kolom berikut:
+
+1. TANGGAL (Date)
+   - Menunjukkan tanggal pembuatan atau penerbitan Cek/BG
+   - Format: Sesuai dengan format tanggal di sistem (misal: DD/MM/YYYY)
+   - Dapat diurutkan: Dari tanggal terbaru atau terlamanya
+   - Dapat dicari: Dengan memilih tanggal spesifik
+
+2. NO. CEK/BG (Check/BG Number)
+   - Merupakan nomor unik untuk setiap Cek atau Bilyet Giro
+   - Digunakan untuk identifikasi transaksi pembayaran
+   - Dapat disaring berdasarkan nomor yang dicari
+
+3. BANK (Bank)
+   - Menunjukkan nama Bank tempat Cek/BG diterbitkan
+   - Contoh: BCA, CAPIT, MANDIRI, DLL
+   - Dapat difilter untuk melihat hanya dari bank tertentu
+
+4. DESKRIPSI (Description)
+   - Berisi keterangan detail mengenai tujuan pembayaran
+   - Contoh: "Pembayaran gaji karyawan", "Pembayaran tagihan listrik", dll
+   - Kolom ini memberikan informasi konteks tambahan tentang pembayaran
+
+5. VENDOR (Vendor)
+   - Menunjukkan kode atau nama pihak yang menerima pembayaran
+   - Dapat berupa nama perusahaan atau nama penerima
+   - Membantu untuk tracking pembayaran ke vendor/pihak tertentu
+
+6. AMOUNT (Jumlah Pembayaran)
+   - Menampilkan nilai rupiah dari Cek/BG
+   - Format: Dengan pemisah ribuan dan dua desimal (contoh: 1.234.567,89)
+   - Dapat digunakan untuk tracking total pembayaran
+
+7. STATUS (Status)
+   - Menunjukkan kondisi pembayaran saat ini
+   - Status yang mungkin ada: P (Pending), A (Approved), C (Completed), dll
+   - Membantu untuk memantau tahap pembayaran
+
+8. UNTUK PEMBAYARAN (For Payment / Payment Purpose)
+   - Menunjukkan nomor atau referensi invoice/dokumen yang dibayar
+   - Jika kosong, akan ditampilkan "-"
+   - Membantu melacak invoice atau dokumen terkait pembayaran
+
+================================================================================
+CARA MENGGUNAKAN HALAMAN INI:
+================================================================================
+
+A. PENCARIAN DAN PENYARINGAN DATA:
+
+1. Cari Berdasarkan Tanggal:
+   - Klik pada kolom "Tanggal"
+   - Muncul pemilih tanggal (Date Picker)
+   - Pilih tanggal spesifik untuk melihat pembayaran pada tanggal tersebut
+
+2. Cari Berdasarkan Nomor Cek/BG:
+   - Klik pada kolom "No. Cek/BG"
+   - Ketik nomor yang ingin dicari
+   - Sistem akan menampilkan hasil yang cocok
+
+3. Cari Berdasarkan Bank:
+   - Klik pada kolom "Bank"
+   - Ketik nama bank yang ingin dicari
+   - Contoh: BCA, CAPIT, MANDIRI
+
+4. Cari Berdasarkan Deskripsi:
+   - Klik pada kolom "Deskripsi"
+   - Ketik kata kunci terkait deskripsi pembayaran
+   - Sistem akan menampilkan semua pembayaran yang sesuai kata kunci
+
+5. Cari Berdasarkan Vendor:
+   - Klik pada kolom "Vendor"
+   - Ketik kode atau nama vendor yang dicari
+
+6. Cari Berdasarkan Status:
+   - Klik pada kolom "Status"
+   - Ketik status yang ingin dilihat
+
+B. PENGURUTAN DATA:
+
+- Secara default, data diurutkan dari tanggal terbaru (Newest First)
+- Klik pada header kolom untuk mengubah urutan (Ascending/Descending)
+- Dapat mengurutkan berdasarkan kolom manapun
+
+C. PAGINATION (Pembagian Halaman):
+
+- Tampilan awal menampilkan 10 data per halaman
+- Dapat mengubah jumlah data per halaman (10, 25, 50, dll)
+- Gunakan tombol navigasi untuk berpindah ke halaman berikutnya atau sebelumnya
+- Terlihat indicator "1 - 10 of 12 items" untuk melihat posisi saat ini
+
+================================================================================
+FITUR EKSPOR DATA:
+================================================================================
+
+EXPORT KE EXCEL:
+
+1. Klik tombol "Excel" di bagian atas tabel
+2. Sistem akan membuat file Excel yang bernama: "Payment-CekBG-Export.xlsx"
+3. File ini akan berisi SEMUA data Cek/BG (bukan hanya halaman yang terlihat)
+4. Gunakan file ini untuk:
+   - Backup data
+   - Analisis lebih lanjut di spreadsheet
+   - Laporan kepada management
+   - Rekonsiliasi dengan laporan bank
+   - Audit trail dan dokumentasi pembayaran
+
+================================================================================
+FITUR LAINNYA:
+================================================================================
+
+1. RESIZE (Ubah Ukuran Kolom):
+   - Arahkan mouse ke garis pemisah antar kolom
+   - Drag untuk memperbesar atau memperkecil lebar kolom
+   - Berguna jika ingin melihat data yang terpotong
+
+2. REORDER (Susun Ulang Kolom):
+   - Dapat mengubah urutan kolom sesuai kebutuhan
+   - Drag header kolom ke posisi yang diinginkan
+
+3. COLUMN MENU:
+   - Klik tombol menu di header kolom
+   - Dapat menyembunyikan/menampilkan kolom tertentu
+   - Lakukan sesuai kebutuhan analisis data
+
+4. SELECT/HIGHLIGHT BARIS:
+   - Klik pada suatu baris untuk memilihnya
+   - Baris akan ter-highlight untuk action selanjutnya
+
+================================================================================
+CATATAN PENTING UNTUK PENGGUNA:
+================================================================================
+
+1. DATA REAL-TIME:
+   - Data yang ditampilkan diambil dari sistem secara real-time
+   - Pastikan koneksi internet stabil saat mengakses halaman
+
+2. HANYA BACA (READ-ONLY):
+   - Halaman ini hanya untuk melihat dan menganalisis data
+   - Tidak dapat mengedit data langsung dari halaman ini
+   - Untuk membuat Cek/BG baru, gunakan fitur "Create" di menu Payment
+
+3. FILTER ROW (FILTER BARIS):
+   - Setiap kolom memiliki field pencarian individual
+   - Dapat menggabungkan beberapa filter sekaligus untuk hasil yang lebih specific
+   - Klik icon filter di setiap kolom untuk melihat opsi filter
+
+4. PERFORMA:
+   - Jika data terlalu banyak, sistem akan melakukan server-side paging
+   - Ini menjaga performa halaman tetap baik
+
+================================================================================
+CONTOH PENGGUNAAN SEHARI-HARI:
+================================================================================
+
+SKENARIO 1: Cek Pembayaran yang Pending
+- Klik kolom "Status"
+- Ketik "P" untuk filter Pending
+- Lihat semua pembayaran yang masih belum dikonfirmasi
+
+SKENARIO 2: Audit Pembayaran ke Vendor Tertentu
+- Klik kolom "Vendor"
+- Ketik kode vendor yang ingin diaudit
+- Lihat semua transaksi pembayaran ke vendor tersebut
+
+SKENARIO 3: Laporan Pembayaran Bulanan
+- Klik kolom "Tanggal" dan pilih range tanggal bulan ini
+- Klik tombol Excel untuk export
+- Gunakan file Excel untuk membuat laporan ke management
+
+SKENARIO 4: Rekonsiliasi Bank
+- Filter berdasarkan Bank dan Tanggal
+- Bandingkan dengan laporan bank bulanan
+- Pastikan semua Cek/BG sudah tercatat
+
+================================================================================
+TROUBLESHOOTING / PERTANYAAN UMUM:
+================================================================================
+
+Q: Data tidak muncul di halaman?
+A: Cek koneksi internet Anda, atau hubungi IT Support
+
+Q: Bagaimana cara menambah Cek/BG baru?
+A: Gunakan menu "Create" di module Payment, bukan di halaman List ini
+
+Q: Dapatkah saya menghapus atau mengedit data di sini?
+A: Tidak, halaman List hanya untuk viewing/melihat. Untuk edit, gunakan fitur 
+   yang sesuai di menu Payment
+
+Q: Dimana data ini disimpan?
+A: Semua data tersimpan di database sistem terpusat Jifas
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================

@@ -1,0 +1,208 @@
+﻿Master Roles
+
+Master Roles digunakan untuk mengelola daftar peran (roles) yang menentukan hak akses dan otorisasi pengguna di seluruh sistem JIFAS. Setiap role mewakili posisi atau fungsi tertentu dengan hak akses yang sudah dikonfigurasi, memastikan setiap pengguna hanya dapat mengakses fitur dan data sesuai dengan peran mereka.
+
+Deskripsi
+
+Master Roles adalah fondasi kontrol akses dalam JIFAS yang mengelompokkan pengguna berdasarkan fungsi dan tanggung jawab mereka. Dengan membuat dan mengelola roles, sistem dapat mengontrol siapa saja yang dapat melihat, membuat, mengubah, atau menghapus data di setiap modul JIFAS.
+
+Fungsi
+
+1. Mendefinisikan Peran Pengguna: Menciptakan role baru dengan kode dan nama yang jelas untuk setiap posisi/fungsi
+2. Mengatur Hak Akses: Menentukan modul dan fitur apa saja yang dapat diakses oleh setiap role
+3. Mengontrol Otorisasi: Membatasi pengguna dengan role tertentu agar hanya bisa melakukan operasi yang diizinkan
+4. Mengelompokkan Pengguna: Memudahkan assignment pengguna ke role yang sesuai dengan posisi mereka
+5. Audit dan Kontrol: Melacak siapa yang berhak melakukan tindakan tertentu dalam sistem
+
+Tujuan
+
+Memastikan hak akses yang tepat untuk setiap pengguna sesuai posisi dan tanggung jawab
+Melindungi data sensitif dengan membatasi akses hanya ke pengguna yang berwenang
+Mempermudah onboarding pengguna baru dengan assignment role yang sudah dikonfigurasi
+Mendukung audit trail dan keamanan sistem
+Memfasilitasi segregasi tugas (separation of duties) di organisasi
+
+Berikut adalah daftar role yang memiliki otoritas untuk membuat atau mengubah data Roles:
+WMTR: Webmaster
+
+Create (Menambah Role Baru)
+1. Klik tombol Create di toolbar bagian atas grid
+2. Di grid, baris baru akan ditambahkan untuk input
+3. Lengkapi field yang diperlukan:
+   Role Code: Kode unik role (contoh: FINA, SPVR, HDFA)
+   Role Name: Nama lengkap role (contoh: Finance, Supervisor Finance)
+   Description: Deskripsi peran (optional)
+   Company Code: Kode perusahaan yang menggunakan role ini
+   Active: Centang jika role aktif digunakan
+4. Tekan Enter atau klik di luar baris untuk menyimpan
+5. Notifikasi sukses akan ditampilkan
+6. Grid otomatis refresh menampilkan role baru
+
+Update (Memperbarui Data Role)
+1. Cari role yang ingin diubah pada grid
+2. Klik tombol Edit (ikon pensil) pada baris role tersebut
+3. Baris akan menjadi editable (dapat diubah)
+4. Ubah field yang diperlukan:
+   Role Code (jika perlu)
+   Role Name
+   Description
+   Company Code
+   Status Active/Inactive
+5. Tekan Enter atau klik di luar baris untuk menyimpan
+6. Notifikasi sukses akan ditampilkan
+7. Perubahan langsung berlaku untuk semua pengguna dengan role tersebut
+
+Delete (Menghapus Role)
+1. Cari role yang ingin dihapus pada grid
+2. Klik tombol Delete (ikon tempat sampah) pada baris role tersebut
+3. Jendela konfirmasi akan muncul: "Are you sure you want to delete role code [KODE]?"
+4. Klik Yes untuk mengkonfirmasi penghapusan
+5. Klik No jika tidak jadi menghapus
+6. Role akan dihapus dari sistem
+7. Notifikasi sukses akan ditampilkan
+8. Grid otomatis refresh
+
+Role Code: Menggunakan input Teks. Wajib diisi (Ya). Berupa kode unik role (contoh: WMTR, FINA, SPVR, HDFA, MGFA).
+Role Name: Menggunakan input Teks. Wajib diisi (Ya). Berupa nama lengkap role (contoh: Webmaster, Finance, Supervisor Finance).
+Description: Menggunakan input Teks. Wajib diisi (Ya). Berisi deskripsi singkat mengenai fungsi dari role tersebut.
+Company Code: Menggunakan input Teks. Wajib diisi (Ya). Berupa kode perusahaan yang menggunakan role ini.
+Active: Menggunakan input Checkbox. Tidak wajib diisi (Tidak). Menunjukkan status role, di mana centang berarti Aktif dan kosong berarti Inactive.
+
+1. Teks (Text Input)
+Input untuk teks yang dapat berisi huruf, angka, dan karakter khusus:
+Role Code: Kode singkat unik (contoh: WMTR, FINA, SPVR)
+Role Name: Nama lengkap role (contoh: Webmaster, Finance, Supervisor Finance)
+Description: Penjelasan fungsi role
+Company Code: Kode perusahaan (contoh: PT001, PT002)
+
+2. Checkbox (Checklist)
+Input untuk status on/off:
+Active: Jika dicentang, role aktif dan dapat digunakan
+Jika tidak dicentang, role inactive dan tidak dapat di-assign ke pengguna baru
+
+Fitur-fitur Tabel Data
+
+1. Pengurutan (Sorting)
+Klik pada nama kolom header untuk mengurutkan data:
+Klik sekali: Urutan A ke Z (atau angka kecil ke besar)
+Klik dua kali: Urutan Z ke A (atau angka besar ke kecil)
+Default: Urutan berdasarkan Role Code
+
+2. Pencarian/Filter (Filter)
+Pada setiap kolom terdapat kolom pencarian tersendiri:
+Role Code: Ketik kode untuk mencari (contoh: FINA, WMTR)
+Role Name: Ketik nama untuk mencari (contoh: Finance, Supervisor)
+Description: Ketik deskripsi untuk mencari
+Company Code: Ketik kode perusahaan untuk mencari
+Active: Filter berdasarkan status (True/False atau Yes/No)
+Filter real-time saat mengetik
+
+3. Pagination (Pembagian Halaman)
+Jika ada banyak role, data akan dibagi per halaman:
+Pilih jumlah baris per halaman menggunakan dropdown di kanan bawah
+Gunakan tombol < Sebelumnya dan Selanjutnya > untuk pindah halaman
+Atau pilih nomor halaman langsung dari yang tersedia
+
+4. Resizable Columns (Kolom Dapat Diubah Ukurannya)
+Geser garis vertikal antara header kolom untuk mengubah lebar
+Lebar kolom yang diatur akan diingat oleh browser
+
+5. Inline Editing (Edit Langsung di Grid)
+Edit dilakukan langsung di dalam grid, tidak ada popup
+Tekan Enter untuk menyimpan
+Tekan Escape untuk membatalkan
+
+6. Action Buttons (Tombol Aksi)
+Setiap baris memiliki dua tombol:
+Edit (ikon pensil): Mengubah data role
+Delete (ikon tempat sampah): Menghapus role dengan konfirmasi
+
+Fitur Khusus Roles
+
+1. Role Code Unik
+Setiap role harus memiliki kode yang unik (tidak boleh duplikat)
+Sistem akan menolak jika coba membuat role dengan kode yang sudah ada
+Gunakan kode singkat, mudah diingat (contoh: FINA, SPVR, HDFA)
+
+2. Role Name Deskriptif
+Gunakan nama yang jelas dan deskriptif sehingga mudah dipahami
+Hindari nama yang ambigu atau terlalu umum
+Contoh baik: "Finance Manager", "Supervisor Finance", "Head Accounting"
+Contoh buruk: "User 1", "Admin", "Staff"
+
+3. Company Code Assignment
+Setiap role harus di-assign ke satu atau lebih perusahaan
+Role dapat digunakan oleh pengguna dari perusahaan yang di-assign
+Memungkinkan role yang sama digunakan di multiple perusahaan dengan kontrol terpisah
+
+4. Active/Inactive Status
+Role yang di-set Inactive tidak dapat di-assign ke pengguna baru
+Pengguna yang sudah memiliki role Inactive tetap dapat login (tapi dengan akses terbatas)
+Gunakan status Inactive untuk role yang sudah jarang/tidak digunakan
+
+5. Inline Edit Mode
+Editing dilakukan langsung di grid (tidak ada popup/modal)
+Lebih efisien untuk perubahan single field
+Changes otomatis disimpan saat meninggalkan baris
+
+6. Delete Confirmation
+Sebelum menghapus, sistem menampilkan konfirmasi
+Menampilkan role code yang akan dihapus untuk verifikasi
+User harus klik "Yes" untuk mengkonfirmasi penghapusan
+
+7. Server-Side Paging
+Data diambil dari server per halaman (bukan semua sekaligus)
+Lebih efisien untuk sistem dengan banyak role
+Sorting dan filtering dilakukan di server
+
+8. Notification Toast
+Notifikasi sukses muncul di kanan atas setelah operasi berhasil
+Durasi: 5 detik otomatis hilang
+Dapat di-close manual dengan klik X
+
+Daftar Role Umum di JIFAS
+
+Berikut adalah rangkuman daftar role umum yang terdapat di JIFAS beserta fungsinya masing-masing:
+WMTR (Webmaster): Berperan sebagai admin sistem yang memiliki akses penuh ke seluruh fitur dan data dalam sistem.
+USER (Users): Pengguna standar yang memiliki akses terbatas pada modul operasional.
+USRL (Users All): Variasi dari role pengguna dengan akses ke modul operasional.
+FINA (Finance): Staf bagian keuangan yang memiliki akses ke modul keuangan dan laporan.
+SPVR (Supervisor Finance): Pengawas bagian keuangan yang memiliki wewenang untuk melakukan approval pada transaksi finance.
+HDFA (Head Finance): Kepala bagian keuangan dengan wewenang approval pada level yang lebih tinggi.
+MGFA (Magang Finance): Peserta magang di bagian keuangan dengan akses terbatas yang ditujukan untuk keperluan training.
+FRPT (Finance Report): Role khusus yang difokuskan untuk mengakses laporan-laporan keuangan.
+TAXS (Tax): Staf bagian perpajakan yang memiliki akses khusus ke modul-modul perpajakan.
+HOAC (Holding Accounting): Bagian akuntansi holding yang memiliki kemampuan akses lintas perusahaan (multi-company).
+ACCT (Accounting): Staf akuntansi yang memiliki akses ke modul-modul akuntansi.
+SPAC (Supervisor Accounting): Pengawas bagian akuntansi yang memiliki hak akses approval.
+HDAC (Head Accounting): Kepala bagian akuntansi dengan hak akses penuh pada fungsi akuntansi.
+MGAC (Magang Accounting): Peserta magang di bagian akuntansi dengan akses yang dibatasi.
+
+Pesan Sukses
+Saat Create: Notifikasi sukses ditampilkan dengan pesan "Role successfully created"
+Saat Update: Notifikasi sukses ditampilkan dengan pesan "Role successfully updated"
+Saat Delete: Notifikasi sukses ditampilkan dengan pesan "Role successfully deleted"
+
+Pesan Error/Validasi
+Jika field wajib kosong: "This field is required"
+Jika Role Code duplikat: "Role code already exists"
+Jika error server: "Error: [Pesan error dari server]"
+
+Pesan Konfirmasi
+Saat Delete: "Are you sure you want to delete role code [KODE]?"
+
+Catatan Tambahan
+
+Perubahan Langsung: Setiap perubahan role langsung berlaku untuk semua pengguna dengan role tersebut
+Audit Trail: Setiap perubahan role tercatat untuk keperluan audit dan compliance
+Role Tidak Boleh Kosong: Setiap pengguna harus memiliki minimal satu role
+Multiple Roles: Satu pengguna dapat memiliki multiple roles sekaligus
+Naming Convention: Gunakan naming convention yang konsisten untuk memudahkan manajemen (contoh: DEPTFUNCTIONLEVEL)
+Role Hierarchy: Pertimbangkan struktur hierarki role dari bawah ke atas (Magang → Staff → Supervisor → Head → Webmaster)
+Company Scope: Pastikan setiap role sudah di-assign ke company yang tepat
+Inactive Backup: Jangan langsung hapus role yang sudah tidak digunakan set ke Inactive terlebih dahulu untuk safety
+Documentation: Dokumentasikan tujuan dan scope setiap role untuk referensi tim HR/IT
+Review Berkala: Lakukan review role secara berkala (quarterly/yearly) untuk memastikan masih sesuai dengan struktur organisasi
+Separation of Duties: Gunakan role untuk mengimplementasikan segregation of duties (pisahkan fungsi yang konflik)
+Authorization: Hanya role WMTR yang dapat mengakses modul Master Roles
+Token Security: Setiap request dilindungi dengan authorization token untuk keamanan data

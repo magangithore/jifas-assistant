@@ -1,0 +1,703 @@
+================================================================================
+DOKUMENTASI FITUR: PEMBAYARAN INVOICE (PAYMENT INVOICE / PAYMENT VOUCHER)
+================================================================================
+
+PENGERTIAN UMUM:
+Fitur Payment Invoice (Bukti Kas Keluar / Payment Voucher) digunakan untuk mengelola 
+proses pembayaran Invoice dari vendor/supplier. Invoice adalah tagihan/permintaan 
+pembayaran dari vendor untuk barang atau jasa yang telah diterima oleh perusahaan.
+
+Fitur ini memungkinkan tim Finance untuk:
+- Membuat pembayaran untuk satu atau lebih invoice sekaligus
+- Memilih vendor yang akan dibayar
+- Menentukan metode pembayaran (Cek, BG, Transfer, dll)
+- Mengalokasikan pembayaran ke setiap invoice
+- Mengelola verifikasi pembayaran hingga posting final
+
+Fungsi utama: Mengelola alur pembayaran invoice dari tahap pembuatan hingga posting 
+dengan metode fleksibel sesuai kebutuhan perusahaan.
+
+================================================================================
+INFORMASI YANG DITAMPILKAN (DAFTAR PEMBAYARAN INVOICE):
+================================================================================
+
+Halaman ini menampilkan tabel dengan kolom-kolom berikut:
+
+1. TANGGAL (Date)
+   - Menunjukkan tanggal pembuatan pembayaran invoice
+   - Format: Sesuai format tanggal sistem (misal: DD/MM/YYYY)
+   - Dapat diurutkan dari tanggal terbaru atau terlamanya
+   - Data diurutkan secara default dari tanggal terbaru
+
+2. NO. INVOICE (Invoice No)
+   - Nomor invoice dari vendor
+   - Identitas dokumen tagihan
+   - Contoh: IVKI26020001
+
+3. NO. PV (Payment Voucher Number / PV No)
+   - Nomor unik untuk setiap pembayaran invoice
+   - Identitas pembayaran di sistem
+   - Contoh: PVKI26020001
+
+4. NO. CEK/BG (Check/Bilyet Giro Number)
+   - Nomor Cek atau Bilyet Giro yang digunakan untuk pembayaran
+   - Hanya muncul jika metode pembayaran menggunakan Cek atau BG
+   - Kosong jika menggunakan metode pembayaran lain (Transfer, Tunai, dll)
+
+5. VENDOR
+   - Nama perusahaan/supplier yang akan menerima pembayaran
+   - Identitas pihak yang ditagih
+   - Contoh: PT. MITRA SOLUSI, CV. ABADI MITRA, dll
+
+6. DESCRIPTION (Deskripsi)
+   - Keterangan singkat tentang pembayaran
+   - Informasi konteks pembayaran
+   - Contoh: "Pembayaran invoice pembelian barang", dll
+
+7. AMOUNT (Jumlah)
+   - Total nilai rupiah/currency pembayaran
+   - Format: Dengan pemisah ribuan dan dua desimal
+   - Jumlah yang akan dibayarkan kepada vendor
+
+8. CURRENCY (Mata Uang)
+   - Mata uang pembayaran
+   - Contoh: IDR (Rupiah), USD (Dollar), dll
+   - Jika currency tidak IDR, ada kurs konversi
+
+9. STATUS (Status Pembayaran)
+   - Menunjukkan tahap/kondisi pembayaran saat ini
+   - Status yang mungkin ada:
+     * "Need Finance Checking" - Menunggu verifikasi dari Finance
+     * "Need Accounting Checking" - Menunggu verifikasi dari Accounting
+     * "Need Posting" - Siap untuk diposting
+     * "Complete" / "Posted" - Sudah diposting dan selesai
+     * "Need Accounting Posting" - Menunggu posting dari Accounting
+     * Dll
+
+10. ACTION (Tombol Aksi)
+    - Klik tombol ini untuk membuka detail pembayaran
+    - Memungkinkan melakukan aksi: Edit, Update, Checking, Void, dll
+    - Bergantung pada status dan peran pengguna
+
+================================================================================
+CARA MEMBUAT PEMBAYARAN INVOICE BARU:
+================================================================================
+
+LANGKAH 1: KLIK TOMBOL "CREATE PAYMENT INVOICE"
+- Tombol ini terletak di bagian atas tabel
+- Akan membuka form besar untuk membuat pembayaran baru
+- Form terdiri dari 3 kolom: payment method, bank/currency, dan document numbers
+
+LANGKAH 2: MENGISI DATA PEMBAYARAN (BAGIAN KIRI)
+
+A. Payment Method (Metode Pembayaran) - WAJIB DIISI
+   - Pilih metode pembayaran: CEK, BG, TRANSFER, TUNAI, dll
+   - Pilihan ini akan menentukan field tambahan yang muncul
+   - Jika memilih CEK atau BG, akan muncul field nomor Cek/BG
+
+B. No. Cek/BG - JIKA METODE CEK ATAU BG
+   - Isi nomor Cek atau Bilyet Giro (maksimal 15 karakter)
+   - Digunakan untuk tracking pembayaran berdasarkan instrumen
+   - Sistem akan memvalidasi nomor Cek/BG yang diinput
+   - Jika nomor sudah terpakai, sistem akan memberikan warning
+
+C. BG Paid Date (Tanggal Pembayaran BG) - JIKA METODE CEK ATAU BG
+   - Pilih tanggal ketika Cek/BG akan dibayarkan atau dicairkan
+   - Tanggal harus lebih akhir atau sama dengan tanggal pembayaran
+
+D. BG Due Date (Tanggal Jatuh Tempo BG) - JIKA METODE CEK ATAU BG
+   - Pilih tanggal jatuh tempo Cek/BG
+   - Tidak boleh lebih awal dari BG Paid Date
+   - Jika dilanggar, sistem akan memberikan peringatan
+
+E. Description (Deskripsi) - WAJIB DIISI
+   - Isi keterangan detail tentang pembayaran (maksimal 200 karakter)
+   - Gunakan untuk mencatat informasi penting pembayaran
+   - Contoh: "Pembayaran invoice pembelian raw material", dll
+
+LANGKAH 3: MENGISI DATA TANGGAL DAN BANK (BAGIAN TENGAH)
+
+A. Transaction Date (Tanggal Transaksi) - WAJIB DIISI
+   - Pilih tanggal pembuatan pembayaran
+   - Sistem akan otomatis mengisi currency rate berdasarkan tanggal ini
+
+B. Bank (Bank Tujuan Pembayaran) - WAJIB DIISI
+   - Pilih bank dimana pembayaran akan dilakukan
+   - Dapat mencari berdasarkan kode atau nama bank
+   - Sistem akan otomatis mengisi Currency dan Rate
+
+C. Payment Currency (Mata Uang Pembayaran) - OTOMATIS ISI
+   - Menampilkan mata uang dari bank yang dipilih
+   - Contoh: IDR, USD, SGD, dll
+   - Jika bukan IDR, field Rate akan aktif untuk edit
+
+D. Rate (Kurs Konversi) - OTOMATIS ISI
+   - Menampilkan nilai kurs berdasarkan tanggal dan currency
+   - Untuk IDR, nilai rate selalu 1 (tidak bisa diubah)
+   - Untuk currency lain, diisi otomatis atau dapat diedit manual
+
+E. Vendor (Supplier) - WAJIB DIISI
+   - Pilih vendor/supplier yang akan menerima pembayaran
+   - Dapat mencari berdasarkan kode atau nama vendor
+   - Vendor harus terdaftar sebagai vendor "Cash Out" di master
+
+F. Total IV Amount (Total Jumlah Invoice) - OTOMATIS ISI
+   - Menampilkan total jumlah invoice yang akan dibayar
+   - Isi otomatis dari total invoice yang dipilih di tabel detail (baris bawah)
+   - Menampilkan currency code di sebelah kirinya
+   - Tidak perlu diisi manual
+
+G. Total PPH (Pajak Penghasilan) - OTOMATIS ISI
+   - Menampilkan total potongan pajak penghasilan
+   - Isi otomatis dari total PPH invoice yang dipilih
+   - Jika currency bukan IDR, menampilkan konversi ke IDR di bawah
+
+H. Total Allocation Amount (Total Alokasi) - OTOMATIS ISI
+   - Menampilkan total alokasi pembayaran
+   - Isi otomatis dari total alokasi per invoice di tabel detail
+   - Jika currency bukan IDR, menampilkan konversi ke IDR di bawah
+
+I. Status - OTOMATIS ISI
+   - Menampilkan status pembayaran
+   - Untuk pembayaran baru, akan kosong hingga disimpan
+   - Tidak dapat diubah secara manual
+
+LANGKAH 4: MENGISI DATA REFERENSI DOKUMEN (BAGIAN KANAN)
+
+Field-field ini untuk mencatat nomor dokumen terkait (OPSIONAL):
+
+A. No. PO (Nomor Purchase Order)
+   - Nomor PO yang terkait dengan pembayaran ini
+
+B. No. PR (Nomor Purchase Requisition)
+   - Nomor PR yang menjadi dasar permintaan barang
+
+C. No. SPK (Nomor Surat Perintah Kerja)
+   - Nomor SPK jika pembayaran untuk jasa/pekerjaan
+
+D. No. DO (Nomor Delivery Order)
+   - Nomor DO untuk tracking pengiriman barang
+
+E. Receipt No / Kwt No (Nomor Bon Terima)
+   - Nomor bon/kwit terima barang dari vendor
+
+F. No. Ref (Nomor Referensi)
+   - Nomor referensi tambahan sesuai kebutuhan
+
+G. Hand Over From (BAST - Berita Acara Serah Terima)
+   - Nomor BAST jika ada penyerahan resmi barang/jasa
+
+LANGKAH 5: MEMILIH DETAIL PEMBAYARAN (INVOICE YANG AKAN DIBAYAR)
+
+Di bagian bawah form, terdapat tabel "DETAIL PEMBAYARAN" dengan kolom:
+
+1. SELECTED (Terpilih) - Checkbox
+   - Centang checkbox untuk memilih invoice yang akan dibayar
+   - Minimum harus ada 1 invoice yang dipilih
+
+2. IV NO (Nomor Invoice)
+   - Nomor invoice dari vendor
+
+3. DATE (Tanggal)
+   - Tanggal pembuatan invoice
+
+4. DESKRIPSI (Keterangan)
+   - Detail keperluan/deskripsi invoice
+
+5. IV AMOUNT (Jumlah Invoice)
+   - Nilai total invoice
+
+6. CURRENCY (Mata Uang)
+   - Mata uang invoice (harus sesuai dengan currency payment)
+
+7. PPH (Pajak Penghasilan)
+   - Potongan pajak dari invoice
+
+8. LOCAL BALANCE (IDR) (Saldo Lokal IDR)
+   - Sisa saldo invoice dalam IDR setelah pembayaran sebelumnya
+
+9. FOREIGN BALANCE (Saldo Asing)
+   - Sisa saldo invoice dalam currency aslinya
+
+10. ALLOCATION (Alokasi) - BISA DIEDIT
+    - Jumlah yang akan dialokasikan/dibayarkan untuk invoice ini
+    - Dapat diedit ketika invoice sudah di-checkbox
+    - Tidak boleh melebihi saldo yang tersedia
+    - Sistem akan validasi nilai yang diinput
+
+CARA MEMILIH DAN MENGALOKASIKAN:
+- Scroll tabel detail jika banyak invoice
+- Centang checkbox untuk memilih invoice yang ingin dibayar
+- Total IV Amount, PPH, dan Allocation di header akan otomatis terupdate
+- Klik cell "Allocation" untuk mengubah jumlah alokasi
+- Masukkan jumlah alokasi (tidak boleh kosong jika di-check)
+- Sistem akan validasi tidak melebihi saldo
+- Dapat memilih 1 invoice atau lebih sekaligus
+
+LANGKAH 6: SIMPAN PEMBAYARAN
+- Klik tombol "SAVE" di bagian kanan bawah
+- Pastikan semua field mandatory sudah diisi dengan benar
+- Pastikan minimal 1 invoice sudah dipilih dengan alokasi yang valid
+- Sistem akan menampilkan konfirmasi sebelum menyimpan
+- Setelah tersimpan, status berubah menjadi "Need Finance Checking"
+
+================================================================================
+CARA MENGECEK/VERIFIKASI PEMBAYARAN INVOICE:
+================================================================================
+
+SKENARIO: Anda adalah bagian Finance dan menerima pembayaran dengan status 
+"Need Finance Checking"
+
+LANGKAH 1: CARI PEMBAYARAN YANG PERLU DICEK
+- Gunakan filter atau cari berdasarkan Status = "Need Finance Checking"
+- Atau cari berdasarkan tanggal, nomor invoice, vendor, dll
+
+LANGKAH 2: BUKA DETAIL PEMBAYARAN
+- Klik tombol "ACTION" pada baris pembayaran yang ingin dicek
+- Form detail pembayaran akan terbuka dalam popup besar
+
+LANGKAH 3: VERIFIKASI DATA PEMBAYARAN
+- Periksa data header pembayaran:
+  * Tanggal transaksi sudah benar?
+  * Vendor penerima pembayaran sesuai?
+  * Bank dan mata uang pembayaran sudah benar?
+  * Kurs pembayaran (jika non-IDR) reasonable?
+  * Nomor Cek/BG (jika ada) sudah benar?
+  * Deskripsi pembayaran lengkap?
+  * Referensi dokumen (PO, PR, SPK, dll) sudah diisi?
+
+- Periksa detail invoice yang akan dibayar:
+  * Invoices yang dipilih sudah sesuai?
+  * Alokasi pembayaran untuk setiap invoice sudah benar?
+  * Total PPH sudah sesuai dengan perhitungan vendor?
+  * Saldo invoice sudah valid?
+
+LANGKAH 4: PROSES CHECKING
+Bergantung pada hasil verifikasi Anda, ada 3 pilihan:
+
+OPSI A: HASIL CHECKING OK - LANJUTKAN KE ACCOUNTING
+- Klik tombol "CHECKING" (hijau)
+- Sistem akan menampilkan konfirmasi
+- Setelah dikonfirmasi, status berubah menjadi "Need Accounting Checking"
+- Pembayaran siap untuk verifikasi oleh bagian Accounting
+
+OPSI B: ADA KESALAHAN - PERBAIKI PEMBAYARAN
+- Klik tombol "UPDATE" (biru)
+- Gunakan form untuk memperbaiki data yang salah
+- Anda dapat mengubah:
+  * Nomor Cek/BG dan tanggalnya (jika ada)
+  * Deskripsi pembayaran
+  * Referensi dokumen
+  * Alokasi pembayaran untuk setiap invoice (jika belum di-posting)
+- Setelah perbaikan, klik tombol "UPDATE" di form
+- Sistem akan menampilkan konfirmasi sebelum update
+- Setelah update, status tetap "Need Finance Checking"
+- Invoice akan kembali ke daftar untuk dicek ulang
+
+OPSI C: PEMBAYARAN DIBATALKAN - VOID PEMBAYARAN
+- Klik tombol "VOID" (merah)
+- Dialog akan meminta alasan pembatalan
+- Isi alasan pembatalan secara jelas (contoh: "Pembayaran double/duplikat", 
+  "Invoice sudah dibayar via metode lain", dll)
+- Klik "CONTINUE" untuk melanjutkan
+- Sistem akan menampilkan konfirmasi terakhir
+- Setelah dikonfirmasi, pembayaran dibatalkan dengan status "VOID"
+- Catatan: Pembayaran yang sudah diposting tidak dapat di-VOID
+
+================================================================================
+CARA MENGECEK/VERIFIKASI PEMBAYARAN INVOICE (UNTUK BAGIAN ACCOUNTING):
+================================================================================
+
+SKENARIO: Anda adalah bagian Accounting dan menerima pembayaran dengan status 
+"Need Accounting Checking"
+
+LANGKAH 1-3: SAMA SEPERTI PROSEDUR FINANCE (lihat di atas)
+
+LANGKAH 4: VERIFIKASI DATA DARI SISI ACCOUNTING
+- Periksa aspek akuntansi/keuangan:
+  * Apakah jurnal entri pembayaran sudah benar?
+  * Apakah cost center/departemen sudah tepat?
+  * Apakah allocation amount sudah sesuai dengan perhitungan?
+  * Apakah PPH/pajak sudah dikurangi sesuai ketentuan?
+  * Apakah semua dokumen pendukung (invoice, BAST, dll) sudah lengkap?
+  * Apakah vendor sudah terdaftar dengan benar di master?
+
+LANGKAH 5: PROSES CHECKING - HASIL OK
+Ada 2 pilihan untuk pembayaran dengan status "Need Accounting Checking":
+
+OPSI A: HASIL CHECKING OK - LANJUTKAN KE POSTING
+- Klik tombol "UPDATE" (biru)
+- Form akan terbuka untuk review final
+- Jika hanya untuk ACC (tanpa perubahan), langsung klik "UPDATE"
+- Status berubah menjadi "Need Posting" / "Complete"
+- Pembayaran siap untuk tahap posting final otomatis oleh sistem
+
+OPSI B: ADA KESALAHAN - PERBAIKI PEMBAYARAN
+- Klik tombol "UPDATE" (biru)
+- Lakukan perubahan data yang diperlukan (mirip prosedur Finance)
+- Setelah selesai, klik "UPDATE"
+- Status tetap "Need Accounting Checking"
+- Pembayaran akan kembali ke Finance untuk diverifikasi ulang
+
+================================================================================
+FITUR LAINNYA:
+================================================================================
+
+1. EXPORT KE EXCEL:
+   - Klik tombol "EXPORT TO EXCEL" di bagian atas tabel
+   - File akan dibuat dengan nama: "List Invoice for Create Payment IV-Export.xlsx"
+   - File ini berisi SEMUA data invoice (detail pembayaran)
+   - Gunakan untuk:
+     * Backup data
+     * Laporan ke management
+     * Analisis pembayaran
+     * Rekonsiliasi dengan dokumen vendor
+
+2. RESIZE (UBAH UKURAN KOLOM):
+   - Arahkan mouse ke garis pemisah antar kolom
+   - Drag untuk memperbesar atau memperkecil lebar kolom
+
+3. REORDER (SUSUN ULANG KOLOM):
+   - Dapat mengubah urutan kolom sesuai kebutuhan
+   - Drag header kolom ke posisi yang diinginkan
+
+4. COLUMN MENU:
+   - Klik tombol menu di header kolom
+   - Dapat menyembunyikan/menampilkan kolom tertentu
+
+5. FILTER (PENYARINGAN):
+   - Setiap kolom memiliki field pencarian individual
+   - Dapat menggabungkan beberapa filter sekaligus
+   - Contoh: Filter status "Need Finance Checking" + vendor tertentu
+
+6. SORTING (PENGURUTAN):
+   - Dapat mengurutkan berdasarkan kolom manapun
+   - Klik header kolom untuk mengubah urutan
+   - Default: Diurutkan dari tanggal terbaru
+
+7. PAGINATION (PEMBAGIAN HALAMAN):
+   - Tampilan awal: 10 data per halaman
+   - Dapat mengubah jumlah data per halaman (10, 25, 50, dll)
+   - Gunakan tombol navigasi untuk berpindah ke halaman lain
+
+8. KONVERSI CURRENCY OTOMATIS:
+   - Jika mata uang pembayaran bukan IDR, akan menampilkan konversi ke IDR
+   - Contoh: USD 1,000.00 = IDR 15,500,000.00 (berdasarkan rate yang berlaku)
+   - Konversi ini ditampilkan di bawah setiap field amount sebagai catatan
+
+================================================================================
+INFORMASI YANG DIPERLUKAN SAAT MEMBUAT PEMBAYARAN INVOICE:
+================================================================================
+
+DATA YANG HARUS DIPERSIAPKAN:
+
+1. Nomor Invoice yang akan dibayar
+   - Bisa satu atau lebih dari satu invoice sekaligus
+   - Invoice harus sudah diterima dan tercatat di sistem
+
+2. Nama Vendor/Supplier
+   - Identitas penerima pembayaran
+   - Vendor harus terdaftar di master dengan tipe "Cash Out"
+
+3. Tanggal Pembayaran
+   - Kapan pembayaran akan dilakukan/dibuat
+
+4. Metode Pembayaran
+   - CEK, BG, TRANSFER, TUNAI, dll
+   - Tentukan berdasarkan perjanjian dengan vendor
+
+5. Bank Tujuan Pembayaran
+   - Bank mana yang akan digunakan
+   - Gunakan untuk menentukan currency pembayaran
+
+6. Nomor Cek/BG (jika menggunakan metode CEK atau BG)
+   - Nomor instrumen pembayaran
+
+7. Tanggal Pembayaran Cek/BG (Paid Date)
+   - Kapan Cek/BG akan dicairkan
+
+8. Tanggal Jatuh Tempo (Due Date)
+   - Kapan Cek/BG jatuh tempo
+
+9. Alokasi Pembayaran per Invoice
+   - Berapa jumlah yang akan dialokasikan untuk setiap invoice
+   - Tidak boleh melebihi saldo sisa invoice
+
+10. Referensi Dokumen Terkait (OPSIONAL)
+    - PO, PR, SPK, DO, BAST, dll
+    - Untuk keperluan tracking dan audit trail
+
+================================================================================
+STATUS-STATUS PEMBAYARAN INVOICE:
+================================================================================
+
+1. CREATE / DRAFT
+   - Pembayaran invoice baru sedang dibuat
+   - Belum disimpan ke sistem
+   - Form masih bisa diedit penuh
+
+2. NEED FINANCE CHECKING
+   - Pembayaran telah disimpan di sistem
+   - Menunggu verifikasi dari tim Finance
+   - Finance dapat: Checking (OK), Update (Perbaiki), atau Void (Batalkan)
+
+3. NEED ACCOUNTING CHECKING
+   - Telah disetujui Finance
+   - Menunggu verifikasi dari tim Accounting
+   - Accounting dapat: Update (OK), Update (Perbaiki), atau Void (Batalkan)
+
+4. NEED POSTING / COMPLETE
+   - Telah disetujui Finance dan Accounting
+   - Siap untuk diposting otomatis
+   - Akan diproses oleh sistem untuk posting final
+
+5. POSTED / PERMANENT
+   - Pembayaran telah diposting sepenuhnya
+   - Data tidak dapat diubah lagi
+   - Hanya dapat di-VOID jika ada kesalahan serius (pembuat record)
+
+6. NEED ACCOUNTING POSTING
+   - Menunggu posting final dari bagian Accounting
+
+7. VOID
+   - Pembayaran telah dibatalkan
+   - Tidak akan diproses lebih lanjut
+   - Semua invoice kembali ke status unpaid
+
+================================================================================
+CATATAN PENTING UNTUK PENGGUNA:
+================================================================================
+
+1. DATA REAL-TIME:
+   - Data yang ditampilkan diambil dari sistem secara real-time
+   - Pastikan koneksi internet stabil saat mengakses halaman
+
+2. VALIDASI MANDATORY FIELDS:
+   - Semua field yang bertanda * (asterisk) WAJIB diisi
+   - Sistem tidak akan mengizinkan penyimpanan jika ada field mandatory kosong
+
+3. MINIMAL SATU INVOICE HARUS DIPILIH:
+   - Setidaknya 1 invoice harus dipilih dengan alokasi > 0
+   - Jika tidak ada yang dipilih, pembayaran tidak dapat disimpan
+
+4. ALOKASI TIDAK BOLEH KOSONG:
+   - Setiap invoice yang dipilih (di-check) HARUS memiliki allocation amount
+   - Allocation amount tidak boleh melebihi saldo invoice
+   - Sistem akan validasi sebelum menyimpan
+
+5. PERUBAHAN DATA TERBATAS:
+   - Setelah pembayaran diposting, data header tidak dapat diubah
+   - Alokasi/detail invoice tidak dapat diubah
+   - Hanya dapat di-VOID kemudian membuat pembayaran baru
+
+6. CURRENCY RATE OTOMATIS:
+   - Kurs pembayaran diisi otomatis berdasarkan tanggal dan currency
+   - Untuk IDR, nilai rate selalu 1 dan tidak bisa diubah
+   - Untuk currency lain, dapat diedit manual jika diperlukan
+
+7. VALIDASI TANGGAL CEK/BG:
+   - BG Paid Date tidak boleh lebih awal dari tanggal pembayaran
+   - BG Due Date tidak boleh lebih awal dari BG Paid Date
+   - Sistem akan memberikan peringatan jika melanggar
+
+8. FILTER INVOICE BERDASARKAN CURRENCY:
+   - Tabel detail akan menampilkan invoice sesuai currency payment yang dipilih
+   - Jika mengubah bank (yang berbeda currency), invoice akan di-filter ulang
+   - Invoice yang sudah di-check akan otomatis unchecked
+
+9. HANYA BACA DI TAHAP POSTING:
+   - Ketika status POSTED atau COMPLETE, sebagian besar field hanya bisa dibaca
+   - Semua field input akan disabled/tidak aktif
+   - Hanya tombol VOID yang masih bisa digunakan
+
+10. NOMOR CEK/BG UNIK:
+    - Setiap nomor Cek/BG hanya dapat digunakan sekali
+    - Sistem akan validasi jika nomor sudah terdaftar sebelumnya
+    - Jika ada error, gunakan nomor Cek/BG yang berbeda
+
+================================================================================
+CONTOH PENGGUNAAN SEHARI-HARI:
+================================================================================
+
+SKENARIO 1: MEMBUAT PEMBAYARAN UNTUK SATU INVOICE
+Kasus: PT ABADI MITRA menagih invoice untuk pembelian barang Rp 10.000.000
+
+Langkah:
+1. Buka Payment Invoice, klik "Create Payment Invoice"
+2. Metode: Pilih "CEK"
+3. No. Cek/BG: Ketik "123456"
+4. BG Paid Date: Pilih 15/02/2026
+5. BG Due Date: Pilih 20/02/2026
+6. Description: Ketik "Pembayaran invoice pembelian barang"
+7. Transaction Date: Pilih 10/02/2026
+8. Bank: Pilih "BCA"
+9. Payment Currency: IDR (otomatis)
+10. Rate: 1 (otomatis)
+11. Vendor: Pilih "PT ABADI MITRA"
+12. Di tabel detail, centang invoice PT ABADI MITRA
+13. Isi Allocation: 10.000.000
+14. Klik SAVE
+15. Pembayaran berhasil dibuat dengan status "NEED FINANCE CHECKING"
+
+SKENARIO 2: MEMBUAT PEMBAYARAN UNTUK MULTIPLE INVOICES (BERBEDA VENDOR)
+Kasus: Pembayaran untuk 3 invoices dari vendor yang berbeda
+
+Langkah:
+1. PERHATIAN: Pembayaran invoice hanya bisa untuk 1 vendor sekaligus
+2. Jika ada invoice dari vendor berbeda, harus dibuat pembayaran terpisah
+3. Buat pembayaran pertama untuk vendor A (invoice 1 & 2)
+4. Buat pembayaran kedua untuk vendor B (invoice 3)
+
+SKENARIO 3: PEMBAYARAN DALAM CURRENCY USD
+Kasus: PT MITRA GLOBAL (vendor lokal) menagih invoice dalam USD $1,000
+
+Langkah:
+1. Buka Payment Invoice, klik "Create Payment Invoice"
+2. Transaction Date: 10/02/2026
+3. Bank: Pilih "BCA USD" (atau bank USD lainnya)
+4. Payment Currency: USD (otomatis dari bank selection)
+5. Rate: 15.500 (contoh rate USD-IDR, atau ambil otomatis)
+6. Vendor: Pilih "PT MITRA GLOBAL"
+7. Total IV Amount akan menampilkan USD $1,000
+8. Total Allocation (IDR) akan menampilkan konversi: IDR 15.500.000
+9. Di tabel detail, centang invoice USD
+10. Isi Allocation: $1,000
+11. Klik SAVE
+
+SKENARIO 4: VERIFIKASI SEBAGAI FINANCE
+1. Buka Payment Invoice
+2. Filter Status = "Need Finance Checking"
+3. Temukan pembayaran yang perlu dicek
+4. Klik ACTION
+5. Review semua data pembayaran dan invoice
+6. Jika OK: Klik CHECKING
+7. Jika ada error: Klik UPDATE, perbaiki data, klik UPDATE lagi
+8. Jika perlu dibatalkan: Klik VOID, isi alasan, klik CONTINUE
+
+SKENARIO 5: PEMBAYARAN YANG SALAH HARUS DIBATALKAN
+1. Pembayaran sudah di-check Finance dan Accounting
+2. Tiba-tiba ditemukan kesalahan (invoice sudah dibayar via cara lain)
+3. Buka pembayaran, klik ACTION
+4. Klik tombol VOID
+5. Isi alasan: "Pembayaran double - sudah dibayar via transfer pada 09/02/2026"
+6. Klik CONTINUE
+7. Klik VOID pada konfirmasi akhir
+8. Pembayaran dibatalkan, invoice kembali ke status unpaid
+
+================================================================================
+FEATURE KHUSUS UNTUK ITEM ALLOCATION:
+================================================================================
+
+FITUR EDITABLE ALLOCATION:
+
+Kolom "Allocation" di tabel detail dapat diedit dengan fitur khusus:
+
+1. CARA EDIT:
+   - Checkbox invoice harus sudah di-checked terlebih dahulu
+   - Klik pada cell Allocation untuk invoice yang di-check
+   - Akan muncul numeric textbox untuk input
+   - Masukkan jumlah alokasi
+   - Tekan Enter atau Tab untuk confirm
+
+2. VALIDASI OTOMATIS:
+   - Sistem akan validasi tidak melebihi saldo invoice
+   - Jika terlalu besar, akan muncul peringatan
+   - Allocation akan direset ke 0 jika tidak valid
+
+3. REAL-TIME UPDATE:
+   - Total Allocation Amount di header akan terupdate otomatis
+   - Footer amount (jika currency bukan IDR) akan terupdate
+   - Tidak perlu klik tombol refresh
+
+4. KETIKA UNCHECKED:
+   - Jika unchecked, Allocation akan otomatis direset ke 0
+   - Data allocation tidak disimpan jika invoice tidak di-check
+
+================================================================================
+TROUBLESHOOTING / PERTANYAAN UMUM:
+================================================================================
+
+Q: Mengapa tidak bisa menyimpan pembayaran?
+A: Pastikan:
+   - Semua field wajib (bertanda *) sudah diisi
+   - Minimal 1 invoice sudah dipilih dengan alokasi > 0
+   - Setiap invoice yang di-check harus memiliki allocation amount
+   - Rate pembayaran tidak 0 (untuk non-IDR)
+   - Aplikasi tidak sedang error
+
+Q: Apakah bisa membayar invoice dari berbagai vendor sekaligus?
+A: Tidak, satu pembayaran hanya untuk satu vendor
+   - Jika ada invoice dari vendor berbeda, harus dibuat pembayaran terpisah
+   - Sistem akan otomatis filter invoice berdasarkan vendor yang dipilih
+
+Q: Bagaimana jika allocation melebihi saldo invoice?
+A: Sistem akan memberikan warning dan reset alokasi ke 0
+   - Masukkan alokasi yang tidak melebihi saldo
+   - Lihat kolom "Local Balance (IDR)" atau "Foreign Balance" untuk saldo
+
+Q: Apakah bisa mengubah pembayaran setelah posted?
+A: Tidak bisa langsung diubah, tapi bisa di-VOID
+   - Klik VOID dengan alasan pembatalan
+   - Invoice akan kembali ke status unpaid
+   - Buat pembayaran baru dengan data yang benar
+
+Q: Apakah rate otomatis berdasarkan tanggal?
+A: Ya, untuk currency non-IDR
+   - Sistem mengambil rate dari master forex berdasarkan tanggal pembayaran
+   - Untuk IDR, rate selalu 1
+   - Bisa diedit manual jika diperlukan adjustment
+
+Q: Bagaimana cara membayar sebagian saja dari invoice?
+A: Gunakan fitur Allocation
+   - Centang invoice yang ingin dibayar
+   - Di kolom Allocation, kosongkan total, isi hanya sebagian saja
+   - Contoh: Invoice Rp 100M, hanya alokasi Rp 50M
+   - Sisa Rp 50M akan tetap menjadi outstanding
+
+Q: Dimana bisa lihat history pembayaran invoice?
+A: Di halaman utama Payment Invoice
+   - Filter berdasarkan status, tanggal, vendor, dll
+   - Klik ACTION untuk melihat detail pembayaran yang sudah diposting
+   - Data akan read-only, tidak bisa diubah
+
+Q: Apakah bisa export data pembayaran?
+A: Ya, gunakan tombol "EXPORT TO EXCEL"
+   - File akan berisi semua invoice detail yang dipilih
+   - Gunakan untuk laporan atau backup
+
+Q: Hubungi siapa jika ada masalah teknis?
+A: Hubungi IT Support dengan menyertakan:
+   - Nomor PV (Payment Voucher) yang bermasalah
+   - Deskripsi masalah yang dihadapi
+   - Screenshot error jika ada
+   - Waktu kejadian
+
+================================================================================
+PERBEDAAN DENGAN FITUR LAIN:
+================================================================================
+
+PAYMENT INVOICE vs PAYMENT CEK/BG vs PAYMENT PUM:
+
+1. PAYMENT INVOICE
+   - Untuk membayar Invoice dari Vendor
+   - Pembayaran didasarkan pada tagihan vendor
+   - Dapat untuk satu atau lebih invoice sekaligus (dari vendor sama)
+   - Alokasi pembayaran per invoice
+   - Dengan validasi Outstanding/Saldo Invoice
+
+2. PAYMENT CEK/BG (List Cek/BG)
+   - Untuk melihat daftar Cek/BG yang telah diterbitkan
+   - Read-only (hanya bisa dilihat)
+   - Untuk tracking dan rekonsiliasi pembayaran
+   - Tidak ada proses pembuatan/editing di halaman ini
+
+3. PAYMENT PUM
+   - Untuk membayar Uang Muka yang diberikan ke karyawan
+   - Pembayaran untuk kebutuhan operasional/perjalanan
+   - Per karyawan satu pembayaran
+   - Tidak ada validasi outstanding
+   - Alokasi per item UM yang diajukan
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================

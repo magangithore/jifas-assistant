@@ -1,0 +1,614 @@
+JIFAS KNOWLEDGE BASE - INVOICE CREATE MODULE
+=============================================
+
+DAFTAR ISI
+==========
+1. Pengenalan Invoice Create Module
+2. Fitur Utama
+3. Flow Pembuatan Invoice
+4. User Interface
+5. Tipe Tagihan
+6. Detail Invoice Grid
+7. Perhitungan Otomatis
+8. Validasi Data
+9. Fitur Finance Correction
+10. Error Handling
+
+===================================================
+1. PENGENALAN INVOICE CREATE MODULE
+===================================================
+
+Invoice Create Module adalah bagian dari aplikasi JIFAS yang digunakan untuk membuat
+dan mengelola dokumen Invoice yang berasal dari Pengajuan Dokumen (PD). Module ini 
+dirancang khusus untuk kebutuhan Finance dan Accounting dalam mengelola dokumen 
+tagihan dari berbagai pihak.
+
+Tujuan Module:
+- Memudahkan pembuatan dokumen invoice terstruktur
+- Mengotomatisasi perhitungan pajak dan biaya
+- Memvalidasi data sebelum submission
+- Mengelola persetujuan dan koreksi dokumen
+- Melacak status dokumen dari awal hingga selesai
+
+===================================================
+2. FITUR UTAMA
+===================================================
+
+A. MANAJEMEN INVOICE
+   - Membuat Invoice baru
+   - Mengedit Invoice yang sudah ada
+   - Melihat daftar semua Invoice
+   - Export data ke Excel
+
+B. KOMPONEN DETAIL INVOICE
+   - Input detail penerima tagihan
+   - Input periode dokumen
+   - Pemilihan tipe tagihan
+   - Input detail item dengan COA
+   - Perhitungan pajak otomatis
+
+C. VALIDASI DAN PERSETUJUAN
+   - Validasi budget berdasarkan COA dan periode
+   - Pengecekan over budget
+   - Pengecekan kelengkapan dokumen
+   - Alur persetujuan multi-level
+
+D. KOREKSI OLEH FINANCE
+   - Fitur khusus untuk tim finance melakukan koreksi
+   - Tampilan data koreksi yang terstruktur
+   - Konfirmasi penerapan koreksi
+
+===================================================
+3. FLOW PEMBUATAN INVOICE
+===================================================
+
+FLOW UTAMA PEMBUATAN INVOICE
+
+Tahap 1: Inisialisasi
+- User mengklik tombol Create Invoice pada grid
+- Sistem membuka form kosong dengan tab PD Form
+- Sistem otomatis mengisi data aplikant dari session login
+- Sistem mengambil data atasan berdasarkan kode karyawan
+
+Tahap 2: Input Data Header
+- User mengisi tanggal dokumen
+- User memilih tipe tagihan (Kontraktor, Supplier, Internal)
+- User memilih PD Type dari dropdown
+- User memilih mata uang
+- User mengisi atau membiarkan rate mata uang otomatis
+
+Tahap 3: Input Data Penerima
+- User memilih vendor dari dropdown atau input manual
+- Sistem otomatis mengisi NPWP dan alamat NPWP dari master vendor
+- User dapat melihat informasi vendor di layar
+
+Tahap 4: Input Dokumen Referensi
+- User mengisi nomor Kwitansi atau PO
+- User mengisi nomor Purchase Order (PO)
+- User mengisi nomor Form Serah Terima (BAST)
+- User mengisi nomor SPK jika tipe tagihan adalah Kontraktor
+- User mengisi deskripsi dokumen
+
+Tahap 5: Input Detail Invoice
+- User mengklik tombol Add Request pada grid detail
+- Untuk setiap baris detail:
+  a. Pilih Divisi
+  b. Pilih Departemen
+  c. Pilih Jenis Permintaan COA
+  d. Sistem otomatis mengisi COA Code dari pilihan
+  e. Input Base Amount
+  f. Pilih Jenis Pajak
+  g. Sistem otomatis menghitung PPN
+  h. Sistem otomatis menghitung PPh
+  i. Sistem otomatis menghitung total amount
+  j. Sistem otomatis cek budget dan status
+
+Tahap 6: Review dan Persetujuan Dokumen
+- User mengklik tombol Next untuk melanjutkan ke tab PD Type
+- User dapat melihat daftar dokumen yang diperlukan
+- User mengupload dokumen sesuai kode dokumen yang diminta
+- Ukuran file maksimal 2 MB per dokumen
+
+Tahap 7: Submit Dokumen
+- User mengklik tombol Save untuk submit
+- Sistem melakukan validasi lengkap
+- Jika valid sistem mengirim data ke server
+- Jika tidak valid sistem menampilkan pesan error detail
+
+FLOW EDITING INVOICE YANG SUDAH ADA
+
+- User memilih invoice dari grid
+- Sistem membuka form dengan data terisi
+- User hanya bisa melihat informasi tidak bisa edit (readonly)
+- Jika status REJECTION atau NEED APPROVAL tidak bisa di-save
+- Jika status normal user bisa lakukan update
+
+FLOW CORRECTION OLEH FINANCE
+
+- Invoice status menjadi CORRECTION
+- Form akan menampilkan tab baru PD Corrected by Finance
+- Tim finance dapat melihat data original dan data yang perlu dikoreksi
+- User melihat informasi koreksi dan klik Apply Correction
+- Sistem mengirim konfirmasi koreksi ke backend
+- Grid ditampilkan kembali dengan data terbaru
+
+===================================================
+4. USER INTERFACE
+===================================================
+
+MAIN GRID - DAFTAR INVOICE
+Kolom yang ditampilkan:
+- Date: Tanggal dokumen dibuat
+- PD No: Nomor dokumen PD
+- Category: Kategori/Tipe PD
+- Description: Deskripsi singkat dokumen
+- Total Amount: Jumlah total dalam mata uang dokumen
+- Currency: Kode mata uang (IDR, USD, dll)
+- Vendor: Nama perusahaan/vendor penerima
+- Head: Nama atasan pemohon
+- Status: Status dokumen saat ini
+- Action: Tombol untuk mengedit atau aksi lainnya
+
+Grid Features:
+- Sorting berdasarkan tanggal terbaru
+- Filtering per kolom dengan input field
+- Pagination dengan 20 data per halaman
+- Export ke Excel untuk semua data
+- Responsive design hingga 80% tinggi viewport
+
+FORM HEADER - INFORMASI PEMBUAT DAN ORGANISASI
+Field:
+- Applicant: Nama karyawan pembuat dokumen (readonly)
+- Approve By: Nama atasan pembuat dokumen (readonly)
+- Division: Kode divisi pembuat dokumen (readonly)
+- Department: Kode departemen pembuat dokumen (readonly)
+
+FORM PD - INFORMASI DOKUMEN
+
+Baris Pertama Kiri:
+- Date: Tanggal dokumen menggunakan date picker
+- Bill Type: Radio button untuk memilih Kontraktor, Supplier, atau Internal
+- PD Type: Dropdown untuk memilih jenis PD
+- Currency: Dropdown untuk memilih mata uang
+- Rate: Numeric textbox untuk input rate mata uang
+- Vendor: Combo box untuk memilih vendor
+- NPWP: Masked textbox untuk NPWP penerima
+- WP Address: Textarea untuk alamat NPWP
+
+Baris Pertama Kanan:
+- Form Receipt: Textbox untuk nomor form serah terima (BAST)
+- PO No: Textbox untuk nomor PO
+- Receipt No/Kwt No: Textbox untuk nomor kwitansi
+- SPK No: Textbox untuk nomor SPK jika Kontraktor
+- Total Dpp: Numeric textbox untuk total DPP (readonly)
+- Total Base Amount: Numeric textbox untuk total base amount (readonly)
+- Description: Textarea untuk deskripsi dokumen
+
+Baris Kedua:
+- Total Amount Foreign: Menampilkan total dalam mata uang dokumen
+- Total Amount Local: Menampilkan total dalam mata uang IDR
+
+DETAIL INVOICE GRID
+Kolom:
+- Divisi: Dropdown untuk memilih divisi
+- Departemen: Dropdown untuk memilih departemen
+- Jenis Permintaan: Dropdown untuk memilih COA
+- COA: Readonly field yang otomatis terisi dari pilihan jenis permintaan
+- Based Amount: Input untuk jumlah before tax
+- Jenis Pajak: Dropdown untuk memilih tipe pajak
+- PPN Percent: Readonly field persentase PPN
+- PPN: Readonly field nilai PPN yang dihitung
+- PPh Percent: Readonly field persentase PPh
+- PPH: Readonly field nilai PPh yang dihitung
+- Jenis PPH: Dropdown untuk tipe PPh jika ada
+- Amount: Total baris yang dihitung otomatis
+- Sisa Budget Month: Sisa budget yang tersedia di bulan ini
+- Status Budget: Menampilkan OK atau OVER BUDGET
+- Need Budget Approval: Menampilkan Yes atau No
+- Action: Tombol delete untuk menghapus baris
+
+PD TYPE TAB
+Grid untuk menampilkan dokumen yang diperlukan:
+- Jenis Dokumen: Nama dokumen yang diperlukan
+- Code: Kode singkat dokumen
+- Upload: Area untuk upload file
+- No Dokumen: Input nomor dokumen
+- Keterangan: Input keterangan dokumen
+
+===================================================
+5. TIPE TAGIHAN
+===================================================
+
+KONTRAKTOR
+- Identifikasi: Tipe tagihan dari kontraktor/subkontraktor
+- Persyaratan Khusus:
+  * Wajib mengisi SPK No
+  * Wajib memiliki form SPK
+  * Perhitungan pajak penuh berlaku
+
+SUPPLIER
+- Identifikasi: Tipe tagihan dari supplier barang/jasa
+- Persyaratan:
+  * Tidak wajib SPK
+  * Fokus pada dokumen pembelian
+  * Perhitungan pajak berdasarkan jenis barang
+
+INTERNAL
+- Identifikasi: Tipe tagihan internal perusahaan
+- Persyaratan:
+  * Tidak wajib SPK
+  * Untuk transaksi internal departemen ke departemen
+  * Perhitungan pajak mungkin berbeda sesuai kebijakan
+
+Pengaruh Tipe Tagihan:
+- Menentukan field required yang harus diisi
+- Mempengaruhi perhitungan dan validasi
+- Mempengaruhi alur approval yang digunakan
+
+===================================================
+6. DETAIL INVOICE GRID
+===================================================
+
+STRUKTUR DETAIL INVOICE
+
+Setiap baris detail invoice mewakili satu item pengeluaran dengan:
+- COA (Chart of Account) untuk kategori pengeluaran
+- Divisi dan Departemen asal pengeluaran
+- Jumlah base amount sebelum pajak
+- Jenis pajak yang berlaku
+- Perhitungan pajak otomatis
+
+FITUR TAMBAH DAN HAPUS BARIS
+
+Menambah Baris:
+- Klik tombol Add Request di toolbar grid
+- Form grid akan menampilkan baris baru kosong
+- User mengisi data dari awal
+
+Menghapus Baris:
+- Klik tombol delete di kolom action
+- Sistem menampilkan konfirmasi
+- Baris dihapus dan total dihitung ulang
+- Data otomatis ter-refresh
+
+EDITOR FIELD
+
+Divisi Editor:
+- Dropdown yang mengambil data dari master divisi
+- Filtered berdasarkan company code yang login
+- Perubahan divisi akan reset departemen dan COA
+
+Departemen Editor:
+- Dropdown dependent pada pilihan divisi
+- Hanya menampilkan departemen yang sesuai divisi
+- Perubahan departemen akan reset COA
+
+Jenis Permintaan Editor:
+- Dropdown untuk memilih COA berdasarkan:
+  * Company code
+  * Divisi pilihan
+  * Departemen pilihan
+  * Tahun fiskal dari tanggal dokumen
+  * Periode akuntansi dari tanggal dokumen
+- Menampilkan kode dan deskripsi COA
+- Saat dipilih otomatis update kode COA dan budget info
+
+Jenis Pajak Editor:
+- Dropdown dari master tax
+- Menampilkan kode pajak dan deskripsi
+- Pemilihan pajak akan trigger perhitungan ulang
+- Pajak NT (No Tax) tidak memerlukan PPh
+
+Jenis PPH Editor:
+- Dropdown dari master PPh
+- Hanya aktif jika jenis pajak memiliki PPh
+- Menampilkan deskripsi PPh
+
+===================================================
+7. PERHITUNGAN OTOMATIS
+===================================================
+
+PERHITUNGAN PPN DAN PPH
+
+Rumus Perhitungan:
+
+Nilai PPN = Base Amount x Persentase PPN / 100
+Contoh: 1000000 x 10 / 100 = 100000
+
+Nilai PPh = Base Amount x Persentase PPh / 100
+Contoh: 1000000 x 2 / 100 = 20000
+
+Total Row Amount = Base Amount + Nilai PPN
+Contoh: 1000000 + 100000 = 1100000
+
+PERHITUNGAN TOTAL GRID
+
+Total Detail Amount = Sum semua Total Row Amount
+
+Total DPP = Sum semua Base Amount untuk tax type bukan NT
+
+Total Base Amount = Sum semua Base Amount
+
+Total PPN = Sum semua Nilai PPN
+
+Total PPH = Sum semua Nilai PPh
+
+Total Local Amount = Total Detail Amount x Currency Rate
+
+Contoh Kalkulasi:
+Base Amount: 1000000 + 2000000 = 3000000
+Tax 10% untuk semua: 300000 + 200000 = 500000  [sisi dari PPn]
+Tax 2% untuk semua: 20000 + 40000 = 60000      [dari PPh]
+Total Detail Amount: 3500000 + 500000 = 4000000 tapi ini salah
+
+Benar:
+Base Amount: 1000000 + 2000000 = 3000000
+PPN: 100000 + 200000 = 300000
+PPh: 20000 + 40000 = 60000
+Total = 1000000 + 100000 + 2000000 + 200000 = 3300000
+
+CURRENCY RATE HANDLING
+
+Jika Currency IDR:
+- Rate otomatis 1
+- User tidak bisa mengubah rate
+- Semua perhitungan dalam IDR
+
+Jika Currency Selain IDR:
+- Rate diambil dari database foreign currency
+- Rate dapat di-override oleh user
+- Total local amount dihitung dengan rate yang digunakan
+
+Perubahan Rate:
+- Saat currency berubah rate otomatis update dari DB
+- Saat rate diubah manual, total local amount recalculate
+- Formula: Total Foreign Amount x Rate = Total Local Amount
+
+VALIDASI BUDGET
+
+Sistem melakukan pengecekan budget otomatis saat:
+- User selesai input base amount
+- User memilih COA
+- User memilih divisi atau departemen
+
+Data yang dikirim untuk validasi:
+- Foreign rate dari form
+- Amount (total row amount)
+- Fiscal year dari tanggal dokumen
+- Accounting period dari bulan tanggal dokumen
+- Company code yang login
+- Division dan Department
+- COA Code
+
+Respon dari validasi:
+- Flag over budget: YES atau NO
+- Sisa budget bulan: nilai sisa budget
+- Need approval: Y atau N
+
+Display Status:
+- Jika sisa budget > amount: Status OK
+- Jika sisa budget < amount: Status OVER BUDGET
+- Warna baris berubah jika over budget
+
+===================================================
+8. VALIDASI DATA
+===================================================
+
+VALIDASI SAAT SUBMIT
+
+Form Header Validation:
+- Semua field required harus diisi
+- Aplikant dan Approve By harus ada dari session
+- Division dan Department harus ada dari session
+
+Detail Validation:
+- Grid detail minimal harus ada 1 baris
+- Setiap baris harus memiliki:
+  * COA Code tidak boleh kosong
+  * Base Amount tidak boleh 0
+  * Jenis Pajak tidak boleh kosong atau Select
+  * Semua perhitungan harus selesai
+
+Dokumen Referensi Validation:
+- Jika Bill Type Kontraktor wajib ada SPK No
+- No kwitansi harus diisi atau input na
+- PO No harus diisi atau input na
+- Currency rate tidak boleh 0
+
+Form Umum:
+- Tanggal harus dalam range periode aktif
+- Vendor harus dipilih dan ada di sistem
+- Description tidak boleh kosong
+- Bill Type harus dipilih
+
+ERROR HANDLING
+
+Validasi tidak lolos menampilkan:
+- Dialog error dengan list error detail
+- Nomor baris dan field yang error
+- Pesan error spesifik per item
+
+Contoh Error Message:
+Cannot continue to save
+Row 1: COA Code cannot empty
+Row 2: Tax Type cannot empty
+Row 3: Base Amount must be filled
+Please correct errors above
+
+===================================================
+9. FITUR FINANCE CORRECTION
+===================================================
+
+SKENARIO CORRECTION
+
+Kondisi Invoice:
+- Invoice sudah di-submit ke Finance
+- Finance menemukan kesalahan atau perlu penyesuaian
+- Status dokumen berubah menjadi CORRECTION
+
+Notifikasi User:
+- User melihat notifikasi bahwa dokumen masuk status CORRECTION
+- User dapat membuka invoice untuk melihat detail koreksi
+- User melihat tab baru PD Corrected by Finance
+
+TAMPILAN CORRECTION FORM
+
+Tab: PD Corrected by Finance
+
+Informasi Original:
+- Tanggal dokumen original
+- Tipe tagihan original
+- Tipe PD original
+- Mata uang original
+- Rate mata uang original
+- Vendor original
+
+Data Koreksi:
+- Grid menampilkan detail baris yang dikoreksi
+- Setiap baris menampilkan:
+  * COA Code yang dikoreksi
+  * Base Amount yang dikoreksi
+  * Jenis Pajak yang dikoreksi
+  * PPN dan PPh yang dikoreksi
+  * Status perubahan
+
+User Interface untuk Correction:
+- Semua field readonly (tidak bisa diedit)
+- User hanya bisa melihat perubahan yang disarankan
+- Tombol Apply Correction untuk konfirmasi
+- Tombol Cancel untuk membatalkan
+
+PROSES PENERAPAN CORRECTION
+
+Langkah Penerapan:
+1. User membaca detail koreksi yang ditampilkan
+2. User mengklik tombol Apply Correction
+3. Sistem menampilkan konfirmasi Are you sure
+4. User klik OK untuk lanjut
+5. Sistem mengirim data approval ke backend
+6. Backend melakukan update status
+7. Sistem menampilkan pesan sukses
+8. Grid invoice di-refresh
+9. User kembali ke grid dengan status tepdate
+
+Data yang Dikirim:
+- Nomor dokumen PD yang dikoreksi
+- Detail baris yang di-approve/terima koreksi
+
+===================================================
+10. ERROR HANDLING
+===================================================
+
+TIPE ERROR DAN HANDLING
+
+Error Validasi Data:
+- Terjadi saat user submit dengan data tidak lengkap
+- Sistem menampilkan dialog dengan detail error
+- User harus memperbaiki dan submit ulang
+
+Error API Server:
+- Terjadi saat komunikasi dengan backend gagal
+- Sistem menampilkan pesan dengan status code
+- User bisa retry atau hubungi administrator
+
+Error Authorization:
+- Terjadi saat token expired atau tidak valid
+- Sistem menampilkan notifikasi harus re-login
+- User di-redirect ke login page
+
+Error Master Data:
+- Terjadi saat master data tidak ditemukan
+- Misalnya: Currency tidak ada, Vendor tidak ada
+- Sistem menampilkan pesan bahwa data harus di-master dulu
+- User menghubungi administrator untuk update master
+
+PESAN ERROR YANG MUNGKIN MUNCUL
+
+Untuk Admin/Finance:
+- Cannot continue to save! Please fill required field
+- Cannot continue to save! Bill Type must be selected
+- Cannot continue to save! Currency Rate cannot be 0
+- Cannot continue to save! PD Detail need minimum 1 item
+- Cannot continue to save! Please fill all validation
+
+Untuk Data:
+- Your company doesnt have active period
+- Please select Bill Type
+- Bill type data not exist
+- Row X: COA Code cannot empty
+- Row X: Tax Type cannot empty
+- Row X: Base Amount must be filled
+
+Untuk Network:
+- Request Status: 404 Status Text: Not Found
+- Request Status: 500 Status Text: Internal Server Error
+- Connection timeout
+
+RECOVERY DARI ERROR
+
+Jika Error Validasi:
+- Perbaiki field yang error sesuai pesan
+- Pastikan semua required field terisi
+- Cek kembali data di grid detail
+- Klik Save lagi
+
+Jika Error Server:
+- Tunggu beberapa detik
+- Coba klik Save lagi
+- Jika masih error, hubungi IT Support
+- Siapkan screenshot error untuk laporan
+
+Jika Error Timeout:
+- Periksa koneksi internet
+- Refresh halaman dan coba lagi
+- Jika besar data coba reduce jumlah baris
+- Hubungi administrator jika masih error
+
+===================================================
+RINGKASAN FITUR QUICK REFERENCE
+===================================================
+
+TOMBOL DAN FUNGSI
+
+Main Grid Level:
+- Create Invoice: Buat invoice baru
+- Export to Excel: Download data ke file Excel
+- Action Button: Edit atau aksi pada invoice pilihan
+
+Form Level:
+- Next: Lanjutkan ke tab PD Type
+- Back: Kembali ke tab PD Form
+- Save: Submit dokumen ke sistem
+- Apply Correction: Terima koreksi dari Finance
+
+Grid Detail Level:
+- Add Request: Tambah baris item baru
+- Delete Button: Hapus baris item
+
+KEYBOARD SHORTCUT
+
+Tab Navigation: User bisa gunakan Tab key untuk pindah field
+Date Picker: Klik field date atau ketik format DD/MM/YYYY
+Dropdown: Ketik untuk filter atau Tab untuk buka dropdown
+Grid Edit: Double click cell atau klik Add Request
+
+MOBILE RESPONSIVE
+
+Form disesuaikan untuk desktop 1366px
+Tidak recommended untuk smartphone karena kompleksitas
+Tablet landscape bisa digunakan dengan limited features
+
+===================================================
+CATATAN PENTING UNTUK USER FINANCE
+===================================================
+
+1. Pastikan semua master data sudah ter-master sebelum invoice dibuat
+2. Currency rate otomatis diambil dari DB sesuai tanggal dokumen
+3. Budget validation real-time saat input base amount
+4. Total amount automatic calculated tidak perlu input manual
+5. Jangan hapus baris detail sembarangan karena akan affect total
+6. Jika ada correction, jangan langsung approve, baca detail dulu
+7. Export Excel gunakan untuk report dan audit trail
+8. Periode aktif harus sudah setup di master accounting period
+9. Over budget tidak menghalangi submit tapi ada flag WARNING
+10. Semua dokumen require approval setelah submit ke Finance

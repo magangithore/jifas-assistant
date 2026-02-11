@@ -1,0 +1,1076 @@
+﻿PPUM & Realization (Finance Approval)
+
+Deskripsi
+
+PPUM & Realization (Finance Approval) adalah modul yang digunakan oleh tim Finance untuk melakukan persetujuan terhadap pengajuan PUM (Pengajuan Uang Muka) yang telah disetujui oleh supervisor/head, serta mengelola dokumen Realisasi (RU) yang merekam penggunaan dana UM di lapangan. 
+
+Modul ini memiliki 2 tab utama:
+1. Tab PPUM (Finance Approval) - Melakukan review dan approval pengajuan PUM dari tahap kedua (Head Approval)
+2. Tab Realization (RU) - Membuat dan mengelola dokumen Realisasi yang menunjukkan bagaimana dana UM telah digunakan
+
+Fungsi
+
+Tab PPUM (Finance Approval):
+1. Melihat daftar pengajuan PUM yang telah disetujui oleh head dan menunggu persetujuan finance
+2. Menganalisis detail pengajuan PUM beserta rincian itemnya
+3. Melihat informasi budget yang tersedia untuk setiap Item COA
+4. Memberi persetujuan atas pengajuan PUM untuk melanjutkan ke tahap pembayaran
+5. Menolak pengajuan PUM dengan alasan jika diperlukan
+6. Membatalkan/Void dokumen UM yang sudah dalam status "Ready to Pay"
+
+Tab Realization (RU):
+1. Melihat daftar dokumen realisasi yang belum selesai
+2. Membuat dokumen Realisasi untuk mencatat penggunaan dana UM
+3. Menambahkan detail pengeluaran dengan vendor, deskripsi, dan jumlah
+4. Menghitung otomatis pajak (PPN dan PPH) berdasarkan tax code yang dipilih
+5. Melakukan checking pengeluaran sebelum posting ke sistem akuntansi
+6. Posting dokumen realisasi untuk diproses lebih lanjut
+7. Membatalkan dokumen realisasi jika ada kesalahan
+
+Tujuan
+
+1. Memastikan pengajuan PUM sesuai dengan budget yang tersedia
+2. Memvalidasi kelengkapan data pengajuan sebelum diproses pembayaran
+3. Mencegah pengeluaran UM melebihi budget yang dialokasikan
+4. Merekam dengan detail bagaimana dana UM digunakan di lapangan
+5. Memastikan perhitungan pajak tepat sesuai peraturan perpajakan
+6. Menyelaraskan data realisasi dengan pencatatan akuntansi
+7. Menjaga kontrol internal atas penggunaan dana UM
+
+PPUM & Realization dapat diakses oleh:
+
+Role: WMDT
+Deskripsi: Master Data
+
+Role: FINA
+Deskripsi: Finance
+
+Role: SPVR
+Deskripsi: Supervisor Finance
+
+Role: HDFA
+Deskripsi: Head Finance
+
+Keterangan: Role FINA, SPVR, HDFA memiliki akses penuh untuk mengelola approval PPUM dan realisasi. Role FRPT hanya memiliki akses untuk melihat laporan.
+
+---
+
+TAB 1: PPUM (FINANCE APPROVAL)
+
+Langkah-langkah Penggunaan
+
+Langkah 1: Melihat Daftar Pengajuan PUM yang Perlu Diapprove
+
+1. Buka modul PUM di menu PPUM & Realization
+2. Klik tab PPUM (Finance Approval)
+3. Grid akan menampilkan daftar semua pengajuan PUM dengan status "Need Approval" dari finance
+4. Anda dapat melihat informasi:
+   Tanggal pengajuan
+   Nomor dokumen PUM
+   Nomor UM (jika sudah dibuat)
+   Kategori PUM
+   Nama karyawan pengaju
+   Deskripsi pengajuan
+   Jumlah yang diminta
+   Status saat ini
+
+Langkah 2: Memfilter dan Mencari Pengajuan
+
+1. Gunakan kolom filter pada setiap header kolom grid
+2. Filter yang tersedia:
+   Berdasarkan Tanggal: Klik pada kolom "Date" â†’ pilih tanggal menggunakan date picker
+   Berdasarkan Nomor Dokumen: Ketik nomor PPUM pada kolom "Document No"
+   Berdasarkan Nomor UM: Ketik nomor UM pada kolom "UM No"
+   Berdasarkan Kategori: Pilih kategori dari dropdown list
+   Berdasarkan Nama Karyawan: Ketik nama karyawan pada kolom "Applicant Name"
+   Berdasarkan Status: Pilih status dari dropdown list
+3. Tekan Enter atau klik icon search untuk menampilkan hasil filter
+
+Langkah 3: Membuka Detail Pengajuan untuk Approval
+
+1. Cari pengajuan yang ingin Anda approve pada grid
+2. Klik tombol Action pada baris pengajuan tersebut
+3. Sebuah jendela detail akan terbuka menampilkan:
+   Informasi Header: Tanggal, nomor dokumen, nomor UM, nama karyawan, head yang approve, jumlah
+   Rincian Item: Grid dengan daftar detail pengeluaran yang diminta
+   Tombol Aksi: Approve, Reject, atau Void (tergantung status)
+
+Langkah 4: Menganalisis Budget dan Memberikan Persetujuan
+
+1. Di jendela detail, review informasi berikut:
+   Nama Karyawan Pengaju: Siapa yang mengajukan
+   Deskripsi Pengajuan: Untuk apa UM ini digunakan
+   Jumlah yang Diminta: Berapa total yang diminta
+   Rincian Item: Lihat breakdown per item dengan COA masing-masing
+   Sisa Budget: Cek apakah budget tersedia untuk setiap COA yang diajukan
+   
+2. Jika setuju untuk approval:
+   Klik tombol Approve
+   Sistem akan menampilkan konfirmasi: "Are you sure want to APPROVE this PUM?"
+   Klik OK untuk melanjutkan
+   Pengajuan akan berubah status menjadi "Ready to Pay"
+
+3. Jika ingin menolak:
+   Klik tombol Reject
+   Sistem akan menampilkan dialog untuk memasukkan alasan penolakan
+   Ketik alasan penolakan (contoh: "Budget tidak tersedia untuk COA ini")
+   Klik OK
+   Status pengajuan akan berubah menjadi "Reject By Finance"
+
+Langkah 5: Membatalkan Dokumen UM (Jika Status "Ready to Pay")
+
+1. Buka detail pengajuan dengan status "Ready to Pay"
+2. Klik tombol Void
+3. Sebuah jendela akan terbuka meminta alasan pembatalan
+4. Ketik alasan pembatalan
+5. Klik Yes untuk mengonfirmasi pembatalan
+6. Dokumen UM akan dibatalkan dan dapat dihapus dari sistem jika diperlukan
+
+Daftar Lengkap Field
+
+Grid Daftar Pengajuan (Tab PPUM)
+
+Field: Date
+Deskripsi: Tanggal pengajuan PUM dibuat
+Tipe: Tanggal
+Keterangan: Format: DD/MM/YYYY, dapat difilter
+
+Field: Document No
+Deskripsi: Nomor referensi pengajuan PUM
+Tipe: Teks
+Keterangan: Unik, tidak boleh duplikat
+
+Field: UM No
+Deskripsi: Nomor UM yang sudah dibuat
+Tipe: Teks
+Keterangan: Kosong jika belum disetujui approval
+
+Field: Category
+Deskripsi: Kategori pengajuan (Biaya, Operasional, dsb)
+Tipe: Dropdown
+Keterangan: Ditentukan saat pengajuan
+
+Field: Applicant Name
+Deskripsi: Nama karyawan yang mengajukan
+Tipe: Teks
+Keterangan: Otomatis dari data karyawan
+
+Field: Description
+Deskripsi: Deskripsi penggunaan dana
+Tipe: Teks
+Keterangan: Contoh: "Biaya perjalanan dinas ke Medan"
+
+Field: Amount
+Deskripsi: Jumlah uang yang diminta
+Tipe: Angka
+Keterangan: Format: desimal 2 digit
+
+Field: Status
+Deskripsi: Status approval saat ini
+Tipe: Dropdown
+Keterangan: Nilai: "Need Approval", "Ready to Pay", "Reject By Finance"
+
+
+Form Detail Pengajuan (Jendela Approval)
+
+Field: PUM Date
+Deskripsi: Tanggal pengajuan
+Tipe: Tanggal
+Keterangan: Readonly, tidak dapat diubah
+
+Field: PPUM No
+Deskripsi: Nomor dokumen pengajuan
+Tipe: Teks
+Keterangan: Readonly, auto-generated
+
+Field: Description
+Deskripsi: Deskripsi pengajuan
+Tipe: Teks Area
+Keterangan: Readonly, tidak dapat diubah
+
+Field: Paid To
+Deskripsi: Nama karyawan pengaju
+Tipe: Teks
+Keterangan: Readonly dengan dropdown karyawan
+
+Field: Approved By
+Deskripsi: Nama head/supervisor yang approve
+Tipe: Teks
+Keterangan: Readonly, diisi dari data karyawan
+
+Field: Amount
+Deskripsi: Jumlah dalam mata uang tertentu
+Tipe: Angka
+Keterangan: Readonly, tidak dapat diubah
+
+
+Grid Rincian Item (Detail Pengeluaran)
+
+Field: Request Type
+Deskripsi: Tipe/jenis pengeluaran (COA)
+Tipe: Dropdown
+Keterangan: Pilih dari daftar COA yang tersedia
+
+Field: Code
+Deskripsi: Kode COA
+Tipe: Teks
+Keterangan: Readonly, auto-filled dari COA dipilih
+
+Field: Division
+Deskripsi: Divisi tempat pengeluaran terjadi
+Tipe: Teks
+Keterangan: Readonly, cascade dari karyawan
+
+Field: Department
+Deskripsi: Departemen tempat pengeluaran
+Tipe: Teks
+Keterangan: Readonly, cascade dari divisi
+
+Field: Amount
+Deskripsi: Jumlah untuk item ini
+Tipe: Angka
+Keterangan: Format: desimal 2 digit, readonly
+
+Field: Sisa Budget
+Deskripsi: Sisa budget yang tersedia
+Tipe: Angka
+Keterangan: Format: desimal 2 digit, readonly
+
+
+Fitur-fitur
+
+1. Tampilan Grid dengan Warna Status
+ Hijau: Pengajuan yang perlu persetujuan (Need Approval)
+ Merah: Pengajuan yang telah ditolak (Reject By Finance)
+ Hitam: Pengajuan yang sudah disetujui (Ready to Pay)
+
+2. Kolom Filter Multi-Kolom
+Setiap kolom memiliki filter row yang memungkinkan Anda menyaring data berdasarkan kriteria spesifik tanpa harus membuka detail. Contoh: filter tanggal "Antara 01/01/2024 - 31/01/2024" atau filter status "Need Approval saja".
+
+3. Sorting dan Paging
+ Grid dapat disort berdasarkan kolom manapun (default: sort by tanggal descending/terbaru terlebih dahulu)
+ Data ditampilkan per halaman (default: 20 baris per halaman)
+ Tombol navigasi halaman di bawah grid
+
+4. Detail Budget View
+Saat membuka detail pengajuan, Anda dapat melihat breakdown budget per item COA termasuk:
+ Budget yang dialokasikan untuk bulan ini
+ Jumlah yang sudah terpakai
+ Sisa budget yang tersedia
+
+5. Konfirmasi Persetujuan
+Sistem akan meminta konfirmasi sebelum melakukan approval atau rejection untuk mencegah kesalahan. Konfirmasi akan menampilkan: "Apakah Anda yakin ingin APPROVE pengajuan PUM dengan nomor XXX senilai YYY?"
+
+6. Alasan Rejection
+Saat menolak pengajuan, Anda harus memberikan alasan penolakan yang akan dicatat dalam sistem dan bisa dilihat oleh karyawan pengaju. Contoh alasan: "Budget tidak tersedia", "Dokumen tidak lengkap", "Duplikat dengan pengajuan lain".
+
+7. Export ke Excel
+Tombol "Export" di toolbar grid memungkinkan Anda mendownload daftar pengajuan dalam format Excel file untuk analisis lebih lanjut atau pembuatan laporan.
+
+8. Modal Window Popup
+Detail pengajuan ditampilkan dalam jendela modal (popup) yang dapat dimaksimalkan untuk melihat informasi lebih detail, dan dapat ditutup untuk kembali ke daftar grid.
+
+9. Real-time Status Update
+Setelah melakukan approval atau rejection, grid akan secara otomatis refresh dan menampilkan update status terbaru tanpa perlu reload halaman.
+
+10. Void Reconfirmation
+Untuk pembatalan dokumen UM, sistem meminta 2 level konfirmasi: (1) dialog peringatan, (2) form alasan pembatalan. Ini untuk mencegah pembatalan yang tidak sengaja.
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+ "Success - [Nomor UM] has been approved and ready for payment": Pengajuan berhasil diapprove
+ "Success - [Nomor UM] has been rejected": Pengajuan berhasil ditolak
+ "Success - [Nomor UM] has been voided": Dokumen UM berhasil dibatalkan
+
+Pesan Konfirmasi
+ "Are you sure want to APPROVE this PUM?": Konfirmasi sebelum approval
+ "Apakah Anda yakin ingin menolak pengajuan PUM dengan nomor [XXX] senilai [YYY]?": Konfirmasi sebelum rejection
+ "Are you sure want to VOID Document: [UM No]?": Konfirmasi sebelum pembatalan UM
+
+Pesan Error
+ "Cannot continue with empty data! Please contact your administrator!": Data pengajuan tidak ditemukan
+ "Cannot continue! Void reason must be filled!": Alasan pembatalan kosong, harus diisi
+ "Request Status: [code] Status Text: [message]": Kesalahan komunikasi dengan server
+
+Catatan Tambahan
+
+Timing dan SLA
+ Finance approval biasanya dilakukan dalam 1-2 hari kerja setelah head approval selesai
+ Pengajuan yang sudah di-approve akan langsung dipindahkan ke tahap pembayaran (PU - Payment Unit)
+ Pengajuan yang di-reject akan dikirim notifikasi ke karyawan untuk revisi atau pembatalan
+
+Budget Validation
+ Sistem otomatis mengecek ketersediaan budget untuk setiap COA pada saat detail pengajuan dibuka
+ Jika salah satu item tidak ada budget, akan ditampilkan dengan highlight untuk memberitahu Anda
+ Anda tetap bisa approve pengajuan dengan budget melebihi, tapi akan tercatat dan perlu disesuaikan di periode berikutnya
+
+Alasan Umum Rejection
+1. "Budget tidak tersedia untuk COA ini" - Total pengeluaran melebihi budget yang dialokasikan
+2. "Dokumen referensi tidak lengkap" - Attachment atau supporting document belum diunggah
+3. "Duplikat dengan pengajuan lain" - Ada pengajuan serupa yang sudah diajukan sebelumnya
+4. "Jumlah tidak sesuai dengan invoice" - Nominal yang diajukan tidak cocok dengan dokumen pendukung
+5. "Persetujuan dari [departemen] belum diperoleh" - Ada approval tambahan yang dibutuhkan
+
+Best Practice Approval
+ Review setiap item detail sebelum memberikan approval
+ Pastikan nominasi sesuai dengan dokumen pendukung (invoice, kwitansi, dsb)
+ Cek budget availability untuk periode berjalan
+ Berikan alasan detail saat melakukan rejection untuk membantu revisi
+ Dokumentasikan alasan approval dalam note jika ada yang khusus
+
+Escalation Scenarios
+Skenario: Pengajuan pending lebih dari 5 hari
+Tindakan: Kontak head department untuk mempercepat review
+
+Skenario: Budget melebihi 2x lipat
+Tindakan: Kontak budget manager untuk validasi ulang
+
+Skenario: Pengajuan berulang dari karyawan yang sama
+Tindakan: Tinjau policy dan pertimbangkan pre-approval limit
+
+Skenario: Persetujuan head tidak jelas alasannya
+Tindakan: Minta klarifikasi head sebelum approval finance
+
+Skenario: Dokumen pendukung tidak ada/hilang
+Tindakan: Minta karyawan untuk menyediakan ulang
+
+
+Troubleshooting
+
+Masalah: Grid tidak menampilkan data
+Penyebab: 1. Belum ada pengajuan pending, 2. Filter terlalu ketat
+Solusi: Buka filter dan reset, atau refresh halaman
+
+Masalah: Tombol Approve/Reject disabled
+Penyebab: Status sudah berubah atau Anda tidak punya akses
+Solusi: Refresh halaman atau minta admin untuk mengecek role
+
+Masalah: Tidak bisa input alasan rejection
+Penyebab: Field validation belum terpenuhi
+Solusi: Pastikan Anda menulis minimal 10 karakter alasan
+
+Masalah: Export ke Excel error
+Penyebab: Server sedang maintenance atau file size terlalu besar
+Solusi: Coba lagi nanti atau filter data terlebih dahulu
+
+Masalah: Detail pengajuan tidak terbuka
+Penyebab: Pengajuan sudah dihapus atau akses denied
+Solusi: Cek apakah Anda masih punya akses atau hubungi admin
+
+
+FAQ (Frequently Asked Questions)
+
+Q: Berapa lama waktu yang diberikan untuk approval finance?
+A: Tidak ada deadline wajib, namun target adalah 1-2 hari kerja. Jika ada urgency, bisa koordinasi dengan head atau director.
+
+Q: Bisakah approval finance di-bypass jika ada keadaan darurat?
+A: Ada proses escalation, tetapi tetap perlu approval dari level yang lebih tinggi (Director/Head). Hubungi administrator untuk prosesnya.
+
+Q: Apa bedanya "Reject By Finance" dengan approval yang dibatalkan?
+A: "Reject By Finance" artinya pengajuan ditolak untuk approval tahap ini (bisa direvisi dan diajukan lagi), sementara "Void" adalah pembatalan dokumen yang sudah jadi UM.
+
+Q: Apakah bisa edit pengajuan setelah di-reject?
+A: Tidak langsung. Karyawan harus membuat pengajuan baru setelah menerima reject, atau bisa request revised UM ke admin jika hanya ada typo minor.
+
+Q: Bagaimana jika approval finance terlewat dan UM sudah terbayarkan?
+A: UM tetap akan tersimpan dalam sistem dengan catatan "Approved" walaupun belum formal dari finance. Akan ada proses review ulang dan adjustment di periode berikutnya.
+
+Q: Bisakah satu pengajuan diapprove sebagian saja?
+A: Tidak, approval adalah all-or-nothing. Jika ada item yang perlu ditolak, maka seluruh pengajuan harus di-reject untuk direvisi.
+
+Q: Siapa yang bisa lihat alasan rejection?
+A: Karyawan pengaju, head/supervisor, dan finance approval yang mengelola. Tidak ditampilkan di laporan umum untuk privasi.
+
+---
+
+TAB 2: REALIZATION (RU)
+
+Langkah-langkah Penggunaan
+
+Langkah 1: Melihat Daftar Dokumen Realisasi
+
+1. Buka modul PPUM & Realization
+2. Klik tab Realization (RU)
+3. Grid akan menampilkan daftar dokumen realisasi (RU) dengan berbagai status
+4. Informasi yang ditampilkan:
+   Tanggal dokumen
+   Nomor PP (PPUM)
+   Nomor RU (Realisasi)
+   Deskripsi/keperluan
+   Jumlah yang dialokasikan
+   Nomor PU (Payment Unit)
+   Nomor UM
+   Status realisasi saat ini
+
+Langkah 2: Memfilter dan Mencari Realisasi
+
+1. Gunakan kolom filter pada setiap header untuk menyaring data
+2. Filter yang tersedia:
+   Berdasarkan Tanggal: Pilih tanggal menggunakan date picker
+   Berdasarkan Nomor PPUM: Ketik nomor PP
+   Berdasarkan Nomor RU: Ketik nomor RU
+   Berdasarkan Deskripsi: Ketik kata kunci deskripsi
+   Berdasarkan Jumlah: Masukkan nominal
+   Berdasarkan Status: Pilih status dari dropdown
+3. Kombinasikan beberapa filter untuk hasil yang lebih spesifik
+
+Langkah 3: Membuka Dokumen Realisasi untuk Edit/Review
+
+1. Cari dokumen realisasi pada grid
+2. Klik tombol Action pada baris dokumen
+3. Jendela realisasi akan terbuka dengan informasi:
+   Header form dengan informasi umum RU
+   Grid detail dengan rincian pengeluaran
+   Tombol aksi: Update, Checking, Posting, Void
+
+Langkah 4: Mengisi/Edit Data Header Realisasi
+
+Di jendela realisasi, Anda dapat melihat dan (jika diizinkan) mengedit field berikut:
+
+Kolom Kiri (Informasi Dasar):
+1. Realization Date: Tanggal dokumen realisasi dibuat (required)
+2. RU No: Nomor realisasi (readonly, auto-generated)
+3. PU No: Nomor payment unit (readonly)
+4. UM No: Nomor uang muka yang direalisasikan (readonly)
+5. Applicant: Nama karyawan penerima UM (readonly)
+6. Term: Syarat pembayaran (required, pilih dari dropdown)
+7. Ref No: Nomor referensi tambahan (opsional, contoh: nomor invoice master)
+
+Kolom Kanan (Informasi Keuangan):
+1. Currency: Mata uang (readonly, biasanya IDR)
+2. Rate: Nilai tukar (readonly untuk IDR biasanya = 1)
+3. UM Amount: Jumlah UM yang diterima (readonly, tidak boleh diubah)
+4. Base Amount: Total pengeluaran dasar tanpa pajak (readonly, auto-calculated)
+5. DPP: Nilai dasar pengenaan pajak (readonly, auto-calculated)
+6. PPN: Pajak pertambahan nilai yang dihitung (readonly, auto-calculated)
+7. PPH: Pajak penghasilan yang dipotong (readonly, auto-calculated)
+8. Total Amount: Total pengeluaran setelah semua pajak (readonly, auto-calculated)
+9. Description: Deskripsi detail realisasi (required, textarea)
+
+Langkah 5: Menambahkan Rincian Pengeluaran (Detail Grid)
+
+1. Di grid "Detail Pengeluaran", klik tombol Add detail untuk menambah baris baru
+2. Sebuah baris kosong akan ditambahkan di bawah grid
+3. Isi field-field berikut untuk setiap item pengeluaran:
+
+   Field Wajib Diisi:
+   Vendor: Pilih vendor/penerima pembayaran dari dropdown
+   Desc: Deskripsi pengeluaran (contoh: "Pembelian alat tulis kantor")
+   Division: Pilih divisi tempat pengeluaran (cascade)
+   Department: Pilih departemen (cascade dari divisi)
+   COA Code: Pilih kode COA/jenis pengeluaran (cascade dari dept)
+   Tax Code: Pilih tax code (akan menentukan perhitungan PPN/PPH)
+   Amount: Masukkan nominal pengeluaran
+
+   Field Auto-Calculated (Readonly):
+   PPN: Otomatis dihitung berdasarkan tax code
+   PPH: Otomatis dihitung jika PPH applicable
+   PPH Code: Pilih tipe PPH jika ada potongan PPH
+
+4. Setelah mengisi field vendor, deskripsi, dan division, field lainnya akan auto-populate
+5. Saat Anda keluar dari cell (cell close), sistem akan otomatis menghitung pajak
+
+Langkah 6: Menghitung dan Validasi Pajak Otomatis
+
+Sistem akan secara otomatis:
+
+1. Menghitung PPN berdasarkan tax code:
+   Tax code dengan PPN 10% â†’ PPN = Amount Ã— 10%
+   Tax code dengan PPN 0% â†’ PPN = 0
+
+2. Menghitung PPH berdasarkan tax code:
+   Tax code dengan PPH 1% â†’ PPH = Amount Ã— 1%
+   Tax code dengan PPH 1.5% â†’ PPH = Amount Ã— 1.5%
+
+3. Menghitung Total Amount untuk setiap item:
+   Total = Amount + PPN - PPH
+   
+   Contoh:
+   Amount: Rp 1.000.000
+   Tax Code: PPN 10%, PPH 1%
+   PPN: Rp 100.000
+   PPH: Rp 10.000
+   Total: Rp 1.000.000 + Rp 100.000 - Rp 10.000 = Rp 1.090.000
+
+4. Update Header Totals: Setiap kali Anda menutup detail item, header secara otomatis update:
+   Base Amount (jumlah item tanpa pajak)
+   DPP (jumlah yang kena pajak)
+   PPN Total (total PPN semua item)
+   PPH Total (total PPH semua item)
+   Total Amount (grand total)
+
+Langkah 7: Menghapus Item Detail
+
+1. Jika ada item yang salah atau tidak perlu, klik tombol Delete (icon sampah) pada baris tersebut
+2. Sistem akan menampilkan konfirmasi: "Are you sure you want to DELETE this item?"
+3. Klik Yes untuk menghapus
+4. Item akan dihapus dan total akan auto-recalculate
+5. Setidaknya harus ada 1 item detail yang tidak boleh kosong
+
+Langkah 8: Menyimpan/Update Data Realisasi
+
+Setelah semua detail pengeluaran selesai diisi:
+
+1. Klik tombol Update (tombol warna biru)
+2. Sistem akan validasi:
+   Semua field required sudah diisi
+   Setidaknya ada 1 item detail
+   Nominal valid (tidak ada item dengan jumlah 0)
+3. Jika validasi OK, sistem akan menampilkan konfirmasi: "Are you sure want to UPDATE DATA for [RU No]?"
+4. Klik OK untuk update
+5. Data akan disimpan dan sistem akan menampilkan:
+   Pesan sukses: "Update successful"
+   Notifikasi sisa/kekurangan: Jika Total Amount < UM Amount muncul "Ada Sisa PUM sebesar [jumlah]", jika lebih muncul "Ada Kekurangan PUM sebesar [jumlah]"
+
+Langkah 9: Melakukan Checking Realisasi
+
+Checking adalah tahap review untuk memastikan data realisasi sudah benar sebelum posting ke sistem akuntansi:
+
+1. Pastikan semua detail sudah diisi dengan benar
+2. Verifikasi nominal pengeluaran sesuai bukti (invoice, kwitansi)
+3. Verifikasi tax code dan perhitungan pajak sudah benar
+4. Jika semuanya OK, klik tombol Checking
+5. Sistem akan menampilkan konfirmasi: "Are you sure want to CHECKING this Realization document?"
+6. Klik OK
+7. Status dokumen akan berubah menjadi "NEED POSTING REALIZATION" (ditandai hijau di grid)
+
+Langkah 10: Posting Realisasi ke Sistem Akuntansi
+
+Posting adalah tahap final dimana data realisasi dikirim ke sistem akuntansi untuk pencatatan:
+
+1. Pastikan dokumen sudah melalui tahap checking
+2. Verifikasi sekali lagi semua data sudah tepat
+3. Klik tombol Posting
+4. Sistem akan menampilkan konfirmasi: "Are you sure want to POSTING this Realization document?"
+5. Klik OK
+6. Data akan dikirim ke sistem akuntansi
+7. Status dokumen akan berubah menjadi "COMPLETE" atau "NEED ACCOUNTING CHECKING" (tergantung proses selanjutnya)
+8. Setelah posting, dokumen tidak bisa diedit lagi (readonly)
+
+Langkah 11: Membatalkan Dokumen Realisasi
+
+Jika ada kesalahan dan ingin membatalkan dokumen realisasi:
+
+1. Buka dokumen yang akan dibatalkan
+2. Klik tombol Void
+3. Jendela akan terbuka meminta alasan pembatalan
+4. Ketik alasan pembatalan (contoh: "Data tertukar dengan dokumen lain")
+5. Klik Yes untuk mengonfirmasi
+6. Sistem akan menampilkan konfirmasi terakhir
+7. Dokumen akan dibatalkan (status berubah menjadi "VOID")
+8. Dokumen yang void tidak akan diproses lebih lanjut
+
+Daftar Lengkap Field
+
+Grid Daftar Realisasi (Tab Realization)
+
+Field: Date
+Deskripsi: Tanggal dokumen realisasi dibuat
+Tipe: Tanggal
+Keterangan: Format: DD/MM/YYYY
+
+Field: PP No
+Deskripsi: Nomor Pengajuan PUM
+Tipe: Teks
+Keterangan: Reference ke PPUM yang direalisasikan
+
+Field: RU No
+Deskripsi: Nomor dokumen Realisasi
+Tipe: Teks
+Keterangan: Unik, auto-generated
+
+Field: Description
+Deskripsi: Deskripsi realisasi
+Tipe: Teks
+Keterangan: Contoh: "Realisasi UM untuk perjalanan dinas"
+
+Field: Amount
+Deskripsi: Jumlah yang dialokasikan dari UM
+Tipe: Angka
+Keterangan: Format: desimal 2 digit
+
+Field: PU No
+Deskripsi: Nomor Payment Unit
+Tipe: Teks
+Keterangan: Reference ke dokumen pembayaran
+
+Field: UM No
+Deskripsi: Nomor Uang Muka
+Tipe: Teks
+Keterangan: Reference ke dokumen UM
+
+Field: Status
+Deskripsi: Status realisasi saat ini
+Tipe: Teks
+Keterangan: Contoh: "NEED CHECKING", "NEED POSTING", "COMPLETE"
+
+
+Form Header Realisasi (Jendela Edit)
+
+Bagian Kiri:
+
+Field: Realization Date
+Deskripsi: Tanggal realisasi
+Tipe: Tanggal
+Required: Ya
+Readonly: Tidak
+
+Field: RU No
+Deskripsi: Nomor realisasi
+Tipe: Teks
+Required: Ya
+Readonly: Ya
+
+Field: PU No
+Deskripsi: Nomor payment unit
+Tipe: Teks
+Required: Tidak
+Readonly: Ya
+
+Field: UM No
+Deskripsi: Nomor uang muka
+Tipe: Teks
+Required: Tidak
+Readonly: Ya
+
+Field: Applicant
+Deskripsi: Nama karyawan penerima UM
+Tipe: Teks
+Required: Ya
+Readonly: Ya
+
+Field: Term
+Deskripsi: Syarat pembayaran
+Tipe: Dropdown
+Required: Ya
+Readonly: Tidak
+
+Field: Ref No
+Deskripsi: Nomor referensi tambahan
+Tipe: Teks
+Required: Tidak
+Readonly: Tidak
+
+
+Bagian Kanan (Keuangan):
+
+Field: Currency
+Deskripsi: Mata uang
+Tipe: Teks
+Required: Tidak
+Readonly: Ya
+
+Field: Rate
+Deskripsi: Nilai tukar
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: UM Amount
+Deskripsi: Total UM yang diterima
+Tipe: Angka
+Required: Ya
+Readonly: Ya
+
+Field: Base Amount
+Deskripsi: Total pengeluaran dasar
+Tipe: Angka
+Required: Ya
+Readonly: Ya
+
+Field: DPP
+Deskripsi: Nilai dasar pengenaan pajak
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: PPN
+Deskripsi: Pajak pertambahan nilai
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: PPH
+Deskripsi: Pajak penghasilan
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: Total Amount
+Deskripsi: Total pengeluaran akhir
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: Description
+Deskripsi: Deskripsi lengkap realisasi
+Tipe: Teks Area
+Required: Ya
+Readonly: Tidak
+
+
+Grid Detail Pengeluaran (Detail RU)
+
+Field: Vendor
+Deskripsi: Nama penerima pembayaran
+Tipe: Dropdown
+Required: Ya
+Editable: Ya (saat add)
+
+Field: Desc
+Deskripsi: Deskripsi pengeluaran
+Tipe: Teks
+Required: Ya
+Editable: Ya (saat add)
+
+Field: Division
+Deskripsi: Divisi tempat pengeluaran
+Tipe: Dropdown
+Required: Ya
+Editable: Ya (cascade)
+
+Field: Department
+Deskripsi: Departemen pengeluaran
+Tipe: Dropdown
+Required: Ya
+Editable: Ya (cascade)
+
+Field: COA Code
+Deskripsi: Kode jenis pengeluaran
+Tipe: Dropdown
+Required: Ya
+Editable: Ya (cascade)
+
+Field: COA Description
+Deskripsi: Deskripsi COA
+Tipe: Teks
+Required: Tidak
+Editable: Tidak (readonly)
+
+Field: Tax Code
+Deskripsi: Kode pajak
+Tipe: Dropdown
+Required: Ya
+Editable: Ya
+
+Field: Amount
+Deskripsi: Nominal pengeluaran
+Tipe: Angka
+Required: Ya
+Editable: Tidak (readonly setelah add)
+
+Field: PPN
+Deskripsi: Pajak pertambahan nilai
+Tipe: Angka
+Required: Tidak
+Editable: Tidak (auto-calculated)
+
+Field: PPH
+Deskripsi: Pajak penghasilan dipotong
+Tipe: Angka
+Required: Tidak
+Editable: Tidak (auto-calculated)
+
+Field: PPH Code
+Deskripsi: Tipe/kode PPH
+Tipe: Dropdown
+Required: Conditional
+Editable: Ya (jika PPH > 0)
+
+Field: Total Amount
+Deskripsi: Total pengeluaran per item
+Tipe: Angka
+Required: Tidak
+Editable: Tidak (auto-calculated)
+
+
+Fitur-fitur
+
+1. Grid dengan Status Color Coding
+ Hijau: Dokumen yang perlu posting (NEED POSTING REALIZATION, NEED TAX APPROVAL, NEED ACCOUNTING CHECKING)
+ Merah: Dokumen yang ditolak atau error
+ Hitam: Dokumen yang sudah selesai (COMPLETE) atau dibatalkan (VOID)
+
+2. Cascade Dropdown
+ Division â†’ Department â†’ COA: Saat Anda memilih Division, daftar Department yang ditampilkan hanya yang sesuai dengan Division tersebut. Begitu juga saat pilih Department, COA yang ditampilkan hanya yang valid untuk departemen itu.
+ Ini memastikan pengeluaran dicatat ke tempat yang tepat
+
+3. Auto-Calculation Pajak
+ Saat Anda pilih Tax Code dan Amount, sistem otomatis hitung:
+  - PPN berdasarkan persentase yang ditentukan di master tax
+  - PPH jika applicable (ada withholding tax)
+  - Total Amount = Amount + PPN - PPH
+ Tidak perlu menghitung manual
+
+4. Real-time Header Update
+ Saat Anda menambah/menghapus/edit detail item, header section (Base Amount, DPP, PPN Total, PPH Total, Total Amount) otomatis update
+ Nomor-nomor selalu match antara detail dan header
+
+5. Multi-Tab Interface
+Jendela edit memiliki tab:
+ Tab Data PUM: Menampilkan informasi PUM yang direalisasikan
+ Tab Lampiran: Menampilkan dokumen/file yang attached ke realisasi ini
+
+6. Detail Grid dengan Add/Delete
+ Tombol "Add detail" untuk menambah item baru
+ Tombol "Delete" (icon sampah) untuk menghapus item
+ Validasi: minimal harus ada 1 item, tidak boleh semua kosong
+
+7. Form Validation
+Sebelum update/checking/posting, sistem validate:
+ Semua field required sudah diisi
+ Data format benar (tanggal, angka, dsb)
+ Detail grid tidak kosong dan setiap item valid
+ Nominal tidak ada yang 0 atau negatif
+
+8. PPH Code Conditional
+ Field PPH Code hanya editable jika ada PPH amount > 0
+ Jika tidak ada PPH, field disabled/grayed out
+ Saat ada PPH, Anda harus memilih tipe PPH dari dropdown (wajib)
+
+9. Void dengan Alasan
+ Tombol Void hanya muncul untuk dokumen yang belum "COMPLETE"
+ Saat void, Anda harus input alasan pembatalan
+ Alasan dicatat dalam sistem untuk audit trail
+
+10. Status Progression
+Dokumen mengalami progression status:
+1. NEED CHECKING â†’ (klik Checking) â†’ NEED POSTING REALIZATION
+2. NEED POSTING REALIZATION â†’ (klik Posting) â†’ COMPLETE atau NEED ACCOUNTING CHECKING
+3. Di setiap tahap bisa ditekan tombol Void untuk membatalkan
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+ "Success - Update successful": Data realisasi berhasil disimpan
+ "Ada Sisa PUM sebesar [Jumlah]": Pengeluaran lebih sedikit dari UM, ada sisa dana
+ "Ada Kekurangan PUM sebesar [Jumlah]": Pengeluaran lebih banyak dari UM, ada kekurangan yang perlu bayar
+ "Success - Checking successful": Dokumen berhasil melalui tahap checking
+ "Success - Posting successful": Dokumen berhasil di-posting ke akuntansi
+ "Success - Document voided": Dokumen berhasil dibatalkan
+
+Pesan Konfirmasi
+ "Are you sure want to UPDATE DATA for [RU No]?": Konfirmasi sebelum save data
+ "Are you sure you want to DELETE this item?": Konfirmasi sebelum hapus item detail
+ "Are you sure want to CHECKING this Realization document?": Konfirmasi sebelum checking
+ "Are you sure want to POSTING this Realization document?": Konfirmasi sebelum posting
+ "[RU No] would be voided. Please input the reason below": Dialog untuk input alasan pembatalan
+
+Pesan Error
+ "Cannot continue with empty data! Please contact your administrator!": Data tidak lengkap atau tidak ditemukan
+ "Please fill all required fields!": Ada field wajib yang belum diisi
+ "Cannot continue with empty detail data! Please fill at least 1 detail item": Grid detail masih kosong
+ "Cannot continue! Void reason must be filled!": Alasan pembatalan harus diisi
+ "Total Amount must be greater than 0": Jendela tidak bisa ditutup jika total 0
+ "Item successfully deleted": Konfirmasi item berhasil dihapus
+
+Pesan Notifikasi Khusus
+ Saat Amount < UM: Muncul pesan hijau "Ada Sisa PUM" dengan jumlah sisa yang akan dikembalikan
+ Saat Amount > UM: Muncul pesan merah "Ada Kekurangan PUM" dengan jumlah kekurangan yang perlu dibayar
+ Notifikasi ini penting untuk mengetahui apakah ada CB Payment atau CB Receive yang akan dibuat
+
+Catatan Tambahan
+
+Perhitungan dan Validasi
+
+Formula Perhitungan:
+
+1. PPN (Pajak Pertambahan Nilai):
+   PPN = Amount Ã— Persentase PPN
+   Contoh: Rp 1.000.000 Ã— 10% = Rp 100.000
+
+2. PPH (Pajak Penghasilan):
+   PPH = Amount Ã— Persentase PPH
+   Contoh: Rp 1.000.000 Ã— 1% = Rp 10.000
+
+3. DPP (Dasar Pengenaan Pajak):
+   DPP = Total semua Amount yang ada PPN
+   Hanya item dengan tax code yang ada PPN saja
+
+4. Total Per Item:
+   Total = Amount + PPN - PPH
+   Contoh: Rp 1.000.000 + Rp 100.000 - Rp 10.000 = Rp 1.090.000
+
+5. Grand Total (Header):
+   Grand Total = SUM(Amount) + SUM(PPN) - SUM(PPH)
+   Atau: SUM(Total Amount semua item)
+
+Validasi Otomatis:
+ Jumlah tidak boleh 0 atau negatif
+ Setiap item harus memiliki Vendor, Description, Division, Department, COA, Tax Code
+ Jika PPH > 0, maka PPH Code harus diisi
+ Detail grid tidak boleh kosong (minimal 1 item)
+
+Workflow Status Progression
+
+
+
+Currency dan Foreign Exchange
+
+ Jika UM dalam mata uang asing (bukan IDR):
+  - Currency field akan menampilkan kode mata uang (USD, EUR, dsb)
+  - Rate field akan menampilkan nilai tukar pada tanggal transaksi
+  - Semua perhitungan tetap dilakukan dalam mata uang asli
+  - Saat posting, sistem akan convert ke IDR menggunakan rate tersebut
+
+ Jika ada perubahan rate antara tanggal UM dan tanggal realisasi:
+  - Perbedaan rate akan dicatat sebagai gain/loss valas
+  - Ini diproses secara terpisah dalam akuntansi
+
+Multi-Currency Support
+
+Mata Uang: IDR
+Simbol: Rp
+Keterangan: Indonesia Rupiah (default)
+
+Mata Uang: USD
+Simbol: $
+Keterangan: US Dollar
+
+Mata Uang: EUR
+Simbol: â‚¬
+Keterangan: Euro
+
+Mata Uang: SGD
+Simbol: S$
+Keterangan: Singapore Dollar
+
+Mata Uang: AUD
+Simbol: A$
+Keterangan: Australian Dollar
+
+Mata Uang: JPY
+Simbol: Â¥
+Keterangan: Japanese Yen
+
+
+Skenario Khusus
+
+Skenario 1: Multiple Item dengan Tax Code Berbeda
+ Item 1: Vendor A, Amount Rp 1.000.000, Tax Code PPN 10% PPH 1% â†’ Total: Rp 1.090.000
+ Item 2: Vendor B, Amount Rp 500.000, Tax Code PPN 0% PPH 0% â†’ Total: Rp 500.000
+ Item 3: Vendor C, Amount Rp 2.000.000, Tax Code PPN 10% PPH 1.5% â†’ Total: Rp 2.170.000
+ Grand Total: Rp 3.760.000
+ DPP: Rp 3.000.000 (item 1 + item 3)
+
+Skenario 2: Realisasi Sebagian (Ada Sisa)
+ UM Amount: Rp 10.000.000
+ Total Realisasi: Rp 8.500.000
+ Sisa: Rp 1.500.000 (akan terbentuk CB Receive Rp 1.500.000)
+
+Skenario 3: Realisasi Melebihi (Ada Kekurangan)
+ UM Amount: Rp 10.000.000
+ Total Realisasi: Rp 10.500.000
+ Kekurangan: Rp 500.000 (akan terbentuk CB Payment Rp 500.000)
+
+Best Practice Realization
+
+1. Verifikasi Bukti: Sebelum menginput detail, pastikan bukti (invoice, kwitansi) sudah diterima lengkap
+2. Input Akurat: Masukkan data persis sesuai bukti, jangan membulatkan atau mengubah nominal
+3. Review Pajak: Cek bahwa tax code yang dipilih benar sesuai jenis pengeluaran
+4. Approval Bertahap: Jangan langsung posting, lakukan checking terlebih dahulu
+5. Document Organization: Simpan bukti dalam folder terstruktur dan link ke dokumen RU
+6. Timely Realization: Lakukan realisasi dalam waktu maksimal 30 hari setelah pembayaran UM
+
+Troubleshooting
+
+Masalah: Tombol "Add detail" disabled
+Penyebab: Status dokumen COMPLETE atau VOID
+Solusi: Tidak bisa edit dokumen yang sudah final, harus void dan buat baru
+
+Masalah: Cascade dropdown tidak update
+Penyebab: Belum memilih parent (Division/Dept)
+Solusi: Pastikan memilih Division dan Department terlebih dahulu
+
+Masalah: PPN/PPH tidak terhitung
+Penyebab: Tax code belum dipilih atau salah
+Solusi: Pilih tax code yang sesuai dari dropdown
+
+Masalah: Field grayed out/readonly
+Penyebab: Status dokumen sudah COMPLETE
+Solusi: Dokumen final tidak bisa diedit, harus buat realisasi baru
+
+Masalah: Detail tidak bisa dihapus
+Penyebab: Itu satu-satunya item detail
+Solusi: Minimal harus ada 1 item, tidak boleh kosong semua
+
+Masalah: Checking button grayed out
+Penyebab: Status bukan "NEED CHECKING"
+Solusi: Pastikan sudah save update terlebih dahulu
+
+Masalah: Error saat Posting
+Penyebab: Ada data yang tidak lengkap atau server error
+Solusi: Cek koneksi internet dan data validation, coba lagi
+
+Masalah: Nominal PPN/PPH besar
+Penyebab: Tax code menggunakan persentase tinggi
+Solusi: Cek kembali tax code apakah sudah benar
+
+
+FAQ (Frequently Asked Questions)
+
+Q: Apakah UM harus direalisasikan semuanya?
+A: Tidak harus. Bisa direalisasikan sebagian, sisanya dikembalikan sebagai CB Receive. Atau bisa juga kekurangan pembayaran sebagai CB Payment.
+
+Q: Berapa lama waktu untuk realisasi setelah UM dibayarkan?
+A: Umumnya dalam 30 hari. Jika melebihi 30 hari, akan ada notifikasi reminder dari sistem.
+
+Q: Bisa edit realisasi yang sudah di-posting?
+A: Tidak bisa. Dokumen yang sudah di-posting ke akuntansi tidak bisa diedit. Harus void dan buat dokumen baru jika ada koreksi.
+
+Q: Bagaimana jika ada kesalahan vendor di detail?
+A: Delete item yang salah, lalu add item baru dengan vendor yang benar. System akan recalculate otomatis.
+
+Q: Apakah PPH Code harus dipilih saat ada PPH?
+A: Ya, wajib. Tipe PPH menentukan bagaimana pajak diproses di sistem akuntansi.
+
+Q: Kalau UM dalam mata uang asing, bagaimana perhitungannya?
+A: Semua perhitungan tetap dalam mata uang asli. Konversi ke IDR terjadi saat posting ke akuntansi menggunakan rate pada tanggal UM.
+
+Q: Bisa checking tanpa update terlebih dahulu?
+A: Tidak. Harus ada update/save data terlebih dahulu sebelum bisa checking.
+
+Q: Siapa saja yang bisa lihat detail realisasi?
+A: Karyawan pengaju, supervisor, finance yang handle, dan user dengan role FINA/WMDT/WMTR.
+
+Q: Apakah realisasi bisa dihapus total dari sistem?
+A: Tidak bisa dihapus, hanya bisa di-void. Dokumen void tetap tersimpan untuk audit trail.
+
+Q: Bagaimana kalau ada sisa PUM yang sangat kecil (misalnya Rp 100)?
+A: Tetap dibuat CB Receive untuk nominal tersebut. Ini penting untuk close/settlement UM yang sempurna.
+
+---
+
+Perbedaan Tab PPUM dan Tab Realization
+
+Aspek: Tujuan
+Tab PPUM (Finance Approval): Approve/reject pengajuan PUM
+Tab Realization (RU): Mencatat penggunaan UM di lapangan
+
+Aspek: Input Data
+Tab PPUM (Finance Approval): Tidak, hanya review saja
+Tab Realization (RU): Ya, input detail pengeluaran
+
+Aspek: Workflow
+Tab PPUM (Finance Approval): Approval/Reject/Void
+Tab Realization (RU): Update/Checking/Posting/Void
+
+Aspek: Key Activity
+Tab PPUM (Finance Approval): Decision approval
+Tab Realization (RU): Record expenses
+
+Aspek: Status Progress
+Tab PPUM (Finance Approval): Need Approval â†’ Ready to Pay â†’ (Reject)
+Tab Realization (RU): Need Checking â†’ Need Posting â†’ Complete
+
+Aspek: Timing
+Tab PPUM (Finance Approval): Dilakukan sebelum pembayaran UM
+Tab Realization (RU): Dilakukan setelah pembayaran UM
+
+Aspek: User
+Tab PPUM (Finance Approval): Finance staff yang approve
+Tab Realization (RU): Finance/Operation yang record realisasi
+
+
+

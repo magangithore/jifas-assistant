@@ -1,0 +1,231 @@
+﻿Master Report Setup
+
+Master Report Setup digunakan untuk mengkonfigurasi struktur dan komposisi laporan keuangan di JIFAS. Modul ini memungkinkan pengguna memetakan akun COA ke berbagai baris/item laporan, menentukan urutan tampilan akun, dan menandai baris laporan yang wajib diisi dengan nilai tertentu.
+
+Deskripsi
+
+Report Setup adalah jembatan antara Master COA dan Laporan Keuangan. Melalui modul ini, pengguna dapat menentukan akun COA mana saja yang akan ditampilkan di setiap baris laporan keuangan (Neraca, Laba-Rugi, Cash Flow), memastikan struktur laporan yang dihasilkan sesuai dengan kebutuhan perusahaan.
+
+Fungsi
+
+1. Memilih Jenis Laporan: Memilih laporan keuangan yang akan dikonfigurasi (Neraca, Laba-Rugi, Cash Flow, dll)
+2. Memetakan Akun ke Laporan: Menentukan akun COA mana saja yang akan ditampilkan pada setiap baris/item laporan
+3. Mengatur Urutan Tampilan: Menentukan urutan dan pengelompokan akun dalam laporan
+4. Menandai Baris Wajib Diisi: Menunjukkan baris laporan mana saja yang perlu diisi dengan nilai (Fill: Yes/No)
+5. Mengatur Hierarki Akun: Menampilkan akun parent dan child sesuai struktur yang diinginkan di laporan
+6. Validasi Duplikasi: Mencegah akun yang sama digunakan di multiple baris dalam laporan yang sama
+
+Tujuan
+
+Memastikan laporan keuangan yang dihasilkan mencerminkan struktur akun perusahaan
+Menyediakan fleksibilitas dalam penyusunan laporan sesuai kebutuhan spesifik
+Mengontrol tampilan dan urutan akun di laporan untuk kemudahan analisis
+Memastikan semua akun penting tercakup dalam laporan yang relevan
+Menjaga konsistensi struktur laporan di seluruh perusahaan
+
+Berikut adalah daftar role yang memiliki akses untuk membuat atau mengubah data Report Setup:
+WMTR: Webmaster
+HOAC: Holding Accounting
+
+Langkah 1: Memilih Jenis Laporan
+1. Di bagian atas modul, terdapat dropdown Report Name
+2. Klik dropdown untuk melihat daftar laporan yang tersedia
+3. Pilih laporan yang ingin dikonfigurasi (contoh: "Balance Sheet Assets", "Profit and Loss Revenue")
+4. Sistem akan otomatis memuat:
+   Daftar baris/item laporan (kiri)
+   Daftar COA tersedia (tengah atas)
+   Daftar COA yang sudah dipilih (kanan bawah)
+
+Langkah 2: Memilih Baris Laporan
+1. Di bagian kiri modul, terdapat Grid COA Description yang menampilkan daftar baris/item laporan
+2. Klik pada baris laporan yang ingin dikonfigurasi (contoh: "Total Assets", "Net Revenue")
+3. Baris yang dipilih akan highlight biru
+4. Panel title di atas akan menampilkan nama laporan yang sedang dikonfigurasi
+5. Grid di kanan bawah akan secara otomatis menampilkan COA yang sudah dipilih untuk baris ini
+
+Langkah 3: Memilih COA dari Struktur Pohon
+1. Di bagian tengah atas modul, terdapat Tree COA List yang menampilkan struktur hierarki semua COA
+2. Klik ikon [+] untuk expand parent account dan melihat child account
+3. Klik pada baris akun yang ingin ditambahkan ke laporan
+4. Baris yang dipilih akan highlight
+5. Sistem akan memvalidasi:
+   Apakah akun sudah digunakan di baris lain → tidak boleh duplikat
+   Apakah baris laporan memperbolehkan entry ("Fill: Yes") → jika "No", tidak bisa tambah
+
+Langkah 4: Menambahkan COA ke Laporan
+1. Setelah memilih baris laporan (Step 2) dan COA dari tree (Step 3)
+2. Klik tombol Add to selected COA (dengan ikon panah bawah)
+3. Sistem akan memvalidasi dan menambahkan COA tersebut ke laporan
+4. COA yang ditambahkan akan muncul di grid Selected COA di kanan bawah
+5. Jika ada error (duplikat atau baris tidak boleh diisi), pesan error akan ditampilkan
+
+Langkah 5: Menghapus COA dari Laporan
+1. Cari COA yang ingin dihapus di grid Selected COA (kanan bawah)
+2. Klik pada baris COA tersebut untuk memilih
+3. Klik tombol Remove from selected COA (dengan ikon panah atas)
+4. Sistem akan meminta konfirmasi penghapusan
+5. Klik OK untuk mengkonfirmasi penghapusan
+6. COA akan dihapus dari laporan
+
+Struktur Tampilan Report Setup
+
+Struktur Layout Modul
+Modul ini terbagi menjadi empat bagian utama untuk memudahkan pengaturan hierarki laporan:
+Header Section: Berisi dropdown Report Name untuk memilih jenis laporan yang akan dikonfigurasi.
+Left Panel (COA Description): Menampilkan daftar item atau baris deskripsi yang akan muncul di laporan akhir (misalnya: "Total Assets").
+Top Right Panel (COA List Tree): Menampilkan seluruh struktur akun (COA) dalam bentuk pohon (expandable tree) yang bisa dipilih untuk dimasukkan ke dalam baris laporan.
+Bottom Right Panel (Selected COA): Menampilkan daftar akun yang telah berhasil dipasangkan ke dalam baris deskripsi laporan yang dipilih di panel kiri.
+
+Daftar Informasi Field
+1. Report Name (Header)
+Report Code: Kode unik laporan yang bersifat Hidden (internal sistem).
+Report Name: Nama laporan yang tampil sebagai pilihan bagi pengguna.
+Active Status: Status keaktifan laporan yang bersifat Hidden.
+Cash Flow Report: Flag Hidden untuk menandai jika laporan tersebut bertipe Cash Flow.
+
+2. COA Description Grid (Panel Kiri)
+Row Number: Nomor urut baris laporan yang bersifat Hidden.
+Item Description: Nama baris yang akan muncul pada laporan (contoh: "Net Revenue").
+Fill Status: Keterangan "Yes" atau "No" yang menunjukkan apakah baris tersebut wajib diisi.
+Report Code: Kode referensi laporan yang bersifat Hidden.
+
+3. COA List Tree (Panel Kanan Atas)
+COA Code & Description: Kode dan nama akun yang ditampilkan secara hierarkis.
+Parent COA: Kode induk akun (Hidden) untuk membentuk struktur pohon.
+Fixed Asset Info: Mencakup flag dan tipe arus kas (In/Out) yang bersifat Hidden.
+System Mapping: Mencakup kode-kode laporan (PL, BS, CF) dan status akun yang semuanya bersifat Hidden.
+
+4. Selected COA Grid (Panel Kanan Bawah)
+Selected COA Code & Description: Informasi akun yang telah dipilih oleh pengguna.
+Parent COA: Informasi kode induk akun yang bersifat Hidden.
+Fixed Asset Info: Detail aset tetap terkait akun yang bersifat Hidden.
+Report Codes: Daftar kode laporan yang sudah menggunakan akun tersebut (Hidden).
+
+1. Dropdown Pilihan Laporan (Report Name)
+Menampilkan daftar semua laporan keuangan yang tersedia
+Format: "Nama Laporan" (contoh: "Balance Sheet Assets", "Profit and Loss")
+Saat dipilih, otomatis refresh semua grid di bawahnya
+Dropdown dengan fitur search untuk mudah menemukan laporan
+
+2. Grid COA Description (Daftar Baris Laporan)
+Menampilkan semua baris/item dalam laporan yang dipilih
+Baris dapat di-select (satu per satu)
+Menampilkan kolom "Fill" yang menunjukkan apakah baris perlu diisi
+Baris dengan indentasi menunjukkan hierarki (parent-child dalam laporan)
+Warna highlight saat baris dipilih
+
+3. TreeList COA (Struktur Akun)
+Menampilkan seluruh struktur hierarki COA dalam format pohon
+Dapat di-expand/collapse untuk navigasi
+Single selection (hanya 1 akun yang bisa dipilih)
+Memudahkan pencarian akun berdasarkan struktur hierarki
+Menampilkan kode COA dan deskripsi akun
+
+4. Tombol Add to Selected COA
+Menambahkan akun yang dipilih dari tree ke laporan
+Requirement:
+  Harus ada baris laporan yang dipilih
+  Harus ada akun COA yang dipilih
+  Baris laporan harus memiliki "Fill: Yes" (boleh diisi)
+  Akun tidak boleh sudah ada di baris lain dari laporan yang sama
+Menampilkan pesan sukses atau error setelah operasi
+Grid Selected COA otomatis refresh
+
+5. Tombol Remove from Selected COA
+Menghapus akun dari laporan
+Requirement:
+  Harus ada akun yang dipilih di grid Selected COA
+Menampilkan konfirmasi sebelum penghapusan
+Pesan sukses ditampilkan setelah operasi
+Grid Selected COA otomatis refresh
+
+6. Grid Selected COA (Daftar Akun Terpilih)
+Menampilkan semua akun yang sudah dipilih untuk baris laporan yang sedang aktif
+Baris dapat di-select untuk dihapus dengan tombol Remove
+Menampilkan kode dan deskripsi akun
+Pagination otomatis untuk data yang banyak
+Sortable kolom untuk memudahkan pencarian
+
+7. Validasi Duplikasi
+Sistem mencegah akun yang sama digunakan di baris lain dalam laporan yang sama
+Jika coba menambah akun yang sudah ada, akan muncul pesan: "COA [KODE] has been used in other row!"
+Validasi juga memeriksa mapping akun ke berbagai laporan (PL Code, BS Code, CF Code)
+
+8. Validasi Baris Boleh Diisi
+Beberapa baris laporan tidak boleh diisi dengan akun tertentu (Fill: No)
+Jika coba menambah ke baris seperti ini, akan muncul pesan: "This item cannot be filled. Please choose another item!"
+Pengguna harus memilih baris yang memiliki Fill: Yes
+
+9. Panel Title
+Menampilkan nama laporan yang sedang dikonfigurasi
+Update otomatis saat memilih laporan dari dropdown
+Membantu pengguna tahu laporan mana yang sedang dikerjakan
+
+10. Loading Indicator
+Menampilkan progress loading saat mengambil data dari server
+Terutama terlihat di grid-grid saat pertama kali load atau saat add/remove
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+Saat Add: "COA successfully added to report"
+Saat Remove: "COA successfully removed from report"
+
+Pesan Error/Validasi
+Jika baris laporan belum dipilih: "Please select one COA Description from left table!"
+Jika akun belum dipilih: "Please select one COA from table above!"
+Jika akun sudah digunakan: "COA: [KODE] has been used in other row!"
+Jika baris tidak boleh diisi: "This item cannot be filled. Please choose another item!"
+Jika tabel kosong: "Table SELECTED COA or Table COA DESCRIPTION contains no data. Cannot continue the operation!"
+Jika hapus tapi tidak ada pilihan: "Please select one COA from table below!"
+
+Pesan Konfirmasi
+Saat Remove: "Are you sure want to remove COA: [KODE]?"
+
+Workflow Tipikal Konfigurasi Report
+
+Contoh: Setup Balance Sheet Assets
+
+1. Pilih Laporan: Dropdown Report Name → pilih "Balance Sheet Assets"
+   Panel title berubah menjadi "Balance Sheet Assets"
+
+2. Pilih Baris Pertama: Grid COA Description → klik "Current Assets"
+   Baris highlight biru
+
+3. Pilih Akun: Tree COA List → expand ASSETS → expand "Current Assets" → klik "Cash Small"
+   Baris akun highlight
+
+4. Tambah Akun: Klik tombol "Add to selected COA"
+   Validasi: Baris "Current Assets" punya Fill: Yes ✓, Akun belum digunakan ✓
+   COA 10101.0000 (Cash Small) muncul di grid Selected COA
+   Pesan sukses ditampilkan
+
+5. Lanjutkan Akun: Ulangi Step 3-4 untuk akun lain dalam kategori "Current Assets"
+   Tambah 10102.0000 (Cash Big)
+   Tambah 10200.0000 (Bank Account)
+   Dst.
+
+6. Pindah Baris: Klik baris berikutnya di grid kiri (contoh: "Fixed Assets")
+   Grid Selected COA otomatis refresh menampilkan akun untuk baris ini
+   Ulangi proses add untuk akun-akun fixed assets
+
+7. Hapus Jika Salah: Jika salah tambah akun:
+   Klik akun yang salah di grid Selected COA
+   Klik tombol "Remove from selected COA"
+   Konfirmasi penghapusan
+   Akun dihapus dari laporan
+
+Catatan Tambahan
+
+Urutan Baris: Urutan baris laporan ditentukan oleh sistem (tidak bisa diubah di modul ini) urutan sesuai dengan struktur laporan yang dirancang
+Akun Parent vs Child: Dapat menambahkan akun parent atau child, tergantung kebutuhan laporan
+Multi-Selection: Hanya satu baris dan satu akun yang bisa dipilih sekaligus; untuk banyak akun, repeat operasi
+Validasi Hierarki: Sistem secara otomatis mengelola mapping akun ke berbagai jenis laporan (PL, BS, CF)
+Integritas Data: Perubahan report setup langsung mempengaruhi laporan yang dihasilkan
+Duplikasi Terlarang: Akun tidak boleh muncul 2x di laporan yang sama (validasi ketat)
+Fill Status Penting: Perhatikan status "Fill" untuk setiap baris jika "No", baris tidak bisa ditambah akun
+Search Laporan: Jika ada banyak laporan, gunakan pencarian di dropdown Report Name untuk mempercepat
+Save Otomatis: Setiap operasi Add/Remove otomatis disimpan ke database
+Performance: Untuk struktur COA yang besar, expand hanya bagian yang diperlukan untuk mempercepat tampilan
+Authorization: Hanya role WMTR dan HOAC yang dapat mengakses fitur ini
+Token Security: Setiap request dilindungi dengan authorization token untuk keamanan data

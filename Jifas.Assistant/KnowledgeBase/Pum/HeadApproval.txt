@@ -1,0 +1,518 @@
+﻿Head Approval (Persetujuan Atasan)
+
+Head Approval adalah tahap kedua dalam workflow pengajuan uang muka dimana atasan/supervisor karyawan melakukan review dan approval terhadap pengajuan PUM yang telah diajukan oleh karyawan. Setiap pengajuan yang sudah melalui approval ini akan dilanjutkan ke tahap approval finance dan pajak.
+
+Deskripsi
+
+Head Approval merupakan mekanisme kontrol dan validasi dari atasan langsung terhadap pengajuan uang muka karyawan. Atasan akan melihat detail pengajuan, informasi budget yang akan digunakan, dan status budget, kemudian memutuskan untuk approve atau reject pengajuan tersebut. Proses ini memastikan bahwa setiap pengajuan sudah di-review oleh management sebelum diproses lebih lanjut.
+
+Fungsi
+
+1. Melihat Daftar Pengajuan Pending: Atasan dapat melihat daftar semua pengajuan dari tim-nya yang menunggu approval
+2. Review Detail Pengajuan: Melihat rincian lengkap pengajuan termasuk nominal, deskripsi, kategori, dan employee data
+3. Validasi Budget: Melihat status budget untuk setiap item pengajuan (OK, Warning, Over Budget)
+4. Analisa Informasi Budget Bulanan: Melihat rincian budget bulanan per COA untuk memahami sisa budget yang tersedia
+5. Approve Pengajuan: Menyetujui pengajuan jika dirasa sudah sesuai dan budget OK
+6. Reject Pengajuan: Menolak pengajuan dengan alasan/catatan jika diperlukan
+7. Handle Over Budget: Memberikan persetujuan khusus jika ada pengajuan yang over budget
+8. Filter dan Search: Mencari pengajuan tertentu dengan berbagai kriteria
+9. Export Data: Mengekspor daftar pengajuan ke Excel untuk laporan
+
+Tujuan
+
+ Memberikan oversight/kontrol dari management terhadap pengajuan uang muka karyawan
+ Memastikan pengajuan sudah valid dan sesuai kebutuhan bisnis sebelum dikasihkan uang
+ Melakukan validasi budget agar tidak terjadi over budget yang tidak terkontrol
+ Mengurangi risiko penyalahgunaan atau penggunaan uang muka yang tidak sesuai
+ Mendukung workflow yang terstruktur dengan approval bertingkat
+ Memfasilitasi komunikasi antara karyawan dan atasan tentang pengajuan
+
+Role yang Dapat Mengakses
+
+Berbagai role dapat mengakses modul Head Approval sesuai dengan tingkat dan fungsi:
+
+Kode: WMTR
+Nama Role: Webmaster
+Keterangan: Akses penuh ke semua fitur head approval
+
+Kode: FINA
+Nama Role: Finance
+Keterangan: Staff finance dapat view dan filter pengajuan
+
+Kode: SPVR
+Nama Role: Supervisor Finance
+Keterangan: Supervisor dapat approve/reject pengajuan dari tim
+
+Kode: HDFA
+Nama Role: Head Finance
+Keterangan: Head Finance dapat approve pengajuan level tinggi
+
+Kode: MGFA
+Nama Role: Magang Finance
+Keterangan: Magang dapat view pengajuan untuk training
+
+Kode: USER
+Nama Role: Users
+Keterangan: Karyawan regular tidak punya akses head approval
+
+Kode: USRL
+Nama Role: Users All
+Keterangan: Karyawan extended juga tidak punya akses
+
+Kode: FRPT
+Nama Role: Finance Report
+Keterangan: Report user tidak punya akses approval
+
+Langkah-langkah Head Approval
+
+1. View Daftar Pengajuan Pending
+
+Akses Modul:
+1. Login dengan role yang memiliki akses (SPVR, HDFA, FINA, WMTR, atau MGFA)
+2. Buka menu Head Approval di modul PUM
+3. Sistem akan otomatis load daftar pengajuan yang menunggu approval dari Anda
+
+Grid Pengajuan:
+Grid akan menampilkan daftar pengajuan dengan informasi:
+ Tanggal: Tanggal pengajuan dibuat
+ Nomor Dokumen: Nomor referensi PUM (PPUM No)
+ Kategori: Kategori/jenis pengajuan (contoh: Travel, Operational, Procurement)
+ Nama Karyawan: Nama employee yang mengajukan
+ Deskripsi: Penjelasan singkat pengajuan
+ Jumlah: Total nominal yang diajukan
+ Status: Status approval (Need Approval, Approved, Rejected)
+ Over Budget?: Flag apakah ada item yang over budget (YES/NO)
+ Tombol Approval: Klik untuk review dan approve/reject
+
+Warna Indikator Status:
+ Hijau: Status "Need Approval" - menunggu review dari Anda
+ Merah: Status "Reject By Head" - sudah ditolak sebelumnya
+ Lainnya: Status sudah completed atau dalam proses tahap lain
+
+2. Filter dan Cari Pengajuan
+
+Grid memiliki fitur filter di setiap kolom untuk memudahkan pencarian:
+
+Kolom: Tanggal
+Cara Filter: Pilih range tanggal dari date picker
+
+Kolom: Nomor Dokumen
+Cara Filter: Ketik nomor atau sebagian nomor
+
+Kolom: Kategori
+Cara Filter: Pilih dari dropdown kategori
+
+Kolom: Nama Karyawan
+Cara Filter: Ketik nama karyawan
+
+Kolom: Deskripsi
+Cara Filter: Ketik kata kunci (min 3 karakter)
+
+Kolom: Jumlah
+Cara Filter: Masukkan nominal (contoh: 5000000)
+
+Kolom: Status
+Cara Filter: Pilih status dari dropdown
+
+Kolom: Over Budget?
+Cara Filter: Pilih YES atau NO
+
+
+Contoh Filter:
+ Untuk lihat pengajuan Januari 2024: Filter tanggal "01/01/2024" - "31/01/2024"
+ Untuk lihat pengajuan kategori Travel: Pilih "Travel" di filter kategori
+ Untuk lihat pengajuan over budget: Pilih "YES" di filter Over Budget?
+
+3. Approval Workflow (Approve atau Reject)
+
+Step 1: Pilih Pengajuan untuk Review
+1. Cari pengajuan yang ingin di-approve di grid
+2. Klik tombol "Approval" pada baris pengajuan tersebut
+3. Jendela popup akan terbuka menampilkan detail lengkap pengajuan
+
+Step 2: Review Detail Pengajuan
+Jendela approval terbagi 2 tab:
+
+Tab 1: Data PUM
+ Request Detail (bagian atas):
+  - Nomor Pengajuan
+  - Nama Karyawan (Pay To)
+  - Tanggal Pengajuan
+  - Deskripsi/Keperluan
+  - Total Jumlah
+
+ Budget Information Grid (bagian bawah):
+  - Menampilkan setiap item pengeluaran dengan detail:
+    - Division dan Department
+    - COA Code (kode akun)
+    - Nominal per item
+    - Status Budget (OK/Warning/Over Budget)
+  - Baris akan berwarna:
+    - Hijau: Budget OK - tidak ada masalah
+    - Merah: Budget Over - melebihi sisa budget yang tersedia
+
+Tab 2: Lampiran
+ Menampilkan file-file bukti/dokumen pendukung yang di-upload karyawan
+ Bisa di-click untuk preview dokumen
+
+Step 3: Lihat Detail Budget per COA
+1. Di grid "Budget Information", klik baris item yang ingin dilihat detail budgetnya
+2. Klik tombol "View" pada baris tersebut
+3. Popup "Budget Information" akan terbuka menampilkan:
+   Company name
+   Bulan dan Tahun (periode budget)
+   Kode COA dan Deskripsi
+   Detail budget monthly breakdown:
+     - Current: Kategori (Budget, Realisasi, Balance, etc)
+     - Month: Budget/realisasi bulan ini
+     - Accumulation: Total kumulatif bulan-bulan sebelumnya
+     - Year: Total tahunan
+   Budget Status: OK atau CROSS (over budget)
+
+4. Klik tombol "Back" untuk kembali ke daftar item
+
+Step 4: Perhatikan Over Budget Flag
+ Jika ada flag "Over Budget?" dengan nilai YES:
+  - Checkbox "I have understood the over budget issue and agree to use the budget" akan muncul
+  - Tombol Approve akan disabled (tidak bisa diklik) sampai Anda centang checkbox
+  - Artinya: Anda harus secara eksplisit acknowledge bahwa sudah aware dan setuju dengan over budget ini
+
+Step 5: Lakukan Approval
+
+Untuk APPROVE:
+1. Pastikan sudah review detail pengajuan dan budget info
+2. Jika ada over budget dan sudah paham: centang checkbox over budget
+3. Klik tombol "Approve" (tombol akan aktif jika semua requirement sudah terpenuhi)
+4. Konfirmasi akan muncul: "Do you want to APPROVE document [Nomor Pengajuan]?"
+5. Klik "Yes" untuk confirm atau "No" untuk batal
+6. Sistem akan memproses dan menampilkan pesan sukses
+7. Pengajuan akan berubah status ke "Approved" dan dilanjutkan ke tahap Finance Approval
+
+Untuk REJECT:
+1. Jika merasa pengajuan perlu ditolak, klik tombol "Reject"
+2. Dialog prompt akan muncul meminta alasan rejection
+3. Ketik alasan rejection (contoh: "Budget tidak tersedia", "Keperluan tidak urgent", "Ada duplicate dengan pengajuan lain")
+4. Klik "OK" untuk submit rejection dengan alasan, atau "Cancel" untuk batal
+5. Konfirmasi: "Are you sure want to REJECT document [Nomor] with total amount [Jumlah]?"
+6. Klik "Yes" untuk confirm atau "No" untuk batal
+7. Sistem akan memproses dan pengajuan akan berubah status ke "Reject By Head"
+8. Karyawan akan dapat melihat rejection dan alasannya, bisa buat pengajuan baru atau revisi
+
+4. Export ke Excel
+
+1. Klik tombol "Excel" di toolbar grid
+2. File akan otomatis di-download dengan nama "Head-PUM-Export.xlsx"
+3. File berisi data pengajuan yang sedang ditampilkan (sudah ter-filter)
+4. Bisa dibuka di Excel untuk analisis lebih lanjut atau print untuk laporan
+
+Daftar Lengkap Field
+
+Field Grid Pengajuan
+
+No.: 1
+Field: Tanggal
+Keterangan: Tanggal pengajuan dibuat
+
+No.: 2
+Field: Nomor Dokumen
+Keterangan: Nomor PPUM (referensi pengajuan)
+
+No.: 3
+Field: Kategori
+Keterangan: Kategori pengajuan (Travel, Operational, dll)
+
+No.: 4
+Field: Nama Karyawan
+Keterangan: Nama employee yang mengajukan
+
+No.: 5
+Field: Deskripsi
+Keterangan: Penjelasan singkat keperluan pengajuan
+
+No.: 6
+Field: Jumlah
+Keterangan: Total nominal yang diajukan
+
+No.: 7
+Field: Status
+Keterangan: Status approval saat ini
+
+No.: 8
+Field: Over Budget?
+Keterangan: Flag ada tidaknya over budget (YES/NO)
+
+No.: 9
+Field: Approval
+Keterangan: Tombol untuk masuk ke halaman approval
+
+
+Field Form Approval (Tab Data PUM)
+
+No.: 1
+Field: Request Number
+Keterangan: Nomor pengajuan (read-only)
+
+No.: 2
+Field: Pay To
+Keterangan: Nama karyawan yang mengajukan (read-only)
+
+No.: 3
+Field: Date
+Keterangan: Tanggal pengajuan (read-only)
+
+No.: 4
+Field: Description
+Keterangan: Deskripsi pengajuan (read-only)
+
+No.: 5
+Field: Amount
+Keterangan: Total nominal pengajuan (read-only)
+
+No.: 6
+Field: Division
+Keterangan: Divisi tempat pengeluaran (dari grid detail)
+
+No.: 7
+Field: Department
+Keterangan: Department tempat pengeluaran (dari grid detail)
+
+No.: 8
+Field: COA Code
+Keterangan: Kode akun yang dibebankan (dari grid detail)
+
+No.: 9
+Field: Amount
+Keterangan: Nominal per item (dari grid detail)
+
+No.: 10
+Field: Budget Status
+Keterangan: Status budget per item (dari grid detail)
+
+
+Field Detail Budget View
+
+No.: 1
+Field: Company Name
+Keterangan: Nama perusahaan
+
+No.: 2
+Field: Month Year
+Keterangan: Periode budget (contoh: February 2024)
+
+No.: 3
+Field: Budget Code
+Keterangan: Kode COA
+
+No.: 4
+Field: Description
+Keterangan: Deskripsi COA
+
+No.: 5
+Field: Current
+Keterangan: Kategori budget (Budget, Realisasi, Balance)
+
+No.: 6
+Field: Month
+Keterangan: Nilai bulan ini
+
+No.: 7
+Field: Accumulation
+Keterangan: Nilai kumulatif tahun
+
+No.: 8
+Field: Year
+Keterangan: Nilai total tahunan
+
+No.: 9
+Field: Budget Status
+Keterangan: OK atau CROSS
+
+
+Fitur-Fitur Head Approval
+
+1. Workflow Bertingkat (Staged Approval)
+ Head Approval adalah tahap kedua setelah karyawan submit pengajuan
+ Setelah head approve, lanjut ke Finance Approval
+ Jika head reject, karyawan bisa revisi dan submit ulang
+ Memastikan kontrol management sebelum proses lebih lanjut
+
+2. Budget Status Validation
+ Sistem otomatis menampilkan status budget untuk setiap item
+ Flag "Over Budget" jika ada item yang melebihi sisa budget
+ Warna indikator: Hijau (OK) vs Merah (Over Budget)
+ Memudahkan head untuk assess budget impact pengajuan
+
+3. Detailed Budget View
+ Bisa drill-down ke detail budget per COA
+ Lihat breakdown budget bulanan (Current, Month, Accumulation, Year)
+ Memahami trend budget dan sisa yang tersedia
+ Membantu keputusan approval lebih informed
+
+4. Over Budget Acknowledgment Checkbox
+ Jika ada over budget, checkbox perlu di-centang sebelum approve
+ Memastikan head secara eksplisit understand dan agree dengan over budget
+ Security control untuk mencegah approval without awareness
+ Audit trail: catat siapa yang approve over budget
+
+5. Rejection dengan Alasan
+ Saat reject, wajib masukkan alasan rejection
+ Alasan tercatat untuk reference karyawan
+ Karyawan bisa lihat alasan dan revisi pengajuan
+ Dokumentasi lengkap untuk follow-up
+
+6. Multi-Tab Interface
+ Tab 1: Data PUM - detail pengajuan dan budget info
+ Tab 2: Lampiran - dokumen bukti yang di-upload
+ Mudah navigate antara data dan dokumen pendukung
+
+7. Color Coding untuk Status
+ Grid utama: Hijau = Need Approval, Merah = Reject
+ Budget grid: Hijau = OK, Merah = Over Budget
+ Visual quick scan untuk prioritas action
+
+8. Filter & Search Multi-Kolom
+ Filter per tanggal range
+ Filter per kategori, status, nama, nominal
+ Multiple filter bisa digunakan sekaligus
+ Cepat menemukan pengajuan spesifik
+
+9. Pagination & Sorting
+ Pengajuan dibagi per halaman (20 per halaman default)
+ Bisa ubah jumlah per halaman
+ Sorting otomatis per tanggal terbaru
+
+10. Excel Export
+ Semua pengajuan bisa di-export ke Excel
+ Dengan format yang rapih dan siap print
+ Untuk laporan bulanan atau dokumentasi
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+ "Pengajuan berhasil di-approve" â†’ Approval sukses, lanjut ke tahap berikutnya
+ "Pengajuan berhasil di-reject" â†’ Rejection tercatat, karyawan akan dapat notifikasi
+
+Pesan Konfirmasi
+ "Do you want to APPROVE document [Nomor]?" â†’ Konfirmasi sebelum approve
+ "Are you sure want to REJECT document [Nomor] with total amount [Jumlah]?" â†’ Konfirmasi sebelum reject
+ "Please enter rejection reason" â†’ Prompt untuk alasan rejection
+
+Pesan Error/Validasi
+ "Please complete all required fields" â†’ Ada field yang belum diisi
+ "Network Error! Please contact your IT Administrator" â†’ Error koneksi server
+ "Budget status cannot be determined" â†’ Error dalam perhitungan budget
+
+Catatan Tambahan Head Approval
+
+Waktu Processing
+
+ Target TAT: Pengajuan harus di-review dalam 1-2 hari kerja
+ Escalation: Jika ada pengajuan pending lebih dari 3 hari, bisa escalate ke level atas
+ Urgent Approval: Untuk pengajuan urgent/critical, bisa fast-track dengan notifikasi khusus
+
+Over Budget Handling
+
+ Minor Over Budget (< 10% dari budget): Biasanya bisa di-approve dengan head acknowledge
+ Significant Over Budget (10-30%): Perlu diskusi dengan Finance atau requester
+ Severe Over Budget (> 30%): Biasanya perlu persetujuan dari Director/Head Department
+ Cross Budget: Jika ada yang crossing budget (negative balance), butuh special handling
+
+Budget Information Interpretation
+
+ Current: Kategori breakdown (Budget, Realisasi actual, Balance sisa, dll)
+ Month: Nominal bulan berjalan/periode pengajuan
+ Accumulation: Total dari awal tahun sampai periode pengajuan
+ Year: Budget total tahunan untuk COA tersebut
+ Balance = Budget - Realisasi: Sisa yang masih bisa digunakan
+
+Rejection Best Practices
+
+ Be Specific: Alasan rejection sebaiknya spesifik dan actionable
+ Suggest Alternative: Jika reject, usahakan sarankan solusi alternative
+ Follow-up: Jika karyawan revisi, lakukan review cepat untuk tidak delay
+ Document: Simpan catatan rejection untuk reference dan training
+
+Approval Best Practices
+
+ Review Completely: Pastikan review budget detail sebelum approve
+ Ask Questions: Jika ada yang tidak jelas, tanya ke requester atau Finance
+ Cross-Check: Bandingkan dengan historical data dan pattern
+ Trust but Verify: Percaya pada requester tapi verify data masuk akal
+ Monitor Trends: Track approval trend untuk assess if needs policy adjustment
+
+Escalation Scenario
+
+Situasi: Pengajuan pending > 3 hari
+Action: Email reminder ke head/supervisor
+
+Situasi: Over budget significant
+Action: Coordinate dengan Finance untuk approval
+
+Situasi: Duplicate pengajuan detected
+Action: Reject dengan alasan, tanya pada requester
+
+Situasi: Unusual amount/category
+Action: Tanya requester untuk klarifikasi
+
+Situasi: Missing attachment/info
+Action: Reject dengan alasan, minta requester revisi
+
+Situasi: Urgent pengajuan
+Action: Prioritize review, target approve hari sama
+
+
+Common Rejection Reasons
+
+ "Insufficient budget for this COA"
+ "Missing supporting documents"
+ "Duplicate with previous request"
+ "Unclear purpose, needs clarification"
+ "Amount exceeds policy limit"
+ "Not aligned with department priority"
+ "Wrong department/cost center"
+ "Late submission near period close"
+
+Approval Metrics to Track
+
+ Approval Rate: % pengajuan yang di-approve
+ Rejection Rate: % pengajuan yang di-reject
+ Average TAT: Rata-rata waktu approval
+ Over Budget Approval %: % over budget yang tetap di-approve
+ Re-submission Rate: % pengajuan yang di-reject tapi re-submit
+
+System Access & Security
+
+ Login: Pastikan logout setelah selesai (jangan biarkan session terbuka)
+ Permissions: Hanya review pengajuan dari tim yang relevan
+ Confidentiality: Data pengajuan karyawan adalah confidential
+ Audit Trail: Semua action (approve/reject) tercatat untuk audit
+ Approval Authority: Jangan approve di luar wewenang Anda
+
+Troubleshooting
+
+Problem: Grid tidak load
+Solusi: Refresh halaman atau logout-login kembali
+
+Problem: Over Budget checkbox tidak aktif
+Solusi: Cek apakah ada item yang truly over budget
+
+Problem: Approval button disabled
+Solusi: Pastikan checkbox over budget sudah di-centang
+
+Problem: Detail COA tidak muncul
+Solusi: Mungkin data COA sedang di-sync, tunggu beberapa saat
+
+Problem: Export Excel error
+Solusi: Coba export lagi dengan filter lebih minimal
+
+Problem: Rejection tidak tercatat
+Solusi: Check koneksi, coba submit rejection kembali
+
+
+Related Workflows
+
+ Sebelum Head Approval: Karyawan submit Pengajuan di Tab PPUM
+ Sesudah Head Approval (Approve): Pengajuan lanjut ke Finance Approval
+ Sesudah Head Approval (Reject): Karyawan dapat notifikasi reject, bisa revisi dan resubmit
+ Final Approval: Setelah Finance & Tax approve, pengajuan ready untuk payment
+

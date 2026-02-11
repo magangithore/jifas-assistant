@@ -1,0 +1,476 @@
+================================================================================
+DOKUMENTASI FITUR: PEMBAYARAN PENGAJUAN UANG MUKA (PAYMENT PUM)
+================================================================================
+
+PENGERTIAN UMUM:
+Fitur Payment PUM digunakan untuk mengelola proses pembayaran Pengajuan Uang Muka 
+(PUM). PUM adalah uang muka yang diberikan kepada karyawan untuk kebutuhan Pengajuan 
+dinas atau operasional lainnya. Fitur ini memungkinkan tim Finance untuk membuat, 
+memodifikasi, mengecek, dan memposting pembayaran PUM hingga tahap akhir.
+
+Fungsi utama: Mengelola alur pembayaran dari tahap pembuatan hingga posting pembayaran 
+dengan metode Cek, Bilyet Giro (BG), atau metode pembayaran lainnya.
+
+================================================================================
+INFORMASI YANG DITAMPILKAN (DAFTAR PEMBAYARAN PUM):
+================================================================================
+
+Halaman ini menampilkan tabel dengan kolom-kolom berikut:
+
+1. TANGGAL (Date)
+   - Menunjukkan tanggal pembuat pembayaran PUM
+   - Format: Sesuai format tanggal sistem (misal: DD/MM/YYYY)
+   - Dapat disortir dari tanggal terbaru atau terlamanya
+   - Data diurutkan secara default dari tanggal terbaru
+
+2. UM NO (Uang Muka Number)
+   - Merupakan nomor referensi Uang Muka yang diajukan oleh karyawan
+   - Menghubungkan pembayaran dengan dokumen pengajuan UM
+   - Contoh: UMKI26020001
+
+3. PU NO (Pengajuan Uang - Payment Unit Number)
+   - Nomor unik untuk setiap pembayaran PUM
+   - Merupakan identitas dokumen pembayaran di sistem
+   - Contoh: PUKI26020001
+
+4. CEK/BG NO (Check/Bilyet Giro Number)
+   - Nomor Cek atau Bilyet Giro yang digunakan untuk pembayaran
+   - Hanya muncul jika metode pembayaran menggunakan Cek atau BG
+   - Kosong jika menggunakan metode pembayaran lain (Transfer, Tunai, dll)
+
+5. DESCRIPTION (Deskripsi)
+   - Keterangan detail mengenai pembayaran
+   - Contoh: "Pembayaran PUM untuk Pengajuan dinas ke Bandung", dll
+   - Memberikan konteks lengkap tentang tujuan pembayaran
+
+6. AMOUNT (Jumlah)
+   - Nilai rupiah pembayaran PUM
+   - Format: Dengan pemisah ribuan dan dua desimal (contoh: 1.000.000,00)
+   - Total jumlah yang akan dibayarkan kepada karyawan/penerima
+
+7. STATUS (Status Pembayaran)
+   - Menunjukkan tahap/kondisi pembayaran saat ini
+   - Status yang ada:
+     * "Need Finance Checking" - Menunggu verifikasi dari Finance
+     * "Need Accounting Checking" - Menunggu verifikasi dari Accounting
+     * "Need Posting" - Siap untuk diposting
+     * "Posted" - Sudah diposting dan selesai
+     * "Need Reverse" - Perlu pembalik data (jika ada kesalahan)
+     * Dll
+
+8. ACTION (Tombol Aksi)
+   - Klik tombol ini untuk membuka detail pembayaran
+   - Memungkinkan melakukan aksi: Edit, Update, Checking, Void, dll
+   - Bergantung pada status dan peran pengguna
+
+================================================================================
+CARA MEMBUAT PEMBAYARAN PUM BARU:
+================================================================================
+
+LANGKAH 1: KLIK TOMBOL "CREATE PAYMENT PUM"
+- Tombol ini terletak di bagian atas tabel
+- Akan membuka form untuk membuat pembayaran baru
+
+LANGKAH 2: MENGISI DATA HEADER (INFORMASI UMUM PEMBAYARAN)
+
+A. Payment Method (Metode Pembayaran) - HANYA UNTUK PEMBAYARAN BARU
+   - Pilih metode pembayaran: CEK, BG, TRANSFER, TUNAI, dll
+   - Pilihan ini akan menentukan field tambahan yang muncul
+   - Jika memilih CEK atau BG, akan muncul field nomor Cek/BG
+
+B. Purpose (Tujuan Pembayaran) - WAJIB DIISI
+   - Pilih tujuan pembayaran dari daftar yang tersedia
+   - Contoh tujuan: "Pengajuan Dinas", "Operasional", dll
+   - Sistem akan otomatis mengisi field "Due (Days)" berdasarkan pilihan
+   - Due Days menunjukkan jangka waktu pembayaran (Jatuh tempo 1, 2, 3 bulan)
+
+C. Date (Tanggal Pembayaran) - WAJIB DIISI
+   - Pilih tanggal pembayaran
+   - Tanggal harus berada dalam bulan yang sama dengan tanggal pembuatan
+   - Sistem akan otomatis mengisi currency rate berdasarkan tanggal yang dipilih
+
+D. Due (Days) - OTOMATIS ISI
+   - Menampilkan tiga kolom: 1, 2, 3
+   - Merupakan jangka waktu jatuh tempo pembayaran (dalam hari atau bulan)
+   - Isi otomatis dari pilihan Purpose
+   - Tidak dapat diubah secara manual
+
+E. No. Cek/BG - JIKA METODE CEK ATAU BG
+   - Isi nomor Cek atau Bilyet Giro (maksimal 15 karakter)
+   - Digunakan untuk tracking pembayaran berdasarkan nomor instrumen
+
+F. Paid Date (Tanggal Pembayaran Cek/BG) - JIKA METODE CEK ATAU BG
+   - Tanggal ketika Cek/BG akan dibayarkan atau dicairkan
+   - Tidak boleh lebih awal dari tanggal pembayaran asli
+
+G. Due Date (Tanggal Jatuh Tempo) - JIKA METODE CEK ATAU BG
+   - Tanggal jatuh tempo pembayaran Cek/BG
+   - Tidak boleh lebih awal dari Paid Date
+
+LANGKAH 3: MENGISI DATA PENERIMA DAN REKENING
+
+A. Paid To (Penerima Pembayaran) - WAJIB DIISI
+   - Pilih nama karyawan yang akan menerima pembayaran
+   - Dapat mencari berdasarkan kode karyawan atau nama
+   - Sistem akan otomatis mengisi employee code
+
+B. Bank (Bank Tujuan) - WAJIB DIISI
+   - Pilih bank dimana pembayaran akan dilakukan
+   - Hanya menampilkan bank dengan currency IDR
+   - Dapat mencari berdasarkan kode atau nama bank
+   - Sistem akan otomatis mengisi Currency dan Currency Rate
+
+C. Currency (Mata Uang) - OTOMATIS ISI
+   - Menampilkan mata uang dari bank yang dipilih
+   - Untuk pembayaran PUM umumnya IDR (Rupiah)
+   - Tidak dapat diubah secara manual
+
+D. Rate (Kurs) - OTOMATIS ISI (jika non-IDR)
+   - Menampilkan nilai kurs berdasarkan tanggal pembayaran
+   - Untuk IDR, nilai rate adalah 1
+   - Untuk currency lain, diisi otomatis dari sistem
+
+E. Amount (Jumlah) - WAJIB DIISI (OTOMATIS DARI DETAIL)
+   - Menampilkan total jumlah pembayaran
+   - Isi otomatis dari total item yang dipilih di tabel detail (baris bawah)
+   - Tidak perlu diisi manual
+
+F. Status - OTOMATIS ISI
+   - Menampilkan status pembayaran saat ini
+   - Untuk pembayaran baru, akan kosong hingga disimpan
+   - Tidak dapat diubah secara manual di form pembuatan
+
+G. Description (Deskripsi) - OPSIONAL
+   - Isi keterangan tambahan jika diperlukan
+   - Berguna untuk catatan atau informasi khusus pembayaran
+
+LANGKAH 4: MEMILIH DETAIL PEMBAYARAN (UANG MUKA YANG AKAN DIBAYAR)
+
+Di bagian bawah form, terdapat tabel "DETAIL PEMBAYARAN" yang menampilkan:
+
+1. SELECTED (Terpilih) - Kolom Checkbox
+   - Centang checkbox untuk memilih item yang akan dibayar
+   - Hanya item yang dipilih (dicheck) yang akan diproses
+   - Minimum harus ada 1 item yang dipilih
+
+2. DATE (Tanggal UM)
+   - Tanggal pembuatan/permohonan Uang Muka
+
+3. NO. UM (Nomor Uang Muka)
+   - Nomor referensi pengajuan Uang Muka
+
+4. DESKRIPSI (Keterangan)
+   - Detail keperluan uang muka
+
+5. AMOUNT (Jumlah)
+   - Jumlah uang muka yang diajukan
+
+6. PAID TO (Nama Penerima)
+   - Nama karyawan penerima uang muka
+
+CARA MEMILIH:
+- Scroll table detail jika banyak item
+- Centang checkbox pada item yang ingin dibayarkan
+- Total amount di header akan otomatis terupdate
+- Dapat memilih 1 item atau lebih sekaligus
+
+LANGKAH 5: SIMPAN PEMBAYARAN
+- Klik tombol "SAVE" di bagian kanan bawah
+- Sistem akan menampilkan konfirmasi sebelum menyimpan
+- Setelah tersimpan, status berubah menjadi "Need Finance Checking"
+- Pembayaran siap untuk tahap verifikasi
+
+================================================================================
+CARA MENGECEK/VERIFIKASI PEMBAYARAN PUM:
+================================================================================
+
+SKENARIO: Anda adalah bagian Finance dan menerima pembayaran dengan status 
+"Need Finance Checking"
+
+LANGKAH 1: CARI PEMBAYARAN YANG PERLU DICEK
+- Gunakan filter atau cari berdasarkan Status = "Need Finance Checking"
+- Atau cari berdasarkan tanggal, nomor PU, atau informasi lainnya
+
+LANGKAH 2: BUKA DETAIL PEMBAYARAN
+- Klik tombol "ACTION" pada baris pembayaran yang ingin dicek
+- Form detail pembayaran akan terbuka
+
+LANGKAH 3: VERIFIKASI DATA
+- Periksa semua data pembayaran:
+  * Tanggal pembayaran sudah benar?
+  * Penerima pembayaran sesuai?
+  * Bank dan rekening tujuan sudah benar?
+  * Jumlah pembayaran sudah sesuai?
+  * Daftar item UM yang akan dibayar sudah benar?
+  * Nomor Cek/BG (jika ada) sudah benar?
+
+LANGKAH 4: PROSES CHECKING
+Bergantung pada hasil verifikasi Anda, ada 3 pilihan:
+
+OPSI A: HASIL CHECKING OK - LANJUTKAN KE ACCOUNTING
+- Klik tombol "CHECKING"
+- Sistem akan menampilkan konfirmasi
+- Setelah dikonfirmasi, status berubah menjadi "Need Accounting Checking"
+- Pembayaran siap untuk verifikasi oleh bagian Accounting
+
+OPSI B: ADA KESALAHAN - PERBAIKI PEMBAYARAN
+- Klik tombol "UPDATE"
+- Gunakan form untuk memperbaiki data yang salah (tanpa mengubah item yang sudah diposting)
+- Kemudian klik tombol "UPDATE" di form
+- Sistem akan menampilkan konfirmasi sebelum update
+- Setelah update, status tetap "Need Finance Checking" untuk diperbaiki
+
+OPSI C: PEMBAYARAN DIBATALKAN - VOID PEMBAYARAN
+- Klik tombol "VOID"
+- Dialog akan meminta alasan pembatalan
+- Isi alasan pembatalan di kolom yang tersedia
+- Klik "CONTINUE" untuk melanjutkan
+- Sistem akan menampilkan konfirmasi terakhir
+- Setelah dikonfirmasi, pembayaran dibatalkan dengan status "Void"
+- Catatan: Pembayaran yang sudah Posted tidak dapat di-Void
+
+================================================================================
+CARA MENGECEK/VERIFIKASI PEMBAYARAN PUM (UNTUK BAGIAN ACCOUNTING):
+================================================================================
+
+SKENARIO: Anda adalah bagian Accounting dan menerima pembayaran dengan status 
+"Need Accounting Checking"
+
+LANGKAH 1-2: SAMA SEPERTI PROSEDUR FINANCE (lihat di atas)
+
+LANGKAH 3: VERIFIKASI DATA DARI SISI ACCOUNTING
+- Periksa aspek akuntansi:
+  * Apakah jurnal entri sudah benar?
+  * Apakah cost center/departemen sudah tepat?
+  * Apakah allocation sudah sesuai?
+  * Apakah semua dokumen pendukung sudah lengkap?
+
+LANGKAH 4: PROSES CHECKING - HASIL OK
+Ada 2 pilihan untuk pembayaran dengan status "Need Accounting Checking":
+
+OPSI A: HASIL CHECKING OK - LANJUTKAN KE POSTING
+- Klik tombol "UPDATE" (tanpa mengubah data, hanya sebagai tanda ACC)
+- Atau sistem dapat langsung memindahkan ke status "Need Posting"
+- Status berubah menjadi "Need Posting"
+
+OPSI B: ADA KESALAHAN - PERBAIKI PEMBAYARAN
+- Sama seperti prosedur di Finance (lihat di atas)
+
+================================================================================
+FITUR LAINNYA:
+================================================================================
+
+1. EXPORT KE EXCEL:
+   - Klik tombol "EXCEL" di bagian atas tabel
+   - File akan dibuat dengan nama: "Payment-PUM-Export.xlsx"
+   - File ini berisi SEMUA data pembayaran (semua halaman)
+   - Gunakan untuk:
+     * Backup data
+     * Laporan ke management
+     * Analisis pembayaran
+     * Rekonsiliasi dengan dokumen accounting
+
+2. RESIZE (UBAH UKURAN KOLOM):
+   - Arahkan mouse ke garis pemisah antar kolom
+   - Drag untuk memperbesar atau memperkecil lebar kolom
+
+3. REORDER (SUSUN ULANG KOLOM):
+   - Dapat mengubah urutan kolom sesuai kebutuhan
+   - Drag header kolom ke posisi yang diinginkan
+
+4. COLUMN MENU:
+   - Klik tombol menu di header kolom
+   - Dapat menyembunyikan/menampilkan kolom tertentu
+
+5. FILTER (PENYARINGAN):
+   - Setiap kolom memiliki field pencarian individual
+   - Dapat menggabungkan beberapa filter sekaligus
+   - Contoh: Filter status "Need Finance Checking" + tanggal Januari 2026
+
+6. SORTING (PENGURUTAN):
+   - Dapat mengurutkan berdasarkan kolom manapun
+   - Klik header kolom untuk mengubah urutan (ascending/descending)
+   - Default: Diurutkan dari tanggal terbaru
+
+7. PAGINATION (PEMBAGIAN HALAMAN):
+   - Tampilan awal: 10 data per halaman
+   - Dapat mengubah jumlah data per halaman
+   - Gunakan tombol navigasi untuk berpindah ke halaman lain
+
+================================================================================
+INFORMASI YANG DIPERLUKAN SAAT MEMBUAT PEMBAYARAN PUM:
+================================================================================
+
+DATA YANG HARUS DIPERSIAPKAN:
+
+1. Nomor Uang Muka (UM No) yang akan dibayarkan
+   - Bisa satu atau lebih dari satu
+
+2. Nomor Karyawan/Penerima Pembayaran
+   - Identitas penerima uang muka
+
+3. Tanggal Pembayaran
+   - Kapan pembayaran akan dilakukan
+
+4. Metode Pembayaran
+   - CEK, BG, TRANSFER, TUNAI, dll
+
+5. Bank Tujuan Pembayaran
+   - Bank mana yang akan digunakan
+
+6. Nomor Cek/BG (jika menggunakan metode CEK atau BG)
+   - Nomor instrumen pembayaran
+
+7. Tujuan/Purpose Pembayaran
+   - Kategori tujuan pembayaran PUM
+
+8. Jumlah Total Pembayaran
+   - Akan dihitung otomatis dari item yang dipilih
+
+================================================================================
+STATUS-STATUS PEMBAYARAN PUM:
+================================================================================
+
+1. CREATE / DRAFT
+   - Pembayaran baru sedang dibuat
+   - Belum disimpan ke sistem
+
+2. NEED FINANCE CHECKING
+   - Pembayaran telah disimpan
+   - Menunggu verifikasi dari Finance
+   - Finance dapat: Checking (OK) atau Update (Perbaiki)
+
+3. NEED ACCOUNTING CHECKING
+   - Telah disetujui Finance
+   - Menunggu verifikasi dari Accounting
+   - Accounting dapat: Update (OK) atau Update (Perbaiki)
+
+4. NEED POSTING
+   - Telah disetujui Finance dan Accounting
+   - Siap untuk diposting
+   - Akan diproses oleh sistem untuk posting final
+
+5. POSTED
+   - Pembayaran telah diposting dan selesai
+   - Data tidak dapat diubah lagi
+   - Hanya dapat di-VOID jika ada kesalahan serius
+
+6. NEED REVERSE
+   - Pembayaran perlu pembalik/reversal
+   - Ada kesalahan dalam posting
+   - Perlu dibuat jurnal pembalik
+
+7. VOID
+   - Pembayaran telah dibatalkan
+   - Tidak akan diproses lebih lanjut
+
+================================================================================
+CATATAN PENTING UNTUK PENGGUNA:
+================================================================================
+
+1. DATA REAL-TIME:
+   - Data yang ditampilkan diambil dari sistem secara real-time
+   - Pastikan koneksi internet stabil
+
+2. VALIDASI MANDATORY FIELDS:
+   - Semua field yang bertanda * (asterisk) WAJIB diisi
+   - Sistem tidak akan mengizinkan penyimpanan jika ada field mandatory kosong
+
+3. MINIMAL SATU ITEM HARUS DIPILIH:
+   - Setidaknya 1 item UM harus dipilih di tabel detail
+   - Jika tidak ada yang dipilih, pembayaran tidak dapat disimpan
+
+4. PERUBAHAN DATA TERBATAS:
+   - Setelah pembayaran diposting, data tidak dapat diubah
+   - Hanya dapat di-VOID kemudian membuat pembayaran baru
+
+5. CURRENCY RATE OTOMATIS:
+   - Kurs mata uang diisi otomatis berdasarkan tanggal
+   - Untuk IDR, nilai rate selalu 1
+   - Untuk currency lain, ambil dari sistem forex rate
+
+6. TANGGAL CEK/BG:
+   - Paid Date tidak boleh lebih awal dari tanggal pembayaran
+   - Due Date tidak boleh lebih awal dari Paid Date
+   - Sistem akan memberikan peringatan jika melanggar
+
+7. HANYA BACA DI TAHAP POSTING:
+   - Ketika status POSTED atau ERROR, form hanya bisa dibaca
+   - Semua field input akan disabled/tidak active
+
+================================================================================
+CONTOH PENGGUNAAN SEHARI-HARI:
+================================================================================
+
+SKENARIO 1: MEMBUAT PEMBAYARAN PUM UNTUK Pengajuan DINAS
+1. Karyawan Budi mengajukan UM untuk Pengajuan ke Surabaya Rp 2.000.000
+2. Anda membuka menu Payment PUM
+3. Klik "Create Payment PUM"
+4. Pilih Metode: CEK
+5. Pilih Purpose: Pengajuan Dinas
+6. Pilih Tanggal: 10/01/2026
+7. Pilih Penerima: Budi (EMP001)
+8. Pilih Bank: BCA
+9. Isi Nomor Cek: 123456
+10. Isi Paid Date dan Due Date
+11. Di tabel detail, centang UM Budi
+12. Klik SAVE
+13. Pembayaran dibuat dengan status "NEED FINANCE CHECKING"
+
+SKENARIO 2: VERIFIKASI SEBAGAI FINANCE
+1. Buka Payment PUM - filter status "Need Finance Checking"
+2. Temukan pembayaran untuk Budi
+3. Klik ACTION
+4. Verifikasi semua data pembayaran
+5. Jika OK: Klik CHECKING
+6. Pembayaran akan pindah ke "Need Accounting Checking"
+
+SKENARIO 3: VERIFIKASI SEBAGAI ACCOUNTING
+1. Buka Payment PUM - filter status "Need Accounting Checking"
+2. Temukan pembayaran untuk Budi
+3. Klik ACTION
+4. Verifikasi data dari sisi accounting
+5. Jika OK: Klik UPDATE (atau sistem otomatis pindah ke "Need Posting")
+6. Pembayaran akan diproses
+
+================================================================================
+TROUBLESHOOTING / PERTANYAAN UMUM:
+================================================================================
+
+Q: Mengapa tidak bisa menyimpan pembayaran?
+A: Pastikan:
+   - Semua field wajib (bertanda *) sudah diisi
+   - Minimal 1 item UM sudah dipilih (di tabel detail)
+   - Aplikasi tidak sedang error
+   - Hubungi IT jika masalah berlanjut
+
+Q: Bagaimana jika salah dalam membuat pembayaran?
+A: Ada beberapa opsi tergantung statusnya:
+   - Jika masih DRAFT: Langsung hapus dan buat ulang
+   - Jika NEED CHECKING: Klik UPDATE untuk perbaiki
+   - Jika sudah POSTED: VOID pembayaran, kemudian buat yang baru
+
+Q: Dapatkah menghapus pembayaran yang sudah diposting?
+A: Tidak bisa dihapus, tapi bisa di-VOID (dibatalkan)
+   Setelah di-VOID, buat pembayaran baru
+
+Q: Apakah bisa mengubah karyawan penerima setelah dibuat?
+A: Tidak bisa mengubah di tahap tertentu
+   - Saat DRAFT/CREATE: Bisa diubah
+   - Saat POSTED: Tidak bisa diubah, harus VOID dan buat baru
+
+Q: Berapa lama waktu pembayaran sampai diposting?
+A: Tergantung proses verifikasi:
+   - Finance Checking: 1-3 hari kerja
+   - Accounting Checking: 1-3 hari kerja
+   - Posting: Otomatis setelah approval
+
+Q: Kemana hubungi jika ada masalah teknis?
+A: Hubungi IT Support dengan menyertakan:
+   - Nomor PU yang bermasalah
+   - Deskripsi masalah
+   - Screenshot jika ada
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================

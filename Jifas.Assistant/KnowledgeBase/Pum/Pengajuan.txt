@@ -1,0 +1,1429 @@
+﻿Pengajuan Uang Muka (Pengajuan PUM)
+
+Modul Pengajuan Uang Muka (Pengajuan PUM) adalah fitur untuk mengajukan permintaan uang muka yang digunakan oleh karyawan kepada perusahaan. Setiap pengajuan akan melalui proses approval dari berbagai pihak (Supervisor, Finance, Pajak) sebelum disetujui dan dicairkan.
+
+Deskripsi
+
+Pengajuan PUM adalah sistem untuk mengelola permintaan uang muka (advance payment) dari karyawan. Karyawan dapat mengajukan uang muka untuk berbagai keperluan bisnis, kemudian sistem akan melakukan validasi terhadap budget yang tersedia dan mengirimkan permintaan approval kepada Supervisor, Finance, dan Pajak. Setelah semua approval diberikan, uang muka dapat diproses untuk pencairan.
+
+Fungsi
+
+1. Membuat Pengajuan Uang Muka: Karyawan dapat membuat pengajuan uang muka baru dengan detail item yang diajukan
+2. Mengelola Detail Pengajuan: Menambah/mengurangi item dalam pengajuan dengan penempatan budget ke COA tertentu
+3. Validasi Budget: Sistem otomatis mengecek apakah jumlah yang diminta masih dalam batas budget yang tersedia
+4. Workflow Approval: Mengirimkan pengajuan untuk approval dari Supervisor â†’ Finance â†’ Pajak
+5. Tracking Status: Memantau status pengajuan dari awal hingga selesai (Complete atau Rejected)
+6. Upload Dokumen Pendukung: Melampirkan dokumen (PDF, JPG, PNG) sebagai bukti/referensi pengajuan
+7. Lihat Detail Pengajuan: Melihat rincian lengkap setiap pengajuan beserta approval history
+8. Export Data: Mengekspor daftar pengajuan ke format Excel untuk keperluan laporan
+
+Tujuan
+
+ Memberikan mekanisme yang terstruktur bagi karyawan untuk mengajukan uang muka
+ Memastikan uang muka hanya diberikan kepada karyawan yang berhak dan sesuai budget
+ Melakukan kontrol dan monitoring terhadap setiap pengajuan melalui proses approval bertingkat
+ Mengelola risiko dengan validasi budget dan tracking approval status
+ Mendukung proses realisasi (pengembalian sisa uang muka) yang terukur
+ Meningkatkan efisiensi administrasi dengan sistem digital dan terintegrasi
+
+Role yang Dapat Mengakses
+
+Berbagai role dapat mengakses modul Pengajuan PUM sesuai dengan fungsi dan tanggung jawab:
+
+Kode: WMTR
+Nama Role: Webmaster
+Keterangan: Akses penuh ke semua fitur modul PUM
+
+Kode: USER
+Nama Role: Users
+Keterangan: Karyawan biasa dapat mengajukan PUM untuk dirinya sendiri
+
+Kode: USRL
+Nama Role: Users All
+Keterangan: Karyawan dengan hak khusus dapat mengajukan PUM untuk karyawan lain
+
+Kode: FINA
+Nama Role: Finance
+Keterangan: Staff finance dapat view semua pengajuan dan proses approval
+
+Kode: SPVR
+Nama Role: Supervisor Finance
+Keterangan: Supervisor dapat approve/reject pengajuan dari tim-nya
+
+Kode: HDFA
+Nama Role: Head Finance
+Keterangan: Head Finance dapat view dan approve pengajuan tingkat atas
+
+Kode: MGFA
+Nama Role: Magang Finance
+Keterangan: Magang finance dapat view pengajuan untuk training
+
+Kode: FRPT
+Nama Role: Finance Report
+Keterangan: Tidak ada akses khusus
+
+Kode: TAXS
+Nama Role: Tax
+Keterangan: Tidak ada akses khusus ke modul pengajuan
+
+
+Struktur Tab Modul
+
+Modul Pengajuan Uang Muka terdiri dari 2 Tab Utama:
+
+Tab 1: PPUM (Pengajuan PUM)
+Tab ini digunakan untuk membuat, melihat, dan mengelola pengajuan uang muka. Di tab ini Anda dapat:
+ Membuat pengajuan PUM baru
+ Melihat daftar semua pengajuan yang telah dibuat
+ Melihat detail dan status pengajuan
+ Melakukan filter dan sorting pengajuan
+ Export daftar pengajuan ke Excel
+ Tracking status approval pengajuan
+
+Tab 2: Realization (Realisasi PUM)
+Tab ini digunakan untuk proses realisasi uang muka (pengembalian sisa uang muka yang tidak digunakan). Di tab ini Anda dapat:
+ Membuat dokumen realisasi untuk uang muka yang sudah dicairkan
+ Mencatat pengeluaran aktual dari uang muka yang diterima
+ Menghitung sisa uang muka yang akan dikembalikan
+ Tracking status realisasi
+ View riwayat realisasi
+
+Langkah-langkah
+
+1. Create (Membuat Pengajuan PUM Baru)
+
+Persiapan:
+ Pastikan Anda login dengan role yang memiliki akses (USER, USRL, FINA, SPVR, HDFA, MGFA, atau WMTR)
+ Pastikan data pribadi Anda sudah lengkap (Head/Atasan, Division, Department)
+ Pastikan ada periode aktif untuk PUM yang sudah di-setup oleh administrator
+
+Proses Create:
+
+1. Klik Modul PUM buka menu "Pengajuan" dan klik "Create PPUM di toolbar bagian atas grid
+2. Jendela form besar akan terbuka untuk input pengajuan baru
+3. Bagian Kiri - Data Utama:
+   Isi Tanggal Dokumen (harus dalam periode aktif PUM)
+   Pilih PP Type (kategori pengajuan) dari dropdown
+   Pilih atau ketik Nama Karyawan:
+     - Jika Anda USER: hanya bisa memilih diri sendiri
+     - Jika Anda USRL: bisa memilih karyawan lain
+     - Sistem akan otomatis mengisi PUM Limit dan Sisa limit
+     - Jika sisa limit = 0: tidak bisa lanjut (sudah over limit)
+     - Jika Head tidak ada: akan muncul peringatan untuk update data
+   Sistem otomatis isi:
+     - Kode Atasan
+     - Nama Atasan
+     - Divisi
+     - Department
+     - PUM Limit (limit uang muka yang diizinkan)
+     - Sisa (sisa limit yang masih bisa diajukan)
+
+4. Bagian Kanan - Deskripsi & Attachment:
+   Isi Deskripsi (maksimal 200 karakter) menjelaskan keperluan pengajuan
+   (Opsional) Upload File Lampiran (PDF, JPG, PNG, max 4MB)
+
+5. Bagian Bawah - Detail Item Pengajuan:
+   Klik tombol "Add Request" untuk menambah baris detail (jika user adalah USRL)
+   Isi setiap baris:
+     - Divisi: Pilih divisi tempat uang muka akan digunakan
+     - Department: Pilih department (auto-cascade dari divisi)
+     - COA Code: Pilih kode akun yang sesuai  Wajib menggunakan coa PUM(auto-filter berdasarkan periode & budget)
+     - Jenis: Otomatis terisi berdasarkan COA yang dipilih (read-only)
+     - Jumlah: Masukkan nominal yang diminta
+     - Budget Tersedia: Otomatis terisi sisa budget untuk COA tersebut
+     - Status Budget: Otomatis terisi (OK/Warning/Over Budget)
+   Untuk hapus baris: klik tombol Delete pada baris tersebut
+   Validasi: Minimal 1 baris detail harus ada dan terisi lengkap
+
+6. Total Pengajuan:
+   Sistem otomatis hitung total dari semua baris detail
+   Tampil di kolom Total bagian bawah
+
+7. Submit Pengajuan:
+   Klik tombol "Save" untuk submit pengajuan
+   Sistem akan validasi semua data wajib
+   Jika ada validasi error: perbaiki sesuai pesan error
+   Jika OK: muncul konfirmasi "Are you sure you want to submit the PUM request?"
+   Klik "Yes" untuk submit atau "No" untuk batal
+   Pengajuan akan dikirim untuk approval supervisor
+
+8. Klik "Cancel" untuk batal membuat pengajuan (data tidak disimpan)
+
+2. View Details (Melihat Detail Pengajuan)
+
+1. Cari pengajuan yang ingin dilihat di grid (bisa gunakan filter/sorting)
+2. Klik tombol "Details" (ikon panah) pada baris pengajuan yang ingin dilihat
+3. Jendela detail akan terbuka menampilkan:
+   Nomor Pengajuan: PPUM No dan tanggal
+   Detail Item:
+     - UM No (nomor jika sudah ada UM)
+     - PU No (nomor jika sudah ada PU)
+     - Total Amount dengan mata uang
+     - Yang menerima (nama karyawan)
+     - Status Budget
+     - Deskripsi pengajuan
+   Status Approval:
+     - Approval Supervisor (nama)
+     - Approval Finance (nama)
+     - Approval Pajak (nama/status)
+     - Status akhir pengajuan
+
+3. Export ke Excel
+
+1. Klik tombol "Excel" di toolbar
+2. File Excel akan otomatis di-download dengan nama "PPUM-Export.xlsx"
+3. Sesuaikan halaman dan cetak jika diperlukan untuk laporan
+
+4. Edit Pengajuan (jika masih dalam proses approval)
+
+1. Cari pengajuan di grid
+2. Klik baris pengajuan untuk memilih
+3. Sistem akan membuka form edit popup
+4. Ubah data yang diperlukan (sama seperti create)
+5. Klik tombol "Update" untuk simpan perubahan
+6. Pengajuan akan dikirim ulang ke approval
+
+5. Filter dan Pencarian
+
+Grid mendukung berbagai filter untuk memudahkan pencarian:
+
+Kolom: Tanggal
+Cara Filter: Pilih tanggal dari date picker
+
+Kolom: Nomor Dokumen
+Cara Filter: Ketik sebagian atau seluruh nomor
+
+Kolom: Kategori
+Cara Filter: Pilih dari dropdown kategori
+
+Kolom: Nama Karyawan
+Cara Filter: Ketik nama karyawan
+
+Kolom: Deskripsi
+Cara Filter: Ketik kata kunci deskripsi
+
+Kolom: Jumlah
+Cara Filter: Masukkan nominal yang dicari
+
+Kolom: Status
+Cara Filter: Pilih status dari dropdown
+
+Kolom: UM No
+Cara Filter: Ketik nomor UM
+
+Kolom: PU No
+Cara Filter: Ketik nomor PU
+
+Kolom: RU No
+Cara Filter: Ketik nomor RU
+
+Kolom: Tanggal Pembayaran
+Cara Filter: Pilih tanggal dari date picker
+
+
+Daftar Lengkap Field
+
+Field Header (Bagian Atas Form)
+
+No.: 1
+Field: Tanggal Dokumen
+Jenis Input: Tanggal
+Wajib Diisi: Ya
+Keterangan: Tanggal pengajuan uang muka dibuat (harus dalam periode PUM aktif)
+
+No.: 2
+Field: PP Type
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Jenis/kategori pengajuan uang muka (contoh: Perjalanan Dinas, Operasional)
+
+No.: 3
+Field: Nama Karyawan
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Nama karyawan yang mengajukan atau untuk siapa uang muka diajukan
+
+No.: 4
+Field: Kode Karyawan
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Kode unik karyawan (auto-terisi dari pilihan nama)
+
+No.: 5
+Field: PUM Limit
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Limit uang muka yang diizinkan untuk karyawan ini (read-only)
+
+No.: 6
+Field: Sisa Limit
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Sisa limit uang muka yang masih bisa diajukan (read-only)
+
+No.: 7
+Field: Nama Atasan
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Nama head/atasan karyawan (auto-terisi dari data karyawan, read-only)
+
+No.: 8
+Field: Kode Atasan
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Kode head/atasan (auto-terisi, read-only)
+
+No.: 9
+Field: Divisi
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Divisi/bagian karyawan (auto-terisi dari data karyawan, read-only)
+
+No.: 10
+Field: Department
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Department/unit karyawan (auto-terisi dari data karyawan, read-only)
+
+No.: 11
+Field: Deskripsi
+Jenis Input: Textarea
+Wajib Diisi: Ya
+Keterangan: Penjelasan/alasan pengajuan uang muka (max 200 karakter)
+
+No.: 12
+Field: File Lampiran
+Jenis Input: File Upload
+Wajib Diisi: Tidak
+Keterangan: Upload dokumen pendukung (PDF, JPG, PNG, max 4MB)
+
+
+Field Detail Grid (Item-Item Pengajuan)
+
+No.: 1
+Field: Divisi
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Divisi tempat uang muka akan digunakan/dibebankan
+
+No.: 2
+Field: Department
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Department tempat uang muka akan dibebankan (cascade dari divisi)
+
+No.: 3
+Field: Kode COA
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Kode akun/chart of account yang dibebankan (auto-filter berdasarkan budget)
+
+No.: 4
+Field: Jenis
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Jenis/deskripsi COA (auto-terisi dari kode COA, read-only)
+
+No.: 5
+Field: Jumlah
+Jenis Input: Angka
+Wajib Diisi: Ya
+Keterangan: Nominal uang muka yang diminta (harus > 0)
+
+No.: 6
+Field: Budget Tersedia
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Sisa budget yang masih ada untuk COA ini (auto-terisi, read-only)
+
+No.: 7
+Field: Status Budget
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Status budget (OK/Warning/Over Budget) (auto-terisi berdasarkan jumlah, read-only)
+
+
+Field Grid Utama (List Pengajuan)
+
+No.: 1
+Field: Tanggal
+Keterangan: Tanggal pengajuan dibuat
+
+No.: 2
+Field: Nomor Dokumen
+Keterangan: Nomor referensi pengajuan (PPUM No)
+
+No.: 3
+Field: Kategori
+Keterangan: Kategori/jenis pengajuan
+
+No.: 4
+Field: Nama Karyawan
+Keterangan: Nama yang mengajukan
+
+No.: 5
+Field: Deskripsi
+Keterangan: Penjelasan singkat pengajuan
+
+No.: 6
+Field: Jumlah
+Keterangan: Total nominal pengajuan
+
+No.: 7
+Field: Status
+Keterangan: Status approval pengajuan
+
+No.: 8
+Field: UM No
+Keterangan: Nomor UM jika sudah ada (bisa kosong)
+
+No.: 9
+Field: PU No
+Keterangan: Nomor PU jika sudah ada (bisa kosong)
+
+No.: 10
+Field: RU No
+Keterangan: Nomor RU jika sudah ada (bisa kosong)
+
+No.: 11
+Field: Tanggal Pembayaran
+Keterangan: Tanggal pembayaran dilakukan
+
+No.: 12
+Field: Details
+Keterangan: Tombol untuk lihat detail
+
+
+Jenis-Jenis Input
+
+1. Tanggal (Date Input)
+ Tekan field untuk membuka date picker
+ Pilih tanggal dari kalender
+ Atau ketik manual dalam format sesuai pengaturan (DD/MM/YYYY atau MM/DD/YYYY)
+ Tanggal harus berada dalam rentang periode PUM aktif
+ Jika diluar rentang: akan muncul pesan error dengan tanggal min-max
+
+2. Dropdown (Pilihan dari List)
+ Klik field untuk membuka daftar pilihan
+ Mulai ketik untuk cari (jika ada fitur search)
+ Pilih salah satu dari daftar
+ Beberapa dropdown memiliki fitur cascade (saat memilih satu, field lain otomatis terisi/berubah)
+
+3. Textarea (Teks Panjang)
+ Klik untuk mulai mengetik
+ Maksimal 200 karakter untuk deskripsi
+ Bisa multiple line (Enter untuk pindah baris)
+
+4. File Upload
+ Klik untuk browse dan pilih file dari komputer
+ Format yang diizinkan: PDF, JPG, PNG
+ Maksimal ukuran: 4MB
+ File akan diunggah saat form disimpan
+
+5. Numeric (Angka)
+ Hanya bisa input angka dan titik (untuk desimal)
+ Format otomatis dengan ribuan separator (contoh: 1.000.000,00)
+ Harus > 0 untuk jumlah pengajuan
+
+Fitur-Fitur Utama
+
+1. Warna Status Pada Grid
+Grid menampilkan warna berbeda sesuai status untuk memudahkan identifikasi:
+
+Warna: Hijau
+Status: Complete
+Makna: Pengajuan telah selesai dan uang sudah dicairkan
+
+Warna: Kuning
+Status: Need Approval
+Makna: Menunggu approval dari Supervisor/Finance/Pajak
+
+Warna: Kuning
+Status: Ready to Pay
+Makna: Sudah approval semua, siap untuk dibayarkan
+
+Warna: Merah
+Status: Rejected
+Makna: Pengajuan ditolak oleh Supervisor atau Finance
+
+
+2. Auto-Populate Data Karyawan
+Saat memilih nama karyawan:
+ Sistem otomatis isi Kode Karyawan
+ Nama Atasan dan Kode Atasan otomatis terisi
+ Divisi dan Department otomatis terisi
+ PUM Limit dan Sisa limit otomatis terisi
+ Jika sisa limit = 0: tidak bisa lanjut (peringatan "sudah melewati batas limit")
+ Jika Head tidak ada: peringatan "belum mempunyai head name"
+
+3. Cascade Dropdown
+Beberapa dropdown saling terhubung:
+ Saat pilih Divisi â†’ list Department otomatis update sesuai divisi
+ Saat pilih Department â†’ list COA Code otomatis update sesuai divisi+department+periode
+
+4. Budget Validation
+Sistem otomatis cek status budget:
+ Ketika input jumlah dan pilih COA â†’ sistem cek sisa budget untuk COA tersebut
+ Menampilkan status: OK (cukup), Warning (hampir habis), Over Budget (melebihi)
+ Jika over budget: ditampilkan dengan warna merah
+ Pengajuan masih bisa dilanjutkan meski over budget (untuk approval lebih lanjut)
+
+5. Sortir dan Urutan Data
+ Klik header kolom untuk urut A-Z atau Z-A
+ Default: urut berdasarkan tanggal terbaru
+ Klik dua kali untuk balik urutan
+
+6. Filter Berdasarkan Kolom
+ Setiap kolom ada input filter di bawah header
+ Filter real-time saat mengetik
+ Bisa filter multiple kolom sekaligus
+ Filter bersifat cumulative (semakin banyak filter = semakin spesifik hasil)
+
+7. Pagination (Pembagian Halaman)
+ Jika data banyak, akan dibagi per halaman (default 20 baris/halaman)
+ Tombol < Sebelumnya dan Selanjutnya > untuk navigasi halaman
+ Bisa pilih jumlah baris per halaman (10, 20, 50, 100)
+ Bisa langsung ke halaman tertentu dengan nomor halaman
+
+8. Detail Grid dengan Add/Delete
+ Grid detail mendukung tambah baris baru (jika USRL role)
+ Untuk USER role: hanya bisa edit amount, tidak bisa tambah/hapus baris
+ Setiap baris bisa dihapus dengan tombol Delete
+ Minimal 1 baris harus ada
+ Total amount otomatis hitung dari semua baris
+
+9. Total Amount Otomatis
+ Sistem otomatis hitung total dari semua baris detail
+ Tampil di field Total
+ Update real-time saat ada perubahan di detail grid
+
+10. Validasi Duplikasi
+ Sistem cek jika ada baris detail dengan data yang sama persis
+ Jika ada duplikasi: muncul peringatan "Duplicate entries detected"
+ Harus dihapus salah satu baris sebelum bisa submit
+
+11. Notification System
+ Sukses: notifikasi hijau di kanan atas "Action successful"
+ Error: notifikasi merah dengan penjelasan error
+ Notifikasi otomatis hilang setelah 5 detik
+ Bisa diklik X untuk close manual
+
+12. Progress Indicator
+ Saat proses load data: ada loading spinner untuk user tunggu
+ Saat upload/submit: ada loading bar untuk show progress
+
+Status Pengajuan
+
+Pengajuan PUM memiliki beberapa status sepanjang lifecycle:
+
+Status: Draft
+Makna: Baru dibuat, belum submit
+Tindakan Berikutnya: Lengkapi data dan submit
+
+Status: Need Supervisor Approval
+Makna: Menunggu approval Supervisor
+Tindakan Berikutnya: Supervisor review dan approve/reject
+
+Status: Need Finance Approval
+Makna: Sudah approve Supervisor, menunggu Finance
+Tindakan Berikutnya: Finance review dan approve/reject
+
+Status: Need Tax Approval
+Makna: Sudah approve Finance, menunggu Pajak
+Tindakan Berikutnya: Pajak review dan approve/reject
+
+Status: Ready to Pay
+Makna: Semua approval OK, siap bayar
+Tindakan Berikutnya: Treasury/Finance cairkan uang
+
+Status: Complete
+Makna: Selesai, uang sudah dicairkan
+Tindakan Berikutnya: Lakukan realisasi (jika ada sisa)
+
+Status: Rejected
+Makna: Ditolak oleh Supervisor atau Finance
+Tindakan Berikutnya: Buat pengajuan baru atau revisi
+
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+ "Pengajuan PUM berhasil dibuat" â†’ Pengajuan telah tersubmit untuk approval
+ "Perubahan berhasil disimpan" â†’ Update data pengajuan sukses
+ "Data berhasil dihapus" â†’ Baris detail berhasil dihapus
+
+Pesan Error/Validasi
+ "Please complete the required data before saving." â†’ Ada field wajib yang kosong
+ "Duplicate entries detected. Please remove or edit identical items in the detail." â†’ Ada baris dengan data sama
+ "Detail amount must be greater than 0 OR COA must be selected to continue" â†’ Jumlah 0 atau COA kosong
+ "Please add at least one row to the detail section." â†’ Tidak ada baris detail
+ "[Nama Karyawan] sudah melewati batas limit pengajuan PUM, silahkan lakukan realisasi terlebih dahulu." â†’ Limit habis
+ "[Nama Karyawan] belum mempunyai head name, silahkan update data karyawan terlebih dahulu." â†’ Head tidak ada di master
+ "Date must be in range [tanggal min] to [tanggal max]" â†’ Tanggal diluar periode aktif
+ "Failed to create PUM. Please contact your IT Administrator!" â†’ Error server saat submit
+
+Pesan Konfirmasi
+ "Are you sure you want to submit the PUM request?" â†’ Konfirmasi sebelum submit
+ "Are you sure you want to delete this item?" â†’ Konfirmasi sebelum hapus baris
+ "At least one detail row is required. You cannot delete the last item." â†’ Tidak bisa hapus baris terakhir
+
+Catatan Tambahan
+
+Untuk Pengguna Regular (USER)
+ Hanya bisa mengajukan untuk diri sendiri
+ Tidak bisa tambah/hapus baris detail (sudah disiapkan 1 baris default)
+ Hanya bisa edit jumlah dan COA pada baris yang sudah ada
+ Data Head, Division, Department otomatis dari profil karyawan
+
+Untuk Pengguna Dengan Akses Khusus (USRL)
+ Bisa mengajukan untuk karyawan lain
+ Bisa tambah/hapus baris detail sesuai kebutuhan
+ Bisa atur divisi dan department untuk setiap baris
+ Lebih fleksibel dalam membuat pengajuan kompleks
+
+Untuk Administrator Divisi (ADMN)
+ Bisa view semua pengajuan di divisinya
+ Biasanya berperan sebagai Supervisor approval
+ Bisa lihat detail, filter, dan export untuk laporan divisi
+
+Untuk Approval Workflow
+ Supervisor: Review pengajuan dari tim-nya, bisa approve atau reject
+ Finance: Validasi aspek keuangan dan budget, bisa approve atau reject
+ Pajak: Review dari aspek perpajakan, bisa approve atau reject
+ Setiap tingkat approval bisa menambah catatan/komentar
+
+PUM Limit Management
+ PUM Limit ditentukan oleh master Karyawan (Setup oleh HR/Admin)
+ Jika sisa limit = 0: tidak bisa membuat pengajuan baru
+ Limit hanya reset setelah ada realisasi (pembayaran kembali sisa uang)
+ Sisa = PUM Limit - Total pengajuan yang outstanding
+
+Budget Status Meaning
+ OK: Jumlah yang diminta masih dalam budget tersedia untuk COA tersebut
+ Warning: Jumlah masih OK tapi mendekati limit budget untuk COA tersebut
+ Over Budget: Jumlah melebihi budget yang ada untuk COA tersebut
+
+UM, PU, dan RU
+ UM (Uang Muka): Nomor yang dibuat setelah pengajuan approve semua dan siap bayar
+ PU (Permintaan Uang): Nomor dokumen keuangan yang dibuat saat uang dicairkan
+ RU (Realisasi Uang): Nomor dokumen saat karyawan melakukan pengembalian sisa uang
+
+Upload File Best Practices
+ Upload file hanya jika ada dokumen pendukung (invoice, quote, dll)
+ Pastikan file tidak terlalu besar (max 4MB)
+ Format PDF lebih recommended daripada image untuk dokumen resmi
+ Jika dokumen multiple page: gabung jadi 1 file PDF terlebih dahulu
+
+Filter dan Export Best Practices
+ Gunakan filter untuk fokus pada data tertentu sebelum export
+ Export dilakukan berdasarkan data yang ditampilkan (sudah di-filter)
+ Hasil export bisa dibuka di Excel untuk sorting, filtering, atau membuat pivot
+ Simpan file export dengan naming yang jelas (contoh: PPUM-Dec2024-Finance)
+
+Troubleshooting Umum
+ Tidak bisa submit: Pastikan semua field wajib sudah terisi
+ COA tidak muncul di dropdown: Mungkin tidak ada budget untuk COA tersebut pada periode/divisi/department pilihan
+ Limit tidak update: Refresh halaman atau login ulang
+ File tidak bisa upload: Pastikan file format dan ukuran sesuai (PDF/JPG/PNG, max 4MB)
+ Error saat submit: Hubungi IT Administrator untuk pengecekan sistem
+
+Role-Based Access
+ Fitur yang tersedia berbeda tergantung role pengguna login
+ Jika tidak bisa buat pengajuan: periksa apakah role Anda sudah dikonfigurasi untuk akses PUM
+ Untuk request akses atau role change: hubungi Webmaster atau IT Administrator
+
+---
+
+Tab 2: Realization (Realisasi Uang Muka)
+
+Deskripsi Realization
+
+Realisasi Uang Muka (RU) adalah proses pencatatan pengeluaran aktual dari uang muka yang telah diterima oleh karyawan. Setelah karyawan menerima uang muka dan melakukan pengeluaran untuk keperluan yang dimaksud, maka karyawan harus membuat dokumen realisasi untuk mencatat setiap pengeluaran dengan detail vendor, deskripsi, dan nominal yang dikeluarkan. Sistem akan menghitung total pengeluaran dan sisa uang yang harus dikembalikan.
+
+Fungsi Realization
+
+1. Membuat Realisasi Uang Muka: Membuat dokumen realisasi untuk mencatat pengeluaran dari UM yang sudah diterima
+2. Memasukkan Detail Pengeluaran: Menambah item-item pengeluaran dengan vendor, deskripsi, dan nominal
+3. Perhitungan Pajak Otomatis: Sistem otomatis menghitung PPN dan PPH berdasarkan jenis pajak yang dipilih
+4. Tracking Sisa Uang: Menghitung berapa sisa uang muka yang belum digunakan/dikembalikan
+5. Upload Dokumen Bukti: Melampirkan dokumen pendukung (invoice, kwitansi, dll)
+6. Export Data: Mengekspor daftar realisasi ke format Excel untuk laporan
+7. View Outstanding PUM: Melihat daftar PUM yang belum direalisasi/completed
+
+Tujuan Realization
+
+ Mengelola pengembalian uang muka secara terstruktur dan transparan
+ Mencatat setiap pengeluaran dari uang muka dengan detail vendor dan nominal
+ Menghitung pajak (PPN/PPH) secara otomatis sesuai peraturan
+ Memastikan sisa uang muka dikembalikan ke perusahaan sesuai due date
+ Mendukung audit trail dan compliance untuk keperluan accounting
+ Mengurangi risiko kehilangan atau penyalahgunaan uang muka
+
+Langkah-langkah Realization
+
+1. View Outstanding PUM (Melihat PUM yang Perlu Direalisasi)
+
+Akses Tab Realization:
+1. Di modul Pengajuan, klik tab "Realization"
+2. Grid akan menampilkan daftar semua PUM yang sudah dicairkan tapi belum direalisasi (status Outstanding)
+3. Kolom yang ditampilkan:
+   PU Date: Tanggal uang dicairkan
+   PP No: Nomor pengajuan PUM
+   PU No: Nomor pembayaran
+   UM No: Nomor uang muka
+   Deskripsi: Keperluan pengajuan
+   Nama Karyawan: Yang menerima uang
+   Jumlah: Total UM yang diterima
+   Due Date: Batas waktu harus direalisasi
+
+Filter dan Cari:
+ Gunakan filter pada setiap kolom untuk mencari PUM tertentu
+ Filter Date: Pilih tanggal range
+ Filter PP/PU/UM No: Ketik nomor
+ Filter Deskripsi: Ketik kata kunci
+ Filter Nama Karyawan: Ketik nama
+
+2. Create Realization (Membuat Dokumen Realisasi)
+
+Persiapan:
+ Pastikan Anda sudah menerima UM dan melakukan pengeluaran
+ Siapkan dokumen bukti untuk setiap pengeluaran (invoice, kwitansi, dll)
+ Kumpulkan informasi: vendor, deskripsi, nominal, divisi, department, COA
+
+Proses Create:
+
+1. Cari PUM yang ingin direalisasi di grid
+2. Klik tombol "Realization" pada baris PUM tersebut
+3. Jendela form realisasi akan terbuka (sama besar dengan form PPUM)
+
+Bagian Kiri - Informasi Dasar:
+ UM No (Read-only): Nomor uang muka yang diterima
+ PU No (Read-only): Nomor pembayaran uang muka
+ Nama Karyawan (Read-only): Nama yang menerima UM
+ Due Date (Read-only): Batas waktu realisasi
+ Realization Date (Wajib): Tanggal pembuatan dokumen realisasi (biasanya hari ini)
+ Ref No (Opsional): Nomor referensi lainnya
+ Deskripsi (Wajib): Penjelasan/catatan tentang realisasi (max 200 karakter)
+
+Bagian Kanan - Data Keuangan:
+ PUM Purpose (Read-only): Tujuan pengajuan dari PUM
+ Currency (Read-only): Mata uang UM
+ Rate (Read-only): Nilai tukar mata uang (jika bukan IDR)
+ UM Amount (Read-only): Total jumlah UM yang diterima
+ Allocation (Read-only): Total pengeluaran yang dialokasikan (auto-hitung dari detail)
+ Base Amount (Read-only): Jumlah pengeluaran sebelum pajak
+ Total DPP (Read-only): Total yang kena pajak
+ Total PPN (Read-only): Total PPN yang dipotong (pajak)
+ Total PPH (Read-only): Total PPH yang dipotong
+ Total Amount (Read-only): Total akhir = Base Amount + PPN - PPH
+ File Lampiran (Opsional): Upload dokumen bukti (PDF, JPG, PNG, max 4MB)
+
+3. Menambah Detail Pengeluaran
+
+Di bagian bawah form ada grid detail untuk mencatat setiap item pengeluaran:
+
+1. Klik tombol "Add Detail" untuk menambah baris pengeluaran baru
+2. Isi setiap kolom pada baris:
+
+   Vendor (Wajib):
+   Dropdown pilihan vendor
+   Ketik untuk search vendor berdasarkan nama atau kode
+   Vendor harus sudah ada di master Vendor
+
+   Deskripsi (Wajib):
+   Penjelasan singkat tentang pengeluaran
+   Contoh: "Tiket pesawat", "Hotel menginap 2 malam", "Konsumsi rapat"
+   Max 85 karakter
+
+   Division (Wajib):
+   Pilih divisi tempat pengeluaran dilakukan
+   Dropdown dengan list divisi
+
+   Department (Wajib):
+   Pilih department (cascade dari divisi yang dipilih)
+   Auto-filter berdasarkan divisi
+
+   COA Code (Wajib):
+   Pilih kode akun yang dibebankan untuk pengeluaran ini
+   Dropdown dengan filter berdasarkan divisi, department, dan tanggal
+   Contoh: 5010 (Travel Expenses), 5030 (Meals & Entertainment)
+
+   COA Description (Read-only):
+   Deskripsi dari COA yang dipilih
+
+   Tax Code (Wajib):
+   Pilih jenis pajak untuk pengeluaran ini
+   Opsi: NT (No Tax), N0 (Non-Taxable), PPN (Normal tax rate)
+   Saat memilih, sistem otomatis isi persentase pajak
+
+   Amount (Wajib):
+   Nominal pengeluaran
+   Hanya angka, akan auto-format dengan separator
+
+   PPN (Read-only):
+   Nilai PPN yang dipotong (auto-hitung berdasarkan Amount Ã— Tax%)
+
+   PPH (Read-only):
+   Nilai PPH/withholding tax (auto-hitung berdasarkan Amount Ã— PPH%)
+
+   PPH Type (Kondisional):
+   Tipe PPH yang dipotong (misal: PPH 21, PPH 22, dll)
+   Hanya wajib diisi jika Tax Code bukan NT
+
+   Total Amount (Read-only):
+   Total per baris = Amount + PPN - PPH
+
+3. Tekan Tab atau klik field lain untuk pindah ke kolom berikutnya
+4. Jika ingin menghapus baris: klik tombol Delete (ikon trash) pada baris tersebut
+5. Minimal 1 baris detail harus ada
+
+4. Submit Realisasi
+
+1. Pastikan semua field wajib sudah terisi:
+   Realization Date
+   Deskripsi
+   Min 1 baris detail dengan vendor dan deskripsi
+   Tax Code untuk setiap item
+
+2. Sistem otomatis hitung:
+   Total pengeluaran dari semua baris detail
+   Total PPN dan PPH
+   Sisa uang = UM Amount - Total Pengeluaran
+
+3. Klik tombol "Create Realization"
+
+4. Konfirmasi akan muncul: "Are you sure want to CREATE REALIZATION from [UM No]?"
+
+5. Klik "Yes" untuk submit atau "No" untuk batal
+
+6. Sistem akan memproses dan menampilkan pesan sukses/error
+
+7. Klik "Cancel" jika ingin membatalkan pembuatan realisasi (data tidak disimpan)
+
+Daftar Lengkap Field Realization
+
+Field Header Form
+
+No.: 1
+Field: UM No
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Nomor uang muka yang direalisasi (read-only)
+
+No.: 2
+Field: PU No
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Nomor pembayaran uang muka (read-only)
+
+No.: 3
+Field: Nama Karyawan
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Nama yang menerima UM (read-only)
+
+No.: 4
+Field: Due Date
+Jenis Input: Tanggal
+Wajib Diisi: Tidak
+Keterangan: Batas waktu harus direalisasi (read-only)
+
+No.: 5
+Field: Realization Date
+Jenis Input: Tanggal
+Wajib Diisi: Ya
+Keterangan: Tanggal pembuatan dokumen realisasi
+
+No.: 6
+Field: Ref No
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Nomor referensi lainnya (optional)
+
+No.: 7
+Field: Deskripsi
+Jenis Input: Textarea
+Wajib Diisi: Ya
+Keterangan: Catatan/penjelasan realisasi (max 200 karakter)
+
+No.: 8
+Field: PUM Purpose
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Tujuan pengajuan PUM (read-only)
+
+No.: 9
+Field: Currency
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Mata uang UM (read-only)
+
+No.: 10
+Field: Rate
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Nilai tukar mata uang (read-only)
+
+No.: 11
+Field: UM Amount
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total jumlah UM diterima (read-only)
+
+No.: 12
+Field: Allocation
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total pengeluaran dari detail (read-only, auto-hitung)
+
+No.: 13
+Field: Base Amount
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total sebelum pajak (read-only, auto-hitung)
+
+No.: 14
+Field: Total DPP
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total yang kena pajak (read-only, auto-hitung)
+
+No.: 15
+Field: Total PPN
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total PPN dipotong (read-only, auto-hitung)
+
+No.: 16
+Field: Total PPH
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total PPH dipotong (read-only, auto-hitung)
+
+No.: 17
+Field: Total Amount
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total akhir realisasi (read-only, auto-hitung)
+
+No.: 18
+Field: File Lampiran
+Jenis Input: File Upload
+Wajib Diisi: Tidak
+Keterangan: Dokumen bukti (PDF, JPG, PNG, max 4MB)
+
+
+Field Detail Grid
+
+No.: 1
+Field: Vendor
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Nama vendor/penyedia barang/jasa
+
+No.: 2
+Field: Deskripsi
+Jenis Input: Teks
+Wajib Diisi: Ya
+Keterangan: Penjelasan singkat pengeluaran (max 85 char)
+
+No.: 3
+Field: Division
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Divisi tempat pengeluaran
+
+No.: 4
+Field: Department
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Department tempat pengeluaran (cascade dari div)
+
+No.: 5
+Field: COA Code
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Kode akun yang dibebankan
+
+No.: 6
+Field: COA Description
+Jenis Input: Teks
+Wajib Diisi: Tidak
+Keterangan: Deskripsi COA (read-only)
+
+No.: 7
+Field: Tax Code
+Jenis Input: Dropdown
+Wajib Diisi: Ya
+Keterangan: Jenis pajak (NT/N0/PPN)
+
+No.: 8
+Field: Amount
+Jenis Input: Angka
+Wajib Diisi: Ya
+Keterangan: Nominal pengeluaran
+
+No.: 9
+Field: PPN
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: PPN dipotong (read-only, auto-hitung)
+
+No.: 10
+Field: PPH
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: PPH dipotong (read-only, auto-hitung)
+
+No.: 11
+Field: PPH Type
+Jenis Input: Dropdown
+Wajib Diisi: Kondisional
+Keterangan: Tipe PPH (wajib jika Tax Code bukan NT)
+
+No.: 12
+Field: Total Amount
+Jenis Input: Angka
+Wajib Diisi: Tidak
+Keterangan: Total per baris (read-only, auto-hitung)
+
+
+Field Grid Outstanding PUM
+
+No.: 1
+Field: PU Date
+Keterangan: Tanggal pembayaran UM dilakukan
+
+No.: 2
+Field: PP No
+Keterangan: Nomor pengajuan PUM
+
+No.: 3
+Field: PU No
+Keterangan: Nomor pembayaran
+
+No.: 4
+Field: UM No
+Keterangan: Nomor uang muka
+
+No.: 5
+Field: Deskripsi
+Keterangan: Keperluan pengajuan
+
+No.: 6
+Field: Nama Karyawan
+Keterangan: Nama yang menerima
+
+No.: 7
+Field: Jumlah
+Keterangan: Total UM diterima
+
+No.: 8
+Field: Due Date
+Keterangan: Batas waktu realisasi
+
+No.: 9
+Field: Realization
+Keterangan: Tombol untuk buat realisasi
+
+
+Fitur-Fitur Realization
+
+1. Cascade Dropdown untuk Division-Department-COA
+ Saat pilih Division â†’ dropdown Department auto-update
+ Saat pilih Department â†’ dropdown COA auto-filter sesuai divisi+dept
+ COA list sudah ter-filter berdasarkan tanggal untuk hanya menampilkan COA yang tersedia
+
+2. Auto-Calculation Pajak
+ Saat pilih Tax Code â†’ sistem otomatis isi persentase pajak
+ Saat input Amount â†’ sistem otomatis hitung PPN dan PPH
+ Rumus: PPN = Amount Ã— PPN% , PPH = Amount Ã— PPH%
+ Total per baris = Amount + PPN - PPH
+
+3. Total Amount Otomatis
+ Sistem otomatis hitung total dari semua baris detail
+ Update real-time saat ada perubahan di detail grid
+ Tampil di field "Allocation"
+
+4. Tax Code Selection
+ NT (No Tax): Tidak ada pajak
+ N0 (Non-Taxable): Tidak dapat dikenakan pajak
+ PPN (Pajak Pertambahan Nilai): Standard rate PPN
+
+5. PPH Type (Conditional)
+ Hanya bisa diisi jika Tax Code bukan "NT"
+ Pilihan: PPH 21, PPH 22, PPH 23, dll
+ Diperlukan untuk perhitungan withholding tax
+
+6. Vendor Selection
+ Dropdown dengan search capability
+ Dapat search berdasarkan nama vendor atau kode vendor
+ Vendor harus sudah ada di master Vendor
+
+7. File Upload dengan Validasi
+ Format: PDF, JPG, PNG
+ Max ukuran: 4MB
+ Untuk dokumen bukti/supporting documents
+
+8. Sorting dan Filtering Grid Outstanding
+ Klik header kolom untuk sort A-Z atau Z-A
+ Filter per kolom untuk cari PUM spesifik
+ Multiple filter bisa digunakan sekaligus
+
+9. Pagination
+ Daftar PUM dibagi per halaman
+ Default 20 baris per halaman
+ Bisa ubah jumlah baris per halaman
+
+10. Export ke Excel
+ Klik tombol "Excel" di toolbar
+ File akan di-download: "User-Realisasi-Export.xlsx"
+ Berisi data PUM yang sedang ditampilkan (sudah di-filter)
+
+Perhitungan dan Validasi Realization
+
+Perhitungan Otomatis
+
+Per Baris Detail:
+
+
+Total Header:
+
+
+Sisa Uang:
+
+
+Validasi Form
+
+ Realization Date wajib diisi: Tidak bisa submit jika kosong
+ Deskripsi wajib diisi: Max 200 karakter
+ Min 1 baris detail: Harus ada minimal 1 item pengeluaran
+ Setiap baris harus lengkap: Vendor, Deskripsi, Division, Dept, COA wajib diisi
+ Tax Code wajib diisi: Harus ada jenis pajak untuk setiap item
+ PPH Type wajib jika tax bukan NT: Jika ada PPH, harus pilih tipe PPH
+
+Pesan dan Konfirmasi Realization
+
+Pesan Sukses
+ "Realisasi PUM berhasil dibuat" â†’ Realisasi telah tersimpan
+ "Realisasi complete" â†’ Proses realisasi selesai
+
+Pesan Error/Validasi
+ "Please fill all required fields!" â†’ Ada field wajib yang kosong
+ "Cannot continue! Please check item details!" â†’ Ada baris detail yang tidak valid
+ "Network Error! Please contact your IT Administrator" â†’ Error saat submit
+
+Pesan Konfirmasi
+ "Are you sure want to CREATE REALIZATION from [UM No]?" â†’ Konfirmasi pembuatan realisasi
+
+Catatan Tambahan Realization
+
+Timing Realisasi
+ Realisasi harus dibuat sebelum/pada Due Date yang ditentukan
+ Jika lewat due date: sistem akan flag sebagai overdue
+ Laporan accounting akan melihat realisasi yang overdue
+
+Sisa Uang dan CB Payment/CB Receive
+
+Setelah realisasi dibuat, sistem akan membandingkan Total Amount Realisasi dengan UM Amount yang diterima:
+
+Jika Total Amount < UM Amount (Ada Sisa/Kurang Bayar):
+ Contoh: UM diterima 10.000.000, Total realisasi 8.500.000, sisa 1.500.000
+ Status: CB Receive (Cash Bank Receive - Penerimaan Kas)
+ Artinya: Ada uang sisa yang harus dikembalikan ke perusahaan
+ Proses: Karyawan harus melakukan pengembalian tunai/transfer sisa uang
+ Dokumen: Akan dibuat dokumen CB Receive untuk mencatat pengembalian kas
+ Bukti: Karyawan wajib submit bukti pengembalian (kwitansi, transfer slip, dll)
+
+Jika Total Amount > UM Amount (Kekurangan/Over Budget):
+ Contoh: UM diterima 10.000.000, Total realisasi 10.500.000, kekurangan 500.000
+ Status: CB Payment (Cash Bank Payment - Pengeluaran Kas)
+ Artinya: Ada pengeluaran tambahan yang perlu dibayarkan dari kas perusahaan
+ Proses: Perusahaan akan melakukan pembayaran tambahan kepada karyawan
+ Dokumen: Akan dibuat dokumen CB Payment untuk pencairan uang tambahan
+ Persetujuan: Biasanya perlu approval finance atau head finance terlebih dahulu
+
+Jika Total Amount = UM Amount (Seimbang):
+ Total realisasi sama dengan UM yang diterima
+ Status: Complete/Selesai
+ Tidak ada CB Payment atau CB Receive
+ Tidak ada pembayaran tambahan atau pengembalian sisa
+
+Bukti Pendukung
+
+ Sangat penting upload dokumen bukti (invoice, kwitansi, tiket, dll)
+ Docs digunakan untuk audit dan verifikasi
+ Pastikan dokumen jelas dan complete (tidak terpotong)
+ Untuk CB Payment/Receive: scan bukti pengembalian atau bukti pembayaran tambahan
+
+Cascade Division-Department-COA
+ Pastikan Division dipilih dulu sebelum Department
+ Pastikan Department dipilih dulu sebelum COA
+ Jika urutan tidak sesuai: dropdown akan kosong atau error
+
+Tax Code dan Perhitungan
+ Jenis pajak mempengaruhi perhitungan PPN dan PPH
+ Jika tidak yakin jenis pajak: tanya ke bagian Finance/Accounting
+ Perubahan tax code akan otomatis update perhitungan
+
+Multiple Currency
+ Jika UM dalam currency selain IDR: rate sudah di-set otomatis
+ Amount input dalam currency UM tersebut
+ Sistem akan auto-convert berdasarkan rate
+
+Vendor Master
+ Jika vendor tidak ada di dropdown: hubungi Admin untuk tambah ke master
+ Pastikan vendor sudah aktif di master
+ Hanya vendor dengan status aktif yang bisa dipilih
+
+PPH Type Selection
+ PPH Type hanya wajib jika ada PPH di-potong (whold_pct > 0)
+ Jika tax code "NT": PPH Type tidak perlu diisi
+ Pilih PPH type yang sesuai dengan jenis pengeluaran dan vendor
+
+Best Practices
+ Buat realisasi sesegera mungkin setelah pengeluaran dilakukan
+ Susun detail realisasi per vendor untuk tracking yang lebih baik
+ Upload scan dokumen bukti untuk file archive
+ Jangan tunggu deadline untuk submit realisasi
+ Cross-check nominal dengan dokumen bukti sebelum submit
+
+Troubleshooting
+ Tidak bisa memilih Department: Pastikan Division sudah dipilih
+ COA tidak muncul: Mungkin tidak ada COA aktif pada tanggal/divisi/dept tersebut
+ Error saat submit: Periksa apakah semua field wajib sudah terisi dengan benar
+ Vendor tidak ada di list: Hubungi Admin untuk tambah vendor baru
+ Rate tidak update: Refresh halaman browser Anda
+
+---
+
+CB Payment & CB Receive (Dokumen Tindak Lanjut)
+
+Definisi
+
+CB Payment (Cash Bank Payment) adalah dokumen pengeluaran kas ketika realisasi UM lebih besar dari jumlah UM yang diterima. Artinya karyawan perlu penambahan uang dari perusahaan.
+
+CB Receive (Cash Bank Receive) adalah dokumen penerimaan kas ketika realisasi UM lebih kecil dari jumlah UM yang diterima. Artinya ada sisa uang yang dikembalikan ke perusahaan.
+
+Alur Kerja CB Payment & CB Receive
+
+Skenario 1: CB Receive (Ada Sisa Uang)
+
+
+
+Dalam skenario ini:
+ Ada uang sisa yang harus dikembalikan
+ Akan dibuat dokumen CB Receive Rp 1.500.000
+ Karyawan harus melakukan pengembalian (tunai/transfer)
+ Tidak boleh tidak dikembalikan (audit akan flag)
+
+Skenario 2: CB Payment (Ada Kekurangan Uang)
+
+
+
+Dalam skenario ini:
+ Ada pengeluaran tambahan di luar UM
+ Akan dibuat dokumen CB Payment Rp 500.000
+ Karyawan menerima uang tambahan (tidak perlu bayar dari kantong sendiri)
+ Finance harus approve pembayaran tambahan
+
+Skenario 3: CB Tidak Ada (Seimbang)
+
+
+
+Dalam skenario ini:
+ Total pengeluaran sama persis dengan UM yang diterima
+ Tidak ada CB Payment atau CB Receive
+ Realisasi langsung complete
+ Tidak ada transaksi kas tambahan
+
+Detail Field CB Payment & CB Receive
+
+CB Payment (Pengeluaran Kas)
+
+Field: Nomor Dokumen
+Value: Auto-Generate
+Keterangan: Misal: CBP-2024-00001 (CB Payment 2024 No. 1)
+
+Field: Tanggal
+Value: Tanggal Realisasi
+Keterangan: Tanggal dibuat dokumen
+
+Field: Kode Akun
+Value: Cash/Bank Account
+Keterangan: Akun kas yang digunakan untuk pembayaran
+
+Field: Nominal
+Value: Kekurangan Uang
+Keterangan: Jumlah yang dikurangkan (negatif/output)
+
+Field: Deskripsi
+Value: "CB Payment for UM [UM No]"
+Keterangan: Penjelasan dokumen
+
+Field: Referensi
+Value: UM No / RU No
+Keterangan: Nomor referensi ke UM/Realisasi
+
+Field: Status
+Value: Pending/Approved/Paid
+Keterangan: Status CB Payment
+
+Field: Approval
+Value: Finance/Head Finance
+Keterangan: Perlu approval sebelum dibayar
+
+
+Contoh CB Payment:
+
+
+CB Receive (Penerimaan Kas)
+
+Field: Nomor Dokumen
+Value: Auto-Generate
+Keterangan: Misal: CBR-2024-00001 (CB Receive 2024 No. 1)
+
+Field: Tanggal
+Value: Tanggal Realisasi
+Keterangan: Tanggal dibuat dokumen
+
+Field: Kode Akun
+Value: Cash/Bank Account
+Keterangan: Akun kas yang menerima pengembalian
+
+Field: Nominal
+Value: Sisa Uang
+Keterangan: Jumlah yang diterima kembali (positif/income)
+
+Field: Deskripsi
+Value: "CB Receive for UM [UM No]"
+Keterangan: Penjelasan dokumen
+
+Field: Referensi
+Value: UM No / RU No
+Keterangan: Nomor referensi ke UM/Realisasi
+
+Field: Status
+Value: Pending/Received
+Keterangan: Status penerimaan kas
+
+Field: Bukti
+Value: Kwitansi/Transfer Slip
+Keterangan: Bukti pengembalian uang
+
+
+Contoh CB Receive:
+
+
+Proses Setelah CB Payment/CB Receive Dibuat
+
+Untuk CB Payment:
+
+1. Sistem membuat dokumen CB Payment otomatis saat realisasi disimpan
+2. Finance/Head Finance melakukan review terhadap CB Payment
+3. Approval dilakukan - jika OK, lanjut ke pembayaran
+4. Jika ditolak - realisasi perlu direvisi atau ada proses diskusi dengan karyawan
+5. Treasury/Finance mencatat pembayaran ke akun bank/kas
+6. Karyawan menerima uang tambahan
+7. Dokumentasi lengkap untuk audit trail
+
+Untuk CB Receive:
+
+1. Sistem membuat dokumen CB Receive otomatis saat realisasi disimpan
+2. Dokumen dikirim ke karyawan untuk melakukan pengembalian
+3. Karyawan mempersiapkan pengembalian (tunai atau transfer)
+4. Karyawan melakukan pengembalian dengan bukti (kwitansi/transfer slip)
+5. Finance/Cashier mencatat penerimaan kas
+6. CB Receive status berubah ke "Received"
+7. Dokumentasi lengkap untuk audit trail
+
+Best Practices untuk CB Payment & CB Receive
+
+Untuk CB Payment:
+
+ Koordinasi dengan Finance: Sebelum submit realisasi yang akan generate CB Payment, sebaiknya diskusi dengan bagian Finance
+ Dokumentasi lengkap: Pastikan semua bukti pengeluaran lengkap dan jelas sebelum submit realisasi
+ Budget check: Pastikan ada budget approval jika pengeluaran melebihi UM
+ Timing: Jangan delayed submit realisasi, karena akan delay juga CB Payment
+ Follow-up: Track status CB Payment untuk memastikan pembayaran cair tepat waktu
+
+Untuk CB Receive:
+
+ Return promptly: Kembalikan sisa uang sesegera mungkin setelah realisasi
+ Bukti pengembalian: Pastikan ada bukti yang jelas (kwitansi/transfer slip original atau scan)
+ Coordination: Jika pengembalian tunai, koordinasi dengan Finance/Cashier untuk penerimaan
+ Documentation: Simpan bukti pengembalian untuk arsip pribadi dan audit
+ Don't delay: Jangan tunda pengembalian sisa uang (audit akan flag)
+
+Skenario Khusus
+
+Skenario: Multiple CB dalam 1 UM
+
+Situasi: 1 UM pernah di-realisasi lebih dari sekali (multiple times)
+
+Contoh:
+
+
+Penjelasan:
+ Bisa ada multiple Realisasi untuk 1 UM (pengeluaran bertahap)
+ Setiap realisasi akan generate CB (jika ada sisa/kekurangan)
+ Karyawan hanya bisa return berdasarkan CB Receive terakhir
+
+Skenario: UM dengan Foreign Currency
+
+Situasi: UM dalam USD, tapi realisasi mix IDR dan USD
+
+Bagaimana sistem handle:
+ Rate otomatis di-convert berdasarkan tanggal realisasi
+ Total dihitung dalam base currency (IDR)
+ CB Payment/Receive juga dalam IDR
+ Kontrak harus clear tentang currency handling
+
+Troubleshooting CB Payment & CB Receive
+
+Problem: CB Payment tidak dibuat
+Penyebab: Total realisasi = UM
+Solusi: Normal, tidak ada CB jika seimbang
+
+Problem: CB Receive tidak muncul di list
+Penyebab: Due date belum tercapai
+Solusi: Sistem mungkin belum generate, tunggu atau refresh
+
+Problem: Nominal CB salah
+Penyebab: Error hitung sistem
+Solusi: Hubungi Finance untuk reversal dan koreksi
+
+Problem: CB Payment tidak approve
+Penyebab: Waiting approval
+Solusi: Follow-up dengan Finance/Head Finance
+
+Problem: Tidak bisa return sisa uang
+Penyebab: Sistem locked
+Solusi: Hubungi Finance/IT untuk unlock
+
+Problem: CB Receive dari periode lama belum clear
+Penyebab: Outstanding
+Solusi: Harus segera di-clear untuk audit
+
+
+Pertanyaan Umum (FAQ) tentang CB
+
+Q: Apakah karyawan bisa menolak CB Payment?
+A: Tidak, CB Payment adalah kebijakan perusahaan. Jika ada keberatan, harus diskusi dengan Finance atau Manager terlebih dahulu.
+
+Q: Apakah CB Payment langsung cair?
+A: Tidak, harus melalui approval dari Finance/Head Finance terlebih dahulu, baru cair.
+
+Q: Bagaimana jika sisa uang hilang/tidak bisa dikembalikan?
+A: Harus segera laporkan ke Manager dan Finance. Bisa ada kebijakan penggantian dari gaji atau tindakan lain.
+
+Q: Apakah ada limit untuk CB Payment?
+A: Tergantung kebijakan perusahaan, biasanya ada limit tertentu sebelum perlu approval lebih tinggi.
+
+Q: Bisa kah CB Payment dan CB Receive dalam 1 UM?
+A: Tidak, dalam 1 UM hanya bisa ada 1 jenis CB (atau Payment atau Receive), tidak bisa keduanya.
+
+Q: Gimana kalau UM belum selesai tapi harus transfer ke karyawan lain?
+A: Perlu proses khusus, hubungi Finance untuk mengurus transfer/reassign UM.
+
+

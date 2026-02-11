@@ -1,0 +1,186 @@
+MASUK APLIKASI
+Buka web browser, kemudian ketik alamat Jifas Web:
+A. KIJ, GBC, MPK, JM, BW, TL, SPPK
+jifas.jababeka.com
+http://10.0.8.57/
+B. JI, ICTEL, NGE
+http://jifasweb.jiinfra.com/
+http://10.10.1.30/
+C. BP, UP, TS
+http://jifas-bp.bekasipower.co.id/
+http://10.12.0.47/
+D. KIK
+http://jifas.kik.com
+http://10.5.1.240/
+LOGIN
+A. INPUT LOGIN Login menggunakan login windows tanpa "@jababeka.com"
+B. HALAMAN HOME
+C. LOG OUT
+MASTER DATA
+A. MASTER COMPANY User: IT Admin
+Halaman Master Company Masuk halaman Master Company: Master Data - Company
+Create New Company
+Klik pada tombol Create untuk membuat company baru
+Isi detail company, kemudian klik Create untuk menyimpan company baru
+Edit Company
+Klik icon Edit pada company yang akan diubah detailnya
+Ubah data yang diinginkan, kemudian klik Update untuk menyimpan perubahan data
+B. MASTER DIVISION User: Finance
+Halaman Master Division Masuk halaman Master Division: Master Data - Division
+Create Division
+Klik pada tombol Create
+Isi detail divisi, kemudian klik Create untuk menyimpan divisi
+Edit Division
+Klik icon Edit pada divisi yang akan diubah detailnya
+Ubah data yang diinginkan, kemudian klik Update untuk menyimpan perubahan data
+C. MASTER DEPARTMENT User: Finance
+Halaman Master Department Masuk halaman Master Department: Master Data - Department
+Create Department
+Klik pada tombol Create
+Isi detail department, kemudian klik Create
+Edit Department
+Klik icon Edit pada department yang akan diubah
+Ubah data yang diinginkan, kemudian klik Update
+D. MASTER VENDOR User: Finance
+Halaman Master Vendor Masuk halaman Master Vendor: Master Data - Vendor
+Create Vendor
+Klik Create
+Input detail vendor
+Klik tanda ceklis (✔) untuk menyimpan
+Edit Vendor
+Klik icon Edit
+Ubah data
+Klik tanda ceklis (✔)
+E. MASTER COA User: Accounting HO
+Halaman Master COA Masuk halaman Master COA: Master Data - COA
+Create COA
+Expand COA
+Klik Add pada COA induk
+Input detail COA
+Klik Update
+Klik OK
+Pilih OK untuk setting report atau Cancel
+Edit COA Catatan: Nomor COA tidak dapat diubah
+Klik Edit
+Ubah detail
+Klik Update
+Klik OK
+Remove COA Syarat:
+COA belum pernah digunakan transaksi
+Menghapus COA akan menghapus seluruh breakdown Langkah:
+Klik Remove
+Klik OK
+F. REPORT SETUP User: Accounting
+Mapping COA
+Pilih report
+Pilih row (Fill = Yes)
+Pilih COA
+Klik Add to Selected Coa
+Remove Mapping
+Pilih report
+Pilih COA di Selected Coa
+Klik Remove from Selected Coa
+G. BUDGET User: Finance
+Upload Budget
+Klik Upload Budget
+Pilih Company
+Upload file Excel
+Klik Save
+Create Budget
+Klik Create Budget
+Input detail dan total tahunan
+Klik Generate
+Klik Save
+Catatan: Total budget per bulan harus sama dengan total budget tahunan.
+H. ACCOUNTING PERIOD User: Accounting HO
+Update Accounting Period
+Pilih Period
+Klik Action
+Check atau uncheck Is Closed
+Klik Update
+Create Accounting Period
+Klik Create
+Input detail accounting period
+Klik Update
+INVOICE
+A. PENGAJUAN INVOICE User: Pemohon Invoice Menu: Invoice - Create
+Create Invoice
+Klik Create Invoice
+Isi PD Form (mandatory)
+Input budget (Add Request)
+Input pajak dan PPH (jika ada)
+Klik Next
+Upload dokumen (jika ada)
+Klik Save
+B. HEAD APPROVAL INVOICE User: Head Department Menu: Invoice - Head Approval
+Approve atau Reject invoice
+Jika over budget wajib checklist persetujuan
+C. KOREKSI INVOICE User: Pemohon Invoice
+Status: Need Check Correction
+Klik Apply Correction
+Jika nominal berubah maka approval ulang
+D. FINANCE APPROVAL INVOICE User: Finance Menu: Invoice - Finance - PD Approval Tahapan:
+Correction (jika ada)
+Document Verification
+Invoice Number terbentuk otomatis
+E. CHECKING INVOICE User: Finance Head Menu: Invoice - Finance - Invoice List Status: Need Finance Checking
+F. PAYMENT INVOICE User: Finance Menu: Payment - Invoice
+Create Payment Invoice
+Klik Create Payment Invoice
+Pilih metode pembayaran
+Pilih invoice
+Pilih allocation
+Klik Save Status selanjutnya: Accounting Checking
+PUM (PENGAJUAN UANG MUKA)
+A. PENGAJUAN PUM User: Pemohon PUM Menu: PUM - Pengajuan - PPUM Status Budget:
+OK
+CM (Cross Month)
+CA (Cross Accumulation)
+CY (Cross Year, tidak bisa dilanjutkan)
+B. APPROVAL PUM Head Department
+Approve atau Reject Finance
+Approve dan terbentuk nomor UM
+C. PAYMENT PUM User: Finance Menu: Payment - Payment PUM Status: Need Finance Checking → Accounting Checking
+D. REALISASI PUM User: Pemohon PUM Menu: PUM - Pengajuan - Realization
+Input detail realisasi
+Vendor
+COA
+Tax
+Amount
+Klik Create Realization
+E. FINANCE VERIFICATION & CHECKING
+Edit data jika diperlukan
+Checking → Accounting Checking Sisa atau kekurangan otomatis masuk Cash Bank
+INVOICE BILLING (IK) User: Finance Menu: Receiving - Create - Invoice (IK) Tahapan:
+Create Invoice IK
+Tax Approval
+Finance Checking
+Accounting Checking
+RECEIVING
+Receiving IK Menu: Receiving - Create - Receiving (RV)
+Receiving Non IK Input manual tanpa invoice billing
+CASH BANK
+Cash Bank Payment & Receiving User: Finance
+CB Payment
+CB Receiving Status: Need Finance Checking → Accounting Checking
+TAX APPROVAL User: Tax Berlaku untuk:
+Invoice
+Realisasi PUM
+Invoice Billing
+Receiving
+Cash Bank Wajib input dokumen PPN dan PPH sebelum approval
+VOID (PEMBATALAN TRANSAKSI) Berlaku untuk semua transaksi Status akhir:
+Removed (belum posting)
+Void (sudah reverse journal)
+ACCOUNTING
+Journal Transaction IV, PV, PU, RU, IK, RV, JM, JR
+Journal Memorial
+Create
+Edit
+Checking
+Posting
+Reverse Journal Untuk transaksi dengan status Need Reverse
+Bulk Posting Menu: Accounting - Bulk Posting
+REPORT
+Report Finance Melalui menu report masing-masing modul
+Report Accounting Melalui menu Accounting Report

@@ -1,0 +1,728 @@
+﻿Tax Approval (Persetujuan Pajak)
+
+Deskripsi
+
+Tax Approval (Persetujuan Pajak) adalah modul yang digunakan oleh tim Tax/Pajak untuk melakukan review, persetujuan, dan pengelolaan dokumen Realisasi (RU) dari sisi perpajakan. 
+
+Modul ini memastikan bahwa:
+ Perhitungan pajak (PPN dan PPH) sudah tepat sesuai peraturan perpajakan
+ Data vendor dan NPWP sudah lengkap dan valid
+ Dokumen pajak pendukung (faktur pajak, bukti potong) sudah tercatat dengan baik
+ Koreksi pajak dapat dilakukan jika ada penyesuaian yang diperlukan
+
+Tax Approval adalah tahap final dalam workflow PUM sebelum dokumen dapat di-posting ke sistem akuntansi.
+
+Fungsi
+
+1. Melihat daftar dokumen Realisasi (RU) yang menunggu persetujuan pajak
+2. Menganalisis detail RU beserta perhitungan pajak yang ada
+3. Melihat informasi vendor dan NPWP yang tercatat
+4. Memberikan persetujuan atas perhitungan pajak dokumen RU
+5. Menolak dokumen RU jika ada ketidaksesuaian dengan peraturan pajak
+6. Melakukan koreksi nilai pajak (PPN dan PPH) jika diperlukan penyesuaian
+7. Menambahkan data faktur pajak dan bukti potong untuk setiap transaksi
+8. Export data ke Excel untuk laporan pajak
+
+Tujuan
+
+1. Memastikan kepatuhan terhadap peraturan perpajakan (PPN dan PPH)
+2. Validasi kelengkapan dokumen pajak pendukung (faktur, bukti potong)
+3. Mencegah kesalahan perhitungan pajak yang dapat berpengaruh pada laporan keuangan
+4. Merekam data pajak dengan detail untuk keperluan SPT (Surat Pemberitahuan) pajak
+5. Mendokumentasikan setiap koreksi pajak untuk audit trail
+6. Memastikan data NPWP vendor sudah terdaftar dengan benar
+
+Role yang Dapat Mengakses
+
+Role: WMTR
+Deskripsi: Webmaster
+
+Role: TAXS
+Deskripsi: Tax Staff
+
+Keterangan: Hanya role WMTR (Webmaster) dan TAXS (Tax Staff) yang memiliki akses untuk melakukan tax approval dan koreksi pajak.
+
+Langkah-langkah Penggunaan
+
+Langkah 1: Melihat Daftar Dokumen Realisasi yang Perlu Tax Approval
+
+1. Buka modul PUM menu Tax Approval
+2. Grid akan menampilkan daftar dokumen RU dengan status yang menunggu persetujuan pajak
+3. Informasi yang ditampilkan:
+   Tanggal dokumen
+   Nomor PP (Pengajuan Pum)
+   Nomor RU (Realisasi)
+   Nomor PU (Payment Unit)
+   Nomor UM
+   Kategori PUM
+   Deskripsi
+   Mata uang
+   Jumlah yang dialokasikan
+   Status perpajakan
+
+Langkah 2: Memfilter dan Mencari Dokumen
+
+1. Gunakan kolom filter pada setiap header kolom grid
+2. Filter yang tersedia:
+   Berdasarkan Tanggal: Pilih tanggal menggunakan date picker
+   Berdasarkan Nomor PP/RU/PU/UM: Ketik nomor yang dicari
+   Berdasarkan Kategori: Pilih kategori dari dropdown
+   Berdasarkan Deskripsi: Ketik kata kunci
+   Berdasarkan Status: Pilih status perpajakan
+3. Kombinasikan beberapa filter untuk hasil yang lebih spesifik
+
+Langkah 3: Membuka Detail Dokumen RU untuk Tax Review
+
+1. Cari dokumen RU pada grid utama
+2. Klik tombol expand/arrow pada baris dokumen untuk melihat detail item
+3. Sebuah sub-grid akan muncul menampilkan daftar vendor/item dalam RU tersebut
+4. Klik tombol Approve pada baris item vendor untuk membuka form approval pajak
+
+Langkah 4: Review Data Pajak di Form Approval
+
+Jendela form approval akan terbuka dengan beberapa tab. Di Tab "Approval", Anda akan melihat:
+
+Informasi Vendor:
+ Tanggal dokumen RU
+ Nama vendor/penerima pembayaran
+ NPWP vendor (dalam format mask: XX.XXX.XXX.X-XXX.XXX)
+ Alamat NPWP vendor
+ Nomor referensi tambahan
+
+Informasi Pajak:
+ Tax Code (kode jenis pajak: PPN, PPH, Non-Pajak, dll)
+ PPH Type (jenis PPH jika ada: PPH 21, PPH 23, dll) - hanya muncul jika ada PPH
+ Mata uang dan nilai tukar
+ Total DPP (Dasar Pengenaan Pajak)
+ Total PPN (Pajak Pertambahan Nilai)
+ Total PPH (Pajak Penghasilan)
+ Status perpajakan saat ini
+ Deskripsi item
+
+Langkah 5: Review Tab PPN (Pajak Pertambahan Nilai)
+
+Jika dokumen RU memiliki PPN:
+
+1. Klik tab PPN
+2. Anda akan melihat:
+   DPP/Tax Base (nilai dasar pengenaan pajak)
+   Total PPN (pajak yang dihitung)
+   Grid detail PPN dengan kolom:
+     - Nomor Faktur Pajak: Nomor faktur dari vendor
+     - Tanggal Faktur: Tanggal faktur diterbitkan
+     - DPP: Nilai dasar pengenaan pajak per faktur
+     - PPN: Nilai PPN per faktur
+     - Year: Tahun pajak
+     - Period: Bulan pajak
+
+3. Untuk menambah faktur PPN:
+   Klik tombol Request di grid detail
+   Isi kolom-kolom yang tersedia: Nomor Faktur, Tanggal Faktur, DPP, PPN
+   Tanggal otomatis akan set tahun dan bulan pajak
+   Klik tombol Save untuk simpan
+
+4. Untuk menghapus faktur PPN:
+   Klik tombol Delete (icon sampah) pada baris faktur
+   Konfirmasi penghapusan
+   Faktur akan dihapus dari detail
+
+Langkah 6: Review Tab PPH (Pajak Penghasilan)
+
+Jika dokumen RU memiliki PPH:
+
+1. Klik tab PPH
+2. Anda akan melihat:
+   DPP/Tax Base (nilai dasar pengenaan pajak)
+   Total PPH (pajak yang dihitung)
+   Grid detail PPH dengan kolom:
+     - Form Code: Kode formulir pajak (contoh: 1721-A1, 1721-A2)
+     - Tax Invoice: Nomor bukti potong
+     - Tax RU Date: Tanggal bukti potong
+     - DPP: Nilai dasar pengenaan pajak
+     - PPH: Nilai PPH yang dipotong
+     - Year: Tahun pajak
+     - Period: Bulan pajak
+
+3. Untuk menambah bukti potong PPH:
+   Klik tombol Request di grid detail
+   Isi kolom-kolom: Form Code, Tax Invoice, Tax RU Date, DPP, PPH
+   Tanggal otomatis akan set tahun dan bulan pajak
+   Klik tombol Save untuk simpan
+
+4. Untuk menghapus bukti potong PPH:
+   Klik tombol Delete pada baris
+   Konfirmasi penghapusan
+
+Langkah 7: Melakukan Tax Correction (Koreksi Pajak)
+
+Jika ada penyesuaian nilai pajak yang diperlukan:
+
+1. Di tab "Approval", klik tombol Tax Correction
+2. Sebuah jendela baru akan terbuka dengan grid tax correction
+3. Grid menampilkan semua item dengan tax code yang memiliki PPN/PPH
+4. Di dalam grid, Anda dapat:
+
+   Ubah Tax Code:
+   Klik cell "Tax Code" untuk mengubah jenis pajak
+   Pilih dari dropdown list
+   Sistem otomatis akan recalculate PPN/PPH berdasarkan tax code baru
+
+   Lakukan Rounding PPN:
+   Klik cell "Round" di kolom PPN
+   Pilih "UP" (pembulatan ke atas) atau "DOWN" (pembulatan ke bawah)
+   Sistem akan otomatis menghitung nilai PPN setelah pembulatan
+   Nilai yang sudah di-correct akan ditampilkan dengan background hijau
+
+   Lakukan Rounding PPH:
+   Klik cell "Round" di kolom PPH
+   Pilih "UP" atau "DOWN"
+   Sistem akan otomatis menghitung nilai PPH setelah pembulatan
+
+   Ubah PPH Type:
+   Jika ada PPH, klik cell "PPH Type"
+   Pilih tipe PPH yang sesuai dari dropdown (PPH 21, PPH 23, dll)
+   Field ini required jika ada nilai PPH
+
+5. Setelah selesai melakukan koreksi, klik tombol Save
+6. Sistem akan meminta konfirmasi: "Are you sure want to SAVE this Tax Correction?"
+7. Klik OK untuk simpan koreksi
+8. Jendela akan menutup dan data tax terupdate
+
+Langkah 8: Memberikan Persetujuan Pajak
+
+Setelah semua review dan koreksi selesai:
+
+1. Di tab "Approval", klik tombol Approve
+2. Sistem akan menampilkan konfirmasi: "Are you sure want to APPROVE TAX for document: [RU No]?"
+3. Klik OK untuk memberikan persetujuan
+4. Status dokumen akan berubah menjadi "APPROVED" (hijau)
+5. Dokumen siap untuk di-posting ke sistem akuntansi
+
+Langkah 9: Menolak Dokumen RU (Jika Ada Ketidaksesuaian)
+
+Jika menemukan ketidaksesuaian atau kesalahan data pajak:
+
+1. Di tab "Approval", klik tombol Reject
+2. Sebuah dialog akan terbuka meminta alasan penolakan
+3. Ketik alasan penolakan (contoh: "NPWP tidak sesuai dengan dokumen", "Perhitungan PPH salah", dll)
+4. Klik Yes untuk mengonfirmasi
+5. Sistem akan meminta konfirmasi akhir
+6. Status dokumen akan berubah menjadi "REJECTED" (merah)
+7. Notifikasi penolakan akan dikirim ke pihak yang menangani realisasi untuk revisi
+
+---
+
+Daftar Lengkap Field
+
+Grid Daftar Dokumen (Main Grid)
+
+Field: Date
+Deskripsi: Tanggal dokumen RU
+Tipe: Tanggal
+Keterangan: Format: DD/MM/YYYY
+
+Field: PP No
+Deskripsi: Nomor Pengajuan PUM
+Tipe: Teks
+Keterangan: Reference ke PPUM
+
+Field: RU No
+Deskripsi: Nomor Realisasi
+Tipe: Teks
+Keterangan: Unik per dokumen
+
+Field: PU No
+Deskripsi: Nomor Payment Unit
+Tipe: Teks
+Keterangan: Reference ke pembayaran
+
+Field: UM No
+Deskripsi: Nomor Uang Muka
+Tipe: Teks
+Keterangan: Reference ke UM
+
+Field: Category
+Deskripsi: Kategori PUM
+Tipe: Dropdown
+Keterangan: Contoh: Biaya, Operasional
+
+Field: Description
+Deskripsi: Deskripsi RU
+Tipe: Teks
+Keterangan: Apa keperluannya
+
+Field: Currency
+Deskripsi: Mata uang
+Tipe: Teks
+Keterangan: IDR, USD, EUR, dll
+
+Field: Amount
+Deskripsi: Jumlah dialokasikan
+Tipe: Angka
+Keterangan: Format: desimal 2 digit
+
+Field: Status
+Deskripsi: Status perpajakan
+Tipe: Teks
+Keterangan: Warna: Hijau=Need Approval, Merah=Rejected, Hitam=Normal
+
+
+Grid Detail Item Vendor (Sub-Grid)
+
+Field: Vendor
+Deskripsi: Nama vendor/penerima
+Tipe: Teks
+Keterangan: Pihak yang menerima pembayaran
+
+Field: Description
+Deskripsi: Deskripsi item
+Tipe: Teks
+Keterangan: Apa yang dibeli/dilayani
+
+Field: Status
+Deskripsi: Status pajak item
+Tipe: Teks
+Keterangan: Need Approval, Approved, Rejected
+
+Field: Approve (Button)
+Deskripsi: Tombol untuk approval
+Tipe: Aksi
+Keterangan: Klik untuk buka form approval
+
+
+Form Approval - Tab Approval
+
+Field: Document Number
+Deskripsi: Nomor RU yang di-approve
+Tipe: Teks
+Required: Ya
+Readonly: Ya
+
+Field: Date
+Deskripsi: Tanggal dokumen
+Tipe: Tanggal
+Required: Tidak
+Readonly: Ya
+
+Field: Vendor
+Deskripsi: Nama vendor
+Tipe: Teks
+Required: Ya
+Readonly: Ya
+
+Field: NPWP
+Deskripsi: Nomor NPWP vendor
+Tipe: Teks (mask)
+Required: Ya
+Readonly: Ya
+
+Field: WP Address
+Deskripsi: Alamat NPWP
+Tipe: Teks Area
+Required: Ya
+Readonly: Ya
+
+Field: Ref No
+Deskripsi: Nomor referensi
+Tipe: Teks
+Required: Tidak
+Readonly: Ya
+
+Field: Tax
+Deskripsi: Kode dan deskripsi pajak
+Tipe: Teks
+Required: Ya
+Readonly: Ya
+
+Field: PPH Type
+Deskripsi: Tipe PPH (jika ada)
+Tipe: Teks
+Required: Conditional
+Readonly: Ya
+
+Field: Currency
+Deskripsi: Mata uang
+Tipe: Teks
+Required: Tidak
+Readonly: Ya
+
+Field: Rate
+Deskripsi: Nilai tukar
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: Total DPP
+Deskripsi: Total dasar pengenaan pajak
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: Total PPN
+Deskripsi: Total PPN
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: Total PPH
+Deskripsi: Total PPH
+Tipe: Angka
+Required: Tidak
+Readonly: Ya
+
+Field: Status
+Deskripsi: Status perpajakan
+Tipe: Teks
+Required: Tidak
+Readonly: Ya
+
+Field: Description
+Deskripsi: Deskripsi item
+Tipe: Teks Area
+Required: Ya
+Readonly: Ya
+
+
+Tab PPN - Grid Detail Faktur Pajak
+
+Field: Tax Invoice
+Deskripsi: Nomor faktur pajak
+Tipe: Teks
+Required: Ya
+Editable: Ya (saat add)
+
+Field: Tax RU Date
+Deskripsi: Tanggal faktur
+Tipe: Tanggal
+Required: Ya
+Editable: Ya (saat add)
+
+Field: DPP
+Deskripsi: Dasar pengenaan pajak
+Tipe: Angka
+Required: Ya
+Editable: Ya
+
+Field: PPN
+Deskripsi: Nilai PPN
+Tipe: Angka
+Required: Ya
+Editable: Ya
+
+Field: Year
+Deskripsi: Tahun pajak
+Tipe: Angka
+Required: Tidak
+Editable: Readonly
+
+Field: Period
+Deskripsi: Bulan pajak (1-12)
+Tipe: Angka
+Required: Tidak
+Editable: Readonly
+
+
+Tab PPH - Grid Detail Bukti Potong
+
+Field: Form Code
+Deskripsi: Kode formulir pajak
+Tipe: Teks
+Required: Ya
+Editable: Ya
+
+Field: Tax Invoice
+Deskripsi: Nomor bukti potong
+Tipe: Teks
+Required: Ya
+Editable: Ya
+
+Field: Tax RU Date
+Deskripsi: Tanggal bukti potong
+Tipe: Tanggal
+Required: Ya
+Editable: Ya
+
+Field: DPP
+Deskripsi: Dasar pengenaan pajak
+Tipe: Angka
+Required: Ya
+Editable: Ya
+
+Field: PPH
+Deskripsi: Nilai PPH
+Tipe: Angka
+Required: Ya
+Editable: Ya
+
+Field: Year
+Deskripsi: Tahun pajak
+Tipe: Angka
+Required: Tidak
+Editable: Readonly
+
+Field: Period
+Deskripsi: Bulan pajak
+Tipe: Angka
+Required: Tidak
+Editable: Readonly
+
+
+Grid Tax Correction
+
+Field: Tax Code
+Deskripsi: Jenis pajak (PPN, PPH, CS)
+Tipe: Dropdown
+Readonly: Tidak
+
+Field: DPP
+Deskripsi: Dasar pengenaan pajak
+Tipe: Angka
+Readonly: Ya
+
+Field: PPN Existing
+Deskripsi: Nilai PPN saat ini
+Tipe: Angka
+Readonly: Ya
+
+Field: PPN Round
+Deskripsi: Pembulatan PPN (UP/DOWN)
+Tipe: Dropdown
+Readonly: Tidak
+
+Field: PPN Correction
+Deskripsi: Nilai PPN setelah koreksi
+Tipe: Angka
+Readonly: Readonly
+
+Field: PPH Existing
+Deskripsi: Nilai PPH saat ini
+Tipe: Angka
+Readonly: Ya
+
+Field: PPH Round
+Deskripsi: Pembulatan PPH (UP/DOWN)
+Tipe: Dropdown
+Readonly: Tidak
+
+Field: PPH Correction
+Deskripsi: Nilai PPH setelah koreksi
+Tipe: Angka
+Readonly: Readonly
+
+Field: PPH Type
+Deskripsi: Tipe PPH (21, 23, dll)
+Tipe: Dropdown
+Readonly: Conditional
+
+
+---
+
+Fitur-fitur
+
+1. Color Coding Status
+ Hijau: Dokumen yang perlu tax approval (NEED APPROVAL TAX)
+ Merah: Dokumen yang ditolak pajak (REJECTED)
+ Hitam: Dokumen normal atau sudah diapprove
+
+2. Expandable Grid Detail
+ Main grid menampilkan list RU
+ Setiap baris RU dapat di-expand untuk melihat detail vendor/item
+ Detail grid menampilkan semua vendor yang ada dalam RU tersebut
+
+3. Multi-Tab Interface dalam Form Approval
+ Tab Approval: Review data utama dan approval
+ Tab PPN: Manage faktur pajak (PPN)
+ Tab PPH: Manage bukti potong pajak (PPH)
+ Tab File: Lihat dokumen pendukung yang di-attach
+
+4. Automatic Tax Calculation
+ Saat tax code dipilih di tax correction, sistem otomatis hitung PPN/PPH
+ Rumus: PPN = DPP Ã— PPH% ; PPH = DPP Ã— PPH%
+ Nilai terupdate secara real-time
+
+5. Tax Rounding dengan Suggestion
+ Fitur pembulatan UP (ke atas) dan DOWN (ke bawah)
+ Sistem memberikan suggested value untuk rounding
+ Contoh: PPN Rp 123.456 di-round UP â†’ Rp 123.500
+
+6. Detail Grid Management (PPN & PPH)
+ Tombol "Request" untuk menambah faktur pajak / bukti potong baru
+ Tombol Delete untuk menghapus item
+ Auto-set tahun dan bulan pajak berdasarkan tanggal faktur
+ Validasi: Total detail tidak boleh lebih besar dari header
+
+7. NPWP Masking
+ Format: XX.XXX.XXX.X-XXX.XXX
+ NPWP vendor otomatis dimunculkan saat membuka form
+
+8. Reject dengan Alasan
+ Saat reject, wajib mengisi alasan penolakan
+ Alasan disimpan dalam sistem untuk audit trail
+
+9. Export ke Excel
+ Grid dapat di-export ke format Excel file
+ Filename: Tax-RU-Export.xlsx
+ Berguna untuk membuat laporan pajak
+
+10. Validation Checks
+ Validasi: Jika ada PPH amount, maka PPH Type harus diisi
+ Validasi: Total DPP detail tidak boleh melebihi DPP header
+ Validasi: Total PPN detail tidak boleh melebihi PPN header
+
+---
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+ "Success - [RU No] has been approved": Tax approval berhasil
+ "Success - [RU No] has been rejected": Penolakan pajak berhasil
+ "Item successfully deleted": Item faktur/bukti potong berhasil dihapus
+ "Tax Correction has been saved successfully!": Koreksi pajak berhasil disimpan
+
+Pesan Konfirmasi
+ "Are you sure want to APPROVE TAX for document: [RU No]?": Konfirmasi sebelum approval
+ "[RU No] would be rejected. Please input the reason below:": Dialog input alasan rejection
+ "Are you sure want to DELETE this item?": Konfirmasi sebelum delete faktur/bukti
+ "Are you sure want to SAVE this Tax Correction?": Konfirmasi sebelum save koreksi
+
+Pesan Validasi/Error
+ "Cannot continue with empty data!": Data tidak lengkap
+ "Cannot continue! Reject reason must be filled!": Alasan rejection harus diisi
+ "Total DPP detail CANNOT GREATER THAN DPP header!": Total DPP detail melebihi header
+ "Total PPN detail CANNOT GREATER THAN PPN header!": Total PPN detail melebihi header
+ "Total of PPH from detail cannot more than header!": Total PPH detail melebihi header
+ "Cannot get suggested value for ppn/pph": Gagal menghitung suggestion value
+
+---
+
+Catatan Tambahan
+
+Jenis-Jenis Tax Code
+
+Tax Code: PPN 10%
+Deskripsi: Pajak Pertambahan Nilai 10%
+PPN: 10%
+PPH: -
+Keterangan: Standar untuk barang/jasa kena pajak
+
+Tax Code: PPN 0%
+Deskripsi: Pajak Pertambahan Nilai 0%
+PPN: 0%
+PPH: -
+Keterangan: Barang tidak kena pajak (BTKP)
+
+Tax Code: PPH 21
+Deskripsi: Pajak Penghasilan 21
+PPN: -
+PPH: Var
+Keterangan: Pajak untuk karyawan/penghasilan
+
+Tax Code: PPH 23
+Deskripsi: Pajak Penghasilan 23
+PPN: -
+PPH: Var
+Keterangan: Pajak untuk jasa, sewa, dll
+
+Tax Code: CS
+Deskripsi: Corrective Special
+PPN: 0%
+PPH: 0%
+Keterangan: Dokumen koreksi, tanpa pajak
+
+Tax Code: NT
+Deskripsi: Non-Tax
+PPN: 0%
+PPH: 0%
+Keterangan: Bukan dokumen kena pajak
+
+
+Perhitungan dan Validasi
+
+Formula Dasar:
+
+1. DPP (Dasar Pengenaan Pajak) = Nilai dasar yang menjadi acuan perhitungan pajak
+2. PPN = DPP Ã— Persentase PPN
+   Contoh: DPP Rp 1.000.000 Ã— 10% = Rp 100.000
+3. PPH = DPP Ã— Persentase PPH
+   Contoh: DPP Rp 1.000.000 Ã— 1% (PPH 23) = Rp 10.000
+
+Validasi Otomatis:
+ Jumlah tidak boleh 0 atau negatif
+ Total detail grid tidak boleh melebihi header
+ Jika ada PPH > 0, maka PPH Type harus diisi
+ Format tanggal dan NPWP harus valid
+
+Skenario Penggunaan
+
+Skenario 1: Approval Sederhana (PPN saja, tanpa Koreksi)
+1. Buka dokumen RU
+2. Review data vendor, NPWP, dan perhitungan PPN
+3. Tambahkan faktur pajak di tab PPN jika belum ada
+4. Klik Approve
+5. Dokumen selesai dan siap posting
+
+Skenario 2: Approval dengan PPH (Pajak Penghasilan)
+1. Buka dokumen RU
+2. Review tab Approval: lihat Total PPH
+3. Review tab PPH: check faktur/bukti potong yang ada
+4. Tambahkan bukti potong baru jika perlu
+5. Pastikan PPH Type sudah terisi
+6. Klik Approve
+
+Skenario 3: Approval dengan Tax Correction
+1. Buka dokumen RU
+2. Review tab Approval: lihat perhitungan pajak
+3. Jika ada yang perlu dikoreksi, klik "Tax Correction"
+4. Di grid tax correction:
+   Ubah tax code jika perlu
+   Lakukan rounding PPN/PPH
+5. Klik Save Correction
+6. Kembali ke tab Approval dan klik Approve
+
+Skenario 4: Rejection karena Data Tidak Lengkap
+1. Buka dokumen RU
+2. Review: NPWP tidak lengkap atau tidak sesuai
+3. Klik Reject
+4. Ketik alasan: "NPWP di sistem tidak sesuai dengan dokumen, mohon update data vendor"
+5. Klik Yes
+6. Dokumen ditolak, notifikasi dikirim untuk perbaikan data
+
+Best Practice Tax Approval
+
+1. Verifikasi Data Vendor: Pastikan NPWP sudah terdaftar dengan benar
+2. Check Dokumen Pendukung: Lihat faktur/bukti potong asli sebelum approval
+3. Validate Perhitungan: Cross-check PPN/PPH dengan dokumen backup
+4. Input Tepat Waktu: Tambahkan faktur pajak/bukti potong segera saat dokumen masuk
+5. Audit Trail: Dokumentasikan setiap koreksi yang dilakukan
+6. Consistency Check: Pastikan tax code konsisten untuk jenis transaksi yang sama
+7. Reject dengan Alasan Jelas: Berikan alasan detail agar proses revisi cepat
+
+Troubleshooting
+
+Masalah: Tab PPN/PPH tidak muncul
+Penyebab: Tidak ada PPN/PPH di dokumen
+Solusi: Normal, tab otomatis hide jika tidak ada pajak
+
+Masalah: Tombol Approve/Reject disabled
+Penyebab: Status dokumen sudah final
+Solusi: Refresh halaman atau hubungi admin
+
+Masalah: Tidak bisa input faktur pajak
+Penyebab: Detail grid ada validation error
+Solusi: Pastikan semua field wajib sudah terisi
+
+Masalah: Tax correction value tidak update
+Penyebab: Kalkulasi error atau network issue
+Solusi: Refresh halaman dan coba lagi
+
+Masalah: PPH Type field tidak bisa diisi
+Penyebab: Field conditional tidak active
+Solusi: Pastikan ada nilai PPH > 0 terlebih dahulu
+
+Masalah: Export Excel error
+Penyebab: File size terlalu besar atau server issue
+Solusi: Filter data terlebih dahulu sebelum export
+
+Masalah: Cascading dropdown tidak update
+Penyebab: Parent value belum dipilih
+Solusi: Pilih parent field terlebih dahulu

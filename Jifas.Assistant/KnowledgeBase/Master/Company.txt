@@ -1,0 +1,105 @@
+﻿Master Company
+
+Deskripsi
+
+Modul Master Company adalah modul utama dalam JIFAS yang digunakan untuk mendata, menyimpan, dan mengelola informasi perusahaan atau entitas bisnis yang menjadi bagian dari ekosistem JIFAS.
+
+Fungsi
+
+Menyediakan database terpusat untuk seluruh data perusahaan yang terlibat dalam transaksi dan pelaporan keuangan.
+Menjadi referensi utama untuk pengelolaan struktur organisasi, relasi antar entitas, dan pemetaan data master lain (division, departement, dsb).
+Mendukung validasi dan konsistensi data pada seluruh modul JIFAS.
+
+Tujuan
+
+Mencegah duplikasi data perusahaan di sistem.
+Memudahkan proses pencarian, pelaporan, dan integrasi data antar modul.
+Menjamin akurasi dan legalitas data perusahaan yang digunakan dalam transaksi dan pelaporan.
+
+Role yang Dapat Mengakses
+
+Berikut adalah daftar role yang memiliki akses untuk membuat atau mengubah data Company:
+WMTR: Webmaster
+FINA: Finance
+SPVR: Supervisor Finance
+HDFA: Head Finance
+
+MGFA: Magang Finance
+Create (Menambah Company Baru)
+1. Klik tombol Create (ikon "+") di bagian kiri atas grid.
+2. Jendela input akan muncul.
+3. Lengkapi seluruh field yang diperlukan sesuai petunjuk.
+4. Setelah data terisi benar, klik tombol Create untuk menyimpan.
+
+Update (Memperbarui Data Company)
+1. Cari company yang ingin diubah pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Edit (pena).
+3. Jendela edit akan muncul.
+4. Perbarui field yang diperlukan.
+5. Klik tombol Update untuk menyimpan perubahan.
+
+Delete (Menghapus Company)
+1. Cari company yang ingin dihapus pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Delete (tempat sampah).
+3. Akan muncul jendela konfirmasi penghapusan.
+4. Jika yakin ingin menghapus, klik Yes untuk melanjutkan.
+
+Berikut adalah rincian seluruh field yang tersedia untuk data Company beserta spesifikasi kontrol dan validasinya:
+Company Code: Menggunakan TextBox. Wajib diisi (Required). Input berupa kode unik 2 karakter dengan huruf kapital dan tidak boleh sama dengan perusahaan lain.
+Company Name: Menggunakan TextBox. Wajib diisi (Required). Input berupa nama perusahaan lengkap sesuai dengan dokumen legal.
+Base Currency: Menggunakan DropDownList. Wajib diisi (Required). Digunakan untuk memilih mata uang dasar perusahaan (contoh: IDR, USD).
+Address 1: Menggunakan TextBox. Digunakan untuk alamat utama perusahaan.
+Address 2: Menggunakan TextBox. Digunakan untuk alamat lanjutan atau kelengkapan.
+Province: Menggunakan ComboBox Cascade. Digunakan untuk memilih provinsi domisili perusahaan.
+Kabupaten: Menggunakan ComboBox Cascade. Digunakan untuk memilih kabupaten domisili perusahaan.
+Kecamatan: Menggunakan ComboBox Cascade. Digunakan untuk memilih kecamatan domisili perusahaan.
+Kelurahan: Menggunakan ComboBox Cascade. Digunakan untuk memilih kelurahan domisili perusahaan.
+Post Code: Menggunakan TextBox. Digunakan untuk memasukkan kode pos perusahaan.
+Phone Number: Menggunakan MaskedTextBox. Memiliki format validasi: (999) 000-0000.
+Fax Number: Menggunakan MaskedTextBox. Memiliki format validasi: (999) 000-0000.
+NPWP: Menggunakan MaskedTextBox. Memiliki format validasi nomor pajak: 99.999.999.9-999.999.
+WP Address: Menggunakan TextBox. Digunakan untuk alamat NPWP guna keperluan laporan pajak.
+TTD: Menggunakan TextBox. Digunakan untuk tanda tangan atau inisial pimpinan.
+KPP: Menggunakan TextBox. Digunakan untuk mencatat Kantor Pelayanan Pajak terkait.
+Parent Company: Menggunakan DropDownList. Bersifat opsional (Optional). Digunakan jika perusahaan merupakan bagian dari suatu grup (induk perusahaan).
+Is Active: Menggunakan Switch. Berfungsi untuk status aktif perusahaan dengan nilai bawaan (Default) adalah Active.
+
+Kolom Teks Biasa: Tempat mengetik data secara bebas (nama, alamat, dll).
+Dropdown Pilihan: Daftar pilihan yang sudah tersedia, tinggal klik pilih.
+Dropdown Berjenjang: Pilihan yang terhubung, contoh: Provinsi → Kabupaten → Kecamatan → Kelurahan. Harus dipilih secara urut dari atas.
+Kolom dengan Format Khusus: Nomor telepon, fax, NPWP otomatis terformat dengan benar.
+Tombol On/Off: Untuk mengaktifkan atau menonaktifkan company.
+
+Fitur-fitur Tabel Data
+
+Mengurutkan Data
+Klik pada judul kolom untuk mengurutkan data dari A-Z atau Z-A.
+
+Mencari Data
+Setiap kolom memiliki kolom pencarian di baris pertama tabel.
+Ketik kata kunci untuk mencari company.
+Contoh: ketik "PT" untuk mencari semua company yang mengandung kata "PT".
+
+Membaca Data Per Halaman
+Data ditampilkan per halaman (misal: 10 data per halaman).
+Gunakan tombol navigasi di bawah tabel untuk pindah halaman.
+Bisa juga pilih jumlah data yang ingin ditampilkan per halaman.
+
+Mengubah Lebar Kolom
+Arahkan mouse ke garis pemisah kolom, lalu drag untuk mengubah lebar kolom.
+
+Tombol Tambah Data
+Tombol Tambah (tanda +) ada di atas tabel untuk menambah company baru.
+
+Pesan dan Konfirmasi
+
+Pesan Sukses: Setelah berhasil tambah/ubah/hapus, akan muncul notifikasi sukses di sudut kanan atas layar.
+Pesan Error: Jika ada masalah, akan tampil pesan error yang menjelaskan masalahnya.
+Konfirmasi Sebelum Hapus: Sebelum menghapus data, sistem akan menanyakan "Apakah Anda yakin ingin menghapus?" untuk mencegah kesalahan.
+
+Catatan Tambahan
+
+Sebuah company bisa punya parent company (induk) jika merupakan bagian dari grup perusahaan.
+Kode Company tidak bisa diubah setelah data dibuat, hanya bisa diisi pertama kali saat membuat data baru.
+Kolom lokasi (Provinsi → Kabupaten → Kecamatan → Kelurahan) harus dipilih secara urut dari atas ke bawah.
+Kolom telepon, fax, dan NPWP otomatis terformat dengan benar saat mengetik untuk menghindari kesalahan penulisan.

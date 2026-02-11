@@ -1,0 +1,1127 @@
+KNOWLEDGE BASE FINANCE APPROVAL MODULE - OVER BUDGET
+
+DESKRIPSI UMUM
+
+Module Finance Approval adalah modul khusus untuk proses approval akhir terhadap invoice yang memiliki amount melebihi budget allocation yang tersedia. Module ini merupakan tahap kritikal terakhir sebelum invoice dapat diproses untuk pembayaran. Module ini menerima invoices yang telah di-approve oleh Head of Department dan harus mendapat approval dari Finance team sebelum posting ke General Ledger. Module ini memastikan control yang ketat atas budget exception dan memiliki audit trail lengkap untuk setiap approval decision.
+
+SASARAN PENGGUNA
+
+- Finance Manager yang bertugas melakukan final approval untuk over budget invoices
+- Senior Finance Staff yang melakukan detail review sebelum approval
+- Finance Supervisor yang melakukan escalation untuk exceptional cases
+- Head of Finance yang melakukan review terhadap approve patterns
+- Internal Audit yang verify approval decisions untuk compliance
+- Accounting Manager yang monitor approval status
+
+FITUR UTAMA
+
+1. INVOICE OVER BUDGET GRID
+
+Feature ini menampilkan daftar lengkap semua invoice yang memiliki amount melebihi available budget. Grid adalah view utama yang menampilkan invoice dalam status Need Approval dan sudah di-approve oleh Head Department.
+
+- Display 8 columns utama untuk review cepat
+- Filter row-based untuk Date, Document No, Category, Applicant, COA Code, Vendor, Amount, Status
+- Sorting berdasarkan tanggal dokumen (DESC)
+- Pagination dengan default 10 items per halaman
+- Color coding untuk status (Need Approval=Green, Rejected=Red, Normal=Black)
+- Excel export untuk reporting dan audit trail
+- Selection mode untuk multi-row operations
+- Progress indicator saat loading data dari API
+
+2. INVOICE DETAIL APPROVAL FORM
+
+Form popup yang terbuka saat user click Approval button pada grid. Form menampilkan detail lengkap invoice dengan semua informasi penting untuk decision making.
+
+- Window title: Invoice Approval Over Budget
+- Window size: 60 viewport width
+- Two-column layout untuk efficient information display
+- Left column: Document metadata dan financial information
+- Right column: Vendor, Applicant, Organizational information
+- All fields readonly untuk data integrity
+- Approve dan Reject buttons untuk workflow action
+
+3. INVOICE HEADER INFORMATION
+
+Feature menampilkan informasi header dari invoice yang akan di-approve dalam form.
+
+- Invoice No header display
+- Date field dengan date picker format
+- COA Code untuk account tracking
+- Amount field untuk over-budget amount
+- Remaining Budget field untuk show available amount
+- PPN amount display
+- PPH amount display
+
+4. INVOICE DETAIL INFORMATION
+
+Feature menampilkan organisasi dan requestor details dalam form.
+
+- Vendor name field
+- Applicant name field (staff yang buat request)
+- Division code field
+- Head Approver name field
+- Description textarea untuk additional context
+- All fields readonly untuk prevent modification
+
+5. APPROVAL DECISION FUNCTIONALITY
+
+Feature untuk melakukan approval atau rejection terhadap invoice yang over budget.
+
+- Approve button dengan confirmation dialog
+- Reject button dengan reason capture dialog
+- Both buttons hanya active jika status Need Approval
+- Approval action dengan POST ke UpdateStatus endpoint
+- Rejection action dengan reason logging
+- Audit trail untuk semua decisions
+
+6. APPROVAL WORKFLOW CONTROL
+
+Feature untuk manage approval process state dan validations.
+
+- Status check sebelum enable approval buttons
+- Dynamic button visibility berdasarkan document status
+- Confirmation dialog untuk prevent accidental approvals
+- Rejection reason validation sebelum process
+
+7. REJECTION REASON DIALOG
+
+Feature khusus untuk capture rejection reason dari Finance team.
+
+- Modal window untuk rejection input
+- Text input field untuk reason entry
+- Rejection dan Cancel buttons
+- Message display dengan document information
+- Reason validation sebelum submit
+
+8. GRID COLOR CODING
+
+Feature untuk visual status indication dalam grid.
+
+- Need Approval status: Green color untuk highlight pending items
+- Rejected status: Red color untuk highlight rejected items
+- Normal status: Black color untuk standard display
+- Color applied pada entire row untuk easy scanning
+
+WORKFLOW APPROVAL INVOICE OVER BUDGET
+
+Berikut adalah flow lengkap proses Finance Approval untuk Invoice Over Budget:
+
+TAHAP 1 PREPARATION
+
+- Finance team membuka Finance Approval module
+- System initialize grid dengan endpoint Invoice Over IvOver
+- API call dengan company code parameter
+- Progress indicator di-display saat data loading
+- Request-start event trigger loading indicator
+
+TAHAP 2 GRID INITIALIZATION
+
+- Kendo DataSource di-initialize dengan schema definition
+- 19 field model di-define untuk schema mapping
+- Sort order: doc_date DESC (terbaru di atas)
+- Pagination setting dengan 10 items per page
+- Transport auto-configure untuk ajax calls
+- dataBound event akan trigger saat data loaded
+
+TAHAP 3 DATA BINDING
+
+- Server mengirim invoice over budget list
+- dataBound function di-trigger untuk post-processing
+- Grid row color di-set berdasarkan status value
+- Status Need Approval: row text color GREEN
+- Status Rejected: row text color RED
+- Status lain: row text color BLACK
+- All rows rendered dengan proper styling
+
+TAHAP 4 GRID DISPLAY
+
+- Grid display dengan 10 columns:
+  * Doc Date (date format)
+  * Doc No (document number)
+  * Category (PD type category)
+  * Applicant (staff name)
+  * COA Code (chart of accounts)
+  * Vendor (vendor name)
+  * Amount (numeric format n0)
+  * Description (text)
+  * Status (approval status)
+  * Approval button (action button)
+
+- Filter row active di atas columns
+- Each column memiliki filter template
+- Date filter dengan date picker
+- Text filter dengan contains operator
+- Dropdown filter untuk Category
+- Pagination control di bawah grid
+
+TAHAP 5 DOCUMENT SELECTION
+
+- User scan grid untuk invoices yang memerlukan approval
+- User dapat filter berdasarkan kriteria yang diperlukan
+- User dapat sort berdasarkan column header
+- User memilih satu invoice dengan click row
+- User mengklik Approval button untuk selected invoice
+
+TAHAP 6 APPROVAL FORM OPEN
+
+- Approval_OnClick function triggered
+- Grid.select() dipanggil untuk select clicked row
+- Edit event triggered untuk open popup form
+- Template editInvoiceOverBudget di-render
+- Form di-populate dengan selected invoice data
+
+TAHAP 7 FORM INITIALIZATION
+
+- gridInvOverBudget_OnEdit function triggered
+- Default grid buttons di-hide (k-edit-buttons)
+- Data model di-extract dari selected row
+- InitButton function dipanggil
+- Button visibility di-control berdasarkan status
+
+TAHAP 8 DETAIL REVIEW - HEADER INFO
+
+- Left section display:
+  * Date field (readonly dengan date format)
+  * COA Code field (readonly)
+  * Amount field (readonly numeric format n2)
+  * Remaining Budget field (readonly showing sisa)
+  * PPN field (readonly showing tax_amount)
+  * PPH field (readonly showing whold_amount)
+
+TAHAP 9 DETAIL REVIEW - CONTEXT INFO
+
+- Right section display:
+  * Vendor field (readonly nama_vendor)
+  * Applicant field (readonly staff name)
+  * Division field (readonly div_code)
+  * Approved By field (readonly atasan)
+  * Description textarea (readonly descs)
+
+- All fields readonly dengan lightgray background style
+
+TAHAP 10 APPROVE DECISION PATH
+
+User memilih untuk approve invoice yang over budget:
+
+- User click Approve button
+- InitButton check untuk status Need Approval
+- Button show jika status match
+- Click handler di-bind ke btnApprove_OnClick
+- Form siap untuk action
+
+TAHAP 11A APPROVE ACTION VALIDATION
+
+- btnApprove_OnClick function triggered
+- Event preventDefault untuk prevent default behavior
+- Grid reference extracted untuk get selected dataItem
+- Validation: rec_no dan doc_no tidak boleh kosong
+- If empty: alert "Data not exist! Please contact your IT administrator!"
+- If valid: proceed ke confirmation
+
+TAHAP 12A APPROVE CONFIRMATION
+
+- Confirmation dialog di-show dengan message:
+  "Are your sure want to APPROVE document: [DOCNO] ?"
+- Done button untuk confirm approval
+- Cancel button untuk abort approval
+
+TAHAP 13A APPROVE PROCESSING
+
+Upon confirm clicked:
+- Model object di-create dengan:
+  * action: A (flag untuk Approve)
+  * recNo: record number dari invoice
+  * docNo: document number
+  * rejectNote: empty string
+- Authorization header dengan token
+
+- API call ke Invoice/Over/UpdateStatus
+- Method: POST
+- Content-Type: application/json
+- Data: JSON stringify dari model
+
+TAHAP 14A APPROVE COMPLETION
+
+Success scenario:
+- Response message di-check untuk FAILED word
+- If FAILED: showMyError dengan response text
+- If success: showMyNotif untuk success notification
+- Grid dataSource.read() untuk refresh data
+- Grid refresh() untuk redraw
+- Form otomatis close setelah refresh
+- Approved invoice removed dari grid atau status updated
+
+Error scenario:
+- Error response di-capture dari ajax call
+- Error message display dengan status, statusText, responseText
+- User dapat retry approval
+
+TAHAP 10B REJECT DECISION PATH
+
+User memilih untuk reject invoice yang over budget:
+
+- User click Reject button
+- InitButton check untuk status Need Approval
+- Button show jika status match
+- Click handler di-bind ke btnReject_OnClick
+
+TAHAP 11B REJECT WINDOW OPEN
+
+- btnReject_OnClick function triggered
+- ShowWinReject function di-call
+- Modal window di-create untuk rejection reason input
+- Window title: Reject Confirmation
+- Templates di-render dengan rejection message
+- Message include: document no dan instruction
+
+TAHAP 12B REJECTION REASON INPUT
+
+- User view modal window dengan:
+  * Message label menampilkan rejection context
+  * Text input field untuk enter reason
+  * Reject button untuk submit
+  * Cancel button untuk abort
+- User enter rejection reason dalam text field
+
+TAHAP 13B BUTTON CLICK HANDLERS
+
+- btnYesReject click handler di-bind
+- btnCancelReject click handler di-bind
+- btnCancelReject will close reject window tanpa action
+- btnYesReject will proceed ke validation
+
+TAHAP 14B REJECTION VALIDATION
+
+- btnYesReject_OnClick function triggered
+- Event preventDefault
+- Grid reference extracted untuk get dataItem
+- Validation 1: rec_no dan doc_no tidak kosong
+  If empty: alert "Data not exist! Please contact your IT administrator!"
+- Validation 2: rejection reason tidak kosong
+  If empty: alert "Please fill reject reason to continue!"
+- If both valid: proceed ke confirmation
+
+TAHAP 15B REJECTION CONFIRMATION
+
+- Confirmation dialog di-show dengan message:
+  "Are your sure want to REJECT document: [DOCNO] ?"
+- Done button untuk confirm rejection
+- Cancel button untuk abort
+
+TAHAP 16B REJECTION PROCESSING
+
+Upon confirm clicked:
+- Model object di-create dengan:
+  * action: X (flag untuk Reject)
+  * recNo: record number
+  * docNo: document number
+  * rejectNote: rejection reason dari user input
+
+- API call ke Invoice/Over/UpdateStatus
+- Method: POST
+- Content-Type: application/json
+- Data: JSON stringify dari model
+- Authorization header included
+
+TAHAP 17B REJECTION COMPLETION
+
+Success scenario:
+- Response message di-check untuk FAILED word
+- If FAILED: showMyError dengan response text
+- If success: showMyNotif untuk notification
+- Reject window close otomatis
+- Grid dataSource.read() untuk refresh data
+- Grid refresh() untuk redraw
+- Rejected invoice updated status atau hidden
+- Rejection reason logged dalam system
+
+Error scenario:
+- Error response di-capture
+- Error message display dengan full details
+- User dapat retry rejection
+
+TAHAP 18 WORKFLOW COMPLETION
+
+- After approval atau rejection:
+  * Detail form automatically close
+  * Main grid di-refresh dengan updated data
+  * Finance team dapat process invoice berikutnya
+  * Complete audit trail maintained
+
+FIELD REFERENCE - GRID COLUMNS
+
+DOCDATE COLUMN
+
+- Field name: doc_date
+- Column title: Doc Date
+- Data type: Date
+- Format: DD/MM/YYYY (ConfigWeb.DateFormat)
+- Width: 130px
+- Alignment: center
+- Editable: No
+- Sortable: Yes (default sort DESC)
+- Filterable: Yes dengan date picker
+- Filter operator: eq (equals)
+- Purpose: Display invoice date
+
+DOCNO COLUMN
+
+- Field name: doc_no
+- Column title: Doc No
+- Data type: String
+- Width: 130px
+- Alignment: center
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan text input
+- Filter operator: contains
+- Min length: 10
+- Purpose: Display invoice number
+
+CATEGORY COLUMN
+
+- Field name: category
+- Column title: Category
+- Data type: String
+- Width: 250px
+- Alignment: center
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan dropdown
+- Dropdown source: Master/PdType/List endpoint
+- Display field: category
+- Value field: category
+- Purpose: Display PD type category
+
+APPLICANT COLUMN
+
+- Field name: staff
+- Column title: Applicant
+- Data type: String
+- Width: 200px
+- Alignment: center
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan text input
+- Filter operator: contains
+- Min length: 10
+- Purpose: Display staff who created request
+
+COACODE COLUMN
+
+- Field name: coa_code
+- Column title: COA Code
+- Data type: String
+- Width: 150px
+- Alignment: center
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan text input
+- Filter operator: contains
+- Min length: 10
+- Purpose: Display chart of accounts code
+
+VENDOR COLUMN
+
+- Field name: nama_vendor
+- Column title: Vendor
+- Data type: String
+- Width: 350px
+- Alignment: center
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan text input
+- Filter operator: contains
+- Min length: 10
+- Purpose: Display vendor name
+
+AMOUNT COLUMN
+
+- Field name: amount
+- Column title: Amount
+- Data type: Number
+- Format: n0 (integer format)
+- Width: 170px
+- Alignment: right
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan numeric input
+- Filter operator: eq
+- Purpose: Display invoice over budget amount
+
+DESCRIPTION COLUMN
+
+- Field name: descs
+- Column title: Description
+- Data type: String
+- Width: 650px
+- Alignment: left
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan text input
+- Filter operator: contains
+- Min length: 10
+- Purpose: Display invoice description
+
+STATUS COLUMN
+
+- Field name: status
+- Column title: Status
+- Data type: String
+- Width: 150px
+- Alignment: center
+- Editable: No
+- Sortable: Yes
+- Filterable: Yes dengan text input
+- Filter operator: contains
+- Min length: 10
+- Possible values: Need Aproval, Rejected, Approved
+- Purpose: Display approval status
+
+ACTION COLUMN
+
+- Column type: Command
+- Command name: edit
+- Button text: Approval
+- Button class: btn k-primary
+- Width: 130px
+- Alignment: center
+- Click handler: Approval_OnClick function
+- Purpose: Launch approval workflow
+
+FIELD REFERENCE - APPROVAL FORM
+
+DOCUMENT NO HEADER
+
+- Label: Invoice No
+- Display: Static header menampilkan doc_no value
+- Purpose: Document identification
+
+DATE FIELD
+
+- Field ID: dpDocDate
+- Label: Date
+- Type: Datepicker
+- Data binding: value:doc_date
+- Format: ConfigWeb.DateFormat
+- State: Readonly
+- Background: lightgray
+- Purpose: Show invoice date
+
+COACODE FIELD
+
+- Field ID: txtCoaCode
+- Label: Coa Code
+- Type: Textbox
+- Data binding: value:coa_code
+- State: Readonly
+- Purpose: Show chart of accounts
+
+AMOUNT FIELD
+
+- Field ID: txtAmount
+- Label: Amount
+- Type: Numeric textbox
+- Data binding: value:amount
+- Format: n2 (2 decimal)
+- State: Readonly
+- Purpose: Show over budget amount
+
+REMAININGBUDGET FIELD
+
+- Field ID: txtBudgetRemain
+- Label: Remaining Budget
+- Type: Numeric textbox
+- Data binding: value:sisa
+- Format: n2
+- State: Readonly
+- Purpose: Show available budget
+
+PPNAMOUNT FIELD
+
+- Field ID: txtPpnAmount
+- Label: PPN
+- Type: Numeric textbox
+- Data binding: value:tax_amount
+- Format: n2
+- State: Readonly
+- Purpose: Show PPN tax amount
+
+PPHAMOUNT FIELD
+
+- Field ID: txtPphAmount
+- Label: PPH
+- Type: Numeric textbox
+- Data binding: value:whold_amount
+- Format: n2
+- State: Readonly
+- Purpose: Show PPH withholding amount
+
+VENDOR FIELD
+
+- Field ID: txtVendor
+- Label: Vendor
+- Type: Textbox
+- Data binding: value:nama_vendor
+- State: Readonly
+- Purpose: Show vendor name
+
+APPLICANT FIELD
+
+- Field ID: txtApplicant
+- Label: Applicant
+- Type: Textbox
+- Data binding: value:staff
+- State: Readonly
+- Purpose: Show staff who created request
+
+DIVISION FIELD
+
+- Field ID: txtDivision
+- Label: Division
+- Type: Textbox
+- Data binding: value:div_code
+- State: Readonly
+- Purpose: Show division code
+
+APPROVEDBY FIELD
+
+- Field ID: txtHead
+- Label: Approved By
+- Type: Textbox
+- Data binding: value:atasan
+- State: Readonly
+- Purpose: Show head approver name
+
+DESCRIPTION FIELD
+
+- Field ID: txtDescription
+- Label: Description
+- Type: Textarea
+- Rows: 4
+- Data binding: value:descs
+- State: Readonly
+- Resize: disabled
+- Purpose: Show invoice description
+
+APPROVE BUTTON
+
+- Button ID: btnApprove
+- Label: Approve
+- Type: Button
+- Class: k-button k-primary
+- Display: Conditional (show jika status Need Aproval)
+- Click handler: btnApprove_OnClick
+- Purpose: Submit approval action
+
+REJECT BUTTON
+
+- Button ID: btnReject
+- Label: Reject
+- Type: Button
+- Class: k-button k-primary
+- Display: Conditional (show jika status Need Aproval)
+- Click handler: btnReject_OnClick
+- Purpose: Submit rejection action
+
+FIELD REFERENCE - REJECTION DIALOG
+
+REJECT MESSAGE LABEL
+
+- Label ID: lblReject
+- Content template: message field dari dialog data
+- Display: Center aligned
+- Purpose: Show rejection context message
+
+REJECT REASON INPUT
+
+- Field ID: txtRejectReason
+- Type: Text input
+- Width: 100 percent
+- Placeholder: (reason entry field)
+- Purpose: User input untuk rejection reason
+- Validation: cannot be empty
+
+REJECT BUTTON
+
+- Button ID: btnYesReject
+- Label: Reject
+- Type: Button
+- Class: k-primary k-button
+- Click handler: btnYesReject_OnClick
+- Purpose: Confirm rejection with reason
+
+CANCEL BUTTON
+
+- Button ID: btnCancelReject
+- Label: Cancel
+- Type: Button
+- Class: k-secondary k-button
+- Click handler: Close kendoWindow
+- Purpose: Abort rejection action
+
+VALIDATION RULES
+
+RULE 1 DOCUMENT SELECTION
+
+- User harus select one document dari grid sebelum open approval
+- Only documents dengan status Need Aproval dapat di-approve
+- Document data harus exist dengan valid rec_no dan doc_no
+
+RULE 2 APPROVAL CONFIRMATION
+
+- Approval action memerlukan confirmation dialog
+- User harus click Done dalam confirmation
+- Document number di-display dalam confirmation message
+
+RULE 3 REJECTION REASON VALIDATION
+
+- Rejection action memerlukan reason input
+- Reason field tidak boleh kosong atau blank
+- Minimum 1 character untuk rejection reason
+
+RULE 4 STATUS CHECK
+
+- InitButton function check status value sebelum enable buttons
+- Only status Need Aproval enable approve dan reject buttons
+- Status lain disable buttons untuk prevent invalid actions
+
+RULE 5 DATA VALIDATION
+
+- rec_no dan doc_no harus non-empty sebelum action
+- If empty: error message displayed
+- User prompt untuk contact IT administrator
+
+RULE 6 API RESPONSE VALIDATION
+
+- Response text di-check untuk FAILED keyword
+- If FAILED present: error message show
+- If success: notification message show
+- Grid auto-refresh setelah successful action
+
+RULE 7 GRID DATA BINDING
+
+- All form fields readonly untuk prevent accidental modification
+- Data binding di-attach ke readonly inputs
+- Background lightgray untuk visual indication readonly
+
+BEST PRACTICES
+
+PRACTICE 1 THOROUGH REVIEW
+
+- Always review all invoice details sebelum make approval decision
+- Check Amount field terhadap Remaining Budget field
+- Verify vendor details dan applicant organization
+- Review Description untuk understand business context
+
+PRACTICE 2 APPROVAL TIMING
+
+- Process over budget approvals dengan priority
+- Make timely decisions untuk prevent workflow delay
+- Escalate exceptional cases ke management quickly
+
+PRACTICE 3 REJECTION DOCUMENTATION
+
+- Always provide detailed rejection reason
+- Clear reason help requestor untuk correct submission
+- Detailed reason important untuk audit trail
+
+PRACTICE 4 BUDGET AUTHORITY
+
+- Verify approval authority terhadap amount threshold
+- Escalate ke higher management jika melebihi limit
+- Follow company budget exception policy
+
+PRACTICE 5 DUPLICATE PREVENTION
+
+- Check grid untuk prevent duplicate submissions
+- Verify document number dalam recent history
+- Flag suspicious duplicate requests
+
+PRACTICE 6 STATUS MONITORING
+
+- Monitor approval status trend regular
+- Track average approval time per invoice
+- Identify bottleneck dalam approval process
+
+PRACTICE 7 VENDOR VERIFICATION
+
+- Verify vendor information accuracy
+- Check vendor status dalam vendor master
+- Ensure vendor active dan approved
+
+PRACTICE 8 GRID FILTERING
+
+- Use filter untuk reduce view ke relevant invoices
+- Filter berdasarkan date range untuk period processing
+- Filter berdasarkan category untuk focus review
+
+TROUBLESHOOTING GUIDE
+
+ISSUE 1 GRID TIDAK LOADING
+
+Symptom: Grid menampilkan kosong atau loading indefinitely
+Cause: API endpoint error atau network issue
+Solution:
+- Verify API URL correct untuk Invoice/Over/IvOver
+- Check network connectivity
+- Verify company code sudah set di system
+- Refresh page dengan F5
+- Check browser console untuk error details
+- Verify authorization token valid
+
+ISSUE 2 APPROVAL FORM TIDAK MEMBUKA
+
+Symptom: Click Approval button tetapi form tidak appear
+Cause: PopUp blocker atau JavaScript error
+Solution:
+- Disable popup blocker untuk website
+- Clear browser cache dan cookies
+- Try dengan browser berbeda
+- Check browser console untuk JavaScript error
+- Verify window.open not blocked
+- Verify Kendo kendoWindow library loaded
+
+ISSUE 3 BUTTONS TIDAK VISIBLE
+
+Symptom: Approve dan Reject button tidak show dalam form
+Cause: Status tidak match Need Aproval atau InitButton error
+Solution:
+- Verify selected document status adalah Need Aproval
+- Check browser console untuk JavaScript errors
+- Verify status field value dalam data
+- Refresh page dan retry
+- Try select different document
+
+ISSUE 4 REJECTION WINDOW NOT SHOWING
+
+Symptom: Click Reject button tetapi dialog tidak appear
+Cause: kendoWindow initialization error
+Solution:
+- Refresh page
+- Check Kendo library loaded
+- Verify dialog template syntax correct
+- Check browser console untuk errors
+- Try approve action untuk test grid functionality
+
+ISSUE 5 APPROVAL/REJECTION FAILED
+
+Symptom: Action gagal dengan error message
+Cause: Backend API error atau validation failure
+Solution:
+- Read error message carefully
+- Verify all required data filled
+- Check API endpoint accessible
+- Verify authorization valid
+- Check database connectivity
+- Contact IT untuk backend troubleshooting
+
+ISSUE 6 GRID NOT REFRESHING
+
+Symptom: After action grid tetap show old data
+Cause: Refresh function issue atau backend delay
+Solution:
+- Wait untuk backend processing complete
+- Manually refresh dengan F5
+- Check network tab untuk API response
+- Verify API response successful
+- Restart grid initialization
+- Try refresh button di pagination
+
+ISSUE 7 FILTER NOT WORKING
+
+Symptom: Filter criteria tidak reduce grid data
+Cause: Filter template issue atau data mismatch
+Solution:
+- Clear filter dan reapply
+- Refresh page dan retry
+- Check filter value format match data
+- Try berbeda filter value
+- Verify data exist untuk filter criteria
+- Check filter operator correct
+
+ISSUE 8 EXPORT TO EXCEL INCOMPLETE
+
+Symptom: Export file tidak include semua data
+Cause: Large dataset atau export restriction
+Solution:
+- Apply filter untuk reduce data sebelum export
+- Export dalam smaller batch dengan date range
+- Verify data exist untuk export period
+- Check file location terakhir
+- Contact admin untuk large data export
+
+ISSUE 9 COLOR CODING TIDAK SHOW
+
+Symptom: Grid rows tidak menampilkan correct color
+Cause: gridDataBound function not executing
+Solution:
+- Refresh page
+- Check browser console untuk errors
+- Verify status values dalam data
+- Try different browser
+- Verify Kendo library version compatible
+
+ISSUE 10 FORM FIELDS SHOWING WRONG DATA
+
+Symptom: Form display incorrect data untuk selected invoice
+Cause: Data binding error atau grid selection issue
+Solution:
+- Refresh page
+- Close form dan reopen
+- Select different document
+- Check data dalam grid accurate
+- Verify Kendo binding correct
+- Check field names di template match schema
+
+SCREEN LAYOUT DESCRIPTION
+
+MAIN GRID VIEW
+
+Grid Area:
+- Container: financeApproval div full width
+- Grid height: 80 viewport height untuk maximize view
+- Grid width: 1300px fixed width
+- Grid ID: gridInvOverBudget
+- Border: Standard grid border styling
+
+Grid Header:
+- 10 column headers dengan column titles
+- Filter row active di bawah headers
+- Date filter: date picker template
+- Text filter: text input dengan contains
+- Numeric filter: numeric input dengan eq
+- Dropdown filter: untuk Category column
+
+Grid Columns Layout:
+- Column 1: Doc Date (130px center)
+- Column 2: Doc No (130px center)
+- Column 3: Category (250px center)
+- Column 4: Applicant (200px center)
+- Column 5: COA Code (150px center)
+- Column 6: Vendor (350px center)
+- Column 7: Amount (170px right)
+- Column 8: Description (650px left)
+- Column 9: Status (150px center)
+- Column 10: Action Buttons (130px center)
+
+Grid Data Rows:
+- Row background: white alternating
+- Row height: standard grid row height
+- Row border: 1px solid border
+- Text color: control berdasarkan status column
+  * Need Approval: Green text
+  * Rejected: Red text
+  * Normal: Black text
+- Hover effect: standard grid hover
+
+Grid Footer:
+- Pagination control di bawah grid
+- Items per page: default 10
+- Page size selector: 5, 10, 15, 20 items
+- Previous/Next buttons
+- Page indicator: currently page X of Y
+- Refresh button: manual data refresh
+
+Toolbar:
+- Location: above grid
+- Excel button: export to Excel functionality
+- Default toolbar items
+
+Progress Indicator:
+- Display saat grid loading data
+- Center positioned
+- Semi-transparent overlay
+
+APPROVAL FORM DETAIL
+
+Window Properties:
+- Title: Invoice Approval Over Budget
+- Size: 60 viewport width
+- Modal: true (prevent background interaction)
+- Resizable: false
+- Draggable: false (fixed position)
+- Position: centered dalam viewport
+
+Form Header:
+- Invoice No: #= doc_no # display
+- Full width section header
+
+Form Layout:
+- Two column layout
+- Left column: 6 units width
+- Right column: 6 units width
+- Horizontal form styling
+- Vertical spacing between groups
+
+Left Column Fields:
+- Date picker field (full width)
+- COA Code textbox (full width)
+- Amount numeric (full width)
+- Remaining Budget numeric (full width)
+- PPN numeric (full width)
+- PPH numeric (full width)
+
+Right Column Fields:
+- Vendor textbox (full width)
+- Applicant textbox (full width)
+- Division textbox (full width)
+- Approved By textbox (full width)
+- Description textarea (4 rows full width)
+
+All fields styling:
+- Input class: form-control input-sm
+- Label class: control-label col-sm-4
+- Value class: col-sm-8
+- Background: lightgray untuk readonly
+- Font: standard form font
+
+Button Section:
+- Alignment: text-right
+- Approve button: k-button k-primary class
+- Reject button: k-button k-primary class
+- Buttons positioned bottom right
+- Margin-top: mt-4
+
+REJECTION DIALOG
+
+Window Properties:
+- Title: Reject Confirmation
+- Modal: true
+- Visible: false (hidden initially)
+- Resizable: false
+- Draggable: false
+- Actions: Pin
+
+Dialog Content:
+- Full width 100 percent
+- Form horizontal styling
+
+Message Section:
+- Center aligned
+- Full width label
+- Display rejection context dengan document No
+
+Input Section:
+- Row with center justification
+- Text input full width
+- Class: form-control input-sm
+- Placeholder untuk user guidance
+
+Button Section:
+- Row with center justification
+- Full width untuk button alignment
+- Reject button (k-primary)
+- Cancel button (k-secondary)
+- Center aligned buttons
+
+STYLING AND COLORS
+
+Text Color Mapping:
+- Need Approval status: Green color (@ConfigWeb.greenColor)
+- Rejected status: Red color (@ConfigWeb.redColor)
+- Normal status: Black color (@ConfigWeb.blackColor)
+
+Background Colors:
+- Grid header: Blue corporate color
+- Form section: Standard form background
+- Input fields: lightgray untuk readonly
+- Dialog: White background overlay
+
+Button Styling:
+- Primary buttons: k-button k-primary class
+- Secondary buttons: k-button k-secondary class
+- Hover effect: standard button hover
+- Active state: button active styling
+
+PERFORMANCE CONSIDERATIONS
+
+OPTIMIZATION 1 LAZY LOADING
+
+- Form components only initialize saat form di-open
+- Detail fields hanya render saat needed
+- Event handlers attached dinamis pada button click
+
+OPTIMIZATION 2 PAGINATION
+
+- Server-side pagination dengan 10 items default
+- Large dataset tidak load completely
+- Load per page reduce memory usage
+- Filter reduce data size sebelum display
+
+OPTIMIZATION 3 PROGRESS INDICATOR
+
+- Show progress saat API call executing
+- User aware system processing
+- Prevent double-click atau duplicate requests
+
+OPTIMIZATION 4 GRID RESIZE
+
+- Window resize event trigger grid resize
+- Grid adapt dalam responsive display
+- No height constraint untuk responsive view
+
+OPTIMIZATION 5 ASYNC API CALLS
+
+- AJAX calls non-blocking
+- UI tidak freeze saat processing
+- Success dan error callback handle response
+
+INTEGRATION POINTS
+
+INTEGRATION 1 INVOICE OVER GRID DATA
+
+- Endpoint: Invoice/Over/IvOver
+- Method: GET
+- Parameters: compCode (current company)
+- Return: Array of over budget invoices
+- Used by: Main grid datasource
+- Schema: 19 fields dengan doc_date, doc_no, amount, etc
+
+INTEGRATION 2 INVOICE OVER STATUS UPDATE
+
+- Endpoint: Invoice/Over/UpdateStatus
+- Method: POST
+- Parameters: action (A untuk approve, X untuk reject), recNo, docNo, rejectNote
+- Return: Status message dari backend
+- Used by: Approval dan rejection actions
+- Authorization: token-based
+
+INTEGRATION 3 MASTER PDTYPE LIST
+
+- Endpoint: Master/PdType/List
+- Method: GET
+- Return: List of PD categories
+- Used by: Category filter dropdown
+- Cache: enabled untuk performance
+
+INTEGRATION 4 AUTHORIZATION
+
+- Header: Authorization dengan type_token dan access_token
+- Applied to: Semua API calls
+- Required untuk: Security dan audit trail
+
+INTEGRATION 5 WORKFLOW STATUS UPDATE
+
+- Status updated ke Approved atau Rejected
+- Document forwarded ke next workflow stage
+- Audit trail logged untuk decision
+
+INTEGRATION 6 BUDGET TRACKING
+
+- Reference: Remaining budget dari budget allocation master
+- Impact: Over budget determination
+- Integration: Budget control system
+
+INTEGRATION 7 NOTIFICATION
+
+- Notification dipanggil saat action success
+- Message menampilkan action result
+- Important untuk user confirmation
+
+MONTHLY CLOSING AND YEAR END
+
+- Prioritize pending over budget approvals saat month-end
+- All pending documents harus complete sebelum closing
+- Review approval patterns untuk year-end reporting
+- Archive completed records setelah processinger

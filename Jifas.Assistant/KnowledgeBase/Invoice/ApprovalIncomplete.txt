@@ -1,0 +1,386 @@
+KNOWLEDGE BASE APPROVAL INCOMPLETE DOCUMENT MODULE
+
+DESKRIPSI UMUM
+
+Module Approval Incomplete Document adalah modul yang digunakan untuk mengelola persetujuan atau approval terhadap dokumen Purchase Delivery yang memiliki dokumen pendukung yang tidak lengkap atau belum terverifikasi. Module ini memungkinkan approver untuk melihat mana dokumen yang masih incomplete dan memutuskan untuk tetap approve invoice tersebut meskipun ada dokumen yang masih missing atau belum di-check. Module ini adalah bagian dari workflow approval yang memastikan tidak ada invoice yang tertunda karena dokumen supporting yang belum lengkap tapi sudah bisa di-approve berdasarkan business decision.
+
+SASARAN PENGGUNA
+
+- Finance Supervisor yang melakukan approval untuk incomplete documents
+- Finance Manager yang authorize incomplete document approval
+- Accounting Manager yang perlu review untuk incomplete documents
+- Head of Finance yang melakukan strategic approval decisions
+- Internal Audit yang melakukan verification untuk incomplete document approvals
+
+FITUR UTAMA
+
+1. INCOMPLETE DOCUMENT GRID
+
+Feature ini menampilkan daftar semua PD documents yang memiliki dokumen pendukung incomplete atau missing. Grid menampilkan informasi penting seperti tanggal dokumen, nomor dokumen, deskripsi, amount, dan current status.
+
+- Filter otomatis untuk date dan document number
+- Sorting berdasarkan tanggal dokumen (DESC)
+- Pagination dengan default 10 items per halaman
+- Warna highlight untuk rows berdasarkan status
+- Export to Excel functionality untuk audit tracking
+- Row coloring untuk indikasi incomplete status
+- View button untuk membuka detail incomplete requirements
+
+2. INCOMPLETE DETAIL GRID
+
+Feature ini menampilkan detail dari incomplete documents termasuk mana dokumen yang masih missing atau belum di-check. Grid menampilkan informasi dokumen yang di-require beserta status verification untuk masing-masing dokumen.
+
+- Read-only grid untuk document requirements
+- Display document type, code, reference number, dan description
+- Checkbox column untuk menunjukkan status verification
+- File name untuk setiap required document
+- Information field untuk tracking keterangan dokumen
+
+3. DOCUMENT VERIFICATION STATUS
+
+Feature untuk tracking status verification dari setiap required document dalam incomplete PD.
+
+- Checkbox indicator untuk sudah verified atau masih missing
+- Document type classification (Invoice, Faktur Pajak, BAST, PO, etc)
+- File attachment references
+- Document numbering untuk traceability
+
+4. APPROVAL WORKFLOW
+
+Feature untuk melakukan approval terhadap incomplete document dengan decision logic.
+
+- Confirmation dialog sebelum final approval
+- Display PD number dalam approval confirmation
+- System requirement untuk confirm approval decision
+- Audit trail untuk setiap approval action
+- Status update otomatis setelah approval
+
+5. INCOMPLETE REASON TRACKING
+
+Feature untuk track alasan mengapa dokumen tersebut incomplete atau missing.
+
+- Problem classification per dokumen missing
+- Reference ke dokumen mana yang incomplete
+- Information field untuk tracking issue details
+- Supporting information untuk audit purpose
+
+6. DOCUMENT REQUIREMENT MANAGEMENT
+
+Feature untuk manage setiap requirement dokumen dan tracking completeness.
+
+- Define required documents untuk setiap PD type
+- Track verification status per document
+- Display file attachments untuk referenced documents
+- Link ke actual files atau documents
+
+7. APPROVAL DECISION LOGGING
+
+Feature untuk logging setiap approval decision terhadap incomplete documents.
+
+- Timestamp untuk approval action
+- User ID dari approver
+- PD reference untuk audit trail
+- Status update dalam system
+
+8. AUDIT TRAIL EXPORT
+
+Feature untuk export incomplete approvals untuk audit purposes.
+
+- Excel export dengan all incomplete documents
+- Include approval status dan decision
+- Date range filtering untuk export
+- Complete audit trail information
+
+WORKFLOW APPROVAL INCOMPLETE DOCUMENT
+
+Berikut adalah flow lengkap proses Approval Incomplete Document di module ini:
+
+TAHAP 1 PREPARATION
+
+- User membuka module Approval Incomplete Document dari menu
+- System menampilkan grid dengan daftar PD yang memiliki incomplete requirements
+- Grid di-populate dari endpoint API Invoice Incomplete GetList
+- Hanya PD dengan status incomplete atau missing documents ditampilkan
+- List di-sort berdasarkan tanggal dokumen (terbaru di atas)
+- Total records dan pagination info ditampilkan
+- Company code filter diterapkan untuk multi-company environment
+
+TAHAP 2 FILTERING DAN SEARCHING
+
+- User dapat filter grid berdasarkan date range
+- User dapat search berdasarkan document number
+- User dapat search berdasarkan description
+- Filter dilakukan row-based client-side
+- Grid auto-refresh dengan filter criteria
+- User dapat sort berdasarkan any column
+
+TAHAP 3 DOCUMENT SELECTION
+
+- User memilih salah satu incomplete PD dari grid dengan mengklik row
+- User mengklik tombol View dengan icon edit pada kolom action
+- System melakukan loading pada detail components
+- Popup window dengan title Approval Incomplete Document dibuka
+- Window di-maximize untuk full screen viewing
+- Edit buttons di-hide karena ini view-only operation
+
+TAHAP 4 DETAIL INITIALIZATION
+
+- System melakukan fetch terhadap detail incomplete documents
+- API call ke Invoice Incomplete GetDetail dilakukan dengan pdNo parameter
+- Detail grid di-initialize dengan columns untuk document tracking
+- Progress indicator ditampilkan saat data fetching
+- Data di-populate ke detail grid setelah fetch selesai
+
+TAHAP 5 DETAIL VISUALIZATION
+
+- Header menampilkan PD number dalam hidden field
+- Detail grid menampilkan semua required documents untuk PD tersebut
+- Columns: Document Type, Code, Document No, Information, File, Status
+- Document Type menampilkan jenis dokumen yang di-require (Invoice, BAST, PO, Faktur Pajak, etc)
+- Code menampilkan singkat identifikasi dokumentype
+- Document No menampilkan nomor atau reference dari dokumen
+- Information field menampilkan deskripsi atau keterangan
+- File Name menampilkan name dari file attachment
+- Status column menampilkan checkbox indicator untuk verification status
+
+TAHAP 6 INCOMPLETE ANALYSIS
+
+- User melakukan review terhadap semua incomplete requirements
+- User melihat mana dokumen yang sudah checked dan mana yang belum
+- User memahami what documents are still missing atau pending
+- User dapat membaca information field untuk understand blocking issues
+- User dapat lihat file references untuk setiap requirement
+
+TAHAP 7 DECISION MAKING
+
+- User mengambil keputusan berdasarkan incomplete status
+- User mempertimbangkan business criticality dari incomplete documents
+- User assess risk dari approving incomplete document
+- User dapat memilih untuk:
+  - Approve incomplete document (proceed dengan approval)
+  - Delay approval (to wait for documents)
+  - Reject dengan instruksi untuk complete documents
+
+TAHAP 8 APPROVAL ACTION
+
+User memilih untuk approve incomplete document:
+
+- User mengklik Approve button
+- Confirmation dialog terbuka dengan text
+  "Are you sure want to APPROVE incomplete document from PD: [PDNUMBER]"
+- PD number di-display dari hidden field untuk confirmation
+- User mengklik Done untuk confirm approval
+
+TAHAP 9 APPROVAL PROCESSING
+
+- System validate approval decision
+- API call ke Invoice Incomplete ApproveDocument dilakukan
+- Parameter: pdNo dari hidden field
+- Authorization header di-include untuk user verification
+- Progress indicator ditampilkan saat processing
+- Response di-monitor untuk success atau error
+
+TAHAP 10 APPROVAL COMPLETION
+
+Success scenario:
+- Success message ditampilkan dengan status confirmation
+- Main grid di-refresh untuk remove approved incomplete document
+- PD status didupdate di backend
+- Document forwarded ke next workflow stage
+- Incomplete record di-archive dalam system
+
+Error scenario:
+- Error message ditampilkan dengan failure reason
+- User dapat retry approval
+- Support contact information ditampilkan
+- No status change dilakukan
+
+TAHAP 11 FINISHING
+
+- Detail form ditutup setelah approval completion
+- Main grid di-refresh untuk show updated list
+- User dapat melanjutkan dengan incomplete document berikutnya
+- Audit trail tersimpan dengan approval timestamp dan user ID
+
+FIELD REFERENCE - INCOMPLETE DOCUMENT GRID
+
+DOCDATE
+
+- Label: Date
+- Type: Date Picker
+- Editable: No
+- Format: DD/MM/YYYY sesuai system configuration
+- Filterable: Yes dengan date picker filter
+- Display: Tanggal pembuatan PD yang incomplete
+- Purpose: Temporal tracking untuk incomplete approval
+
+DOCNO
+
+- Label: Document Number
+- Type: Text
+- Editable: No
+- Width: 150px
+- Filterable: Yes dengan contains operator
+- Sortable: Yes
+- Display: Nomor unik PD document
+- Purpose: Document identification
+
+DESC
+
+- Label: Description
+- Type: Text Area
+- Editable: No
+- Width: 650px
+- Filterable: Yes dengan contains operator
+- Display: Deskripsi atau subject dari PD
+- Purpose: Understand document purpose
+
+AMOUNT
+
+- Label: Amount
+- Type: Numeric
+- Format: n2 (2 decimal places)
+- Editable: No
+- Width: 170px
+- Filterable: Yes dengan eq operator
+- Display: Total amount dari PD
+- Purpose: Value tracking
+
+STATUS
+
+- Label: Status
+- Type: Text
+- Editable: No
+- Width: 150px
+- Filterable: Yes dengan contains operator
+- Display: Current status (Approval Incomplete, etc)
+- Purpose: Status indication
+
+ACTION
+
+- Label: Action
+- Type: Button
+- Text: View
+- Command: Edit (untuk open detail popup)
+- Width: 100px
+- Display: View button untuk open detail form
+- Purpose: Launch detail approval form
+
+FIELD REFERENCE - INCOMPLETE DETAIL GRID
+
+SUBCATEGORY
+
+- Label: Document Type
+- Type: Text
+- Editable: No
+- Width: 450px
+- Display: Jenis kategori dokumen yang di-require
+- Values: Invoice, Faktur Pajak, BAST, PO, Copy PO, etc
+- Purpose: Document classification
+
+PDCODENO
+
+- Label: Code
+- Type: Text
+- Editable: No
+- Width: 100px
+- Display: Singkat code untuk document type
+- Purpose: Quick reference identifier
+
+PDPATHNO
+
+- Label: Document No
+- Type: Numeric/Text
+- Editable: No
+- Width: 150px
+- Display: Nomor atau reference number dokumen
+- Format: Numeric dengan n2 format jika applicable
+- Purpose: Document traceability
+
+PDDESC
+
+- Label: Information
+- Type: Text Area
+- Editable: No
+- Width: 350px
+- Display: Deskripsi atau keterangan tentang dokumen
+- Purpose: Additional information untuk document
+
+FILENAME
+
+- Label: File
+- Type: Text
+- Editable: No
+- Width: 200px
+- Display: Nama file attachment yang di-reference
+- Purpose: File attachment tracking
+
+ISCHECK
+
+- Label: Status
+- Type: Checkbox
+- Editable: No (disabled checkbox)
+- Width: 100px
+- Display: Checkbox indicator untuk verification status
+- Checked: Jika dokumen sudah verified
+- Unchecked: Jika dokumen masih missing atau pending
+- Purpose: Visual indication dari document completeness
+
+DOCNO (Hidden)
+
+- Label: (Hidden)
+- Type: Hidden Field
+- ID: hdfPdNo
+- Editable: No
+- Display: Disimpan untuk reference dalam approval action
+- Purpose: Used dalam approval confirmation dan API call
+
+VALIDATION RULES
+
+RULE 1 REQUIRED DOCUMENT CHECK
+
+- Grid harus memiliki minimal 1 item
+- Setiap row mewakili required document
+- Incomplete status ditentukan berdasarkan IsCheck field
+- Document dengan IsCheck false = masih incomplete
+
+RULE 2 STATUS VERIFICATION
+
+- Checkbox dalam IsCheck column menunjukkan verification status
+- Unchecked = dokumen missing atau belum di-verify
+- Checked = dokumen sudah tersedia dan ter-verify
+- Mixed status di-allow dalam incomplete document
+
+RULE 3 APPROVAL REQUIREMENT
+
+- Approval dapat hanya dilakukan untuk incomplete documents
+- PD number harus valid dan ter-load
+- Hidden field hdfPdNo harus ter-populate
+- Confirmation dialog harus di-acknowledge
+
+RULE 4 CONFIRMATION DIALOG
+
+- Dialog confirmation mandatory sebelum final approval
+- PD number harus di-display dalam confirmation message
+- User harus click Done untuk confirm
+- Cancel cancels approval action
+
+RULE 5 API VALIDATION
+
+- Authorization header harus include valid token
+- Parameter pdNo mandatory dalam API call
+- Content-type JSON mandatory
+- Response success/error harus handle di-client
+
+RULE 6 GRID REFRESH
+
+- Main grid auto-refresh setelah successful approval
+- Approved incomplete documents removed dari grid
+- Detail popup otomatis close setelah approval
+- User dapat immediately process berikutnya incomplete
+
+RULE 7 ERROR HANDLING
+
+- API error harus display user-friendly message
+- Network error harus handled dengan retry option
+- Partial failures harus logged untuk audit

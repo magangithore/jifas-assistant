@@ -1,0 +1,244 @@
+﻿Master Acc Period
+
+Master Acc Period (Account Period) digunakan untuk mengelola periode akuntansi/tahun fiskal untuk setiap perusahaan di JIFAS. Periode akuntansi membagi tahun menjadi 12 bulan, menentukan tanggal awal dan akhir setiap periode, serta mengontrol apakah periode/tahun sudah ditutup untuk pencegahan perubahan data transaksi.
+
+Deskripsi
+
+Master Acc Period adalah fondasi manajemen waktu akuntansi yang menetapkan periode operasional setiap perusahaan. Dengan membagi tahun menjadi 12 periode bulanan dan menentukan tanggal open/close, sistem dapat mengontrol kapan transaksi dapat dicatat dan kapan periode harus ditutup untuk audit.
+
+Fungsi
+1. Mendefinisikan Periode Akuntansi: Menetapkan 12 periode bulanan untuk tahun fiskal setiap perusahaan
+2. Mengatur Tanggal Periode: Menentukan tanggal awal dan akhir setiap periode/bulan
+3. Mengontrol Pembukaan/Penutupan: Menandai periode/tahun sebagai open atau closed untuk mengontrol entry transaksi
+4. Mencegah Entry Terakhir: Jika periode/tahun ditutup, sistem akan mencegah entry transaksi di periode tersebut
+5. Memfasilitasi Pelaporan: Transaksi dikelompokkan berdasarkan periode untuk pelaporan per bulan/periode
+
+Tujuan
+Memastikan setiap perusahaan memiliki periode akuntansi yang terstruktur untuk tahun fiskal
+Mengontrol waktu entry transaksi melalui mekanisme open/close periode
+Memfasilitasi penutupan buku (closing) per periode dan per tahun
+Mendukung audit dan rekonsiliasi dengan membatasi perubahan data periode yang sudah ditutup
+Memastikan data historis terlindungi dari perubahan yang tidak sah
+
+Berikut adalah daftar role yang memiliki akses untuk membuat atau mengubah data Acc Period:
+WMTR: Webmaster
+HOAC: Holding Accounting
+
+Create (Menambah Periode Akuntansi Baru)
+1. Klik tombol Create di toolbar bagian atas grid.
+2. Jendela input akan muncul dengan judul "Create New Account Period".
+3. Pilih Company: Dropdown untuk memilih perusahaan yang akan dibuat periode akuntansinya.
+4. Pilih Tahun: Date picker untuk memilih tahun (format: YYYY, contoh: 2024).
+5. Setelah tahun dipilih, sistem otomatis akan generate 12 periode bulanan:
+   Periode 1 = 1 Januari s/d akhir Januari
+   Periode 2 = 1 Februari s/d akhir Februari
+   ... sampai ...
+   Periode 12 = 1 Desember s/d 31 Desember
+6. Grid detail akan menampilkan 12 baris (satu untuk setiap bulan) dengan:
+   Period: Nomor periode (1-12)
+   Start Date: Tanggal awal periode
+   End Date: Tanggal akhir periode
+7. Anda dapat mengedit tanggal start/end jika diperlukan penyesuaian:
+   Klik pada kolom tanggal untuk mengubahnya
+   Sistem membatasi pilihan tanggal hanya dalam tahun yang dipilih
+8. Setelah yakin dengan data, klik tombol Save untuk menyimpan 12 periode sekaligus.
+9. Akan muncul notifikasi sukses.
+
+Update (Memperbarui Data Periode)
+1. Cari periode yang ingin diubah pada grid list.
+2. Klik tombol Action (Edit) di kolom aksi.
+3. Jendela edit akan muncul dengan judul "Edit Acc Period".
+4. Tampilan menunjukkan dua bagian pilihan:
+   Period Closed?: Toggle untuk menandai periode ini sudah ditutup/tidak
+   Year Closed?: Toggle untuk menandai tahun ini sudah ditutup/tidak (hanya aktif jika period = 12)
+5. Field tanggal dapat diubah jika diperlukan.
+6. Ubah status Period Closed dan/atau Year Closed sesuai kebutuhan.
+7. Klik tombol Update untuk menyimpan perubahan.
+8. Akan muncul notifikasi sukses.
+
+Delete (Menghapus Periode Akuntansi)
+Fitur delete tidak tersedia langsung di grid
+Untuk menghapus periode, hubungi administrator JIFAS
+
+Daftar Lengkap Field yang Tersedia
+
+1. Create Form: Header Fields
+Company: Menggunakan input Dropdown. Wajib diisi. Menampilkan pilihan perusahaan dengan format: [KODE] [NAMA].
+Year: Menggunakan input Date Picker. Wajib diisi. Hanya mengizinkan pemilihan tahun (format: YYYY).
+
+2. Create Form: Detail Grid Fields
+Company Code: Input Teks. Bersifat Hidden (tersembunyi). Tidak wajib diisi secara manual karena tersimpan otomatis dari header.
+Year: Input Angka. Bersifat Hidden (tersembunyi). Tidak wajib diisi secara manual karena tersimpan otomatis dari header.
+Period: Input Angka. Wajib ada (1-12). Bersifat Read-only (tidak dapat diubah).
+Start Date: Input Date. Wajib diisi. Dapat diubah melalui fitur Inline Editing.
+End Date: Input Date. Wajib diisi. Dapat diubah melalui fitur Inline Editing.
+
+3. Edit Form Fields
+Company Code: Input Teks. Wajib ada. Bersifat Read-only (tidak dapat diubah).
+Year: Input Angka. Wajib ada. Bersifat Read-only (tidak dapat diubah).
+Period: Input Angka. Wajib ada. Bersifat Read-only (tidak dapat diubah).
+Start Date: Input Date. Wajib diisi dan dapat diubah.
+End Date: Input Date. Wajib diisi dan dapat diubah.
+Period Closed?: Input Toggle (Saklar). Wajib diisi. Jika "Closed", transaksi tidak bisa dicatat pada periode tersebut.
+Year Closed?: Input Toggle (Saklar). Wajib diisi. Hanya aktif jika Period = 12. Jika "Closed", seluruh tahun akuntansi akan ditutup.
+
+4. Main Grid List Fields (Tampilan Utama)
+Company: Menampilkan Teks berupa kode perusahaan.
+Year: Menampilkan Angka tahun akuntansi.
+Period: Menampilkan Angka nomor periode (1-12).
+Start Date: Menampilkan Date dengan format dd-MM-yyyy.
+End Date: Menampilkan Date dengan format dd-MM-yyyy.
+Period Closed?: Menampilkan status teks "Open" atau "Closed".
+Year Closed?: Menampilkan status teks "Open" atau "Closed".
+
+Penjelasan Jenis Input Form
+
+1. Dropdown (Pilihan Tetap)
+Pilihan dari daftar yang sudah tersedia:
+Company: Menampilkan daftar perusahaan aktif dengan format "KODE NAMA"
+Contoh: "PT001 PT Jababeka Utama"
+
+2. Date Picker (Pemilih Tahun)
+Input khusus untuk memilih tahun:
+Year: Hanya memperbolehkan pemilihan tahun (format YYYY)
+Tampilan: Decade view yang mudah dipilih
+Range: Tahun lalu hingga tahun depan (configurable)
+Contoh: 2024, 2025, 2026
+
+3. Date Inline Editing (Pengeditan Tanggal Langsung)
+Di dalam grid detail, dapat langsung mengedit tanggal:
+Klik pada kolom Start Date atau End Date untuk mengubah
+Date picker akan muncul dengan batasan min/max sesuai tahun
+Contoh: Untuk tahun 2024, hanya bisa pilih tanggal antara 1 Januari 2024 31 Desember 2024
+
+4. Toggle (On/Off Switch)
+Tombol geser untuk status open/closed:
+Period Closed?: Tandai periode sudah ditutup
+Year Closed?: Tandai tahun sudah ditutup (hanya aktif saat Period = 12)
+Jika ON: Periode/Tahun ditutup, transaksi tidak bisa dientry
+Jika OFF: Periode/Tahun terbuka, transaksi masih bisa dientry
+
+5. Teks Readonly (Tidak Dapat Diubah)
+Field yang sudah ditentukan dan tidak bisa diubah:
+Company Code: Ditentukan saat create
+Year: Ditentukan saat create
+Period: Auto-generated 1-12, tidak dapat diubah
+
+Fitur-fitur Tabel Data
+
+1. Pengurutan (Sorting)
+Klik pada nama kolom untuk mengurutkan data:
+Klik sekali: Urutan A ke Z (atau angka kecil ke besar)
+Klik dua kali: Urutan Z ke A (atau angka besar ke kecil)
+Kolom yang dapat diurutkan: Company, Year, Period, Start Date, End Date
+
+2. Pencarian/Filter (Filter)
+Pada setiap kolom terdapat kolom pencarian tersendiri:
+Mengetik kata kunci akan menampilkan periode yang cocok
+Company: Filter exact match (tepat sama)
+Year: Filter exact match
+Period: Filter exact match
+Start Date: Filter by date
+End Date: Filter by date
+
+3. Pagination (Pembagian Halaman)
+Jika ada banyak periode, data akan dibagi per halaman:
+Default: Jumlah halaman disesuaikan dengan jumlah data
+Gunakan tombol < Sebelumnya dan Selanjutnya > untuk pindah halaman
+Atau pilih halaman langsung dari nomor halaman yang tersedia
+
+4. Column Menu
+Klik ikon menu di header untuk mengatur tampilan kolom:
+Tampilkan/sembunyikan kolom
+Urutkan kolom
+Filter kolom
+
+Fitur Khusus Acc Period
+
+1. Auto-Generate 12 Periode Bulanan
+Saat membuat periode akuntansi baru:
+Pilih Company dan Tahun
+Sistem otomatis generate 12 periode:
+  Periode 1 = 1 Januari s/d last day of January
+  Periode 2 = 1 Februari s/d last day of February
+  ... dan seterusnya sampai Periode 12
+Tanggal otomatis disesuaikan dengan jumlah hari di setiap bulan (28/29/30/31)
+Pengguna masih bisa menyesuaikan tanggal jika diperlukan
+
+2. Inline Date Editing di Grid Detail
+Dalam grid detail periode:
+Double-click pada kolom Start Date atau End Date untuk edit
+Date picker akan muncul terbatas pada tahun yang dipilih
+Tidak ada dua periode dengan tanggal yang overlapping
+Validasi otomatis: Start Date harus lebih awal dari End Date
+
+3. Conditional Year Closed Toggle
+Toggle untuk "Year Closed?" hanya aktif saat:
+Period = 12 (periode terakhir/Desember)
+Jika bukan periode 12, toggle "Year Closed?" akan disabled (tidak bisa diklik)
+Ini memastikan tahun hanya ditutup setelah semua 12 periode sudah dikonfigurasi
+
+4. Format Tanggal Konsisten
+Semua tanggal menggunakan format yang sama:
+Display format: dd-MM-yyyy (contoh: 31-12-2024)
+Internal format: UTC untuk konsistensi database
+Validasi range: Hanya memperbolehkan tanggal dalam tahun yang dipilih
+
+5. Notifikasi Sukses
+Setelah operasi Create/Update berhasil:
+Notifikasi toast muncul di kanan atas
+Durasi tampil: 5 detik otomatis hilang
+Dapat di-close manual dengan klik tombol X
+Data di grid otomatis refresh
+
+6. Period dan Year Closed Status
+Dua level status untuk kontrol ketat:
+Period Closed: Menutup hanya satu periode (bulan)
+Year Closed: Menutup seluruh tahun akuntansi
+Setelah ditutup, transaksi di periode tersebut tidak bisa diubah/dihapus
+
+7. Batch Create Multiple Periods
+Saat membuat periode baru:
+Tidak hanya 1 periode, tapi 12 periode dibuat sekaligus
+Semua 12 periode disimpan dalam 1 transaksi
+Lebih efisien daripada harus create satu per satu
+
+8. Data Validation pada Save
+Sistem melakukan validasi saat save:
+Start Date dan End Date harus diisi (tidak boleh kosong)
+Start Date harus <= End Date
+Tanggal harus dalam tahun yang dipilih
+Jika ada error, pesan akan ditampilkan
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+Saat Create: Notifikasi "Success" muncul (durasi 5 detik)
+Saat Update: Notifikasi "Success" muncul (durasi 5 detik)
+Grid data otomatis refresh menampilkan data terbaru
+
+Pesan Error
+Jika field wajib kosong: "Harap isi semua field yang diperlukan"
+Jika tanggal tidak valid: "Start Date harus lebih awal atau sama dengan End Date"
+Jika diluar tahun: "Tanggal harus dalam rentang 1 Januari 31 Desember tahun yang dipilih"
+Error koneksi: "Request Status: [CODE] Status Text: [TEXT]"
+
+Pesan Informasi
+Saat membuka form edit untuk periode 12: "Year Closed toggle sekarang aktif"
+Saat membuka form edit untuk periode 1-11: "Year Closed toggle akan aktif hanya di periode 12"
+
+Catatan Tambahan
+
+Pre-Closing Preparation: Pastikan semua periode akuntansi dibuat sebelum tahun fiskal dimulai
+One Period Per Company Per Year: Setiap perusahaan hanya boleh memiliki satu set (12 periode) untuk setiap tahun
+Tanggal Standard: Default menggunakan tanggal kalender (1 Januari 31 Desember); dapat disesuaikan jika menggunakan tahun fiskal berbeda
+Period Closed Impact: Jika Period Closed = Yes, semua transaksi di periode tersebut tidak bisa diubah/dihapus
+Year Closed Impact: Jika Year Closed = Yes, seluruh tahun akuntansi ditutup dan tidak ada transaksi baru yang bisa dientry untuk tahun tersebut
+Date Format: Gunakan format dd-MM-yyyy konsisten (contoh: 15-03-2024 untuk 15 Maret 2024)
+Modification Control: Tanggal dan status hanya bisa dimodifikasi jika belum ditutup
+Company Selection: Pilihan company dari daftar perusahaan aktif di master company
+Year Limitation: Tahun yang bisa dipilih dibatasi pada tahun lalu, tahun ini, dan tahun depan
+Bulk Action: Saat membuat 12 periode, semua disimpan sekaligus; jika ada error, seluruh transaksi dibatalkan
+Audit Trail: Setiap perubahan status (open/closed) tercatat untuk audit
+Authorization: Hanya role WMTR dan HOAC yang dapat mengakses fitur ini
+Token Security: Setiap request dilindungi dengan authorization token

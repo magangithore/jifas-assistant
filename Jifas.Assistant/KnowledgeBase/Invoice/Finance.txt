@@ -1,0 +1,1169 @@
+KNOWLEDGE BASE FINANCE APPROVAL MODULE
+
+DESKRIPSI UMUM
+
+Module Finance Approval adalah modul yang digunakan untuk mengelola persetujuan dan verifikasi dokumen finance pada proses pembelian invoice. Module ini memiliki dua tahap besar yaitu PD Approval untuk persetujuan Purchase Delivery dari pihak finance dan Invoice Posting untuk verifikasi detail invoice sebelum posting ke general ledger. Module ini adalah tahap kritikal dalam payment process karena memastikan semua detail invoice sudah sesuai dengan vendor invoice dan PO sebelum dilakukan pembayaran.
+
+SASARAN PENGGUNA
+
+- Finance Manager yang bertanggung jawab untuk approval dokumen pembelian
+- Finance Staff yang melakukan checking dan verifikasi invoice detail
+- Accounting Supervisor yang perlu review finance decisions
+- Accountant yang melakukan posting invoice ke GL
+- Internal Audit yang melakukan verifikasi finance transactions
+
+FITUR UTAMA
+
+1. PD APPROVAL GRID
+
+Feature ini menampilkan daftar semua Purchase Delivery documents yang memerlukan persetujuan dari pihak finance. Grid menampilkan informasi penting seperti tanggal dokumen, nomor PD, deskripsi, amount, currency, dan status approval.
+
+- Filter otomatis untuk menampilkan dokumen berdasarkan status
+- Sorting berdasarkan tanggal dokumen (DESC)
+- Pagination dengan default 20 items per halaman
+- Warna highlight untuk rows berdasarkan status
+- Export to Excel functionality
+- Row coloring untuk indikasi status
+
+2. PD DETAIL APPROVAL FORM
+
+Form detail yang terbuka ketika user mengklik tombol Action pada salah satu row di PD grid. Form ini menampilkan informasi lengkap PD termasuk header data dan detail breakdown per line item dengan informasi COA, amount, pajak, budget status.
+
+- Multiple tabs untuk menampilkan informasi berbeda (PD Form, Document Verification)
+- Header section dengan informasi dokumen umum (PD number, date, vendor, currency, rate, total amount)
+- Detail grid menampilkan breakdown per line item
+- Document verification tab untuk verify semua dokumen pendukung
+- Three action buttons untuk Correction, Save Correction, dan Cancel
+
+3. INVOICE POSTING GRID
+
+Feature untuk menampilkan daftar semua invoice yang siap untuk dilakukan finance checking atau posting ke general ledger. Grid menampilkan informasi PD number, invoice number, PV number, category, description, currency, amount, vendor, dan status.
+
+- Filter dan search functionality
+- Pagination dengan default 20 items per halaman
+- Column sorting dan resizing
+- Export to Excel functionality
+- Status coloring untuk visual indication
+
+4. INVOICE POSTING DETAIL FORM
+
+Form detail yang menampilkan informasi lengkap invoice termasuk header dan detail breakdown. Form ini memungkinkan user untuk melakukan update invoice detail sebelum posting.
+
+- Header section dengan informasi invoice (IV number, date, category, vendor, currency, rate, foreign amount, local amount)
+- Detail grid dengan informasi COA breakdown, DPP amount, tax type, PPN, PPH, PPH type
+- Description dan status fields
+- Three main buttons untuk Void, Update, dan Checking
+
+5. DOCUMENT VERIFICATION TAB
+
+Feature dalam PD approval form yang menampilkan checklist semua dokumen pendukung yang harus tersedia untuk invoice tersebut.
+
+- Grid berisi daftar dokumen types dan field untuk mark as checked
+- Document information seperti nomor dokumen, tipe, deskripsi
+- Checkbox untuk verifikasi status
+- Verify button untuk confirm document verification
+- Dynamic visibility based on PD type
+
+6. DETAIL GRID EDITORS
+
+Feature dalam invoice detail grid untuk melakukan editing inline terhadap invoice line items.
+
+- Request Type dropdown editor untuk select COA
+- Tax Type dropdown editor untuk select tax classification
+- PPH Type dropdown editor untuk select withholding tax type
+- Amount fields dengan auto calculation untuk taxes
+- Budget remaining calculation
+
+7. PD CORRECTION FEATURE
+
+Feature yang memungkinkan finance team untuk melakukan koreksi terhadap detail PD sebelum final approval.
+
+- Enable correction mode untuk activate editing
+- Modify detail items including amount, tax code, PPH type
+- Save correction untuk persist changes
+- Automatic calculations untuk related fields
+- Over budget warnings
+
+8. INVOICE VOID FUNCTIONALITY
+
+Feature untuk melakukan void atau pembatalan terhadap invoice dengan alasan pencatatan.
+
+- Popup window untuk input void reason
+- Confirmation dialog sebelum final void
+- Reason tracking untuk audit
+- Status update ke voided
+
+WORKFLOW PD APPROVAL
+
+Berikut adalah flow lengkap proses PD Approval di module Finance:
+
+TAHAP 1 PREPARATION
+
+- User membuka module Finance Approval dari menu
+- System menampilkan grid dengan daftar PD yang memerlukan finance approval
+- Grid di-populate dari endpoint API Invoice Finance Index
+- Hanya PD dengan status yang memerlukan finance action ditampilkan
+- List di-sort berdasarkan tanggal dokumen (terbaru di atas)
+- Total records dan pagination info ditampilkan
+
+TAHAP 2 SELECTION
+
+- User memilih salah satu PD dari grid dengan mengklik row
+- User mengklik tombol Action dengan icon edit pada kolom action
+- System melakukan loading pada form elements
+- Popup window dengan title Approve PD dibuka dan di-maximize
+
+TAHAP 3 INITIALIZATION
+
+- System melakukan initialize terhadap semua field components
+- Date picker, dropdown lists, numeric boxes di-setup
+- Currency rate di-ambil dari master currency sesuai pilihan currency
+- PD detail data di-fetch dari backend API
+- Detail grid di-populate dengan line items dari PD
+- Document verification grid di-load dengan dokumen requirements
+- Button handlers di-setup untuk action buttons
+
+TAHAP 4 DATA POPULATION
+
+- Header fields di-fill dengan PD data (PD number, date, type, vendor, etc)
+- Detail grid di-fill dengan line item breakdown (COA, amount, tax, PPH, budget status)
+- Currency dan rate di-set sesuai PD currency
+- Total amount calculations di-perform
+- Document verification checklist di-populate dengan required document types
+- Conditional fields display berdasarkan PD type (SPK field hanya untuk Kontraktor bills)
+
+TAHAP 5 REVIEW AND VERIFICATION
+
+- User melakukan review terhadap header information
+- User memeriksa detail grid untuk memastikan semua items benar
+- User dapat melihat budget status (OK atau OVER BUDGET) dalam warna merah
+- User melakukan verification terhadap supporting documents di Document Verification tab
+- User dapat mencatat document status dengan checkbox
+
+TAHAP 6A - CORRECTION PATH
+
+User memilih untuk melakukan koreksi terhadap PD detail:
+
+- User mengklik tombol Correction untuk activate edit mode
+- All fields menjadi enabled untuk editing
+- Detail grid menjadi editable dengan tambahan Create button
+- User dapat mengubah amount, tax code, PPH type untuk each line item
+- Calculator otomatis menghitung tax amounts dan totals
+- Budget checking dilakukan untuk detect over budget condition
+- User dapat menambah atau menghapus line items
+- User mengklik Save Correction untuk persist changes
+- System melakukan validation sebelum save
+- Confirmation dialog ditampilkan
+- API call ke Invoice Correction FinCorrection dilakukan
+- Success message ditampilkan
+- Grid di-refresh untuk update status
+
+TAHAP 6B - DOCUMENT VERIFICATION PATH
+
+User melakukan verification terhadap dokumen sebelum final approval:
+
+- User berpindah ke Document Verification tab
+- User melihat grid berisi semua dokumen requirements
+- User melakukan check pada checkbox untuk setiap dokumen yang sudah diverifikasi
+- User mengklik Verify button
+- System memvalidasi bahwa semua required documents sudah di-check
+- Confirmation dialog ditampilkan
+- API call ke Invoice User UpdateValidatePd dilakukan untuk confirm verification
+- Success message ditampilkan
+- Document grid di-refresh
+- Status di-update ke next stage
+
+TAHAP 6C - CANCEL PATH
+
+User membatalkan approval:
+
+- User mengklik Cancel button
+- Form akan ditutup tanpa save
+- Grid di-refresh untuk reload data
+
+TAHAP 7 COMPLETION
+
+- PD approval workflow selesai
+- Document akan di-forward ke next stage (Finance Checking atau Accounting)
+- Status di-update dalam system
+- User dapat melanjutkan dengan PD berikutnya
+
+WORKFLOW INVOICE POSTING
+
+Berikut adalah flow lengkap proses Invoice Posting di module Finance:
+
+TAHAP 1 PREPARATION
+
+- User membuka Invoice Posting section dari module Finance
+- System menampilkan grid dengan daftar invoice yang perlu finance checking atau posting
+- Grid di-populate dari endpoint API Invoice Posting Index dengan parameter company code
+- Server-side pagination, filtering, sorting applied
+- Total records ditampilkan
+- Grid height 75 viewport height
+
+TAHAP 2 INVOICE SELECTION
+
+- User mencari atau filter invoice dari grid (berdasarkan date, PD number, IV number, category, vendor, status)
+- User melakukan sort berdasarkan column yang diinginkan
+- User memilih salah satu invoice dengan mengklik row
+- User mengklik tombol Action untuk membuka detail form
+- Popup window dengan title Detail Posting IV dibuka
+
+TAHAP 3 FORM INITIALIZATION
+
+- System melakukan initialize terhadap semua form field components
+- Date picker di-setup dengan date format
+- Dropdown lists di-setup untuk vendor, category, currency
+- Numeric text boxes di-setup dengan format n2
+- Field enable/disable rules diterapkan berdasarkan invoice status
+- Invoice detail grid di-initialize dengan columns untuk COA breakdown, tax info, etc
+- Button handlers di-setup berdasarkan status
+
+TAHAP 4 DATA POPULATION
+
+- Header fields di-fill dengan invoice master data
+  - IV Number (read-only)
+  - Invoice Date dari master invoice
+  - Category dari PD type
+  - Vendor dari master vendor
+  - Currency dan Foreign Rate
+  - Description dari invoice
+  - Status indicator
+- Foreign Amount dan Local Amount calculated dan ditampilkan
+- Detail grid di-load dengan line items dari invoice
+  - Each row shows COA, DPP amount, tax type, PPN amount dan percent, PPH amount dan percent
+  - Budget remaining di-calculate
+  - Over budget indicator (red color untuk over budget)
+- Button visibility di-tentukan berdasarkan invoice status
+
+TAHAP 5 REVIEW AND UPDATE
+
+Tergantung dari invoice status:
+
+STATUS: NEED FINANCE CHECKING
+- User dapat melihat dan modify invoice data
+- Detail grid editable untuk update COA selections dan amounts
+- Buttons yang visible: Void, Update, Checking
+- User dapat review budget status untuk setiap line item
+
+STATUS: NEED ACCOUNTING CHECKING
+- User dapat view dan melakukan minor updates
+- Detail editing terbatas
+- Buttons visible: Void, Update
+
+STATUS: NEED TAX APPROVAL atau OUTSTANDING PPH
+- User view-only untuk most fields
+- Update hanya untuk specific fields
+- Buttons: Void, Update
+
+STATUS: READY TO PAY, POSTED, NEED POSTING
+- User dapat hanya view invoice
+- Detail editing di-disable
+- Button: Void saja
+
+TAHAP 6A - UPDATE PATH
+
+User mengklik Update button untuk melakukan perubahan pada invoice:
+
+- User melakukan review terhadap detail grid
+- User dapat mengubah COA selection melalui dropdown editor
+- Automatic calculation dilakukan untuk PPN dan PPH berdasarkan tax type
+- User dapat mengubah tax type melalui dropdown editor
+- Total amounts di-recalculate automatically
+- Budget remaining di-update
+- User dapat mengubah PPH Type jika perlu
+- Validation dilakukan sebelum save:
+  - Minimum 1 line item harus exist
+  - COA Code harus diisi untuk semua items
+  - Amount harus lebih besar dari 0
+  - Tax Code harus diisi
+  - PPH Type harus diisi jika PPH percent lebih besar 0
+- User mengklik Update button (labeled sebagai "Update")
+- Confirmation dialog ditampilkan dengan detail
+- User confirm update
+- API call dilakukan untuk save invoice changes
+- Success notification ditampilkan
+- Grid di-refresh untuk update status invoice
+
+TAHAP 6B - CHECKING PATH
+
+User mengklik Checking button untuk approve invoice dari finance perspective:
+
+- Validation otomatis dilakukan pada invoice
+- Currency rate harus sudah diisi
+- Confirmation dialog ditampilkan untuk confirm checking action
+- API call dilakukan ke Invoice Posting UpdateStatus dengan action C
+- Invoice status di-update ke next stage dalam approval workflow
+- Success notification ditampilkan
+- Grid di-refresh
+
+TAHAP 6C - VOID PATH
+
+User mengklik Void button untuk membatalkan invoice:
+
+- Popup window terbuka dengan template untuk input void reason
+- Invoice number ditampilkan dalam label
+- User harus mengisi void reason (mandatory)
+- User mengklik Continue untuk proceed
+- Validation: Void reason tidak boleh kosong
+- If validation fails: error message ditampilkan
+- If validation passes: Confirmation dialog terbuka untuk final confirmation
+- User confirm void action
+- API call dilakukan ke Invoice Posting UpdateStatus dengan action X dan reason
+- Invoice status updated ke VOIDED
+- Success notification ditampilkan
+- Grid di-refresh
+- Void popup ditutup
+
+TAHAP 7 COMPLETION
+
+- Invoice processing workflow selesai
+- Status di-update dalam system berdasarkan action yang diambil
+- Invoice siap untuk next stage (payment, accounting posting, dll)
+- User dapat melanjutkan dengan invoice berikutnya
+
+FIELD REFERENCE - PD APPROVAL TAB
+
+PD NO
+- Label: PD No.
+- Type: Text Box
+- Editable: No
+- Display: Invoice document number yang unik
+- Purpose: Identifikasi dokumen
+
+DATE
+- Label: Date
+- Type: Date Picker
+- Editable: No
+- Format: DD/MM/YYYY sesuai system configuration
+- Display: Tanggal pembuatan PD
+
+PD TYPE
+- Label: PD Type
+- Type: Dropdown List
+- Editable: No
+- Values: Dari master PD Type (Pembelian Barang, Jasa, etc)
+- Display: Jenis kategori pembelian
+
+BILL TYPE
+- Label: Bill Type
+- Type: Radio Button Group
+- Values: K (Kontraktor), S (Supplier), I (Internal)
+- Editable: No
+- Purpose: Menentukan tipe tagihan untuk menunjukkan SPK field
+
+CURRENCY & RATE
+- Label: Currency / Rate
+- Type: Dropdown untuk currency, Numeric untuk rate
+- Currency values dari master currency
+- Rate: Foreign exchange rate
+- Editable: No untuk dropdown, Yes untuk rate field (jika currency non-IDR)
+- Purpose: Untuk conversion foreign amount ke local currency
+
+VENDOR
+- Label: Vendor
+- Type: Dropdown List
+- Editable: No
+- Values: Dari master Vendor dengan filter untuk finance approved vendors
+- Display: Nama vendor yang akan menerima pembayaran
+- Purpose: Identifikasi pihak ketiga
+
+NPWP
+- Label: NPWP
+- Type: Text Box
+- Editable: No
+- Display: Nomor NPWP dari vendor
+- Purpose: Tax identification
+
+WP ADDRESS
+- Label: WP Address
+- Type: Text Area
+- Editable: No
+- Display: Alamat vendor sesuai NPWP
+
+APPLICANT
+- Label: Applicant
+- Type: Text Box
+- Editable: No
+- Display: Nama staff yang membuat PD
+- Purpose: Originator identification
+
+DIVISION & DEPARTMENT
+- Label: Division / Department
+- Type: Text Box
+- Editable: No
+- Display: Divisi dan Departemen pemohon
+- Purpose: Organizational structure tracking
+
+APPROVE BY
+- Label: Approve By
+- Type: Text Box
+- Editable: No
+- Display: Nama atasan yang akan approve
+- Purpose: Approval chain indication
+
+DPP/TAX BASE
+- Label: DPP/Tax Base
+- Type: Numeric Text Box
+- Format: n2
+- Editable: No
+- Display: Jumlah yang akan menjadi basis untuk perhitungan pajak
+- Purpose: Tax base tracking
+
+TOTAL BASE AMOUNT
+- Label: Total Base Amount
+- Type: Numeric Text Box
+- Format: n2
+- Editable: No
+- Display: Total amount termasuk pajak
+- Purpose: Total value tracking
+
+HAND OVER FORM
+- Label: Hand Over Form
+- Type: Text Box
+- Editable: Yes
+- Display: Nomor BAST (Berita Acara Serah Terima Barang)
+- Purpose: Reference untuk dokumen penyerahan barang
+
+PO NO
+- Label: PO No.
+- Type: Text Box
+- Editable: Yes
+- Display: Nomor Purchase Order
+- Purpose: Reference ke master ORDER document
+
+RECEIPT NO / KWT NO
+- Label: Receipt No / Kwt No
+- Type: Text Box
+- Editable: Yes
+- Display: Nomor Kwitansi atau penerimaan
+- Purpose: Receipt number tracking
+
+SPK NO (Conditional untuk Kontraktor)
+- Label: SPK No.
+- Type: Text Box
+- Editable: Yes (hanya untuk bill type Kontraktor)
+- Display: Nomor Surat Perintah Kerja
+- Purpose: Contractor work order reference
+
+DESCRIPTION
+- Label: Description
+- Type: Text Area
+- Editable: Yes
+- Display: Deskripsi atau catatan untuk PD
+- Purpose: Additional information
+
+DETAIL GRID - PD FORM TAB
+
+Grid menampilkan breakdown per line item dari PD dengan columns:
+
+DIVISI
+- Display: Divisi code
+
+DEPARTEMEN
+- Display: Departemen code
+
+REQUEST TYPE
+- Display: Deskripsi dari Chart of Accounts
+- Editor: Dropdown dengan cascading dari master COA
+
+COA CODE
+- Display: Kode Chart of Accounts
+- Read-only
+
+BASE AMOUNT
+- Display: Jumlah amount untuk line item
+- Editable: Yes
+- Type: Numeric
+- Auto-trigger: Tax calculations
+
+TAX TYPE
+- Display: Jenis pajak (tax code)
+- Editor: Dropdown dengan master Tax types
+- Selection trigger: Auto-calculate PPN dan PPH percentages
+
+PPN %
+- Display: Presentase Pajak Pertambahan Nilai
+- Read-only
+
+PPN
+- Display: Jumlah PPN
+- Read-only (auto-calculated)
+
+PPH %
+- Display: Presentase Pajak Penghasilan Withholding
+- Read-only
+
+PPH
+- Display: Jumlah PPH
+- Read-only (auto-calculated)
+
+PPH TYPE
+- Display: Jenis PPH yang digunakan
+- Editor: Dropdown dengan master PPH types
+- Required-if: PPH percent lebih besar 0
+
+TOTAL
+- Display: Total amount = Base Amount + PPN
+- Read-only (calculated)
+- Format: Bold untuk emphasis
+
+SISA BUDGET
+- Display: Sisa budget untuk COA ini
+- Auto-calculated: Budget remaining = Budget - Base Amount
+
+STATUS
+- Display: Status over budget (OK, CY, CA)
+- Color-coded: Red untuk over budget, Green untuk OK
+
+FIELD REFERENCE - DOCUMENT VERIFICATION TAB
+
+Grid untuk verification status dokumen pendukung:
+
+DOCUMENT TYPE
+- Display: Jenis dokumen (Invoice, Faktur Pajak, BAST, PO, Copy PO)
+- Width: 250px
+
+CODE
+- Display: Kode dokumen singkat
+- Width: 80px
+
+DOCUMENT NO
+- Display: Nomor dokumen
+- Width: 150px
+
+INFORMATION
+- Display: Deskripsi atau keterangan dokumen
+- Width: 350px
+
+STATUS
+- Display: Checkbox untuk indicator sudah verified
+- Type: Checkbox
+- Editable: Yes
+- Width: 100px
+
+FIELD REFERENCE - INVOICE POSTING
+
+IV NO
+- Label: IV No
+- Type: Text Box
+- Editable: Read-only
+- Display: Invoice number unik
+
+DATE
+- Label: Date
+- Type: Date Picker
+- Editable: Yes (conditional berdasarkan status)
+- Format: DD/MM/YYYY
+
+CATEGORY
+- Label: Category
+- Type: Dropdown (disabled)
+- Display: Kategori dari PD type
+
+PAID TO
+- Label: Paid To
+- Type: Dropdown List
+- Editable: Yes (conditional)
+- Values: Master vendor
+
+CURRENCY
+- Label: Currency
+- Type: Dropdown List
+- Values: Master currency
+- Cascade: Update rate otomatis
+
+RATE
+- Label: Rate
+- Type: Numeric Text Box
+- Editable: Yes (jika currency bukan IDR)
+
+FOREIGN AMOUNT
+- Label: Foreign Amount
+- Type: Numeric Text Box
+- Format: n2
+- Editable: No (calculated dari detail)
+
+LOCAL AMOUNT
+- Label: Local Amount (IDR)
+- Type: Numeric Text Box
+- Format: n2
+- Editable: No (calculated)
+
+DESCRIPTION
+- Label: Description
+- Type: Text Area
+- Editable: Yes (conditional)
+
+STATUS
+- Label: Status
+- Type: Text Box
+- Editable: No
+- Display: Current invoice status
+
+DETAIL GRID - INVOICE POSTING
+
+DIV / DEPT
+- Display: Division dan Department code
+
+REQUEST TYPE
+- Display: Deskripsi COA
+- Editor: Dropdown dengan filter berdasarkan div/dept/company
+
+COA CODE
+- Display: Code
+- Read-only
+
+DPP AMOUNT
+- Display: DPP/base amount untuk line item
+- Editable: Yes (trigger calculations)
+
+TAX TYPE
+- Display: Tax code
+- Editor: Dropdown dengan master tax
+- Selection: Auto-calculate tax percentages dan amounts
+
+PPN / PPH COLUMNS
+- Display: Tax amounts dan percentages
+- Read-only (auto-calculated)
+
+PPH TYPE
+- Display: Withholding tax type
+- Editor: Dropdown dengan master PPH types
+
+TOTAL BASE AMOUNT
+- Display: Total = DPP + PPN
+- Format: Bold
+
+SISA BUDGET
+- Display: Remaining budget = Budget - DPP
+- Color-coded: Red untuk over, Green untuk normal
+
+VALIDATION RULES
+
+RULE 1 REQUIRED FIELDS IN HEADER
+
+- PD Date tidak boleh kosong
+- Vendor harus di-select
+- Currency harus di-select
+- DPP / Tax Base harus diisi untuk PD Type tertentu
+- Description tidak boleh kosong untuk PD Create
+
+RULE 2 DETAIL VALIDATION
+
+- Minimum 1 line item harus exist di detail grid
+- Setiap line item harus memiliki COA Code
+- Amount harus lebih besar dari 0
+- Tax Code harus di-select (tidak boleh kosong)
+- Jika Tax Code bukan NT dan PPH percentage lebih besar 0 maka PPH Type harus di-select
+
+RULE 3 FOREIGN CURRENCY RATE
+
+- Jika currency dipilih adalah non-IDR maka rate harus lebih besar dari 0
+- System tidak memperbolehkan save jika rate masih 0
+- Error message: Cannot continue to save! Please fill currency rate
+
+RULE 4 BUDGET CHECKING
+
+- Total amount untuk setiap line item tidak boleh melebihi budget yang tersedia
+- Over budget detection dilakukan dengan flag (CY = Cross Year, CA = Accumulation)
+- Over budget items ditampilkan dengan warna merah
+- Save untuk over budget items tetap diperbolehkan tetapi dengan warning
+
+RULE 5 DOCUMENT VERIFICATION
+
+- Semua required documents harus di-mark sebagai verified sebelum confirm verification
+- Verification dapat hanya dilakukan jika minimum 1 document sudah di-check
+
+RULE 6 EDIT MODE RESTRICTIONS
+
+- Status tertentu tidak allow edit (POSTED, PAID, NEED REVERSE)
+- Status tertentu hanya allow view-only
+- Detail grid toolbar (create/delete) hanya visible jika dalam edit mode
+
+RULE 7 VOID CONFIRMATION
+
+- Void reason tidak boleh kosong
+- Confirmation required sebelum final void
+- Void action tidak dapat di-undo
+
+VALIDATION MESSAGES
+
+MESSAGE 1: Cannot continue! Reject reason must be filled!
+- Triggered when: Void reason field kosong saat void action
+- Action: Isi field reason kemudian retry
+
+MESSAGE 2: Detail cannot be empty
+- Triggered when: Tidak ada line items dalam detail grid
+- Action: Tambahkan minimal 1 line item sebelum save
+
+MESSAGE 3: COA Code is required
+- Triggered when: Ada line item tanpa COA Code
+- Action: Pilih COA Code untuk setiap item
+
+MESSAGE 4: Detail Amount must be greater than 0
+- Triggered when: Ada line item dengan amount kurang dari atau sama dengan 0
+- Action: Isi amount dengan nilai positif
+
+MESSAGE 5: Tax Code is required
+- Triggered when: Ada line item tanpa tax code
+- Action: Pilih tax code untuk setiap item
+
+MESSAGE 6: Taxes with PPH Percent > 0 must have a PPH Type specified
+- Triggered when: PPH percent lebih dari 0 tetapi PPH Type kosong
+- Action: Select PPH Type untuk item dengan PPH percent
+
+MESSAGE 7: Cannot continue to save! Please fill currency rate
+- Triggered when: Currency rate masih 0 saat save
+- Action: Isi currency rate sesuai current rate
+
+MESSAGE 8: CANNOT SAVE if over budget status is CY
+- Triggered when: Mencoba save dengan line item status CY (Cross Year)
+- Action: Review budget atau hubungi supervisor
+
+BEST PRACTICES
+
+PRACTICE 1 VERIFY BEFORE APPROVAL
+
+- Selalu verify semua dokumen pendukung sebelum final approval
+- Cross-check invoice amount dengan PO amount
+- Verifikasi vendor details match dengan master vendor
+
+PRACTICE 2 CURRENCY HANDLING
+
+- Selalu update currency rate ke current rate saat processing
+- Pastikan foreign amount sudah benar sebelum conversion
+- Double check local amount calculation untuk foreign currency invoices
+
+PRACTICE 3 TAX COMPLIANCE
+
+- Pastikan tax type dipilih sesuai dengan tax treatment pada invoice
+- Verifikasi PPH type sudah sesuai dengan vendor NPWP classification
+- PPH percentage harus match dengan tax regulation
+
+PRACTICE 4 BUDGET AWARENESS
+
+- Perhatikan budget remaining untuk setiap COA
+- Hindari over budget approvals kecuali ada special authorization
+- Cross Year budget items perlu special attention
+
+PRACTICE 5 DOCUMENT RETENTION
+
+- Pastikan semua supporting documents sudah di-upload/attached
+- Reference numbers (PO, BAST, etc) harus di-fill dengan benar
+- Keep copies dari vendor invoices untuk audit trail
+
+PRACTICE 6 DETAIL ACCURACY
+
+- Review detail breakdown untuk memastikan accuracy
+- Verify calculations untuk PPN dan PPH
+- Check COA codes match dengan budget allocation
+
+PRACTICE 7 TIMELY PROCESSING
+
+- Process invoices segera setelah received untuk minimize payment delays
+- Monitor invoice aging dan prioritize overdue payments
+- Batch process similar invoices untuk efficiency
+
+PRACTICE 8 EXCEPTION HANDLING
+
+- Document setiap correction dengan reason
+- Untuk over budget items, secure approval dari supervisor
+- Communicate dengan department heads untuk budget overruns
+
+TROUBLESHOOTING GUIDE
+
+ISSUE 1 GRID TIDAK LOADING
+
+Symptom: Grid menampilkan kosong atau loading terus menerus
+Cause: API endpoint tidak accessible atau data issue
+Solution:
+- Refresh page dengan F5
+- Verify current company code sudah set correctly
+- Check network connectivity
+- Clear browser cache dan coba lagi
+
+ISSUE 2 FORM TIDAK MEMBUKA
+
+Symptom: Saat klik Action button form tidak muncul
+Cause: PopUp blocker atau JavaScript error
+Solution:
+- Disable popup blocker untuk website ini
+- Check browser console untuk error messages
+- Try dengan browser yang berbeda
+- Clear browser cache
+
+ISSUE 3 DETAIL GRID KOSONG
+
+Symptom: Detail grid tidak menampilkan line items
+Cause: Data tidak ter-fetch atau document tidak punya detail
+Solution:
+- Refresh form dengan close dan open kembali
+- Verify dokumen memiliki line items di create stage
+- Check apakah document number sudah correct
+
+ISSUE 4 CURRENCY RATE TIDAK MUNCUL
+
+Symptom: Currency rate field masih 0 setelah currency dipilih
+Cause: Rate tidak ter-fetch dari master currency atau internet issue
+Solution:
+- Coba pilih currency lagi
+- Check apakah currency sudah active di master
+- Manual input rate jika needed
+- Contact admin untuk update master currency rates
+
+ISSUE 5 OVER BUDGET CANNOT SAVE
+
+Symptom: Tidak bisa save invoice dengan over budget items
+Cause: System blocking save untuk CY (Cross Year) status
+Solution:
+- Review detail items yang over budget
+- Reduce amounts atau adjust COA allocation
+- Contact supervisor untuk exception approval
+- Check dengan accounting untuk year-end special handling
+
+ISSUE 6 VALIDATION ERROR PADA SAVE
+
+Symptom: Error message muncul saat mencoba save
+Cause: Ada mandatory field yang kosong atau validation failed
+Solution:
+- Read error message dengan teliti
+- Fill semua required fields
+- Verify amount dan rate sudah diisi
+- Ensure PPH Type selected jika PPH percent lebih dari 0
+
+ISSUE 7 DROPDOWN TIDAK POPULATE
+
+Symptom: Dropdown editor kosong atau tidak bisa search
+Cause: Master data incomplete atau API error
+Solution:
+- Refresh form
+- Try dengan dropdown lain untuk test
+- Contact admin untuk update master data
+- Check network untuk API connectivity
+
+ISSUE 8 VOID ACTION TIDAK BERHASIL
+
+Symptom: Void action gagal atau error muncul
+Cause: Invoice dalam status yang tidak bisa di-void
+Solution:
+- Check invoice status terlebih dahulu
+- Hanya NEED POSTING, READY TO PAY, POSTED bisa di-void
+- Void reason harus terisi dengan benar
+- Retry void action
+
+ISSUE 9 AMOUNT NOT CALCULATING
+
+Symptom: Total amount tidak auto-calculate setelah input
+Cause: Numeric textbox tidak properly initialized
+Solution:
+- Move focus ke field lain untuk trigger calculation
+- Refresh page
+- Try input dengan format yang correct (use decimal point)
+
+ISSUE 10 PDF ATAU DOKUMEN TIDAK BISA ATTACH
+
+Symptom: Tidak bisa upload dokumen pendukung
+Cause: File size exceeds limit atau format tidak allowed
+Solution:
+- Check file size maksimal 4MB
+- Verify format sudah allowed (PDF, JPG, PNG, Excel)
+- Compress file jika perlu
+- Contact admin untuk technical support
+
+SCREEN LAYOUT DESCRIPTION
+
+MAIN SCREEN - PD APPROVAL
+
+Top section:
+- Page title Introduction text
+- Two tabs: PD Approval dan Invoice List
+
+Grid section:
+- Column headers: Date, Document No, Description, Amount, Currency, Status, Action
+- Multiple rows dengan PD documents
+- Bottom pagination controls dan items per page selector
+- Top right: Export to Excel button
+
+Grid height: 75 viewport height
+Row selection: Single row select
+Color coding: Green untuk Need Approval status
+
+DETAIL FORM - PD APPROVAL POPUP
+
+Title bar: Approve PD dengan close button
+Window: Maximized untuk full screen viewing
+
+Tab strip dengan 2 tabs:
+- Tab 1: PD Form (active)
+- Tab 2: Document Verification
+
+PD Form Tab content:
+- Left section (6 columns width):
+  - Row 1: PD No
+  - Row 2: Date
+  - Row 3: PD Type
+  - Row 4: Currency / Rate
+  - Row 5: Vendor
+  - Row 6: NPWP
+  - Row 7: WP Address
+  - Row 8: Hand Over Form
+  - Row 9: PO No
+  - Row 10: Receipt No
+  - Row 11: SPK No (conditional untuk Kontraktor)
+
+- Right section (6 columns width):
+  - Row 1: Bill Type (radio buttons)
+  - Row 2: Applicant
+  - Row 3: Division
+  - Row 4: Department
+  - Row 5: Approve By
+  - Row 6: DPP/Tax Base
+  - Row 7: Total Base Amount
+  - Row 8: Description
+
+- Detail grid section:
+  - Below form fields
+  - Grid dengan columns untuk COA breakdown
+  - Grid height: 30 viewport height
+
+- Footer section:
+  - Total amounts row
+  - Foreign amount dan Local amount
+
+Action Buttons (bottom):
+- Correction (primary blue)
+- Save Correction (primary blue, initially hidden)
+- Cancel (danger red)
+
+Document Verification Tab content:
+- Section label: PD Type
+- Detail grid dengan document types
+- Checkbox column untuk verification
+- Verify button (primary blue)
+- Grid height: 60 viewport height
+
+MAIN SCREEN - INVOICE POSTING
+
+Top section:
+- Page title
+- Tab: Invoice List
+
+Grid section:
+- Column headers: Date, PD No, Document No, PV No, Category, Description, Currency, Amount, Vendor, Status, Action
+- Multiple rows dengan invoice documents
+- Bottom pagination controls
+- Top right: Export to Excel button
+- Row coloring: Green untuk Need Posting status
+
+Grid height: 75 viewport height
+
+DETAIL FORM - INVOICE POSTING POPUP
+
+Title bar: Detail Posting IV dengan close button
+Window: Maximized untuk full screen
+
+Header form section:
+- Left column (6 columns width):
+  - Row 1: IV No (readonly)
+  - Row 2: Date
+  - Row 3: Category
+  - Row 4: Paid To
+  - Row 5: Currency / Rate
+  - Row 6: Foreign Amount
+
+- Right column (6 columns width):
+  - Row 1: Description
+  - Row 2: Status
+  - Row 3: Local Amount
+
+Detail grid section:
+- Below header form
+- Grid dengan columns untuk breakdown
+- Grid height: 30 viewport height
+- Inline editing untuk selected fields
+
+Action buttons (bottom):
+- Void (danger red)
+- Update (primary blue)
+- Checking (success green)
+- Button visibility conditional berdasarkan status
+
+VOID POPUP
+
+Title: Void Confirmation
+Width: 30vw
+Height: 17vh
+Modal: Yes
+
+Content:
+- Label dengan invoice number dan "would be voided. Please input the reason below:"
+- Text input untuk void reason
+- Button section:
+  - Cancel button (secondary)
+  - Continue button (primary)
+
+SCREEN DIMENSIONS
+
+- Main grid height: 75vh
+- Detail grid height: 30vh (PD) atau 40vh (Invoice)
+- Form width: 100%
+- Popup window: Maximized untuk detail forms
+- Void popup: 30vw width
+
+COLUMN DESCRIPTIONS - MAIN GRIDS
+
+Date column shows invoice document date in format DD/MM/YYYY
+Document No shows invoice number identifier
+Amount shows total invoice amount formatted with n2
+Currency shows currency code (IDR, USD, etc)
+Status shows current document status
+Vendor shows vendor name untuk invoice posting
+Action column contains edit button untuk open detail form
+
+COLOR SCHEME
+
+Green text: Need Approval atau Need Posting status items
+Red text: Over budget items atau error conditions
+Blue header: Grid header background
+White background: Form pages
+Default text: Black
+
+PERMISSIONS AND SECURITY
+
+PERMISSION LEVEL 1: FINANCE VIEWER
+
+- Can view all grids dan detail forms
+- Cannot perform any action
+- Cannot modify data
+- Can view historical records
+- Cannot export
+
+PERMISSION LEVEL 2: FINANCE USER
+
+- Can view all grids dan detail forms
+- Can perform updates dan corrections
+- Can verify documents
+- Can export to Excel
+- Cannot void invoices
+
+PERMISSION LEVEL 3: FINANCE MANAGER
+
+- Full access ke all features
+- Can approve PDs
+- Can perform corrections
+- Can void invoices dengan reason
+- Can export reports
+- Can access historical audit trails
+
+PERMISSION LEVEL 4: FINANCE DIRECTOR
+
+- Same as Finance Manager plus
+- Can approve over budget items
+- Can create manual adjustments
+- Can access all audit trails
+- Can manage master data references
+
+AUTHENTICATION
+
+- User harus login dengan valid credentials
+- Session token digunakan untuk all API calls
+- Token di-refresh otomatis setiap 30 menit
+- Timeout setelah 1 jam inactivity
+- Header Authorization menggunakan Bearer token format
+
+DATA SECURITY
+
+- All API calls encrypted dengan HTTPS
+- Database access dengan role-based permission
+- Audit trail untuk semua actions performed
+- Sensitive data seperti NPWP tidak ditampilkan di grid export
+- Void reasons logged untuk audit
+
+PERFORMANCE CONSIDERATIONS
+
+OPTIMIZATION 1: SERVER-SIDE PAGINATION
+
+- Default 20 items per page
+- User dapat adjust sampai maksimal 100
+- Server-side filtering untuk large datasets
+- Recommend tidak load lebih dari 100 items sekaligus
+
+OPTIMIZATION 2: LAZY LOADING
+
+- Detail forms hanya load saat dibuka
+- Detail grids fetch data on-demand
+- Master data di-cache untuk repeated queries
+
+OPTIMIZATION 3: ASYNC OPERATIONS
+
+- Detail grid di-load async bukan blocking UI
+- Currency rate fetch non-blocking
+- Budget calculations background processing
+
+OPTIMIZATION 4: FIELD VALIDATION
+
+- Client-side validation sebelum server submit
+- Server-side validation sebagai backup
+- Reduce round-trips dengan batch validation
+
+INTEGRATION POINTS
+
+INTEGRATION 1: CREATE INVOICE MODULE
+
+- Finance Approval retrieve PD dari created invoices
+- Status flow dari Create Invoice ke Finance Approval
+- Detail data inherited dari Create stage
+
+INTEGRATION 2: HEAD APPROVAL MODULE
+
+- Head Approval harus selesai sebelum Finance Approval
+- Finance dapat view approval status dari Head stage
+- Rejected invoices dari Head tidak perlu Finance check
+
+INTEGRATION 3: TAX APPROVAL MODULE
+
+- Tax Approval harus selesai sebelum Finance Posting
+- Finance notified tentang tax status
+- Tax amounts dari Tax approval used untuk GL posting
+
+INTEGRATION 4: ACCOUNTING MODULE
+
+- GL posting menggunakan data dari Finance Approval
+- Finance amounts define GL distribution
+- Posting baru tidak perlu Finance re-check
+
+INTEGRATION 5: PAYMENT PROCESSING
+
+- Approved invoices forwarded ke payment processing
+- Finance Approval adalah gatekeeper before payment
+- Payment reference links back ke Finance approval record
+
+INTEGRATION 6: MASTER DATA
+
+- Chart of Accounts untuk COA reference
+- Vendor master untuk vendor information
+- Tax master untuk tax type selection
+- Currency master untuk rate reference
+- PD Type master untuk category options
+
+MONTHLY PROCESSING CONSIDERATIONS
+
+- All invoices dalam bulan harus completed approval cycle
+- Late invoices require special month-end handling
+- Budget cut-off perlu diverifikasi
+- Currency rate dated untuk end of month invoices
+
+YEAR END PROCESSING CONSIDERATIONS
+
+- All unpaid invoices harus finalized dengan proper treatment
+- Year-over-year budget allocation needs review
+- Tax liability harus accurately reflected
+- Withholding tax reporting must be accurate before cutoff
+
+CONTACT AND SUPPORT
+
+For application issues contact IT Support
+For business logic questions contact Finance Manager
+For data related issues contact Accounting Manager
+For master data update request contact Data Administrator

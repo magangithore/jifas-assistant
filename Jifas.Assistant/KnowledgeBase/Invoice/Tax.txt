@@ -1,0 +1,986 @@
+KNOWLEDGE BASE TAX APPROVAL MODULE
+
+DESKRIPSI UMUM
+
+Module Tax Approval adalah modul yang digunakan untuk mengelola persetujuan pajak pada dokumen invoice. Module ini memungkinkan tim accounting untuk melakukan review, persetujuan, atau penolakan pajak yang telah dikalkulasi pada invoice. Module ini mencakup manajemen untuk tiga jenis pajak yaitu PPN (Pajak Pertambahan Nilai), PPH (Pajak Penghasilan), dan PPN N0 (PPN khusus dengan kondisi tertentu).
+
+Penggunaan module ini sangat penting dalam accounting process karena memastikan semua pajak yang dikenakan terhadap invoice sudah sesuai dengan peraturan dan kebijakan perusahaan sebelum dokumen di-posting ke sistem accounting.
+
+SASARAN PENGGUNA
+
+- Tax Compliance Officer atau Accounting Staff yang bertanggung jawab untuk review pajak
+- Finance Manager yang perlu berinteraksi dengan data pajak
+- Corporate Accounting yang menggunakan data ini untuk laporan keuangan
+- Internal Audit yang perlu melakukan verifikasi perhitungan pajak
+
+FITUR UTAMA
+
+1. TAX APPROVAL GRID
+
+Feature ini menampilkan daftar semua invoice yang memerlukan persetujuan pajak (status Need Approval). Grid ini menampilkan informasi penting seperti tanggal dokumen, nomor invoice, kategori, deskripsi, mata uang, jumlah PPN, jumlah PPH, total amount, dan status approval.
+
+- Filter otomatis untuk menampilkan hanya invoice dengan status Need Approval
+- Sorting berdasarkan tanggal dokumen (DESC)
+- Pagination dengan default 20 items per halaman
+- Warna highlight untuk rows berdasarkan status (green untuk Need Approval, merah untuk Over Budget)
+- Export to Excel functionality
+
+2. DETAIL APPROVAL FORM
+
+Form ini terbuka ketika user mengklik tombol Approval pada salah satu row di grid. Form ini menampilkan detail lengkap dari invoice yang akan di-approve termasuk informasi pembayar, jumlah pajak, dan detail breakdown per line item.
+
+- Multiple tabs untuk menampilkan informasi berbeda (Approval, PPN, PPN N0, PPH, File)
+- Header section dengan informasi dokumen (tanggal, pembayar, DPP, status, deskripsi)
+- Detail grid yang menampilkan breakdown per line item dengan informasi COA, DPP, tax code, PPN, PPH
+- Action buttons untuk Approve, Reject, dan Tax Correction
+- Conditional visibility berdasarkan jenis pajak yang ada dalam invoice
+
+3. PPN MANAGEMENT
+
+Feature untuk mengelola Pajak Pertambahan Nilai (PPN) pada invoice.
+
+- TAB PPN: Menampilkan informasi PPN header (DPP, jumlah PPN, nama WP, NPWP, alamat WP)
+- Detail grid untuk input tax invoices (Faktur Pajak) dengan informasi nomor faktur, tanggal, DPP, PPN
+- Tombol Save dan Cancel untuk menyimpan atau membatalkan perubahan
+- Validasi bahwa total DPP dan PPN di detail tidak boleh melebihi header
+
+4. PPH MANAGEMENT
+
+Feature untuk mengelola Pajak Penghasilan (PPH) pada invoice.
+
+- TAB PPH: Menampilkan informasi PPH header (DPP, jumlah PPH, nama WP, NPWP, alamat WP)
+- Detail grid untuk input bukti potong dengan informasi kode form, nomor bukti, tanggal, DPP, PPH
+- Tombol Save dan Cancel untuk menyimpan atau membatalkan perubahan
+- Validasi bahwa total DPP dan PPH di detail tidak boleh melebihi header
+
+5. PPN N0 SPECIAL HANDLING
+
+Feature khusus untuk mengelola jenis PPN tertentu dengan kode N0 (PPN khusus).
+
+- TAB PPN N0: Menampilkan informasi PPN khusus header (DPP, jumlah PPN, nama WP, NPWP, alamat WP)
+- Detail grid untuk input tax invoices PPN N0
+- Tombol Save dan Cancel
+- Validasi sama seperti PPN regular
+
+6. TAX CORRECTION
+
+Feature yang memungkinkan user untuk melakukan koreksi terhadap perhitungan pajak pada invoice.
+
+- Popup window yang menampilkan grid berisi semua line items dengan tax code, DPP, PPN existing, PPH existing
+- Column untuk rounding selection (UP atau DOWN) untuk PPN
+- Column untuk rounding selection untuk PPH
+- Column untuk correction result yang akan ditampilkan setelah selection rounding
+- Dropdown untuk PPH Type selection
+- Tombol Save dan Cancel
+
+7. FILE MANAGEMENT
+
+Feature untuk menampilkan dokumen pendukung yang telah di-upload.
+
+- TAB File: Menampilkan grid berisi semua dokumen pendukung yang terkait dengan invoice
+- Preview functionality untuk dokumen berupa image (PNG, JPG)
+- Download functionality untuk file lainnya
+- Klik pada dokumen akan membuka preview dalam popup
+
+WORKFLOW TAX APPROVAL
+
+Berikut adalah flow lengkap proses Tax Approval dari awal hingga akhir:
+
+TAHAP 1 PREPARATION
+
+- User membuka module Tax Approval dari menu
+- System menampilkan grid dengan daftar invoice yang memiliki status PD Need Tax Approval
+- Grid di-populate dari endpoint API Invoice Tax Index dengan parameter current company code
+- Hanya invoice dengan tax status Need Approval yang ditampilkan
+- List di-sort berdasarkan tanggal dokumen (terbaru di atas)
+
+TAHAP 2 SELECTION
+
+- User memilih salah satu invoice dari grid dengan mengklik row
+- User mengklik tombol Approval dengan icon edit pada kolom action
+- System membuka popup window dengan template edit approval pajak
+- Popup di-maximize untuk menampilkan seluruh form
+
+TAHAP 3 INITIALIZATION
+
+- System menampilkan invoice number di header
+- System melakukan check terhadap jenis pajak yang berlaku untuk invoice ini (PPN, PPH, PPN N0)
+- Berdasarkan hasil check, system menampilkan atau menyembunyikan tab yang sesuai
+- System menampilkan header information (tanggal, pembayar, DPP, status, deskripsi)
+- System melakukan fetch data dari detail invoice untuk menampilkan detail grid
+- Detail grid di-populate dengan informasi COA, DPP, tax code, PPN percentage, PPH percentage, dan budget status
+
+TAHAP 4 REVIEW
+
+- User melakukan review terhadap semua informasi yang ditampilkan
+- User dapat melihat breakdown per line item di detail grid
+- Baris yang berwarna merah mengindikasikan ada kondisi over budget atau cross year (CY atau CA status)
+- User dapat melihat dokumen pendukung di tab File dengan preview capability
+- User dapat mengganti tab untuk melihat detail PPN, PPH, atau PPN N0 sesuai kebutuhan
+
+TAHAP 5 DECISION
+
+User memiliki tiga pilihan action yang dapat dilakukan
+
+OPSI A APPROVE
+
+- User mengklik tombol Approve
+- System menampilkan confirmation dialog dengan detail invoice yang akan di-approve
+- User mengklik Yes untuk confirm
+- System mengirimkan request ke API Invoice Tax UpdateStatus dengan action A (Approve)
+- System menampilkan success message
+- System me-refresh grid untuk update status invoice ke Approved
+
+OPSI B REJECT
+
+- User mengklik tombol Reject
+- System menampilkan popup window untuk input alasan penolakan
+- User wajib mengisi field untuk reason (tidak boleh kosong)
+- User mengklik Yes untuk confirm rejection
+- System mengirimkan request ke API Invoice Tax UpdateStatus dengan action X (Reject) dan note berisi alasan
+- System menampilkan success message
+- System menutup rejection popup
+- System me-refresh grid untuk update status invoice
+- Status devient PD Reject by Tax
+
+OPSI C TAX CORRECTION
+
+- User mengklik tombol Tax Correction
+- System membuka popup window berisi grid Tax Correction
+- Grid menampilkan semua line items dengan tax detail
+- User dapat memodifikasi rounding untuk PPN dan PPH
+- User dapat mengubah PPH Type jika diperlukan
+- User mengklik Save untuk menyimpan koreksi
+- System menampilkan confirmation dialog
+- System mengirimkan data koreksi ke API TaxCorrection Action
+- System menutup popup dan me-refresh header dan detail grid
+
+TAHAP 6 COMPLETION
+
+- Setelah action approval atau rejection selesai, workflow berakhir
+- Invoice akan di-forward ke tahap berikutnya berdasarkan hasil approval
+- Approved invoice dapat di-post ke accounting
+- Rejected invoice dikembalikan ke staff untuk dilakukan perbaikan
+
+TAX CORRECTION DETAILED FLOW
+
+Tax Correction adalah proses sub-workflow yang dapat dilakukan dalam tahap review:
+
+TAHAP 1 CORRECTION INITIATION
+
+- User mengklik tombol Tax Correction
+- System membuka popup dengan judul Tax Value Correction
+- Popup berukuran 70 persen viewport width dan 60 persen viewport height
+- System menginisialisasi grid Tax Correction dengan endpoint Invoice Tax Detail
+
+TAHAP 2 GRID INITIALIZATION
+
+- Grid di-populate dengan data dari API menggunakan parameter document number
+- Hanya items dengan tax code tidak sama dengan NT (No Tax) yang ditampilkan
+- Grid menampilkan columns untuk Tax Code, DPP, PPN Existing, PPN Round, PPN Correction, PPH Existing, PPH Round, PPH Correction, PPH Type
+- Grid menggunakan inline editing mode
+
+TAHAP 3 ROUNDING SELECTION
+
+User dapat memilih rounding direction untuk mengkoreksi nilai pajak:
+
+- Pilihan rounding adalah UP atau DOWN
+- Ketika user memilih rounding direction, system melakukan AJAX call ke API TaxCorrection CorrectionValue
+- API mengembalikan nilai yang telah dikoreksi berdasarkan pilihan rounding
+- Correction amount ditampilkan di column Correction
+- Row cell untuk correction akan berubah warna menjadi dark green dengan text white
+
+TAHAP 4 PPH TYPE MODIFICATION
+
+- User dapat mengubah PPH Type melalui dropdown di column PPH Type
+- Dropdown di-populate dari API Master Pph GetPph
+- User dapat memilih tipe PPH yang sesuai
+- Jika user memilih tax code CS maka PPN dan PPH akan di-set ke 0
+- Jika user memilih tax code lainnya maka system akan menghitung nilai PPN dan PPH berdasarkan tax rate
+
+TAHAP 5 VALIDATION
+
+Sebelum saving, system melakukan validasi:
+
+- Jika PPH percentage lebih besar dari 0 atau PPH amount lebih besar dari 0 maka PPH Type tidak boleh kosong
+- Jika tidak ada items dalam grid maka tombol Save akan disembunyikan
+- Semua items harus memiliki correction values yang valid
+
+TAHAP 6 SAVING
+
+- User mengklik tombol Save
+- System menampilkan confirmation dialog untuk confirm save Tax Correction
+- User mengklik Yes untuk confirm
+- System mengumpulkan data dari grid dan membuat payload berisi header data dan detail data
+- Header data mencakup total PPN correction, total PPH correction, total base amount
+- Detail data mencakup document number, record number, tax code, PPH amount, PPH code untuk setiap item
+- System mengirimkan POST request ke API TaxCorrection Action
+- System menampilkan success notification
+- System menutup Tax Correction popup
+- System melakukan refresh untuk header form dan detail grid dengan data terbaru
+- System melakukan update pada tab PPN dan tab PPH dengan data yang sudah dikoreksi
+
+FIELD REFERENCE - APPROVAL TAB HEADER
+
+Field dalam approval tab header section:
+
+FIELD DATE
+
+- Label: Date
+- Type: Read Only Date Picker
+- Format: Sesuai system date format
+- Value: Tanggal dokumen invoice
+- Descs: Tanggal pada saat invoice di-create
+- Requirement: Informational only
+
+FIELD PAID TO
+
+- Label: Paid To
+- Type: Text Box
+- Editable: No
+- Value: Nama vendor yang akan menerima pembayaran
+- Descs: Nama lengkap dari master vendor berdasarkan vendor code
+
+FIELD DPP TAX BASE
+
+- Label: DPP/Tax Base
+- Type: Numeric Text Box dengan format n2
+- Currency Display: Menampilkan currency code di sebelah kiri
+- Editable: No
+- Value: Jumlah Base untuk perhitungan pajak
+- Descs: Nilai dasar yang digunakan untuk menghitung PPN dan PPH
+
+FIELD AMOUNT
+
+- Label: Amount
+- Type: Numeric Text Box dengan format n2
+- Currency Display: Menampilkan currency code di sebelah kiri
+- Editable: No
+- Value: Total amount termasuk pajak
+- Descs: Total amount invoice setelah termasuk PPN dan PPH
+
+FIELD BASE AMOUNT
+
+- Label: Base Amount
+- Type: Numeric Text Box dengan format n2
+- Currency Display: Menampilkan currency code di sebelah kiri
+- Editable: No
+- Value: Base amount dari invoice
+- Descs: Amount basis sebelum penambahan pajak tambahan
+
+FIELD TAX STATUS
+
+- Label: Status
+- Type: Text Box
+- Editable: No
+- Value: Status pajak saat ini
+- Values: Need Approval, Approved, Posted, Rejected, Cross Year, etc
+- Descs: Menunjukkan stage mana invoice berada dalam approval process
+
+FIELD DESCRIPTION
+
+- Label: Description
+- Type: Text Area
+- Editable: No
+- Value: Deskripsi atau catatan tambahan untuk invoice
+- Rows: 4 lines
+- Resize: Disabled
+
+FIELD DETAIL GRID
+
+Grid yang menampilkan breakdown per line item:
+
+Columns:
+
+1. REQUEST TYPE - Deskripsi penuh dari chart of accounts
+2. COA - Kode chart of accounts
+3. BASE AMOUNT - Nilai base untuk line item ini
+4. TAX TYPE - Jenis pajak yang berlaku (Q2, N1, etc)
+5. PPN - Jumlah PPN untuk line item
+6. PPN - Percentage dari PPN
+7. PPH - Jumlah PPH untuk line item
+8. PPH - Percentage dari PPH
+9. TOTAL AMOUNT - Total amount line item including taxes
+10. PPH TYPE - Jenis PPH yang digunakan
+11. REMAINING BUDGET - Sisa budget untuk COA ini
+12. STATUS OVER BUDGET - Indicator apakah ada over budget (OK, CY, CA)
+
+FIELD REFERENCE - PPN TAB
+
+Fields di PPN tab:
+
+FIELD DPP PPN - Numeric, readonly, value dari DPP untuk PPN calculation
+FIELD PPN AMOUNT - Numeric, readonly, value dari PPN yang sudah dihitung
+FIELD WP NAME PPN - Text, readonly, nama dari WP (Wajib Pajak)
+FIELD NPWP - Masked text box, editable, format 00.000.000.0-000.000
+FIELD WP ADDRESS - Text area, 4 rows, editable, alamat WP
+
+Di detail grid PPN dapat menambahkan tax invoice dengan fields:
+- TAX INVOICE: Nomor faktur pajak
+- TAX INVOICE DATE: Tanggal faktur pajak (editable date picker)
+- DPP: Nilai DPP (numeric)
+- PPN: Nilai PPN (numeric)
+- YEAR: Tahun (readonly)
+- PERIOD: Bulan/periode (readonly)
+- ACTION: Delete button
+
+FIELD REFERENCE - PPH TAB
+
+Fields di PPH tab:
+
+FIELD DPP PPH - Numeric, readonly, value dari DPP untuk PPH calculation
+FIELD PPH AMOUNT - Numeric, readonly, value dari PPH yang sudah dihitung
+FIELD WP NAME PPH - Text, readonly, nama dari WP
+FIELD NPWP PPH - Masked text box, editable
+FIELD WP ADDRESS PPH - Text area, editable
+
+Di detail grid PPH dapat menambahkan bukti potong dengan fields:
+- FORM CODE: Kode form pajak (e.g. 1721-A1)
+- TAX INVOICE: Nomor bukti potong
+- TAX INVOICE DATE: Tanggal bukti potong
+- DPP: Nilai DPP
+- PPH: Nilai PPH
+- YEAR: Tahun
+- PERIOD: Periode
+- ACTION: Delete button
+
+FIELD REFERENCE - PPN N0 TAB
+
+Fields di PPN N0 tab:
+
+FIELD DPP PPN KEK - Numeric, readonly
+FIELD PPN N0 AMOUNT - Numeric, readonly
+FIELD WP NAME - Text, readonly
+FIELD NPWP - Masked text box, readonly
+FIELD WP ADDRESS - Text area, readonly
+
+Di detail grid dapat menambahkan tax invoice dengan fields:
+- TAX INVOICE: Nomor faktur pajak
+- TAX INVOICE DATE: Tanggal faktur pajak
+- DPP: Nilai DPP
+- PPN: Nilai PPN
+- YEAR: Tahun
+- PERIOD: Periode
+- ACTION: Delete button
+
+VALIDATION RULES
+
+RULE 1 STATUS CHECK
+
+- Jika tax status adalah POSTED atau APPROVED maka semua input fields dan buttons akan di-disable
+- User tidak dapat melakukan perubahan atau action
+- Purpose: Prevent modification pada invoice yang sudah final
+
+RULE 2 REQUIRED FIELD REJECTION
+
+- Ketika user memilih action Reject, field untuk reason menjadi required
+- Reason tidak boleh kosong atau hanya whitespace
+- System akan menampilkan error message jika user mencoba submit tanpa reason
+
+RULE 3 DETAIL VALIDATION PPN
+
+- Total DPP dari detail PPN tidak boleh melebihi total DPP header
+- Total PPN dari detail tidak boleh melebihi total PPN header
+- Jika validation failed, system akan show alert dan reset nilai ke 0
+
+RULE 4 DETAIL VALIDATION PPH
+
+- Total DPP dari detail PPH tidak boleh melebihi total DPP header
+- Total PPH dari detail tidak boleh melebihi total PPH header
+- Jika validation failed, system akan show alert dan reset nilai ke 0
+
+RULE 5 TAX CORRECTION VALIDATION
+
+- Sebelum saving tax correction, semua items dengan PPH percentage lebih besar 0 atau PPH amount lebih besar 0 harus memiliki PPH Type yang tidak kosong
+- Jika ada item yang tidak memenuhi requirement ini, save akan ditolak dengan alert message
+- Purpose: Ensure semua withholding tax properly typed
+
+RULE 6 EDIT MODE DATES
+
+- Ketika user mengedit tanggal dalam detail grid PPN atau PPH, system akan otomatis extract fiscal year dan period
+- Fiscal year di-extract dari tahun pada tanggal
+- Period di-extract dari bulan pada tanggal
+- Purpose: Automatic calculation untuk fiscal period tracking
+
+RULE 7 OVER BUDGET DETECTION
+
+- System akan highlight dengan warna merah rows yang memiliki budget status CY (Cross Year) atau CA (Accumulation)
+- Ini memberikan warning bahwa ada potential issue dengan budget
+- User tetap dapat approve tetapi harus aware dengan kondisi ini
+
+VALIDATION MESSAGES
+
+Berikut adalah pesan validasi yang mungkin ditampilkan:
+
+MESSAGE 1: Cannot continue! Reject reason must be filled!
+- Triggered when: User mencoba reject tanpa mengisi reason
+- Action: User harus mengisi reason field kemudian retry
+
+MESSAGE 2: Total of DPP from detail cannot more than header!
+- Triggered when: Total DPP di detail PPN atau PPH exceeds header
+- Action: User harus mengurangi DPP di detail grid
+
+MESSAGE 3: Total of PPN from detail cannot more than header!
+- Triggered when: Total PPN di detail exceeds header PPN
+- Action: User harus mengurangi PPN di detail grid
+
+MESSAGE 4: Total of PPH from detail cannot more than header!
+- Triggered when: Total PPH di detail exceeds header PPH
+- Action: User harus mengurangi PPH di detail grid
+
+MESSAGE 5: Cannot continue to save tax correction. There is a PPH Type that is null.
+- Triggered when: Saving tax correction dengan ada item yang PPH Type empty
+- Action: User harus mengisi PPH Type untuk semua items dengan PPH
+
+MESSAGE 6: Cannot get suggested value for ppn
+- Triggered when: API error saat fetch correction value untuk PPN
+- Action: Retry atau hubungi IT support
+
+MESSAGE 7: Cannot get suggested value for pph
+- Triggered when: API error saat fetch correction value untuk PPH
+- Action: Retry atau hubungi IT support
+
+BEST PRACTICES
+
+PRACTICE 1 REVIEW BEFORE APPROVAL
+
+- Selalu review detail grid untuk memastikan semua tax calculation sudah correct
+- Perhatikan baris yang berwarna merah sebagai indikasi potential issue
+- Bandingkan dengan supporting documents di tab File
+
+PRACTICE 2 CHECK NPWP
+
+- Pastikan NPWP vendor sudah benar sebelum approve
+- NPWP akan otomatis ter-populate dari master vendor tetapi tetap perlu di-verify
+- Kesalahan NPWP dapat menyebabkan issue saat reporting ke tax authority
+
+PRACTICE 3 DOCUMENT ATTACHMENT
+
+- Pastikan semua supporting documents sudah ter-attach sebelum approval
+- Case untuk Over Budget atau Correction harus memiliki supporting documentation
+- Gunakan tab File untuk verify dokumen sudah ada
+
+PRACTICE 4 REJECTION REASON
+
+- Berikan rejection reason yang jelas dan spesifik
+- Reason akan membantu staff untuk understand apa yang harus di-correct
+- Contoh alasan yang baik: Tax calculation inconsistent with invoice amount atau NPWP tidak sesuai master
+
+PRACTICE 5 TAX CORRECTION
+
+- Gunakan Tax Correction feature untuk melakukan rounding adjustment saja
+- Jangan ubah tax code jika tidak ada alasan legitimate
+- Dokumentasikan alasan correction di deskripsi atau dalam supporting note
+
+PRACTICE 6 BATCH PROCESSING
+
+- Jika ada multiple invoices yang need approval dapat diproses dalam batch
+- Gunakan filter dan search functionality untuk narrow down list
+- Approve invoices dengan status sama lebih efisien secara time
+
+PRACTICE 7 PERIODIC REVIEW
+
+- Lakukan periodic review terhadap rejected invoices
+- Monitor trend approval rate untuk identify pattern
+
+PRACTICE 8 COMMUNICATION
+
+- Jika ada issue dengan vendor atau calculation, komunikasikan dengan staff creator
+- Jangan reject tanpa explanation
+- Use rejection reason field untuk provide constructive feedback
+
+TROUBLESHOOTING GUIDE
+
+ISSUE 1 GRID TIDAK LOADING
+
+Symptom: Grid Tax Approval tampil kosong atau loading terus menerus
+Cause: API endpoint tidak accessible atau data issue
+Solution: 
+- Refresh page dengan F5
+- Check apakah current company code sudah set dengan benar
+- Verify network connectivity
+- Clear browser cache dan coba again
+
+ISSUE 2 FORM TIDAK MEMBUKA
+
+Symptom: Ketika klik Approval button form tidak muncul
+Cause: Pop-up blocker atau JavaScript error
+Solution:
+- Disable pop-up blocker untuk website ini
+- Check browser console untuk error message
+- Coba dengan browser yang berbeda
+- Clear browser cache
+
+ISSUE 3 DETAIL GRID KOSONG
+
+Symptom: Detail grid di approval form tidak menampilkan line items
+Cause: Data tidak ter-fetch dari API atau document tidak memiliki detail
+Solution:
+- Refresh form dengan close dan open kembali
+- Verify dokumen memiliki line item di create invoice stage
+- Check apakah document number sudah correct
+
+ISSUE 4 BUTTON TIDAK RESPONSIVE
+
+Symptom: Approve, Reject, atau Tax Correction button tidak berfungsi saat diklik
+Cause: Form masih loading atau ada validation error
+Solution:
+- Tunggu sampai form fully loaded
+- Check apakah ada error notification di form
+- Close form dan retry
+
+ISSUE 5 SAVE TAX CORRECTION FAILED
+
+Symptom: Ketika click Save di tax correction popup mendapat error
+Cause: Validation error atau required field tidak terisi
+Solution:
+- Check notification message untuk detail error
+- Pastikan semua required fields terisi
+- Pastikan PPH Type sudah selected untuk items dengan PPH
+- Retry save
+
+ISSUE 6 NPWP AUTO FILL TIDAK BEKERJA
+
+Symptom: Field NPWP di PPN atau PPH tab tidak otomatis ter-populate
+Cause: Vendor code tidak valid atau master vendor incomplete
+Solution:
+- Verify vendor code di header section
+- Check master vendor data untuk vendor tersebut
+- Manual input NPWP jika diperlukan
+- Contact admin untuk update master vendor
+
+ISSUE 7 EXPORT TO EXCEL ERROR
+
+Symptom: Export to Excel button tidak bekerja atau file corrupted
+Cause: Large dataset atau browser issue
+Solution:
+- Reduce filtered data sebelum export
+- Try dengan browser berbeda
+- Check browser permissions untuk download files
+
+ISSUE 8 DATE PICKER ISSUE
+
+Symptom: Date picker tidak muncul atau tanggal tidak ter-select
+Cause: Browser compatibility atau JavaScript issue
+Solution:
+- Try manual type date dengan format yang correct
+- Use different browser
+- Check system date setting
+
+SCREEN LAYOUT DESCRIPTION
+
+MAIN SCREEN
+
+- Top section: Header dengan title Tax Approval
+- Center section: Grid Tax Approval dengan columns untuk Date, IV No, Category, Description, Currency, PPN, PPH, Amount, Status
+- Bottom section: Paging controls dan items per page selector
+- Top right: Export to Excel button
+- Grid height: 80 viewport height
+
+DETAIL FORM SCREEN
+
+- Top section: Invoice number label
+- Tabs section: 5 tabs untuk Approval, PPN, PPN N0, PPH, File
+- Approval tab content:
+  - Left column: Fields untuk Date, Paid To, DPP, Status, Description
+  - Right column: Fields untuk Amount, Base Amount
+  - Detail grid: 12 columns untuk Request Type, COA, Base Amount, Tax Type, PPN amounts, PPH amounts, Total, PPH Type, Remaining Budget, Status
+  - Action buttons: Tax Correction, Approve, Reject di bawah detail grid
+- PPN tab content:
+  - Header fields: DPP, PPN Amount, WP Name, NPWP, Address
+  - Detail grid: Tax Invoice, Tax Date, DPP, PPN, Year, Period, Delete
+  - Buttons: Save, Cancel
+- PPH tab content:
+  - Header fields: DPP, PPH Amount, WP Name, NPWP, Address
+  - Detail grid: Form Code, Tax Invoice, Tax Date, DPP, PPH, Year, Period, Delete
+  - Buttons: Save, Cancel
+- PPN N0 tab: Similar layout ke PPN tab
+- File tab: Grid showing dokumen pendukung dengan preview capability
+
+TAX CORRECTION POPUP
+
+- Title: Tax Value Correction
+- Grid berisi columns: Tax Code, DPP Existing, PPN existing, PPN Round dropdown, PPN Correction, PPH Existing, PPH Round dropdown, PPH Correction, PPH Type dropdown
+- Buttons: Cancel, Save
+- Width: 70 viewport width
+- Height: 60 viewport height
+
+REJECTION CONFIRMATION POPUP
+
+- Title: Reject Confirmation
+- Label: Showing invoice number with message will be rejected
+- Text input: For rejection reason (required)
+- Buttons: Cancel, Yes
+
+SCREEN DIMENSIONS
+
+- Grid Tax Approval height: 80vh
+- Detail form width: 100%
+- Detail grid height: 30vh
+- PPN/PPH detail grid height: 40vh
+- Tax Correction grid height: 50vh
+- Tax Correction popup width: 70vw
+- Tax Correction popup height: 60vh
+- Rejection popup width: 30%
+
+COLOR SCHEME
+
+- Over Budget rows: Red text color
+- Need Approval rows: Lime Green text color
+- Correction highlight: Dark green background dengan white text
+- Header: Blue background
+
+COLUMN DESCRIPTIONS - MAIN GRID
+
+Column 1: DATE
+- Shows invoice document date
+- Format: DD/MM/YYYY sesuai system configuration
+- Sortable: Yes
+- Filterable: Yes dengan date picker
+
+Column 2: IV NO
+- Invoice number identifier
+- Unique untuk setiap invoice
+- Sortable: Yes
+- Filterable: Yes dengan text contains operator
+
+Column 3: CATEGORY
+- Category dari invoice (e.g. Pembelian Barang, Jasa)
+- Dari master PD Type
+- Sortable: No
+- Filterable: Yes dengan dropdown dari master
+
+Column 4: DESCRIPTION
+- Deskripsi invoice atau item description
+- Free text field
+- Sortable: No
+- Filterable: Yes dengan text contains
+
+Column 5: CURRENCY
+- Currency code (IDR, USD, etc)
+- Sortable: Yes
+- Filterable: Yes dengan text contains
+
+Column 6: PPN
+- Jumlah Pajak Pertambahan Nilai
+- Format: n2 dengan thousand separator
+- Right aligned
+- Sortable: Yes
+- Filterable: Yes dengan numeric operator
+
+Column 7: PPH
+- Jumlah Pajak Penghasilan
+- Format: n2 dengan thousand separator
+- Right aligned
+- Sortable: Yes
+- Filterable: Yes dengan numeric operator
+
+Column 8: AMOUNT
+- Total amount setelah pajak
+- Format: n2 dengan thousand separator
+- Right aligned
+- Sortable: Yes
+- Filterable: Yes
+
+Column 9: STATUS
+- Tax approval status
+- Values: Need Approval, Approved, Posted, Rejected
+- Center aligned
+- Sortable: Yes
+- Filterable: Yes
+
+Column 10: ACTION
+- Tombol Approval untuk detail form
+- Button style: Primary blue
+- Text: Approval
+- Click handler: Open detail form popup
+
+ACTION BUTTONS - APPROVAL TAB
+
+Button 1: TAX CORRECTION
+
+- Label: Tax Correction
+- Style: Primary blue button
+- Position: Bottom left dari detail grid
+- Visibility: Only when status is Need Approval
+- On Click: Open Tax Correction popup window
+- Confirmation: No
+
+Button 2: APPROVE
+
+- Label: Approve
+- Style: Success green button
+- Position: Bottom center dari detail grid
+- Visibility: Only when status is Need Approval
+- On Click: Show confirmation dialog with invoice number
+- Confirmation: Yes, required
+- Action: POST request ke API Invoice Tax UpdateStatus dengan action A
+- Success: Show notification dan refresh grid
+
+Button 3: REJECT
+
+- Label: Reject
+- Style: Danger red button
+- Position: Bottom right from detail grid
+- Visibility: Only when status is Need Approval
+- On Click: Open rejection reason popup
+- Confirmation: Yes, required
+- Action: POST request ke API dengan action X dan reason
+- Success: Show notification dan refresh grid
+
+SPECIAL STATUS DESCRIPTIONS
+
+STATUS: NEED APPROVAL
+
+- Meaning: Invoice sudah di-create dan validated tetapi belum di-approve oleh tax reviewer
+- What to do: User harus review invoice detail dan melakukan approval, rejection, atau correction
+- Color: Green untuk highlight di grid
+
+STATUS: APPROVED
+
+- Meaning: Invoice sudah di-approve dan siap untuk di-posting ke accounting
+- What to do: Invoice akan di-forward ke next stage
+- Can be modified: No, form akan di-disable
+
+STATUS: POSTED
+
+- Meaning: Invoice sudah di-post ke general ledger dan tidak dapat dimodifikasi lagi
+- What to do: View only
+- Can be modified: No, semua fields readonly
+
+STATUS: REJECTED
+
+- Meaning: Invoice ditolak karena ada issue (calculation, NPWP, dll)
+- What to do: Invoice akan dikembalikan ke staff untuk diperbaiki
+- Reference: Rejection reason akan ter-display
+
+STATUS: CROSS YEAR (CY)
+
+- Meaning: Invoice memiliki line item yang meliputi dua fiscal year berbeda
+- What to do: Review carefully, PPN dan PPH harus di-split per fiscal year
+- Highlight: Row di-color red sebagai warning
+
+STATUS: ACCUMULATION (CA)
+
+- Meaning: Ada accumulation issue pada budget tracking
+- What to do: Review detail grid dan check budget status
+- Highlight: Row di-color red sebagai warning
+
+KEYBOARD SHORTCUTS
+
+Shortcut 1: TAB
+- Function: Navigate between form fields dan buttons
+- Usage: Press Tab untuk move ke next field
+
+Shortcut 2: ENTER
+- Function: Submit form atau confirm dialog
+- Usage: Press Enter ketika form ready untuk submit
+
+Shortcut 3: ESCAPE
+- Function: Close popup atau cancel current action
+- Usage: Press Escape untuk battleship ke previous screen
+
+Shortcut 4: CTRL+SHIFT+E
+- Function: Export grid to Excel
+- Usage: Press pada main grid untuk trigger export
+
+NOTIFICATION HANDLING
+
+NOTIFICATION TYPE 1: SUCCESS
+
+- Message style: Green background dengan white text
+- Auto dismiss: Yes, setelah 5 detik
+- Examples: Invoice approved successfully, Tax correction saved successfully
+- Action: None, hanya informational
+
+NOTIFICATION TYPE 2: ERROR
+
+- Message style: Red background dengan white text
+- Auto dismiss: No, user harus close
+- Examples: Cannot save tax correction, API error, Validation failed
+- Action: User harus read error message dan take corrective action
+
+NOTIFICATION TYPE 3: WARNING
+
+- Message style: Yellow background dengan black text
+- Auto dismiss: No
+- Examples: Over budget detected, Cross year period detected
+- Action: User should review carefully sebelum lanjut
+
+NOTIFICATION TYPE 4: INFO
+
+- Message style: Blue background dengan white text
+- Auto dismiss: Yes, setelah 3 detik
+- Examples: Loading data, Processing...
+- Action: None, just wait
+
+RESPONSIVE DESIGN
+
+DESKTOP VIEW
+
+- Grid width: Full width container
+- Detail form maximized untuk full screen viewing
+- All columns visible tanpa horizontal scroll
+- Optimal untuk 1920x1080 atau lebih besar
+
+TABLET VIEW
+
+- Grid columns: May need horizontal scroll untuk semua columns
+- Detail form: Popup akan scale untuk fit tablet screen
+- Tab strips: Full width
+- Buttons: Full width atau grouped
+
+MOBILE VIEW
+
+- Not recommended untuk module ini karena complexity
+- If accessed: Grid akan very narrow
+- Detail form: May difficult untuk navigate
+- Recommendation: Use desktop untuk optimal experience
+
+BROWSER COMPATIBILITY
+
+Supported browsers:
+- Chrome version 90 dan lebih tinggi
+- Firefox version 88 dan lebih tinggi
+- Edge version 90 dan lebih tinggi
+- Safari version 14 dan lebih tinggi
+
+Known issues:
+- IE 11 tidak supported
+- Older browser versions mungkin punya issue dengan date picker atau grid functionality
+
+PERMISSIONS AND SECURITY
+
+PERMISSION LEVEL 1: TAX APPROVAL VIEWER
+
+- Can view grid dan detail form
+- Cannot perform any action (Approve, Reject, Correction)
+- Can view historical data
+- Cannot export
+
+PERMISSION LEVEL 2: TAX APPROVAL USER
+
+- Can view dan approve invoices
+- Can use Tax Correction feature
+- Can export to Excel
+- Cannot reject invoices
+
+PERMISSION LEVEL 3: TAX APPROVAL MANAGER
+
+- Full access ke all features
+- Can approve, reject, perform correction
+- Can export
+- Can also manage tax parameters
+
+PERMISSION LEVEL 4: TAX COMPLIANCE OFFICER
+
+- Can view dan manage all tax approvals
+- Can perform all actions including correction
+- Can access historical records
+- Can run reports
+
+AUTHENTICATION
+
+- User harus login dengan valid credentials
+- Session token digunakan untuk all API calls
+- Token di-refresh otomatis setiap 30 menit
+- Timeout setelah 1 jam inactivity
+- Header Authorization menggunakan Bearer token format
+
+DATA SECURITY
+
+- All API calls encrypted dengan HTTPS
+- Database access dengan role-based permission
+- Audit trail untuk semua actions performed
+- Sensitive data seperti NPWP tidak ditampilkan di grid
+- Export file juga encrypted
+
+PERFORMANCE CONSIDERATIONS
+
+OPTIMIZATION 1: PAGINATION
+
+- Default 20 items per page reduce load time
+- User dapat adjust items per page sampai 100
+- Grid server-side pagination untuk large dataset
+- Recommend untuk tidak load lebih dari 100 items sekaligus
+
+OPTIMIZATION 2: LAZY LOADING
+
+- Detail form hanya load saat diperlukan
+- Tab content di-load when tab di-click bukan semua tabs loading upfront
+- Grid detail di-fetch async bukan blocking UI
+
+OPTIMIZATION 3: CACHING
+
+- Master data seperti vendor, COA di-cache
+- Cache invalidate ketika data change detected
+- Reduce API calls untuk repeated inquiries
+
+OPTIMIZATION 4: RENDERING
+
+- Detail grid menggunakan virtual scroll untuk large dataset
+- Only visible rows di-render to browser
+- Improve performance untuk grid dengan banyak rows
+
+INTEGRATION POINTS
+
+INTEGRATION 1: CREATE INVOICE MODULE
+
+- Tax Approval retrieve data dari invoices yang di-create
+- Status flow dari Create Invoice ke Tax Approval
+- Inherits atau payment terms dan conditions
+
+INTEGRATION 2: FINANCE APPROVAL MODULE
+
+- After tax approved, forward ke Finance Approval stage
+- Finance reviewer akan review dari Finance perspective
+- Tax info include dalam Finance Approval
+
+INTEGRATION 3: ACCOUNTING POSTING
+
+- After Finance Approval, invoice dapat di-post ke GL
+- Posting menggunakan final tax amounts approved dalam Tax Approval stage
+- GL entries include tax detail
+
+INTEGRATION 4: MASTER DATA
+
+- Chart of Accounts untuk COA reference
+- Vendor master untuk vendor information
+- Tax rules dan configuration dari Tax master
+- Fiscal period dari Accounting master
+
+MONTHLY CLOSING CONSIDERATIONS
+
+- All invoices dalam current month harus completed approval sebelum month-end
+- Late invoices yang dated sebelumnya harus have special attention
+- Cross-year invoices harus properly periode-allocated
+- Run reconciliation sebelum posting ke GL
+
+YEAR END CLOSING CONSIDERATIONS
+
+- All unpaid invoices harus finalized dengan proper tax treatment
+- Tax liability harus accurately reflected sebelum year end reporting
+- Withholding tax harus properly reconciled dengan tax return
+- Report semua late approvals atau pending items untuk audit
+
+COMMON ISSUES AND RESOLUTIONS
+
+ISSUE: PPN DETAIL TIDAK BISA DITAMBAH
+
+Cause: Tab PPN tidak aktif atau hidden
+Solution: Check dahulu apakah invoice ini memiliki PPN component
+
+ISSUE: PPAH TYPE DROPDOWN KOSONG
+
+Cause: Master PPH tidak ter-update atau tidak ada data
+Solution: Contact admin untuk update master PPH data
+
+ISSUE: SAVE CORRECTION ALWAYS FAIL
+
+Cause: Network issue atau database locking
+Solution: Retry setelah beberapa saat atau contact IT support
+
+ISSUE: FORM MAKSIMIZE NOT WORKING
+
+Cause: Browser issue atau window manager limitation
+Solution: Manually resize window atau use different browser

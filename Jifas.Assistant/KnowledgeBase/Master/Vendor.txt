@@ -1,0 +1,169 @@
+﻿Master Vendor
+
+Modul Master Vendor digunakan untuk mengelola data vendor dan tenant yang berhubungan dengan transaksi di sistem JIFAS. Data vendor sangat penting untuk proses pembayaran, pengadaan, dan pelaporan pajak.
+
+Berikut adalah rincian role yang memiliki otoritas untuk membuat atau mengubah data Vendor:
+WMTR (Webmaster): Admin sistem dengan akses penuh.
+USER (Users): Pengguna biasa dengan akses operasional.
+USRL (Users All): Pengguna dengan akses operasional (variasi).
+FINA (Finance): Staf Finance dengan akses modul keuangan.
+SPVR (Supervisor Finance): Supervisor Finance dengan hak approval transaksi.
+HDFA (Head Finance): Kepala Finance dengan hak approval level atas.
+MGFA (Magang Finance): Magang Finance dengan akses terbatas.
+
+Create (Menambah Vendor Baru)
+1. Klik tombol Create (ikon "+") di toolbar bagian atas grid.
+2. Jendela input akan muncul dengan form kosong.
+3. Lengkapi seluruh field yang diperlukan (ditandai dengan asterisk *).
+4. Perhatikan cascade dropdown untuk Provinsi → Kabupaten → Kecamatan → Kelurahan.
+5. Setelah data terisi benar, klik tombol Save (Simpan) untuk menyimpan vendor baru.
+6. Akan muncul konfirmasi "Apakah Anda yakin ingin MENYIMPAN vendor ini?" klik OK untuk melanjutkan.
+
+Update (Memperbarui Data Vendor)
+1. Cari vendor yang ingin diubah pada grid menggunakan kolom pencarian.
+2. Pada kolom Action di sisi kanan, klik ikon Edit (ikon pensil).
+3. Jendela edit akan muncul dengan data vendor terpilih.
+4. Perbarui field yang diperlukan (perhatikan: Kode tidak dapat diubah).
+5. Klik tombol Update (Perbarui) untuk menyimpan perubahan.
+6. Akan muncul konfirmasi "Apakah Anda yakin ingin MEMPERBARUI vendor ini?" klik OK untuk melanjutkan.
+
+Delete (Menghapus Vendor)
+1. Cari vendor yang ingin dihapus pada grid.
+2. Pada kolom Action di sisi kanan, klik ikon Delete (ikon tempat sampah).
+3. Akan muncul jendela konfirmasi penghapusan dengan menampilkan "Apakah Anda yakin ingin MENGHAPUS vendor (Kode) Nama?"
+4. Jika yakin ingin menghapus, klik tombol Yes (Ya) untuk melanjutkan.
+5. Jika tidak jadi, klik tombol No (Tidak).
+
+Kode: Menggunakan input Teks. Wajib diisi (Ya). Kode akan dibuat otomatis oleh sistem dan bersifat read-only (tidak dapat diubah) saat proses edit.
+Old Code (Kode Lama): Menggunakan input Teks. Wajib diisi (Ya). Digunakan untuk menyimpan kode dari JIFAS Desktop guna keperluan migrasi data vendor lama.
+Tipe: Menggunakan Dropdown. Wajib diisi (Ya). Tersedia pilihan badan usaha seperti: PT, CV, PTTB, FA, KOP, PMA, PMDN, PRM, UD, atau YYS.
+Nama: Menggunakan input Teks. Wajib diisi (Ya). Berisi nama lengkap vendor atau tenant sesuai dokumen resmi.
+Alamat 1 & 2: Menggunakan input Teks. Alamat 1 (Jalan/Nomor) bersifat wajib (Ya), sedangkan Alamat 2 (Kompleks/Blok) bersifat opsional (Tidak).
+Wilayah (Provinsi, Kabupaten, Kecamatan, Kelurahan): Menggunakan Pilihan Cascade. Provinsi dan Kabupaten wajib diisi (Ya), sedangkan Kecamatan dan Kelurahan bersifat opsional (Tidak). Pilihan akan menyaring data di bawahnya secara berjenjang.
+Kode Pos: Menggunakan input Teks. Bersifat opsional (Tidak)
+Telepon 1 & 2: Menggunakan Teks Terformat. Bersifat opsional (Tidak) dengan format otomatis: (999) 000-0000.
+Nama Kontak (PIC) & Nomor HP: PIC menggunakan Teks, Nomor HP menggunakan Teks Terformat (9999 0000 0000). Keduanya bersifat opsional (Tidak).
+Mata Uang & Kode Pajak: Menggunakan Dropdown. Bersifat opsional (Tidak). Digunakan untuk menentukan mata uang transaksi dan tipe perhitungan PPh.
+NPWP: Menggunakan Teks Terformat. Wajib diisi (Ya). Memiliki format otomatis 16 digit (9999999999999999) dan nilainya harus unik di dalam sistem.
+Alamat NPWP: Menggunakan input Teks. Bersifat opsional (Tidak) untuk mencatat alamat sesuai surat NPWP.
+Kredit (Istilah & Limit): Menggunakan input Angka. Bersifat opsional (Tidak). Istilah kredit menentukan hari jatuh tempo (0-99 hari), dan limit menentukan plafon hutang (0-99).
+Informasi Pembayaran (Bayar Ke, Bank, Nomor Rekening): Menggunakan kombinasi Teks dan Dropdown. Bersifat opsional (Tidak) untuk keperluan tujuan transfer pembayaran.
+Kategori (Jenis Tenant & Jenis Vendor): Menggunakan Toggle. Bersifat opsional (Tidak). Digunakan untuk menandai apakah entitas berfungsi sebagai penerima barang (tenant) atau penyuplai (vendor).
+
+1. Teks Biasa
+Input sederhana untuk mengisi data berupa huruf, angka, atau kombinasi. Contoh: Nama Vendor, Alamat, Kode Pos.
+
+2. Dropdown (Pilihan Tetap)
+Pilihan yang sudah ditentukan sebelumnya. Sistem akan menampilkan daftar lengkap. Contoh: Tipe (PT/CV/PTTB), Mata Uang, Bank.
+
+3. Pilihan Cascade (Bertingkat)
+Sistem yang mengandalkan satu pilihan untuk mengaktifkan pilihan berikutnya:
+Provinsi → Setelah dipilih, akan mengaktifkan field Kabupaten (hanya menampilkan kabupaten di provinsi tersebut)
+Kabupaten → Setelah dipilih, akan mengaktifkan field Kecamatan (hanya menampilkan kecamatan di kabupaten tersebut)
+Kecamatan → Setelah dipilih, akan mengaktifkan field Kelurahan (hanya menampilkan kelurahan di kecamatan tersebut)
+
+Cara kerjanya: Jika Anda memilih "Jawa Barat" di Provinsi, maka Kabupaten akan menampilkan daftar kota/kabupaten yang ada di Jawa Barat saja. Ini memudahkan pengguna untuk tidak salah memilih.
+
+4. Teks Terformat (Masked Input)
+Input otomatis dengan format tertentu:
+Telepon: Otomatis menjadi format (999) 000-0000, contoh: (021) 123-4567
+HP: Otomatis menjadi format 9999 0000 0000, contoh: 0812 3456 7890
+NPWP: Otomatis menjadi format 16 digit, contoh: 1234567890123456
+
+5. Angka (Numeric)
+Input khusus untuk angka saja. Contoh: Istilah Kredit (30 hari), Limit Kredit (500 juta).
+
+6. Toggle (On/Off Switch)
+Tombol geser untuk mengaktifkan atau menonaktifkan fitur:
+Jenis Tenant (TENANT): Aktifkan jika vendor menerima barang
+Jenis Vendor (VENDOR): Aktifkan jika vendor mengirim/menyuplai barang
+
+Satu vendor dapat ditetapkan sebagai kedua-duanya sekaligus (tenant dan vendor).
+
+Fitur-fitur Tabel Data
+
+1. Pengurutan (Sorting)
+Klik pada nama kolom untuk mengurutkan data:
+Klik sekali: Urutan A ke Z (atau angka kecil ke besar)
+Klik dua kali: Urutan Z ke A (atau angka besar ke kecil)
+
+2. Pencarian/Filter (Filter)
+Pada setiap kolom terdapat kolom pencarian tersendiri:
+Pencarian Teks: Mengetik kata kunci akan menampilkan vendor yang cocok (Kode, Nama, PIC, Telepon)
+Pencarian Tepat (Exact Match): Untuk kolom Mata Uang dan Kode Pajak, harus tepat sama
+
+3. Perubahan Ukuran Kolom
+Geser garis vertikal antara judul kolom untuk memperlebar atau mempersempit kolom tampilan.
+
+4. Pagination (Pembagian Halaman)
+Jika ada banyak vendor, data akan dibagi per halaman:
+Gunakan tombol < Sebelumnya dan Selanjutnya > untuk pindah halaman
+Atau pilih halaman langsung dari nomor halaman yang tersedia
+Atur berapa banyak baris per halaman menggunakan dropdown di kanan bawah
+
+5. Tombol Create (Tambah)
+Tombol + Create di toolbar digunakan untuk membuat vendor baru.
+
+Fitur Khusus Vendor
+
+1. Validasi Nama Vendor
+Sistem akan menghapus awalan jenis badan usaha dari nama vendor (PT, CV, PTTB, FA, KOP, PMA, PMDN, PRM, UD, YYS)
+Contoh: Jika Anda mengetik "PT Maju Jaya", sistem akan otomatis menjadi "Maju Jaya"
+Ini untuk menghindari duplikasi kode di database
+Nama vendor harus unik (tidak boleh ada vendor dengan nama sama)
+
+2. Validasi NPWP Unik
+NPWP yang diinput harus unik (tidak boleh ada vendor lain dengan NPWP sama)
+Sistem akan memvalidasi saat field NPWP diubah
+Jika NPWP sudah ada di sistem, akan muncul pesan error
+
+3. Format Otomatis Nomor Telepon
+Saat Anda mengetik nomor telepon, sistem akan otomatis memformatnya:
+Telepon: Misalnya ketik "2112345678" akan menjadi "(021) 123-4567"
+HP: Misalnya ketik "081234567890" akan menjadi "0812 3456 7890"
+NPWP: Misalnya ketik "1234567890123456" akan menjadi "1234567890123456" (16 digit)
+
+4. Cascade Dropdown Lokasi
+Pemilihan lokasi (Provinsi, Kabupaten, Kecamatan, Kelurahan) menggunakan sistem bertingkat:
+Pilih Provinsi terlebih dahulu (wajib)
+Setelah Provinsi dipilih, field Kabupaten akan aktif dan hanya menampilkan kabupaten di provinsi tersebut (wajib)
+Setelah Kabupaten dipilih, field Kecamatan akan aktif dan hanya menampilkan kecamatan di kabupaten tersebut (opsional)
+Setelah Kecamatan dipilih, field Kelurahan akan aktif dan hanya menampilkan kelurahan di kecamatan tersebut (opsional)
+
+Sistem ini memastikan data lokasi yang dipilih konsisten dan tidak salah tempat.
+
+5. Kode Vendor Otomatis
+Field Kode Vendor dibuat otomatis oleh sistem
+Saat membuat vendor baru, field "Kode" tidak ditampilkan (pengguna tidak perlu mengisinya)
+Saat mengedit vendor yang sudah ada, field "Kode" tidak dapat diubah (read-only)
+
+Pesan dan Konfirmasi
+
+Pesan Sukses
+Saat Create: "Vendor berhasil disimpan"
+Saat Update: "Vendor berhasil diperbarui"
+Saat Delete: "Vendor berhasil dihapus"
+Saat Validasi: "Nama Vendor dapat digunakan" atau "NPWP dapat digunakan"
+
+Pesan Error
+Jika field wajib kosong: "Harap isi semua field yang diperlukan sebelum melanjutkan"
+Jika nama vendor duplikat: "Nama vendor sudah terdaftar di sistem"
+Jika NPWP duplikat: "NPWP sudah terdaftar untuk vendor lain"
+Jika ada kesalahan server: Menampilkan pesan error dari server
+
+Pesan Konfirmasi
+Saat Save: "Apakah Anda yakin ingin MENYIMPAN vendor ini?"
+Saat Update: "Apakah Anda yakin ingin MEMPERBARUI vendor ini?"
+Saat Delete: "Apakah Anda yakin ingin MENGHAPUS vendor ini? (Kode Nama Vendor)"
+Saat Cancel: "Apakah Anda yakin ingin MEMBATALKAN semua perubahan yang dibuat untuk vendor ini?"
+
+Catatan Tambahan
+
+Keamanan: Setiap permintaan ke server dilindungi dengan token akses (authorization token). Hanya pengguna yang login dapat mengakses data.
+Audit Trail: Sistem mencatat setiap perubahan data (siapa, kapan, apa yang diubah).
+Keunikan NPWP: NPWP harus unik untuk setiap vendor; jika tidak memiliki NPWP, isi dengan 0000000000000000.
+Toggle Tenant/Vendor: Satu vendor dapat ditetapkan sebagai tenant (penerima barang) dan/atau vendor (penyuplai) secara bersamaan.
+Istilah dan Limit Kredit: Digunakan untuk kontrol cash flow dan pengaturan kondisi pembayaran vendor.
+Currency/Mata Uang: Penting untuk vendor impor atau transaksi valuta asing.
+Tax Code: Diperlukan untuk perhitungan pajak penghasilan (PPh) saat pembayaran vendor.
+Data Lama (Old Code): Field ini untuk kompatibilitas dengan sistem lama (JIFAS Desktop); gunakan jika melakukan migrasi data.

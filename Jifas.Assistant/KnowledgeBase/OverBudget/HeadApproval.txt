@@ -1,0 +1,1000 @@
+KNOWLEDGE BASE OVER BUDGET APPROVAL MODULE
+
+DESKRIPSI UMUM
+
+Module Over Budget Approval adalah modul yang digunakan untuk mengelola persetujuan atau approval terhadap dokumen invoice dan PUM yang amount nya melebihi budget yang tersedia. Module ini memiliki dua tabrifikasi utama yaitu Invoice Over Budget untuk approval invoice yang over budget dan PUM Over Budget untuk approval PUM yang over budget. Module ini adalah tahap kritikal dalam workflow approval karena memastikan semua dokumen yang over budget mendapat approval eksplisit dari head of department sebelum diproses lebih lanjut. Module ini memungkinkan head untuk membuat keputusan strategic tentang budget exception dan prioritas spending.
+
+SASARAN PENGGUNA
+
+- Head of Department yang memiliki budget authority untuk approve over budget items
+- Finance Head yang melakukan final approval over budget approvals
+- Finance Manager yang melakukan escalation untuk over budget exceptions
+- Accounting Manager yang track over budget approvals
+- Financial Planner yang monitor budget utilization trends
+- Internal Audit yang verify over budget approval decisions
+
+FITUR UTAMA - INVOICE OVER BUDGET
+
+1. INVOICE OVER BUDGET GRID
+
+Feature ini menampilkan daftar semua invoice documents yang memiliki amount melebihi available budget untuk COA yang dipilih. Grid menampilkan informasi penting seperti tanggal dokumen, nomor invoice, kategori, deskripsi, COA code, amount, dan status approval.
+
+- Filter otomatis untuk date, document number, category
+- Sorting berdasarkan tanggal dokumen (DESC)
+- Pagination dengan default 10 items per halaman
+- Warna highlight untuk rows berdasarkan status (Need Approval = green)
+- Export to Excel functionality untuk audit tracking
+- View/Approval button untuk membuka detail form
+
+2. INVOICE DETAIL APPROVAL FORM
+
+Form detail yang terbuka untuk setiap invoice over budget yang dipilih. Form menampilkan informasi lengkap invoice termasuk header data dan supporting documents.
+
+- Multiple tabs untuk Approval dan File information
+- Header section dengan informasi dokumen (date, COA code, amount, remaining budget, PPN, PPH)
+- Vendor, Applicant, Division, Approve By information
+- Description field
+- File tab menampilkan supporting documents list
+- Approve dan Reject buttons
+
+3. DOCUMENT VERIFICATION TAB
+
+Feature dalam approval form yang menampilkan list dokumen pendukung yang sudah di-attach untuk invoice tersebut.
+
+- Grid berisi daftar dokumen yang sudah uploaded
+- Document information tracking
+- File attachment references
+- Read-only display untuk document review
+
+4. APPROVAL DECISION WORKFLOW
+
+Feature untuk melakukan approval atau rejection terhadap invoice over budget.
+
+- Confirmation dialog untuk approve action
+- Rejection reason dialog untuk reject action
+- API integration untuk status update ke backend
+- Audit trail untuk setiap decision
+
+5. INLINE DETAIL GRID
+
+Feature untuk menampilkan detail dokumen pendukung dalam grid format.
+
+- Display dokumen type, code, nomor
+- Information field untuk deskripsi
+- File attachment references
+- Read-only presentation untuk review
+
+FITUR UTAMA - PUM OVER BUDGET
+
+1. PUM OVER BUDGET GRID
+
+Feature menampilkan daftar semua PUM documents yang memiliki amount over budget. Similar dengan invoice grid tetapi untuk PUM document type.
+
+- Filter otomatis untuk date, document number, category (PP type)
+- Sorting berdasarkan tanggal (DESC)
+- Pagination dengan default 10 items per halaman
+- Color highlighting untuk status
+- Export to Excel functionality
+- Approval button untuk membuka detail form
+
+2. PUM DETAIL APPROVAL FORM
+
+Form detail untuk PUM over budget approval dengan structure mirip invoice.
+
+- Approval tab dengan header information
+- File tab dengan document attachments
+- Tab strip untuk organization
+- Multiple information fields untuk PUM-specific data
+
+3. DOCUMENT ATTACHMENT DISPLAY
+
+Feature khusus untuk PUM yang menampilkan attached documents dengan visual preview.
+
+- Grid untuk document attachments
+- Image preview untuk PNG/JPG files
+- Download button untuk document files
+- File extension detection untuk proper display
+- Inline template untuk document rendering
+
+4. PUM APPROVAL DECISION
+
+Feature untuk approve atau reject PUM over budget.
+
+- Confirmation dialog untuk approval
+- Rejection reason capture untuk rejection
+- API call dengan bgAppr dan bgIsOk flags
+- Status update tracking
+
+5. FILE MANAGEMENT
+
+Feature untuk manage file attachments dalam PUM approval.
+
+- Display file paths
+- Extension-based rendering (images vs files)
+- Clickable links untuk file access
+- File type identification
+
+WORKFLOW INVOICE OVER BUDGET
+
+Berikut adalah flow lengkap proses Invoice Over Budget Approval:
+
+TAHAP 1 PREPARATION
+
+- User membuka Invoice Over Budget tab dari module
+- System menampilkan grid dengan daftar invoice yang memiliki over budget amount
+- Grid di-populate dari endpoint API Invoice Over Index
+- Hanya invoice dengan amount lebih besar dari remaining budget ditampilkan
+- List di-sort berdasarkan tanggal dokumen (terbaru di atas)
+- Pagination controls ditampilkan
+
+TAHAP 2 FILTERING DAN SEARCHING
+
+- User dapat filter berdasarkan date range
+- User dapat search berdasarkan document number
+- User dapat filter berdasarkan category
+- Filter dilakukan row-based
+- Grid auto-refresh dengan filter criteria
+
+TAHAP 3 INVOICE SELECTION
+
+- User memilih salah satu invoice dari grid dengan mengklik row
+- User mengklik Approval button untuk membuka approval form
+- Popup window dengan title Invoice Approval Over Budget dibuka
+- Form siap untuk review dan decision
+
+TAHAP 4 FORM INITIALIZATION
+
+- System melakukan fetch terhadap detail over budget invoice
+- Data di-populate ke form fields dari API response
+- Tab strip di-initialize dengan Approval dan File tabs
+- Document grid di-initialize untuk supporting documents
+
+TAHAP 5 DETAIL REVIEW - APPROVAL TAB
+
+- Left section menampilkan:
+  - Document Date (readonly)
+  - COA Code (readonly)
+  - Amount (readonly dengan currency format)
+  - Remaining Budget (readonly - showing available budget)
+  - PPN amount (readonly)
+  - PPH amount (readonly)
+
+- Right section menampilkan:
+  - Vendor name
+  - Applicant (staff name yang membuat invoice)
+  - Division code
+  - Approve By (head department name)
+  - Description
+
+TAHAP 6 DOCUMENT VERIFICATION - FILE TAB
+
+- User dapat click File tab untuk review supporting documents
+- Detail grid menampilkan:
+  - Document Type (jenis dokumen requirement)
+  - Code (singkat code)
+  - Document Number
+  - Information/Deskripsi
+- Grid display untuk review documents attached
+
+TAHAP 7 DECISION MAKING
+
+User memilih salah satu dari dua path:
+
+PATH A: APPROVE OVER BUDGET
+
+- User mengklik Approve button
+- Confirmation dialog terbuka dengan text
+  "Anda yakin ingin menyetujui dokumen [DOCNUMBER] ini?"
+- User click Done untuk confirm approval
+
+TAHAP 8A APPROVAL PROCESSING
+
+- API call dilakukan ke Invoice Over UpdateStatusPd
+- Parameters dikirim:
+  - action: A (untuk Approve)
+  - recNo: record number dari invoice
+  - docNo: invoice document number
+  - rejectNote: empty string
+- Authorization header di-include
+- Progress indicator ditampilkan
+
+TAHAP 8B APPROVAL COMPLETION
+
+Success scenario:
+- Success message ditampilkan
+- Main grid di-refresh untuk remove approved invoice
+- Invoice status updated ke approved
+- Document forwarded ke next workflow stage
+
+Error scenario:
+- Error message ditampilkan dengan failure reason
+- User dapat retry approval
+
+PATH B: REJECT OVER BUDGET
+
+- User mengklik Reject button
+- Rejection reason prompt dialog terbuka dengan text
+  "Kenapa Permintaan [DOCNUMBER] senilai [AMOUNT] tidak disetujui?"
+- User harus input rejection reason
+
+TAHAP 9B REJECTION REASON VALIDATION
+
+- System validate rejection reason tidak kosong
+- If empty: error message "Please fill the reason to reject this document!"
+- If filled: proceed ke confirmation
+
+TAHAP 10B REJECTION CONFIRMATION
+
+- Alert dialog menampilkan "Reason to reject this document is: [REASON]"
+- User acknowledge alert
+- Confirmation dialog terbuka untuk final confirmation
+
+TAHAP 11B REJECTION PROCESSING
+
+- API call dilakukan ke Invoice Over UpdateStatusPd
+- Parameters dikirim:
+  - action: X (untuk Reject/Cancel)
+  - recNo: record number
+  - docNo: document number
+  - rejectNote: rejection reason dari user
+- Authorization header di-include
+- Progress indicator ditampilkan
+
+TAHAP 12B REJECTION COMPLETION
+
+- Success message ditampilkan dengan status update
+- Main grid di-refresh
+- Invoice status updated ke rejected
+- Rejection reason logged dalam system untuk audit
+
+TAHAP 13 WORKFLOW COMPLETION
+
+- Detail form ditutup setelah approval atau rejection
+- Main grid di-refresh untuk show updated status
+- User dapat melanjutkan dengan invoice berikutnya
+
+WORKFLOW PUM OVER BUDGET
+
+Berikut adalah flow lengkap proses PUM Over Budget Approval:
+
+TAHAP 1 PREPARATION
+
+- User membuka PUM Over Budget tab dari module
+- System menampilkan grid dengan daftar PUM yang over budget
+- Grid di-populate dari endpoint API Invoice Over IndexPum
+- List di-sort berdasarkan tanggal dokumen (DESC)
+- Pagination controls ditampilkan
+
+TAHAP 2 FILTERING DAN SEARCHING
+
+- User dapat filter berdasarkan date range dengan date picker
+- User dapat search berdasarkan document number
+- User dapat filter berdasarkan category (PUM Type)
+- Filter dilakukan row-based
+- Grid auto-refresh dengan filter criteria
+
+TAHAP 3 PUM SELECTION
+
+- User memilih salah satu PUM dari grid dengan mengklik row
+- User mengklik Approval button untuk membuka approval form
+- Popup window dengan title PUM Approval Over Budget dibuka
+
+TAHAP 4 FORM INITIALIZATION
+
+- System fetch detail PUM data dari backend
+- Data di-populate ke form fields
+- Tab strip di-initialize dengan Approval dan File tabs
+- Document attachment grid di-initialize untuk display files
+
+TAHAP 5 DETAIL REVIEW - APPROVAL TAB
+
+- Left section menampilkan:
+  - Document Date (readonly)
+  - COA Code (readonly)
+  - Amount (readonly dengan format)
+  - Remaining Budget (readonly)
+  - Description
+
+- Right section menampilkan:
+  - Receive By (penerima PUM)
+  - Paid To (staff yang create request)
+  - Division code
+  - Approve By (supervisor name)
+
+TAHAP 6 DOCUMENT REVIEW - FILE TAB
+
+- User dapat click File tab untuk review attached documents
+- Dynamic grid menampilkan attached files
+- Image files (PNG/JPG) di-display dengan preview thumbnail
+- Document files ditampilkan dengan download button
+- Extension-based rendering untuk proper file display
+
+TAHAP 7 DECISION MAKING - PUM
+
+User memilih salah satu dari dua path:
+
+PATH A: APPROVE PUM
+
+- User mengklik Approve button
+- Confirmation dialog terbuka dengan text
+  "Anda yakin ingin menyetujui dokumen [DOCNUMBER] ini?"
+- User click Done untuk confirm
+
+TAHAP 8A PUM APPROVAL PROCESSING
+
+- API call dilakukan ke Invoice Over Update
+- Parameters dikirim dengan HTTP PUT method:
+  - docNo: PUM document number
+  - coa_code: Chart of Accounts code
+  - bgAppr: true (flag untuk approved)
+  - bgIsOk: true (flag untuk valid budget)
+- Authorization header di-include
+- Progress handling dengan refresh
+
+TAHAP 8B PUM APPROVAL COMPLETION
+
+- Success notification ditampilkan via notifApproval function
+- Main grid di-refresh untuk remove approved PUM
+- PUM status updated ke approved
+- Document forwarded ke next stage
+
+PATH B: REJECT PUM
+
+- User mengklik Reject button
+- Rejection reason prompt dialog terbuka dengan text
+  "Kenapa Permintaan [DOCNUMBER] senilai [AMOUNT] tidak disetujui?"
+- Input field untuk alasan rejection
+
+TAHAP 9B PUM REJECTION REASON VALIDATION
+
+- System validate reason tidak kosong
+- If empty: error "tolong isi alasan di reject terlebih dahulu"
+- If filled: proceed
+
+TAHAP 10B PUM REJECTION CONFIRMATION
+
+- Alert ditampilkan "Alasan Di Reject Adalah [REASON]"
+- User acknowledge alert
+
+TAHAP 11B PUM REJECTION PROCESSING
+
+- API call dilakukan ke Invoice Over Update
+- Parameters dikirim dengan HTTP PUT method:
+  - docNo: document number
+  - coa_code: COA code
+  - bgAppr: false
+  - bgIsOk: false
+  - apprNote: rejection reason
+- Authorization di-include
+
+TAHAP 12B PUM REJECTION COMPLETION
+
+- Success notification ditampilkan
+- Main grid di-refresh
+- PUM status updated ke rejected
+- Reason logged dalam system
+
+TAHAP 13 WORKFLOW COMPLETION
+
+- Detail form otomatis close setelah decision
+- Main grid di-refresh untuk show updated data
+- User dapat process PUM berikutnya
+
+FIELD REFERENCE - INVOICE OVER BUDGET GRID
+
+DOCDATE
+
+- Label: Date
+- Type: Date
+- Format: DD/MM/YYYY
+- Editable: No
+- Filterable: Yes dengan date picker
+- Display: Tanggal invoice yang over budget
+- Sortable: Yes (default sort DESC)
+
+DOCNO
+
+- Label: Document Number
+- Type: Text
+- Editable: No
+- Width: 130px
+- Filterable: Yes dengan contains filter
+- Display: Nomor unik invoice document
+- Purpose: Document identification
+
+CATEGORY
+
+- Label: Category
+- Type: Text
+- Editable: No
+- Width: 250px
+- Filterable: Yes dengan dropdown list
+- Display: Jenis kategori dari PD Type master
+- Purpose: Category classification
+
+DESC
+
+- Label: Description
+- Type: Text
+- Editable: No
+- Width: 650px
+- Filterable: Yes dengan contains filter
+- Display: Deskripsi invoice
+- Purpose: Document description
+
+COACODE
+
+- Label: COA
+- Type: Text
+- Editable: No
+- Width: 130px
+- Filterable: Yes dengan contains filter
+- Display: Chart of Accounts code yang over budget
+- Purpose: Account tracking
+
+AMOUNT
+
+- Label: Amount
+- Type: Numeric
+- Format: n2 (2 decimal places)
+- Editable: No
+- Width: 150px
+- Filterable: Yes dengan contains filter
+- Display: Invoice amount yang over budget
+- Purpose: Value tracking
+
+STATUS
+
+- Label: Status
+- Type: Text
+- Editable: No
+- Width: 150px
+- Filterable: Yes dengan contains filter
+- Display: Status approval (Need Approval, Approved, etc)
+- Color: Green untuk Need Approval status
+- Purpose: Status indication
+
+ACTION
+
+- Label: (no label)
+- Type: Button
+- Text: Approval
+- Command: Edit
+- Width: 130px
+- Display: Button untuk open approval detail form
+- Purpose: Launch approval workflow
+
+FIELD REFERENCE - INVOICE APPROVAL FORM
+
+PD NO HEADER
+
+- Label: PD No
+- Type: Static Text Header
+- Display: Document number dalam title
+- Readonly: Yes (informational)
+
+APPROVAL TAB - LEFT SECTION
+
+Date field:
+- Label: Date
+- Readonly: Yes dengan lightgray background
+- Format: Date picker format
+- Display: Tanggal dokumen
+
+Coa Code field:
+- Label: Coa Code
+- Readonly: Yes
+- Display: Chart of Accounts code yang over
+- Purpose: Account identification
+
+Amount field:
+- Label: Amount
+- Type: Numeric textbox
+- Format: n2
+- Readonly: Yes
+- Display: Invoice amount yang melebihi budget
+- Purpose: Amount tracking
+
+Remaining Budget field:
+- Label: Remaining Budget
+- Type: Numeric textbox
+- Format: n2
+- Readonly: Yes
+- Binding: sisa field
+- Display: Available budget amount
+- Purpose: Show budget constraint
+
+PPN field:
+- Label: PPN
+- Type: Numeric textbox
+- Format: n2
+- Readonly: Yes
+- Binding: tax_amount field
+- Display: VAT amount
+- Purpose: Tax information
+
+PPH field:
+- Label: PPH
+- Type: Numeric textbox
+- Format: n2
+- Readonly: Yes
+- Binding: whold_amount field
+- Display: Withholding tax amount
+- Purpose: Tax information
+
+APPROVAL TAB - RIGHT SECTION
+
+Vendor field:
+- Label: Vendor
+- Type: Text
+- Readonly: Yes
+- Display: Vendor name
+- Purpose: Vendor identification
+
+Applicant field:
+- Label: Applicant
+- Type: Text
+- Readonly: Yes
+- Binding: staff field
+- Display: Name of staff yang membuat request
+- Purpose: Originator tracking
+
+Division field:
+- Label: Division
+- Type: Text
+- Readonly: Yes
+- Display: Divisi code dari requestor
+- Purpose: Organizational tracking
+
+Approve By field:
+- Label: Approve By
+- Type: Text
+- Readonly: Yes
+- Binding: atasan field
+- Display: Name of head yang akan approve
+- Purpose: Approval authority indication
+
+Description field:
+- Label: Description
+- Type: Text Area
+- Readonly: Yes
+- Binding: FinHeadAppr_Desc field
+- Display: Invoice description
+- Purpose: Additional information
+
+FILE TAB
+
+Detail Grid:
+- Columns: Document Type, Code, Document No, Information
+- Content: Supporting documents list
+- Read-only: Yes
+- Display: All attached documents
+
+ACTION BUTTONS
+
+Approve Button:
+- Label: Approve
+- Class: k-button k-primary
+- ID: approve
+- Function: btnApprove_OnClick handler
+- Action: Approve over budget invoice
+
+Reject Button:
+- Label: Reject
+- Class: k-button k-primary
+- ID: reject
+- Function: btnReject_OnClick handler
+- Action: Reject over budget invoice
+
+FIELD REFERENCE - PUM OVER BUDGET GRID
+
+Similar structure dengan Invoice Over Budget grid tetapi untuk PUM document type dengan columns:
+Date, Document No, Category (PUM Type), Description, Coa Code, Amount, Status, Approval button
+
+FIELD REFERENCE - PUM APPROVAL FORM
+
+Approval Tab - Left Section:
+- Date, Coa Code, Amount, Remaining Budget, Description (semua readonly)
+
+Approval Tab - Right Section:
+- Receive By (nama penerima)
+- Paid To (nama staff requestor)
+- Division
+- Approve By (supervisor name)
+
+File Tab:
+- Dynamic grid menampilkan attached files
+- Image preview untuk PNG/JPG
+- File download links untuk document files
+
+VALIDATION RULES
+
+RULE 1 DOCUMENT SELECTION
+
+- User harus select one document dari grid sebelum open approval form
+- Only documents dengan over budget amount dapat di-select
+- Document status harus memungkinkan untuk approval
+
+RULE 2 APPROVAL CONFIRMATION
+
+- Approval action memerlukan confirmation dialog
+- User harus click Done dalam confirmation dialog
+- Document number harus di-display dalam confirmation
+
+RULE 3 REJECTION REASON
+
+- Rejection action memerlukan reason input
+- Rejection reason tidak boleh kosong atau blank
+- User harus provide meaningful reason untuk audit trail
+
+RULE 4 API PARAMETER VALIDATION
+
+- Invoice over: require action, recNo, docNo, rejectNote parameters
+- PUM over: require docNo, coa_code, bgAppr, bgIsOk, apprNote parameters
+- Authorization token harus valid dalam header
+
+RULE 5 STATUS UPDATE
+
+- After successful approval: status updated ke approved
+- After successful rejection: status updated ke rejected dengan reason logged
+- Grid automatically refresh untuk reflect new status
+
+RULE 6 DOCUMENT REQUIREMENT
+
+- Each over budget document harus have COA code
+- COA code mendetermine budget constraint
+- Amount harus clearly exceed remaining budget untuk appear dalam grid
+
+BEST PRACTICES
+
+PRACTICE 1 REVIEW BUDGET IMPACT
+
+- Always review remaining budget field sebelum make approval decision
+- Understand impact dari approval terhadap department budget
+- Consider future expenses sebelum approve
+
+PRACTICE 2 DOCUMENTATION
+
+- Always provide clear reason saat reject over budget request
+- Document rejection reason untuk future reference
+- Keep audit trail clear dengan meaningful communications
+
+PRACTICE 3 APPROVAL AUTHORITY
+
+- Verify bahwa user memiliki authority untuk approve over budget amounts
+- Follow company policy untuk over budget threshold
+- Escalate ke higher authority jika diperlukan
+
+PRACTICE 4 BUDGET CONTROL
+
+- Monitor rundown dari departmental budget dengan regular reviews
+- Track cumulative over budget approvals
+- Identify trend dari over budget requests
+
+PRACTICE 5 VENDOR VERIFICATION
+
+- Verify vendor information dalam approval form
+- Ensure vendor masih active dan approved
+- Check untuk duplicate submissions
+
+PRACTICE 6 DOCUMENT ATTACHMENT REVIEW
+
+- Review semua supporting documents sebelum approval
+- Ensure documents dalam File tab complete
+- Verify document authenticity
+
+PRACTICE 7 TIMELY PROCESSING
+
+- Process over budget requests segera untuk minimize delay
+- Prioritize urgent or high-value requests
+- Monitor aging dari pending approvals
+
+PRACTICE 8 COMMUNICATION
+
+- Communicate approval atau rejection decisions promptly
+- Provide clear feedback untuk rejected requests
+- Follow up untuk corrected submissions
+
+TROUBLESHOOTING GUIDE
+
+ISSUE 1 GRID TIDAK LOADING
+
+Symptom: Over budget grid menampilkan kosong atau loading forever
+Cause: API endpoint tidak accessible atau data issue
+Solution:
+- Verify API URL correct untuk Invoice/Over/Index
+- Check network connectivity
+- Verify company code sudah set di system
+- Refresh page dengan F5
+- Check browser console untuk error messages
+
+ISSUE 2 APPROVAL FORM TIDAK MEMBUKA
+
+Symptom: Saat click Approval button form tidak appear
+Cause: PopUp blocker atau JavaScript error
+Solution:
+- Disable popup blocker untuk website
+- Clear browser cache
+- Try dengan browser berbeda
+- Check console untuk JavaScript errors
+- Verify authorization token valid
+
+ISSUE 3 CONFIRMATION DIALOG TIDAK MUNCUL
+
+Symptom: Saat click Approve button dialog tidak appear
+Cause: Kendo dialog tidak initialized
+Solution:
+- Refresh page
+- Check Kendo library sudah loaded
+- Try browser berbeda
+- Verify JavaScript enabled di browser
+
+ISSUE 4 REJECTION REASON TIDAK ACCEPTED
+
+Symptom: Reject action gagal atau reason tidak ter-save
+Cause: Validation error atau API issue
+Solution:
+- Verify rejection reason tidak kosong
+- Check error message di alert
+- Ensure reason valid string format
+- Verify API endpoint accessible
+- Check response dari backend
+
+ISSUE 5 GRID TIDAK REFRESH SETELAH ACTION
+
+Symptom: After approval atau rejection, grid tidak update
+Cause: Refresh function issue atau backend delay
+Solution:
+- Wait untuk backend processing complete
+- Manually refresh dengan F5
+- Check browser console untuk errors
+- Verify API success response
+- Retry manual refresh
+
+ISSUE 6 DOCUMENT GRID TIDAK MENAMPILKAN FILES
+
+Symptom: File tab kosong atau documents tidak showing
+Cause: Data fetch gagal atau template issue
+Solution:
+- Refresh form
+- Close dan open form kembali
+- Check API endpoint untuk document fetch
+- Verify document attachments exist di backend
+- Contact admin untuk data verification
+
+ISSUE 7 IMAGE PREVIEW TIDAK RENDER
+
+Symptom: Image files dalam File grid tidak menampilkan preview
+Cause: File path issue atau rendering error
+Solution:
+- Check file path URL format correct
+- Verify image file exist di server
+- Check file permissions
+- Try direct URL di browser untuk test
+- Contact admin untuk path verification
+
+ISSUE 8 APPROVAL ACTION GAGAL
+
+Symptom: Approval atau rejection action failed dengan error
+Cause: API error, validation failure, atau backend issue
+Solution:
+- Read error message carefully
+- Verify all required fields filled
+- Check authorization valid
+- Verify document data intact
+- Retry approval action
+- Contact support dengan error details
+
+ISSUE 9 FILTER TIDAK WORKING
+
+Symptom: Filter criteria tidak bekerja untuk reduce data
+Cause: Filter configuration issue
+Solution:
+- Clear filter dan reapply
+- Refresh page
+- Check filter value format correct
+- Try berbeda filter criteria
+- Verify data exist untuk selected criteria
+
+ISSUE 10 EXPORT EXCEL INCOMPLETE
+
+Symptom: Export result tidak include semua data atau cut off
+Cause: Large dataset atau export limit
+Solution:
+- Apply filter untuk reduce data sebelum export
+- Export dalam smaller batch dengan date range
+- Contact admin untuk large data export
+- Verify selection sebelum export
+
+SCREEN LAYOUT DESCRIPTION
+
+MAIN PAGE INVOICE OVER BUDGET
+
+Grid Area:
+- Column headers: Date, Document No, Category, Description, COA, Amount, Status, Approval
+- Multiple rows dengan over budget invoices
+- Bottom pagination dengan items per page selector
+- Filter row dengan date picker, text inputs, dropdown
+- Export to Excel button di top left
+- Grid height: 70 viewport height
+- Width: 1300px
+
+Color and Styling:
+- Header: Blue background
+- Need Approval rows: Green text color
+- White row background alternating
+- Border: 1px solid gray
+
+MAIN PAGE PUM OVER BUDGET
+
+Similar layout dengan PUM-specific data:
+- Column headers similar dengan invoice
+- Category filter menampilkan PUM Type dropdown
+- Support untuk PUM document type
+- Same grid height dan styling
+
+INVOICE APPROVAL DETAIL FORM
+
+Window Title: Invoice Approval Over Budget
+Window State: Popup modal
+Buttons: Hidden cancel dan update buttons
+
+Tab Strip:
+- Tab 1: Approval (active)
+- Tab 2: File
+
+Approval Tab Layout:
+- Left column (6 columns width):
+  * Date picker
+  * COA Code text
+  * Amount numeric
+  * Remaining Budget numeric
+  * PPN numeric
+  * PPH numeric
+
+- Right column (6 columns width):
+  * Vendor name
+  * Applicant
+  * Division
+  * Approve By
+  * Description textarea
+
+Action Buttons:
+- Approve button (primary blue) - id approve
+- Reject button (primary blue) - id reject
+- Position: bottom right dengan text-right alignment
+
+File Tab:
+- Detail grid menampilkan documents
+- Columns: Document Type, Code, Document No, Information
+- Grid height: 300-400px
+
+PUM APPROVAL DETAIL FORM
+
+Window Title: PUM Approval Over Budget
+Similar structure dengan Invoice form tetapi untuk PUM data
+
+Approval Tab:
+- Left section: Date, COA Code, Amount, Remaining Budget, Description
+- Right section: Receive By, Paid To, Division, Approve By
+
+File Tab:
+- Dynamic grid dengan attachment images/documents
+- Image preview template rendering
+- File links untuk document access
+
+GRID STYLING
+
+- Header background: Default blue biru corporate
+- Row text: Black sa normal, Green untuk Need Approval status
+- Alternating rows: White background standard
+- Column width: Fixed per configuration
+- Border: Standard grid border 1px
+
+CONFIRMATION DIALOGS
+
+Approve Confirmation:
+- Title: Standard confirmation
+- Message: Anda yakin ingin menyetujui dokumen [DOCNUMBER] ini?
+- Buttons: Done, Cancel
+
+Reject Reason Prompt:
+- Type: Text input prompt
+- Message: Kenapa Permintaan [DOCNUMBER] senilai [AMOUNT] tidak disetujui?
+- Buttons: OK dengan reason input, Cancel
+
+Reject Confirmation Alert:
+- Title: Alert
+- Message: Alasan Di Reject Adalah [REASON]
+- Single button: OK
+
+PERFORMANCE CONSIDERATIONS
+
+OPTIMIZATION 1 SERVER-SIDE PAGINATION
+
+- Default 10 items per page untuk both invoice dan PUM grids
+- Server-side paging untuk large datasets
+- Query parameters optimized untuk filter efficiency
+
+OPTIMIZATION 2 LAZY LOADING
+
+- Detail form hanya load saat dibuka
+- Supporting documents grid fetch on-demand
+- Template di-render dinamis
+
+OPTIMIZATION 3 GRID REFRESH
+
+- Efficient refresh mechanism setelah approval
+- Removed records tidak di-query lagi
+- State preserved saat refresh
+
+OPTIMIZATION 4 ASYNC OPERATIONS
+
+- API calls non-blocking dengan progress indicator
+- UI tidak freeze saat processing
+
+INTEGRATION POINTS
+
+INTEGRATION 1 INVOICE OVER INDEX API
+
+- Endpoint: Invoice/Over/Index
+- Method: GET
+- Parameters: compCode
+- Return: Over budget invoice list
+- Used by: Invoice Over Budget grid
+
+INTEGRATION 2 INVOICE OVER STATUS UPDATE API
+
+- Endpoint: Invoice/Over/UpdateStatusPd
+- Method: POST
+- Parameters: action, recNo, docNo, rejectNote
+- Return: Status message
+- Used by: Invoice approval/rejection actions
+
+INTEGRATION 3 PUM OVER INDEX API
+
+- Endpoint: Invoice/Over/IndexPum
+- Method: GET
+- Parameters: compCode
+- Return: Over budget PUM list
+- Used by: PUM Over Budget grid
+
+INTEGRATION 4 PUM OVER UPDATE API
+
+- Endpoint: Invoice/Over/Update
+- Method: PUT
+- Parameters: docNo, coa_code, bgAppr, bgIsOk, apprNote
+- Return: Status response
+- Used by: PUM approval/rejection actions
+
+INTEGRATION 5 DOCUMENT RETRIEVAL
+
+- Endpoint: filepath/Get?docNo=[DOCNUMBER]
+- Method: GET
+- Return: File path list untuk PUM attachments
+- Used by: PUM File tab grid
+
+INTEGRATION 6 BUDGET MASTER DATA
+
+- Reference: Remaining budget calculation dari budget allocation
+- Impact: Over budget determination logic
+- Integration: Budget tracking system
+
+INTEGRATION 7 WORKFLOW STATUS
+
+- Update status setelah approval atau rejection
+- Forward ke next workflow stage
+- Trigger downstream processing
+
+MONTHLY CLOSING CONSIDERATION
+
+- Priority approval untuk over budget items approaching month-end
+- Ensure all pending over budget approvals processed sebelum closing
+- Review cumulative over budget amounts saat closing
+
+YEAR END PROCESSING
+
+- All over budget documents harus finalized sebelum year-end
+- Final review status approvals
+- Archive old records
+- Audit report prepare
