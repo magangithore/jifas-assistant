@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Jifas.Assistant/Jifas.Assistant.csproj" />
+  <Project Path="jifas_assistant.DAL/jifas_assistant.DAL.csproj" Id="1aa074ab-7aa5-4893-973a-46691db3c8b1" />
 </Solution>

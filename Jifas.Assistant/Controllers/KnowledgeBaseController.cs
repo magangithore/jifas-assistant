@@ -1,42 +1,37 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Jifas.Assistant.Data;
-using Jifas.Assistant.Data.Models;
-using Jifas.Assistant.Services;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Jifas.Assistant.Services;
+using jifas_assistant.DAL.Models;
 
 namespace Jifas.Assistant.Controllers
 {
     /// <summary>
     /// Admin controller for managing JIFAS Knowledge Base
-    /// Handles CRUD operations for KB documents and seeding from MD files
     /// </summary>
-    [Route("api/kb")]
     [ApiController]
+    [Route("api/kb")]
     public class KnowledgeBaseController : ControllerBase
     {
-        private readonly JifasAssistantDbContext _db;
-        private readonly IKnowledgeBaseService _kbService;
-        private readonly IKBSeedingService _seedingService;
-        private readonly ILoggerService _logger;
-        private readonly HttpClient _httpClient;
+        private readonly JIFAS_AssistantContext _db;
+        private readonly IEmbeddingService _embeddingService;
+        private readonly ILoggerService _loggerService;
+        private readonly IKnowledgeBaseService _knowledgeBaseService;
 
         public KnowledgeBaseController(
-            JifasAssistantDbContext db,
-            IKnowledgeBaseService kbService,
-            IKBSeedingService seedingService,
-            ILoggerService logger,
-            HttpClient httpClient)
+            JIFAS_AssistantContext db,
+            IEmbeddingService embeddingService,
+            ILoggerService loggerService,
+            IKnowledgeBaseService knowledgeBaseService)
         {
-            _db = db ?? throw new ArgumentNullException(nameof(db));
-            _kbService = kbService ?? throw new ArgumentNullException(nameof(kbService));
-            _seedingService = seedingService ?? throw new ArgumentNullException(nameof(seedingService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _db = db;
+            _embeddingService = embeddingService;
+            _loggerService = loggerService;
+            _knowledgeBaseService = knowledgeBaseService;
         }
 
         /// <summary>
@@ -47,8 +42,6 @@ namespace Jifas.Assistant.Controllers
         {
             try
             {
-                _logger.LogInformation("[KnowledgeBaseController] Fetching all documents");
-
                 var documents = await _db.KnowledgeBaseDocuments
                     .Where(d => d.IsActive == true)
                     .Select(d => new
@@ -57,9 +50,9 @@ namespace Jifas.Assistant.Controllers
                         d.Title,
                         d.Category,
                         d.Tags,
-                        d.ViewCount,
                         d.CreatedAt,
-                        d.UpdatedAt
+                        d.UpdatedAt,
+                        ChunkCount = d.KnowledgeBaseChunks.Count
                     })
                     .ToListAsync();
 
@@ -67,7 +60,6 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Error fetching documents: {0}", ex, ex.Message);
                 return StatusCode(500, new { error = $"Error: {ex.Message}" });
             }
         }
@@ -80,13 +72,12 @@ namespace Jifas.Assistant.Controllers
         {
             try
             {
-                _logger.LogInformation("[KnowledgeBaseController] Fetching document {0}", id);
-
                 var document = await _db.KnowledgeBaseDocuments
+                    .Include(d => d.KnowledgeBaseChunks)
                     .FirstOrDefaultAsync(d => d.Id == id);
 
                 if (document == null)
-                    return NotFound(new { message = $"Document {id} not found" });
+                    return NotFound();
 
                 return Ok(new
                 {
@@ -95,15 +86,20 @@ namespace Jifas.Assistant.Controllers
                     document.Content,
                     document.Category,
                     document.Tags,
-                    document.ViewCount,
                     document.CreatedAt,
                     document.UpdatedAt,
-                    document.IsActive
+                    document.IsActive,
+                    Chunks = document.KnowledgeBaseChunks.Select(c => new
+                    {
+                        c.Id,
+                        c.ChunkIndex,
+                        c.Content,
+                        c.EmbeddingDimensions
+                    })
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Error fetching document: {0}", ex, ex.Message);
                 return StatusCode(500, new { error = $"Error: {ex.Message}" });
             }
         }
@@ -114,34 +110,34 @@ namespace Jifas.Assistant.Controllers
         [HttpPost("documents")]
         public async Task<IActionResult> AddDocument([FromBody] KBDocumentRequest request)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Title))
+            {
+                return BadRequest("Title is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Content))
+            {
+                return BadRequest("Content is required");
+            }
+
             try
             {
-                if (request == null || string.IsNullOrWhiteSpace(request.Title))
-                    return BadRequest(new { error = "Title is required" });
-
-                if (string.IsNullOrWhiteSpace(request.Content))
-                    return BadRequest(new { error = "Content is required" });
-
-                _logger.LogInformation("[KnowledgeBaseController] Adding new document: {0}", request.Title);
-
-                var document = new KnowledgeBaseDocument
+                var document = new KnowledgeBaseDocuments
                 {
                     Title = request.Title,
                     Content = request.Content,
                     Category = request.Category ?? "General",
                     Tags = request.Tags,
                     IsActive = true,
-                    ViewCount = 0,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    CreatedBy = "admin",
-                    UpdatedBy = "admin"
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
 
                 _db.KnowledgeBaseDocuments.Add(document);
                 await _db.SaveChangesAsync();
 
-                _logger.LogInformation("[KnowledgeBaseController] Document added with ID: {0}", document.Id);
+                // Create chunks from content
+                await CreateChunksAsync(document.Id, request.Content);
 
                 return Ok(new
                 {
@@ -152,7 +148,6 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Error adding document: {0}", ex, ex.Message);
                 return StatusCode(500, new { error = $"Error: {ex.Message}" });
             }
         }
@@ -165,20 +160,22 @@ namespace Jifas.Assistant.Controllers
         {
             try
             {
-                if (request == null)
-                    return BadRequest(new { error = "Request body is required" });
-
-                _logger.LogInformation("[KnowledgeBaseController] Updating document {0}", id);
-
                 var document = await _db.KnowledgeBaseDocuments.FindAsync(id);
                 if (document == null)
-                    return NotFound(new { message = $"Document {id} not found" });
+                    return NotFound();
 
                 if (!string.IsNullOrWhiteSpace(request.Title))
                     document.Title = request.Title;
 
                 if (!string.IsNullOrWhiteSpace(request.Content))
+                {
                     document.Content = request.Content;
+                    
+                    // Recreate chunks
+                    var oldChunks = _db.KnowledgeBaseChunks.Where(c => c.DocumentId == id);
+                    _db.KnowledgeBaseChunks.RemoveRange(oldChunks);
+                    await CreateChunksAsync(id, request.Content);
+                }
 
                 if (!string.IsNullOrWhiteSpace(request.Category))
                     document.Category = request.Category;
@@ -186,12 +183,9 @@ namespace Jifas.Assistant.Controllers
                 if (!string.IsNullOrWhiteSpace(request.Tags))
                     document.Tags = request.Tags;
 
-                document.UpdatedAt = DateTime.UtcNow;
-                document.UpdatedBy = "admin";
+                document.UpdatedAt = DateTime.Now;
 
                 await _db.SaveChangesAsync();
-
-                _logger.LogInformation("[KnowledgeBaseController] Document {0} updated successfully", id);
 
                 return Ok(new
                 {
@@ -201,7 +195,6 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Error updating document: {0}", ex, ex.Message);
                 return StatusCode(500, new { error = $"Error: {ex.Message}" });
             }
         }
@@ -214,19 +207,14 @@ namespace Jifas.Assistant.Controllers
         {
             try
             {
-                _logger.LogInformation("[KnowledgeBaseController] Deleting document {0}", id);
-
                 var document = await _db.KnowledgeBaseDocuments.FindAsync(id);
                 if (document == null)
-                    return NotFound(new { message = $"Document {id} not found" });
+                    return NotFound();
 
                 document.IsActive = false;
-                document.UpdatedAt = DateTime.UtcNow;
-                document.UpdatedBy = "admin";
+                document.UpdatedAt = DateTime.Now;
 
                 await _db.SaveChangesAsync();
-
-                _logger.LogInformation("[KnowledgeBaseController] Document {0} deleted successfully", id);
 
                 return Ok(new
                 {
@@ -236,7 +224,6 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Error deleting document: {0}", ex, ex.Message);
                 return StatusCode(500, new { error = $"Error: {ex.Message}" });
             }
         }
@@ -247,14 +234,14 @@ namespace Jifas.Assistant.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int topK = 5)
         {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest("Query is required");
+            }
+
             try
             {
-                if (string.IsNullOrWhiteSpace(query))
-                    return BadRequest(new { error = "Query is required" });
-
-                _logger.LogInformation("[KnowledgeBaseController] Searching KB for: {0}", query);
-
-                var results = await _kbService.SearchAsync(query, topK);
+                var results = await _knowledgeBaseService.SearchAsync(query, topK);
 
                 return Ok(results.Select(r => new
                 {
@@ -267,103 +254,126 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Error searching KB: {0}", ex, ex.Message);
                 return StatusCode(500, new { error = $"Error: {ex.Message}" });
             }
         }
 
         /// <summary>
-        /// Check Qdrant health
+        /// Create chunks from document content and generate embeddings
         /// </summary>
-        [HttpGet("admin/qdrant-health")]
-        public async Task<IActionResult> CheckQdrantHealth()
+        private async Task CreateChunksAsync(int documentId, string content, int chunkSize = 500, int overlap = 50)
         {
-            try
+            System.Diagnostics.Debug.WriteLine($"[KB Upload] Creating chunks for document {documentId}...");
+
+            var chunks = new List<KnowledgeBaseChunks>();
+            var paragraphs = content.Split(new[] { "\n\n", "\r\n\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+            int chunkIndex = 0;
+            var currentChunk = "";
+
+            foreach (var paragraph in paragraphs)
             {
-                var qdrantUrl = "http://localhost:6333";
-                var response = await _httpClient.GetAsync($"{qdrantUrl}/health");
-
-                var isHealthy = response.IsSuccessStatusCode;
-                return Ok(new
+                if ((currentChunk + paragraph).Length > chunkSize && !string.IsNullOrEmpty(currentChunk))
                 {
-                    healthy = isHealthy,
-                    qdrantUrl = qdrantUrl,
-                    statusCode = (int)response.StatusCode,
-                    message = isHealthy ? "Qdrant is healthy" : "Qdrant is not responding"
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("[KnowledgeBaseController] Qdrant health check failed: {0}", ex, ex.Message);
-                return Ok(new
-                {
-                    healthy = false,
-                    message = $"Qdrant health check failed: {ex.Message}"
-                });
-            }
-        }
-
-        /// <summary>
-        /// Seed knowledge base from MD files in knowledge-base/ folder
-        /// Reads all .md files, generates embeddings, and saves to database
-        /// </summary>
-        [HttpPost("admin/seed")]
-        public async Task<IActionResult> SeedKnowledgeBase([FromQuery] string folderPath = "")
-        {
-            try
-            {
-                _logger.LogInformation("[KnowledgeBaseController] Starting KB seeding...");
-
-                var results = await _seedingService.SeedKnowledgeBaseAsync(folderPath);
-
-                var summary = new
-                {
-                    total = results.Count,
-                    success = results.Count(r => r.Success),
-                    failed = results.Count(r => !r.Success),
-                    documents = results.Select(r => new
+                    chunks.Add(new KnowledgeBaseChunks
                     {
-                        r.FileName,
-                        r.Success,
-                        r.DocumentId,
-                        r.Message
-                    })
-                };
+                        DocumentId = documentId,
+                        ChunkIndex = chunkIndex++,
+                        Content = currentChunk.Trim(),
+                        CreatedAt = DateTime.Now
+                    });
 
-                _logger.LogInformation("[KnowledgeBaseController] Seeding complete: {0} success, {1} failed",
-                    summary.success, summary.failed);
+                    // Keep overlap
+                    var words = currentChunk.Split(' ');
+                    currentChunk = string.Join(" ", words.Skip(Math.Max(0, words.Length - overlap))) + "\n\n";
+                }
 
-                return Ok(summary);
+                currentChunk += paragraph + "\n\n";
+            }
+
+            // Add remaining content
+            if (!string.IsNullOrWhiteSpace(currentChunk))
+            {
+                chunks.Add(new KnowledgeBaseChunks
+                {
+                    DocumentId = documentId,
+                    ChunkIndex = chunkIndex,
+                    Content = currentChunk.Trim(),
+                    CreatedAt = DateTime.Now
+                });
+            }
+
+            _db.KnowledgeBaseChunks.AddRange(chunks);
+            await _db.SaveChangesAsync();
+
+            System.Diagnostics.Debug.WriteLine($"[KB Upload] Created {chunks.Count} chunks, now generating embeddings...");
+
+            // Generate embeddings for each chunk
+            try
+            {
+                int successCount = 0;
+
+                foreach (var chunk in chunks)
+                {
+                    try
+                    {
+                        var embedding = await _embeddingService.GenerateEmbeddingAsync(chunk.Content);
+                        
+                        if (embedding != null && embedding.Count > 0)
+                        {
+                            chunk.Embedding = JsonConvert.SerializeObject(embedding);
+                            chunk.EmbeddingDimensions = embedding.Count;
+                            successCount++;
+                            System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: {embedding.Count}-dim embedding");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: Failed to generate embedding");
+                        }
+
+                        // Small delay to avoid rate limits
+                        await Task.Delay(100);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[KB Upload] Error generating embedding for chunk {chunk.ChunkIndex}: {ex.Message}");
+                    }
+                }
+
+                await _db.SaveChangesAsync();
+                System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Generated embeddings for {successCount}/{chunks.Count} chunks");
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Seeding error: {0}", ex, ex.Message);
-                return StatusCode(500, new { error = ex.Message });
+                System.Diagnostics.Debug.WriteLine($"[KB Upload] Error in embedding generation: {ex.Message}");
+                // Continue even if embedding generation fails - chunks are still created
             }
         }
 
         /// <summary>
-        /// Clear all KB documents from database
+        /// Get Knowledge Base statistics
         /// </summary>
-        [HttpDelete("admin/clear")]
-        public async Task<IActionResult> ClearKnowledgeBase()
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
         {
             try
             {
-                _logger.LogWarning("[KnowledgeBaseController] Clearing all KB documents...");
-
-                var success = await _seedingService.ClearKnowledgeBaseAsync();
+                var docCount = await _db.KnowledgeBaseDocuments.CountAsync(d => d.IsActive == true);
+                var chunkCount = await _db.KnowledgeBaseChunks.CountAsync();
+                var chunksWithEmbeddings = await _db.KnowledgeBaseChunks.CountAsync(c => c.Embedding != null);
 
                 return Ok(new
                 {
-                    success = success,
-                    message = success ? "Knowledge base cleared" : "Failed to clear knowledge base"
+                    totalDocuments = docCount,
+                    totalChunks = chunkCount,
+                    chunksWithEmbeddings = chunksWithEmbeddings,
+                    embeddingCoverage = chunkCount > 0 ? Math.Round((double)chunksWithEmbeddings / chunkCount * 100, 2) + "%" : "0%",
+                    lastUpdated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError("[KnowledgeBaseController] Clear error: {0}", ex, ex.Message);
-                return StatusCode(500, new { error = ex.Message });
+                return StatusCode(500, new { error = $"Error getting stats: {ex.Message}" });
             }
         }
     }

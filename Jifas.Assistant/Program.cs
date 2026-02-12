@@ -5,10 +5,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Jifas.Assistant.Configuration;
-using Jifas.Assistant.Data;
-using Jifas.Assistant.Data.Repositories;
-using Jifas.Assistant.Data.UnitOfWork;
 using Jifas.Assistant.Services;
+using jifas_assistant.DAL.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 // ADD SERVICES TO CONTAINER
 // ========================================
 
-// 1. Add Database Context with SQL Server
+// 1. Add Database Context with SQL Server (OLD)
+// NOTE: Using JIFAS_AssistantContext from DAL instead
+/*
 builder.Services.AddDbContext<JifasAssistantDbContext>(options =>
 {
     var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
@@ -26,6 +26,7 @@ builder.Services.AddDbContext<JifasAssistantDbContext>(options =>
         sqlServerOptions.EnableRetryOnFailure(maxRetryCount: 5);
     });
 });
+*/
 
 // 2. Add Configuration Models (Strongly Typed Settings)
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
@@ -48,9 +49,20 @@ builder.Services.Configure<OptimizationSettings>(builder.Configuration.GetSectio
 builder.Services.AddSingleton(sp => new AppSettings(builder.Configuration));
 
 // 3.5. Add Data Access Layer - Repositories & Unit of Work
-builder.Services.AddScoped<IChatRepository, ChatRepository>();
-builder.Services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
-builder.Services.AddScoped<IUnitOfWork, Jifas.Assistant.Data.UnitOfWork.UnitOfWork>();
+// NOTE: Old data layer commented out - keeping for reference
+// builder.Services.AddScoped<IChatRepository, ChatRepository>();
+// builder.Services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
+// builder.Services.AddScoped<IUnitOfWork, Jifas.Assistant.Data.UnitOfWork.UnitOfWork>();
+
+// 3.6. Add DAL Context for KB Search
+builder.Services.AddDbContext<JIFAS_AssistantContext>(options =>
+{
+    var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+    options.UseSqlServer(connectionString);
+});
+
+// 3.7. Add Knowledge Base Search Service (RAG)
+builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
 
 // 4. Add Controllers & JSON Options
 builder.Services.AddControllers()
@@ -80,7 +92,7 @@ builder.Services.AddMemoryCache();
 // 7.5 Add HttpClient Factory
 builder.Services.AddHttpClient();
 
-// 8. Add Application Services
+// 8. Add Application Services (FULL SUITE)
 // ========== Core Services ==========
 builder.Services.AddScoped<ILoggerService, FileLoggerService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
@@ -91,9 +103,7 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
-
-// ========== Knowledge Base Seeding ==========
-builder.Services.AddScoped<IKBSeedingService, KBSeedingService>();  // Simplified: SQL Server only
+builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
 
 // ========== Infrastructure Services ==========
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
@@ -102,9 +112,15 @@ builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
 builder.Services.AddScoped<IMetricsService, MetricsService>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
 
+// ========== Optional Services (Optimization) ==========
+builder.Services.AddSingleton<ICommonQueryCacheService, CommonQueryCacheService>();
+
+// ========== Conversation Logging ==========
+builder.Services.AddScoped<IConversationService, ConversationService>();
+
 // 9. Add Health Checks
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<JifasAssistantDbContext>(
+    .AddDbContextCheck<JIFAS_AssistantContext>(
         name: "database",
         tags: new[] { "ready" });
 
@@ -118,16 +134,18 @@ var app = builder.Build();
 // DATABASE INITIALIZATION
 // ========================================
 
+// DATABASE INITIALIZATION (SIMPLIFIED)
+// NOTE: Using JIFAS_AssistantContext only for RAG KB
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<JifasAssistantDbContext>();
+        var context = services.GetRequiredService<JIFAS_AssistantContext>();
         
         if (context.Database.IsSqlServer())
         {
-            // Apply any pending migrations (if connection is available)
             try
             {
                 context.Database.Migrate();
@@ -139,7 +157,7 @@ using (var scope = app.Services.CreateScope())
             {
                 var logger = services.GetService<ILogger<Program>>();
                 if (logger != null)
-                    logger.LogWarning("Database migration skipped (may have been applied manually). Error: {0}", migrateEx.Message);
+                    logger.LogWarning("Database migration skipped. Error: {0}", migrateEx.Message);
             }
         }
     }

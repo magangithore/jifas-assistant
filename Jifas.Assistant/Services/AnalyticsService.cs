@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Jifas.Assistant.Data;
 using Microsoft.EntityFrameworkCore;
+using jifas_assistant.DAL.Models;
 
 namespace Jifas.Assistant.Services
 {
@@ -56,11 +56,13 @@ namespace Jifas.Assistant.Services
 
     public class AnalyticsService : IAnalyticsService
     {
-        private readonly JifasAssistantDbContext _db;
+        private readonly JIFAS_AssistantContext _db;
+        private readonly ILoggerService _logger;
 
-        public AnalyticsService(JifasAssistantDbContext db)
+        public AnalyticsService(JIFAS_AssistantContext db, ILoggerService logger)
         {
             _db = db;
+            _logger = logger;
         }
 
         public async Task<List<DocumentPerformance>> GetDocumentPerformanceAsync()
@@ -70,25 +72,24 @@ namespace Jifas.Assistant.Services
                 var result = new List<DocumentPerformance>();
                 var now = DateTime.Now;
 
-                // Get all documents
+                // Get all active documents
                 var documents = await _db.KnowledgeBaseDocuments
                     .Where(d => d.IsActive == true)
                     .ToListAsync();
 
-                // Get all chats (conversations)
+                // Get all chats to analyze KB usage
                 var chats = await _db.Chats.ToListAsync();
 
                 foreach (var doc in documents)
                 {
-                    // Find chats related to this doc - simplified matching
+                    // Chats model menggunakan IsOutOfScope dan Confidence
                     var relatedChats = chats
-                        .Where(c => !string.IsNullOrEmpty(c.UserMessage) && 
-                                   c.UserMessage.ToLower().Contains(doc.Title?.ToLower() ?? ""))
+                        .Where(c => !string.IsNullOrEmpty(c.RelatedDocumentIds) && c.RelatedDocumentIds.Contains(doc.Id.ToString()))
                         .ToList();
 
                     var hitCount = relatedChats.Count;
                     var avgConfidence = relatedChats.Count > 0 
-                        ? relatedChats.Average(c => c.ConfidenceScore ?? 0.75)
+                        ? relatedChats.Average(c => c.Confidence ?? 0)
                         : 0;
 
                     var lastAccessed = relatedChats.Count > 0
@@ -99,7 +100,9 @@ namespace Jifas.Assistant.Services
                         ? (int)(now - lastAccessed.Value).TotalDays
                         : 999;
 
-                    var successRate = hitCount > 0 ? 0.75 : 0; // Default success rate
+                    var successRate = relatedChats.Count > 0
+                        ? (double)relatedChats.Count(c => (c.Confidence ?? 0) > 0.5) / relatedChats.Count
+                        : 0;
 
                     var status = DetermineDocStatus(hitCount, avgConfidence, daysOld);
                     var trend = "STABLE";
@@ -122,7 +125,7 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AnalyticsService] Error in GetDocumentPerformance: {ex.Message}");
+                _logger.LogError($"[AnalyticsService] Error in GetDocumentPerformance: {ex.Message}");
                 return new List<DocumentPerformance>();
             }
         }
@@ -135,33 +138,32 @@ namespace Jifas.Assistant.Services
 
                 // Get chats from last N days
                 var recentChats = await _db.Chats
-                    .Where(c => c.CreatedAt >= cutoffDate)
+                    .Where(c => c.CreatedAt >= cutoffDate && !string.IsNullOrEmpty(c.Message))
                     .ToListAsync();
 
-                // Group by user message and calculate stats
+                // Group by message and calculate stats
                 var queryStats = recentChats
-                    .GroupBy(c => c.UserMessage)
+                    .GroupBy(c => c.Message)
                     .Where(g => !string.IsNullOrWhiteSpace(g.Key))
                     .Select(g => new QueryStatistic
                     {
                         Query = g.Key,
                         Frequency = g.Count(),
-                        AverageConfidence = Math.Round(g.Average(c => c.ConfidenceScore ?? 0.75), 2),
-                        SuccessRate = Math.Round((double)g.Count(c => (c.ConfidenceScore ?? 0.75) > 0.5) / g.Count(), 2),
-                        TopDocument = g.First().Category ?? "KB"
+                        AverageConfidence = Math.Round(g.Average(c => c.Confidence ?? 0), 2),
+                        SuccessRate = Math.Round((double)g.Count(c => (c.Confidence ?? 0) > 0.5) / g.Count(), 2),
+                        TopDocument = "KB"
                     })
                     .OrderByDescending(x => x.Frequency)
                     .Take(20)
                     .ToList();
 
-                System.Diagnostics.Debug.WriteLine(
-                    $"[AnalyticsService] Found {queryStats.Count} unique queries in last {days} days");
+                _logger.LogInformation($"[AnalyticsService] Found {queryStats.Count} unique queries in last {days} days");
 
                 return queryStats;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AnalyticsService] Error in GetPopularQueries: {ex.Message}");
+                _logger.LogError($"[AnalyticsService] Error in GetPopularQueries: {ex.Message}");
                 return new List<QueryStatistic>();
             }
         }
@@ -170,15 +172,17 @@ namespace Jifas.Assistant.Services
         {
             try
             {
-                var chats = await _db.Chats.ToListAsync();
+                var conversations = await _db.Chats.ToListAsync();
                 var documents = await _db.KnowledgeBaseDocuments.Where(d => d.IsActive == true).ToListAsync();
+                var chunks = await _db.KnowledgeBaseChunks.Where(c => c.Embedding != null).ToListAsync();
 
-                var totalConversations = chats.Count;
-                var kbHitCount = chats.Count; // All chats are KB-related in this system
-                var avgConfidence = 0.75; // Default since Chat model doesn't track confidence
+                var totalConversations = conversations.Count;
+                var kbHitCount = conversations.Count(c => c.IsOutOfScope != true);
+                var avgConfidence = conversations.Count > 0
+                    ? conversations.Average(c => c.Confidence ?? 0)
+                    : 0;
 
-                // Calculate health score (0-1)
-                var kbHitRate = totalConversations > 0 ? 1.0 : 0; // 100% if any chats exist
+                var kbHitRate = totalConversations > 0 ? (double)kbHitCount / totalConversations : 0;
                 var confidenceScore = avgConfidence;
                 var healthScore = (kbHitRate * 0.5) + (confidenceScore * 0.5);
 
@@ -192,7 +196,7 @@ namespace Jifas.Assistant.Services
                     KbHitRate = Math.Round(kbHitRate, 2),
                     AverageConfidence = Math.Round(avgConfidence, 2),
                     DocumentCount = documents.Count,
-                    ChunkCount = 0, // Not tracked in new model
+                    ChunkCount = chunks.Count,
                     HealthStatus = healthStatus,
                     LastUpdatedAt = DateTime.Now,
                     Recommendations = recommendations
@@ -200,7 +204,7 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AnalyticsService] Error in GetSystemHealth: {ex.Message}");
+                _logger.LogError($"[AnalyticsService] Error in GetSystemHealth: {ex.Message}");
                 return new SystemHealthMetrics();
             }
         }
@@ -211,10 +215,9 @@ namespace Jifas.Assistant.Services
 
             try
             {
-                // Get document performance
                 var docPerformance = await GetDocumentPerformanceAsync();
 
-                // Recommendation 1: Identify underperforming docs
+                // Underperforming docs
                 var needsReview = docPerformance
                     .Where(d => d.AverageConfidence < 0.65 && d.HitCount > 0)
                     .ToList();
@@ -225,7 +228,7 @@ namespace Jifas.Assistant.Services
                         $"Review doc '{doc.Title}' - low confidence ({doc.AverageConfidence:F0}%) despite {doc.HitCount} hits");
                 }
 
-                // Recommendation 2: Identify stale docs
+                // Stale docs
                 var staleDocs = docPerformance
                     .Where(d => d.DaysOld > 30 && d.HitCount > 0)
                     .ToList();
@@ -236,38 +239,19 @@ namespace Jifas.Assistant.Services
                         $"Update doc '{doc.Title}' - last accessed {doc.DaysOld} days ago");
                 }
 
-                // Recommendation 3: Identify unused docs
-                var unusedDocs = docPerformance
-                    .Where(d => d.HitCount == 0)
-                    .ToList();
-
+                // Unused docs
+                var unusedDocs = docPerformance.Where(d => d.HitCount == 0).ToList();
                 if (unusedDocs.Count > 0)
                 {
                     var titles = string.Join(", ", unusedDocs.Select(d => $"'{d.Title}'"));
                     recommendations.Add($"Consider archiving unused docs: {titles}");
                 }
 
-                // Recommendation 4: Popular topics without good coverage
-                var queries = await GetPopularQueriesAsync(30);
-                var lowSuccessQueries = queries
-                    .Where(q => q.SuccessRate < 0.70)
-                    .Take(3)
-                    .ToList();
-
-                if (lowSuccessQueries.Count > 0)
-                {
-                    foreach (var query in lowSuccessQueries)
-                    {
-                        recommendations.Add(
-                            $"Create/improve doc for popular query: '{query.Query}' (success rate: {query.SuccessRate:P})");
-                    }
-                }
-
-                return recommendations.Take(5).ToList(); // Top 5 recommendations
+                return recommendations.Take(5).ToList();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AnalyticsService] Error in GetRecommendations: {ex.Message}");
+                _logger.LogError($"[AnalyticsService] Error in GetRecommendations: {ex.Message}");
                 return new List<string> { "Unable to generate recommendations" };
             }
         }
@@ -276,16 +260,12 @@ namespace Jifas.Assistant.Services
         {
             if (hitCount == 0)
                 return "UNUSED";
-
             if (daysOld > 60)
                 return "STALE";
-
             if (avgConfidence < 0.60)
                 return "NEEDS_REVIEW";
-
             if (avgConfidence >= 0.80 && hitCount >= 5)
                 return "HEALTHY";
-
             return "ACTIVE";
         }
 

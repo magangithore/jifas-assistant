@@ -54,6 +54,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Compatibility\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 
@@ -65,6 +66,9 @@
     <Compile Remove="Controller\ChatbotController.cs" />
     <Compile Remove="Controller\KnowledgeBaseController.cs" />
     <Compile Remove="Configuration\ConfigurationUsageExamples.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\jifas_assistant.DAL\jifas_assistant.DAL.csproj" />
   </ItemGroup>
 
 </Project>
