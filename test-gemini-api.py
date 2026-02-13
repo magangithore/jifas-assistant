@@ -5,7 +5,7 @@ import requests
 import json
 import sys
 
-API_KEY = "AIzaSyDdTDJEIjXTPI4IoJLTTP4giavhvkR8z0k"
+API_KEY = "Replace with your API Key"
 MODEL = "models/text-embedding-004"
 URL = f"https://generativelanguage.googleapis.com/v1/models/text-embedding-004:embedContent?key={API_KEY}"
 

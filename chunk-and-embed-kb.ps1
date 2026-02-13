@@ -6,7 +6,7 @@
 param(
     [string]$SqlServer = "(localdb)\MSSQLLocalDB",
     [string]$Database = "JIFAS_Assistant",
-    [string]$GeminiApiKey = "AIzaSyDdTDJEIjXTPI4IoJLTTP4giavhvkR8z0k",
+    [string]$GeminiApiKey = "Replace with your API Key",
     [string]$GeminiModel = "models/gemini-1.5-flash",
     [int]$ChunkSize = 500,
     [int]$ChunkOverlap = 50
