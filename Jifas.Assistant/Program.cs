@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Services;
+using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,22 +29,12 @@ builder.Services.AddDbContext<JifasAssistantDbContext>(options =>
 });
 */
 
-// 2. Add Configuration Models (Strongly Typed Settings)
+// 2. Add Configuration Models (Strongly Typed Settings) - ONLY ESSENTIALS
 builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
-builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection("OpenAI"));
-builder.Services.Configure<AzureOpenAISettings>(builder.Configuration.GetSection("Azure:OpenAI"));
-builder.Services.Configure<QdrantSettings>(builder.Configuration.GetSection("Qdrant"));
 builder.Services.Configure<KnowledgeBaseSettings>(builder.Configuration.GetSection("KnowledgeBase"));
 builder.Services.Configure<ChatSettings>(builder.Configuration.GetSection("Chat"));
 builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
-builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("API"));
-builder.Services.Configure<SupportSettings>(builder.Configuration.GetSection("Support"));
 builder.Services.Configure<SuggestionSettings>(builder.Configuration.GetSection("Suggestion"));
-builder.Services.Configure<SearchSettings>(builder.Configuration.GetSection("Search"));
-builder.Services.Configure<MetricsSettings>(builder.Configuration.GetSection("Metrics"));
-builder.Services.Configure<HealthCheckSettings>(builder.Configuration.GetSection("HealthCheck"));
-builder.Services.Configure<PerformanceSettings>(builder.Configuration.GetSection("Performance"));
-builder.Services.Configure<OptimizationSettings>(builder.Configuration.GetSection("Optimization"));
 
 // 3. Add AppSettings Helper
 builder.Services.AddSingleton(sp => new AppSettings(builder.Configuration));
@@ -63,8 +54,7 @@ builder.Services.AddDbContext<JIFAS_AssistantContext>(options =>
 
 // 3.7. Add Knowledge Base Search Service (RAG)
 builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
-
-// 4. Add Controllers & JSON Options
+// NOTE: IKnowledgeBaseSearchService already registered above, no duplicate needed
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
@@ -92,31 +82,27 @@ builder.Services.AddMemoryCache();
 // 7.5 Add HttpClient Factory
 builder.Services.AddHttpClient();
 
-// 8. Add Application Services (FULL SUITE)
+// 8. Add Application Services (ESSENTIAL ONLY)
 // ========== Core Services ==========
 builder.Services.AddScoped<ILoggerService, FileLoggerService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
-builder.Services.AddScoped<IGeminiService, GeminiService>();
+builder.Services.AddScoped<IInputValidator, InputValidator>();  // ? INPUT VALIDATION (CRITICAL)
+builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();  // ? KB SEARCH (MUST BE BEFORE PROMPT ENGINE)
+builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();  // ? INTELLIGENT PROMPT ENGINE
+builder.Services.AddScoped<IGeminiService, GeminiService>();  // ? ENHANCED GEMINI WITH PROMPT ENGINE
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
+builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();  // ? CHAT HISTORY PERSISTENCE
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
-builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
-
-// ========== Infrastructure Services ==========
-builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
-builder.Services.AddScoped<IPerformanceMonitorService, PerformanceMonitorService>();
 builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
-builder.Services.AddScoped<IMetricsService, MetricsService>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
 
-// ========== Optional Services (Optimization) ==========
+// ========== Optional Services ==========
 builder.Services.AddSingleton<ICommonQueryCacheService, CommonQueryCacheService>();
-
-// ========== Conversation Logging ==========
-builder.Services.AddScoped<IConversationService, ConversationService>();
 
 // 9. Add Health Checks
 builder.Services.AddHealthChecks()

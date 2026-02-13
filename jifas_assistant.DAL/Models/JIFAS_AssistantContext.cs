@@ -19,6 +19,8 @@ public partial class JIFAS_AssistantContext : DbContext
 
     public virtual DbSet<Chats> Chats { get; set; }
 
+    public virtual DbSet<ChatHistory> ChatHistories { get; set; }
+
     public virtual DbSet<KnowledgeBaseChunks> KnowledgeBaseChunks { get; set; }
 
     public virtual DbSet<KnowledgeBaseDocuments> KnowledgeBaseDocuments { get; set; }

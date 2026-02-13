@@ -64,6 +64,102 @@ namespace Jifas.Assistant.Models
         /// Knowledge Base results used to generate this response
         /// </summary>
         public List<KnowledgeBaseResult> KnowledgeBaseResults { get; set; } = new List<KnowledgeBaseResult>();
+
+        /// <summary>
+        /// Performance metrics for this response (in milliseconds)
+        /// </summary>
+        [JsonProperty("performanceMetrics")]
+        public PerformanceMetrics PerformanceMetrics { get; set; } = new PerformanceMetrics();
+    }
+
+    /// <summary>
+    /// Performance metrics tracking for response time analysis
+    /// All times in milliseconds (ms)
+    /// </summary>
+    public class PerformanceMetrics
+    {
+        /// <summary>
+        /// Time taken for input validation (ms)
+        /// </summary>
+        public long InputValidationMs { get; set; }
+
+        /// <summary>
+        /// Time taken for cache lookup (ms)
+        /// </summary>
+        public long CacheLookupMs { get; set; }
+
+        /// <summary>
+        /// Time taken for scope detection (ms)
+        /// </summary>
+        public long ScopeDetectionMs { get; set; }
+
+        /// <summary>
+        /// Time taken for KB search (keyword + semantic in parallel) (ms)
+        /// </summary>
+        public long KbSearchMs { get; set; }
+
+        /// <summary>
+        /// Time taken for KB result validation (ms)
+        /// </summary>
+        public long ResultValidationMs { get; set; }
+
+        /// <summary>
+        /// Time taken for confidence calculation (ms)
+        /// </summary>
+        public long ConfidenceCalculationMs { get; set; }
+
+        /// <summary>
+        /// Time taken for LLM response generation (ms)
+        /// </summary>
+        public long LlmResponseMs { get; set; }
+
+        /// <summary>
+        /// Time taken for suggestions generation (ms)
+        /// </summary>
+        public long SuggestionsMs { get; set; }
+
+        /// <summary>
+        /// Time taken for response caching (ms)
+        /// </summary>
+        public long CachingMs { get; set; }
+
+        /// <summary>
+        /// Total end-to-end response time (ms)
+        /// </summary>
+        public long TotalMs { get; set; }
+
+        /// <summary>
+        /// Whether the response was served from cache (fast path)
+        /// </summary>
+        public bool WasCacheLit { get; set; }
+
+        /// <summary>
+        /// Whether suggestions were cached
+        /// </summary>
+        public bool SuggestionsCached { get; set; }
+
+        /// <summary>
+        /// Average KB search result score (0-1)
+        /// </summary>
+        public double AverageKbScore { get; set; }
+
+        /// <summary>
+        /// Number of KB results before validation
+        /// </summary>
+        public int KbResultsBeforeValidation { get; set; }
+
+        /// <summary>
+        /// Number of KB results after validation
+        /// </summary>
+        public int KbResultsAfterValidation { get; set; }
+
+        /// <summary>
+        /// Performance summary for logging
+        /// </summary>
+        public string GetSummary()
+        {
+            return $"[PERFORMANCE] Total: {TotalMs}ms | Validation: {InputValidationMs}ms | KB Search: {KbSearchMs}ms | LLM: {LlmResponseMs}ms | Suggestions: {SuggestionsMs}ms | Cache: {(WasCacheLit ? "HIT (fast)" : "MISS")}";
+        }
     }
 
     /// <summary>

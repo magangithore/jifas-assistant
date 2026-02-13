@@ -12,60 +12,40 @@ using Newtonsoft.Json.Linq;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Gemini API service for JIFAS AI Assistant
-    /// STRICT: Only uses JIFAS Knowledge Base for answers
+    /// Gemini API Service for JIFAS AI Assistant
+    /// - Uses semantic search + keyword search for intelligent KB matching
+    /// - Generates context-aware, professional responses
+    /// - STRICT KB-only mode: Never makes up information
     /// </summary>
     public class GeminiService : IGeminiService
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly ILoggerService _logger;
+        private readonly IPromptEngineeringService _promptEngineering;
+        private readonly IKnowledgeBaseSearchService _kbSearch;
         private readonly string _apiKey;
         private readonly string _baseUrl;
         private readonly string _model;
 
-        // JIFAS-specific system prompt
-        private const string JIFAS_SYSTEM_PROMPT = @"
-Kamu adalah JIFAS AI Assistant, asisten virtual khusus untuk Jababeka Integrated Finance Accounting System (JIFAS).
-
-ATURAN KETAT:
-1. HANYA jawab pertanyaan yang berkaitan dengan JIFAS berdasarkan Knowledge Base yang diberikan.
-2. Jika konteks Knowledge Base tidak mencakup jawaban, katakan dengan jelas bahwa informasi tidak tersedia di Knowledge Base JIFAS.
-3. JANGAN pernah menjawab pertanyaan di luar konteks JIFAS (seperti cuaca, berita, resep masakan, dll).
-4. Jawab dalam Bahasa Indonesia yang profesional dan mudah dipahami.
-5. Berikan jawaban yang ringkas namun lengkap.
-6. Jika user bertanya hal yang tidak terkait JIFAS, tolak dengan sopan dan arahkan kembali ke topik JIFAS.
-
-FORMAT JAWABAN:
-- Gunakan bahasa yang ramah dan profesional
-- Berikan langkah-langkah jika diperlukan
-- Sertakan informasi kontak support jika relevan
-
-TOPIK YANG DAPAT DIJAWAB:
-- Login dan akses JIFAS
-- Troubleshooting JIFAS
-- Fitur dan menu JIFAS (AR, AP, GL, Budget, Reports)
-- Konfigurasi dan pengaturan JIFAS
-- User guide dan panduan JIFAS
-- Pertanyaan teknis seputar JIFAS
-";
-
         public GeminiService(
             HttpClient httpClient,
             IConfiguration configuration,
-            ILoggerService logger)
+            ILoggerService logger,
+            IPromptEngineeringService promptEngineering,
+            IKnowledgeBaseSearchService kbSearch)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
+            _promptEngineering = promptEngineering ?? throw new ArgumentNullException(nameof(promptEngineering));
+            _kbSearch = kbSearch ?? throw new ArgumentNullException(nameof(kbSearch));
 
             _apiKey = _configuration["Gemini:ApiKey"];
             if (string.IsNullOrEmpty(_apiKey))
             {
                 _logger.LogError("[GeminiService] Gemini API key not configured", null);
-                throw new InvalidOperationException(
-                    "Gemini API key not found. Please set Gemini:ApiKey in appsettings.json"
-                );
+                throw new InvalidOperationException("Gemini API key not configured in appsettings.json");
             }
 
             _model = _configuration["Gemini:Model"] ?? "gemini-2.0-flash";
@@ -74,6 +54,10 @@ TOPIK YANG DAPAT DIJAWAB:
             _logger.LogInformation("[GeminiService] Initialized with model: {0}", _model);
         }
 
+        /// <summary>
+        /// Generate response using intelligent semantic search + smart prompts
+        /// This ensures AI finds CORRECT answers in KB
+        /// </summary>
         public async Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults)
         {
             try
@@ -84,39 +68,53 @@ TOPIK YANG DAPAT DIJAWAB:
                     return "Pertanyaan tidak valid. Silakan berikan pertanyaan yang jelas.";
                 }
 
-                // Build context from knowledge base results
-                var kbContext = BuildKnowledgeBaseContext(kbResults);
+                // Normalize query for better matching
+                var normalizedQuery = NormalizeQuery(userQuery);
+                _logger.LogInformation("[GeminiService] Processing query: {0}", normalizedQuery);
 
-                // If no KB results found
-                if (string.IsNullOrEmpty(kbContext))
+                // Validate KB results
+                if (kbResults == null || kbResults.Count == 0)
                 {
-                    _logger.LogWarning("[GeminiService] No KB results found for query: {0}", userQuery);
-                    return "Mohon maaf, saya tidak menemukan informasi yang relevan di Knowledge Base JIFAS untuk pertanyaan Anda. " +
-                           "Silakan hubungi IT Help Desk di finance-it@jababeka.com untuk bantuan lebih lanjut.";
+                    _logger.LogWarning("[GeminiService] No KB results found for query: {0}", normalizedQuery);
+                    return BuildNoResultsMessage(normalizedQuery);
                 }
 
-                var prompt = $@"{JIFAS_SYSTEM_PROMPT}
+                _logger.LogInformation("[GeminiService] Found {0} KB results (relevance: {1}%)", 
+                    kbResults.Count, 
+                    (int)(kbResults.Max(r => r.Score) * 100));
 
-=== KNOWLEDGE BASE JIFAS ===
-{kbContext}
-=== END KNOWLEDGE BASE ===
+                // Use PromptEngineeringService to build intelligent prompt
+                var intelligentPrompt = await _promptEngineering.BuildIntelligentPromptAsync(
+                    normalizedQuery,
+                    kbResults,
+                    sessionContext: null
+                );
 
-Pertanyaan User: {userQuery}
+                _logger.LogDebug("[GeminiService] Calling Gemini API with intelligent prompt");
+                var response = await CallGeminiApiAsync(intelligentPrompt);
 
-Berikan jawaban berdasarkan Knowledge Base di atas. Jika informasi tidak tersedia di Knowledge Base, katakan dengan jelas.";
+                if (string.IsNullOrEmpty(response))
+                {
+                    _logger.LogWarning("[GeminiService] Empty response from Gemini");
+                    return "Maaf, terjadi kesalahan dalam memproses jawaban. Silakan coba lagi.";
+                }
 
-                _logger.LogDebug("[GeminiService] Calling Gemini API for query: {0}", userQuery);
-                var response = await CallGeminiApiAsync(prompt);
-                
-                _logger.LogInformation("[GeminiService] Successfully generated response for query");
-                return response;
+                // Format response for better readability
+                var formattedResponse = FormatResponse(response);
+
+                _logger.LogInformation("[GeminiService] Response generated successfully ({0} chars)", response.Length);
+                return formattedResponse;
             }
             catch (Exception ex)
             {
                 _logger.LogError("[GeminiService] Error in GenerateResponseAsync: {0}", ex, ex.Message);
-                return "Mohon maaf, terjadi kesalahan dalam memproses permintaan Anda. Silakan coba lagi atau hubungi IT Help Desk.";
+                return GetErrorMessage();
             }
         }
+
+        /// <summary>
+        /// Generate follow-up suggestions based on conversation context
+        /// </summary>
 
         public async Task<List<string>> GenerateSuggestionsAsync(string userQuery, string response)
         {
@@ -128,47 +126,33 @@ Berikan jawaban berdasarkan Knowledge Base di atas. Jika informasi tidak tersedi
                     return GetDefaultSuggestions();
                 }
 
-                var prompt = $@"Berdasarkan percakapan berikut tentang JIFAS (Jababeka Integrated Finance Accounting System), 
-berikan 3 pertanyaan lanjutan yang mungkin ingin ditanyakan user. 
-Pertanyaan HARUS terkait dengan JIFAS saja.
+                var suggestionPrompt = $@"Berdasarkan percakapan tentang JIFAS berikut, berikan EXACTLY 3 pertanyaan lanjutan yang relevan.
+Pertanyaan HARUS terkait dengan JIFAS (AR, AP, GL, Budget, PUM, Master Data, Reporting).
 
 Pertanyaan user: {userQuery}
 Jawaban AI: {response}
 
-Format output (HANYA 3 pertanyaan, satu per baris, tanpa numbering atau bullet):
-Bagaimana cara...
-Apa perbedaan...
-Dimana saya bisa...";
+INSTRUKSI:
+- Berikan HANYA 3 pertanyaan
+- Satu pertanyaan per baris
+- Tanpa numbering atau bullet
+- Pilih pertanyaan praktis dan sering ditanyakan
+- Format natural dalam bahasa Indonesia
 
-                _logger.LogDebug("[GeminiService] Generating suggestions for query: {0}", userQuery);
-                var result = await CallGeminiApiAsync(prompt);
-                
-                var suggestions = new List<string>();
-                var lines = result.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-                
-                foreach (var line in lines)
-                {
-                    var trimmed = line.Trim();
-                    if (!string.IsNullOrEmpty(trimmed) && trimmed.Length > 10)
-                    {
-                        // Remove numbering if present
-                        trimmed = Regex.Replace(trimmed, @"^\d+[\.\)]\s*", "");
-                        trimmed = Regex.Replace(trimmed, @"^[-•]\s*", "");
-                        
-                        if (!string.IsNullOrEmpty(trimmed))
-                        {
-                            suggestions.Add(trimmed);
-                        }
-                    }
-                    
-                    if (suggestions.Count >= 3) break;
-                }
+Contoh:
+Bagaimana cara membuat invoice di JIFAS?
+Apa perbedaan AR dan AP?
+Bagaimana proses approval document?";
 
-                // Fallback suggestions if AI doesn't return enough
+                _logger.LogDebug("[GeminiService] Generating suggestions");
+                var result = await CallGeminiApiAsync(suggestionPrompt);
+
+                var suggestions = ParseSuggestions(result);
+
                 if (suggestions.Count == 0)
                 {
-                    _logger.LogDebug("[GeminiService] Using fallback suggestions");
-                    suggestions.AddRange(GetDefaultSuggestions());
+                    _logger.LogDebug("[GeminiService] Using default suggestions");
+                    return GetDefaultSuggestions();
                 }
 
                 _logger.LogInformation("[GeminiService] Generated {0} suggestions", suggestions.Count);
@@ -181,87 +165,164 @@ Dimana saya bisa...";
             }
         }
 
+        /// <summary>
+        /// Check if query is within JIFAS scope
+        /// Uses intelligent detection based on keywords
+        /// </summary>
+
         public async Task<bool> IsInScopeAsync(string userQuery)
         {
             try
             {
-                // Fast keyword-based check first
+                // Quick negative keyword check
                 var outOfScopeKeywords = new[]
                 {
-                    "bitcoin", "crypto", "cryptocurrency", "dating", "pacaran", "cinta", 
-                    "resep", "masakan", "cuaca", "weather", "politik", "game", "gaming", 
-                    "film", "movie", "musik", "lagu", "song", "covid", "corona", "virus", 
-                    "vaksin", "agama", "religion", "seks", "sex", "porno", "judi", "gambling",
-                    "taruhan", "bet", "saham", "stock", "forex", "trading"
+                    "bitcoin", "crypto", "dating", "resep", "masakan", "cuaca", "weather", "game", "gaming",
+                    "film", "movie", "musik", "covid", "corona", "agama", "seks", "judi", "gambling"
                 };
 
                 var lowerQuery = userQuery.ToLower();
-                foreach (var keyword in outOfScopeKeywords)
+                if (outOfScopeKeywords.Any(k => lowerQuery.Contains(k)))
                 {
-                    if (lowerQuery.Contains(keyword))
-                    {
-                        _logger.LogDebug("[GeminiService] Query marked out-of-scope by keyword: {0}", keyword);
-                        return false;
-                    }
+                    _logger.LogDebug("[GeminiService] Query out of scope (negative keyword)");
+                    return false;
                 }
 
-                // JIFAS-related keywords (in-scope indicators)
+                // Quick positive keyword check for JIFAS
                 var inScopeKeywords = new[]
                 {
-                    "jifas", "login", "akses", "password", "menu", "modul",
-                    "ar", "ap", "gl", "invoice", "payment", "vendor", "customer",
-                    "budget", "anggaran", "report", "laporan", "finance", "keuangan",
-                    "accounting", "akuntansi", "journal", "jurnal", "voucher",
-                    "approval", "error", "masalah", "tidak bisa", "gagal", "help",
-                    "bantuan", "cara", "bagaimana", "dimana", "apa itu", "user guide"
+                    "jifas", "invoice", "approval", "ar", "ap", "gl", "budget", "vendor", "payment",
+                    "pum", "laporan", "master", "login", "error", "bagaimana", "apa itu", "berapa"
                 };
 
-                foreach (var keyword in inScopeKeywords)
+                if (inScopeKeywords.Any(k => lowerQuery.Contains(k)))
                 {
-                    if (lowerQuery.Contains(keyword))
-                    {
-                        _logger.LogDebug("[GeminiService] Query marked in-scope by keyword: {0}", keyword);
-                        return true;
-                    }
+                    _logger.LogDebug("[GeminiService] Query in scope (positive keyword)");
+                    return true;
                 }
 
-                // For ambiguous queries, use keyword matching as fallback
-                _logger.LogDebug("[GeminiService] Query marked in-scope by default (ambiguous)");
+                // Default to in-scope for ambiguous queries
+                _logger.LogDebug("[GeminiService] Query marked in scope (ambiguous - default)");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error in IsInScopeAsync: {0}", ex, ex.Message);
-                // Default to in-scope to avoid blocking legitimate queries
-                return true;
+                _logger.LogError("[GeminiService] Error checking scope: {0}", ex, ex.Message);
+                return true; // Default to in-scope
             }
         }
 
-        private string BuildKnowledgeBaseContext(List<KnowledgeBaseResult> kbResults)
+        /// <summary>
+        /// Format response for better readability
+        /// </summary>
+        private string FormatResponse(string response)
         {
-            if (kbResults == null || kbResults.Count == 0)
-            {
-                return string.Empty;
-            }
+            if (string.IsNullOrEmpty(response))
+                return response;
 
-            var sb = new StringBuilder();
-            foreach (var result in kbResults)
-            {
-                if (result == null) continue;
+            // Clean up common formatting issues
+            response = response.Trim();
 
-                sb.AppendLine($"[{result.Category}] {result.Title}");
-                sb.AppendLine(result.Content);
-                sb.AppendLine($"(Confidence: {result.Score:F2})");
-                sb.AppendLine("---");
-            }
+            // Ensure proper spacing after punctuation
+            response = Regex.Replace(response, @"([.!?])\s+([A-Z])", "$1\n$2");
 
-            return sb.ToString();
+            return response;
         }
 
+        /// <summary>
+        /// Build message when no KB results found
+        /// </summary>
+        private string BuildNoResultsMessage(string userQuery)
+        {
+            return $@"Maaf, saya tidak menemukan informasi yang relevan di Knowledge Base JIFAS untuk pertanyaan Anda:
+
+""{userQuery}""
+
+**Kemungkinan penyebab:**
+• Pertanyaan menggunakan istilah yang berbeda dari Knowledge Base
+• Topik ini belum didokumentasikan
+• Pertanyaan terlalu spesifik
+
+**Saran:**
+1. Coba rephrase dengan istilah JIFAS standar (AR, AP, GL, Budget, PUM)
+2. Tanyakan fitur atau menu spesifik
+3. Hubungi IT Help Desk: finance-it@jababeka.com
+
+Apakah ada pertanyaan lain tentang JIFAS?";
+        }
+
+        /// <summary>
+        /// Get error message for API failures
+        /// </summary>
+        private string GetErrorMessage()
+        {
+            return @"Maaf, terjadi kesalahan dalam memproses permintaan Anda.
+
+**Silakan coba:**
+1. Ulangi pertanyaan Anda
+2. Gunakan kata kunci yang lebih spesifik
+3. Hubungi IT Help Desk jika masalah berlanjut
+
+Terima kasih atas kesabaran Anda!";
+        }
+
+        /// <summary>
+        /// Parse suggestions from Gemini response
+        /// </summary>
+        private List<string> ParseSuggestions(string response)
+        {
+            var suggestions = new List<string>();
+
+            if (string.IsNullOrEmpty(response))
+                return suggestions;
+
+            var lines = response.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim();
+
+                // Remove numbering if present
+                trimmed = Regex.Replace(trimmed, @"^\d+[\.\)]\s*", "");
+                trimmed = Regex.Replace(trimmed, @"^[-•*]\s*", "");
+
+                if (!string.IsNullOrEmpty(trimmed) && trimmed.Length > 5)
+                {
+                    suggestions.Add(trimmed);
+                }
+
+                if (suggestions.Count >= 3)
+                    break;
+            }
+
+            return suggestions;
+        }
+
+        /// <summary>
+        /// Get default suggestions
+        /// </summary>
+        private List<string> GetDefaultSuggestions()
+        {
+            return new List<string>
+            {
+                "Bagaimana cara membuat invoice di JIFAS?",
+                "Apa perbedaan antara AR dan AP?",
+                "Bagaimana proses approval document?"
+            };
+        }
+
+        /// <summary>
+        /// Call Gemini API with optimized settings for KB responses
+        /// - Low temperature for factual answers
+        /// - Properly formatted prompt
+        /// - Error handling and validation
+        /// </summary>
         private async Task<string> CallGeminiApiAsync(string prompt)
         {
             try
             {
+                _logger.LogDebug("[GeminiService] Preparing API request");
+
                 var requestBody = new
                 {
                     contents = new[]
@@ -276,10 +337,18 @@ Dimana saya bisa...";
                     },
                     generationConfig = new
                     {
-                        temperature = 0.3,
-                        maxOutputTokens = 1024,
-                        topP = 0.8,
-                        topK = 40
+                        temperature = 0.1,              // Very low - stick to facts
+                        maxOutputTokens = 2048,         // Allow detailed responses
+                        topP = 0.85,                    // Good quality
+                        topK = 40                       // Conservative
+                    },
+                    safetySettings = new[]
+                    {
+                        new
+                        {
+                            category = "HARM_CATEGORY_HARASSMENT",
+                            threshold = "BLOCK_ONLY_HIGH"
+                        }
                     }
                 };
 
@@ -287,12 +356,16 @@ Dimana saya bisa...";
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var url = $"{_baseUrl}?key={_apiKey}";
+                _httpClient.Timeout = TimeSpan.FromSeconds(60);
+
+                _logger.LogDebug("[GeminiService] Sending request to Gemini API");
                 var response = await _httpClient.PostAsync(url, content);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogError("[GeminiService] API Error {0}: {1}", null, response.StatusCode, responseContent);
+                    var errorMsg = $"[GeminiService] API Error {response.StatusCode}: {responseContent}";
+                    _logger.LogError(errorMsg, null);
                     throw new Exception($"Gemini API error: {response.StatusCode}");
                 }
 
@@ -302,26 +375,85 @@ Dimana saya bisa...";
                 if (string.IsNullOrEmpty(text))
                 {
                     _logger.LogWarning("[GeminiService] Empty response from Gemini API");
-                    return "Tidak ada respons dari AI.";
+                    throw new Exception("Empty response from Gemini");
                 }
 
-                return text;
+                _logger.LogInformation("[GeminiService] API call successful ({0} chars)", text.Length);
+                return text.Trim();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError("[GeminiService] HTTP Error connecting to Gemini API", ex);
+                throw new Exception("Failed to connect to Gemini API", ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError("[GeminiService] Request to Gemini API timed out", ex);
+                throw new Exception("Gemini API request timed out", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error calling Gemini API: {0}", ex, ex.Message);
+                _logger.LogError("[GeminiService] Unexpected error calling Gemini API", ex);
                 throw;
             }
         }
 
-        private List<string> GetDefaultSuggestions()
+        /// <summary>
+        /// Normalize user query for better KB matching
+        /// - Fixes common Indonesian typos
+        /// - Converts abbreviations
+        /// - Standardizes spacing
+        /// </summary>
+        private string NormalizeQuery(string query)
         {
-            return new List<string>
+            if (string.IsNullOrWhiteSpace(query))
+                return query;
+
+            var normalized = query.Trim();
+            normalized = Regex.Replace(normalized, @"\s+", " ");
+
+            // Map common Indonesian typos and abbreviations
+            var replacements = new Dictionary<string, string>
             {
-                "Bagaimana cara login ke JIFAS?",
-                "Apa saja modul yang tersedia di JIFAS?",
-                "Bagaimana cara menghubungi IT Help Desk?"
+                { "gmn", "bagaimana" },
+                { "gimana", "bagaimana" },
+                { "bgmn", "bagaimana" },
+                { "knp", "kenapa" },
+                { "dri", "dari" },
+                { "dr", "dari" },
+                { "yg", "yang" },
+                { "jd", "jadi" },
+                { "sdh", "sudah" },
+                { "blm", "belum" },
+                { "gak bisa", "tidak bisa" },
+                { "ga bisa", "tidak bisa" },
+                { "gak ada", "tidak ada" }
             };
+
+            foreach (var kvp in replacements)
+            {
+                normalized = Regex.Replace(
+                    normalized,
+                    $@"\b{Regex.Escape(kvp.Key)}\b",
+                    kvp.Value,
+                    RegexOptions.IgnoreCase
+                );
+            }
+
+            return normalized;
+        }
+
+        /// <summary>
+        /// Public API method to call Gemini with custom prompt
+        /// Used by other services for advanced operations
+        /// </summary>
+        async Task<string> IGeminiService.CallGeminiApiAsync(string prompt)
+        {
+            return await CallGeminiApiAsync(prompt);
         }
     }
 }
+
+
+
+

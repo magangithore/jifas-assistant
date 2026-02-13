@@ -24,6 +24,12 @@ namespace Jifas.Assistant.Services
         /// Check if the query is within JIFAS scope
         /// </summary>
         Task<bool> IsInScopeAsync(string userQuery);
+
+        /// <summary>
+        /// Call Gemini API directly with custom prompt
+        /// Used for generating natural responses
+        /// </summary>
+        Task<string> CallGeminiApiAsync(string prompt);
     }
 
     public class KnowledgeBaseResult

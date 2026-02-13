@@ -55,6 +55,7 @@
 
   <ItemGroup>
     <Folder Include="Compatibility\" />
+    <Folder Include="Data\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 
