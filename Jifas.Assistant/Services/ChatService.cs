@@ -203,9 +203,20 @@ namespace Jifas.Assistant.Services
                  // If confidence is too low or no results found, generate natural response using Gemini
                  if (confidenceScore < MIN_KB_CONFIDENCE || validatedResults == null || validatedResults.Count < MIN_KB_RESULTS_REQUIRED)
                  {
-                     // ?? STEP 6: GENERATE NO-MATCH RESPONSE
+                     // FIX #5: SMARTER FALLBACK LOGIC with metadata
                      var llmStopwatch = Stopwatch.StartNew();
-                     var noMatchMessage = await GenerateNoMatchResponseAsync(userMessage);
+                     
+                     // Use partial match response if we have some results, otherwise no-match
+                     string noMatchMessage;
+                     if (validatedResults != null && validatedResults.Count > 0)
+                     {
+                         noMatchMessage = await GeneratePartialMatchResponseAsync(userMessage, validatedResults);
+                     }
+                     else
+                     {
+                         noMatchMessage = await GenerateNoMatchResponseAsync(userMessage);
+                     }
+                     
                      llmStopwatch.Stop();
                      metrics.LlmResponseMs = (long)llmStopwatch.Elapsed.TotalMilliseconds;
                      
@@ -215,18 +226,29 @@ namespace Jifas.Assistant.Services
                      response.ConfidenceScore = confidenceScore;
                      response.KnowledgeBaseResults = validatedResults ?? kbResults ?? new List<KnowledgeBaseResult>();
                      
-                     // Generate final suggestions based on actual response
+                     // FIX #5: Generate helpful KB-specific suggestions for better results
                      var suggestionsStopwatch = Stopwatch.StartNew();
                      var suggestions = await _suggestionService.GenerateSuggestionsAsync(userMessage, noMatchMessage);
                      suggestionsStopwatch.Stop();
                      metrics.SuggestionsMs = (long)suggestionsStopwatch.Elapsed.TotalMilliseconds;
                      response.Suggestions = suggestions;
+                     
+                     // FIX #5: Add debug metadata for monitoring and improvement
+                     var debugMetadata = new Dictionary<string, object>
+                     {
+                         ["ConfidenceScore"] = confidenceScore,
+                         ["KBResultsCount"] = validatedResults?.Count ?? 0,
+                         ["TopResultScore"] = validatedResults?.FirstOrDefault()?.Score ?? 0,
+                         ["QueryProcessingTimeMs"] = metrics.KbSearchMs,
+                         ["FailureReason"] = confidenceScore < MIN_KB_CONFIDENCE ? "LowConfidence" : "NoResults"
+                     };
+                     _logger.LogWarning($"[LOW_CONFIDENCE] Details: {string.Join(", ", debugMetadata.Select(kv => $"{kv.Key}={kv.Value}"))}");
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
                     
-                    _logger.LogWarning($"[LOW_CONFIDENCE] Confidence({confidenceScore:F2}) | {metrics.GetSummary()}");
+                    _logger.LogWarning($"[FALLBACK_RESPONSE] Confidence({confidenceScore:F2}) | {metrics.GetSummary()}");
                     
                     // Save chat history asynchronously
                     _ = SaveChatHistoryAsync(response, userMessage, request);
@@ -391,7 +413,7 @@ namespace Jifas.Assistant.Services
 
         /// <summary>
         /// Calculate confidence score based on KB results
-        /// Takes into account: relevance score, result count, and result diversity
+        /// FIX #3: More sophisticated calculation taking multiple factors into account
         /// </summary>
         private double CalculateKBConfidence(List<KnowledgeBaseResult> results)
         {
@@ -400,24 +422,47 @@ namespace Jifas.Assistant.Services
                 return 0.0;
             }
 
-            // Get top 3 results for scoring
+            // FIX #3: Enhanced multi-factor confidence calculation
             var topResults = results.Take(3).ToList();
             
-            // Average score of top results (0-1)
+            // Factor 1: Average relevance score (40% weight)
             var avgScore = topResults.Average(r => r.Score);
             
-            // Document diversity bonus: prefer results from different documents
+            // Factor 2: Best match score (30% weight)
+            var maxScore = topResults.Max(r => r.Score);
+            var scoreCeiling = maxScore >= 0.8 ? maxScore : maxScore * 0.9;
+            
+            // Factor 3: Result count diversity (20% weight)
             var documentDiversity = topResults.Select(r => r.DocumentId).Distinct().Count();
-            var diversityBonus = Math.Min(documentDiversity * 0.05, 0.15);
+            var diversityScore = Math.Min(documentDiversity / 3.0, 1.0);
             
-            // Result count bonus: more results = higher confidence
-            var resultCountBonus = Math.Min(results.Count * 0.02, 0.10);
+            // Factor 4: Minimum quality check
+            var hasHighRelevance = topResults.Any(r => r.Score >= 0.75);
+            var qualityBonus = hasHighRelevance ? 0.1 : 0.0;
             
-            // Final confidence = average score + bonuses
-            var confidence = Math.Min(avgScore + diversityBonus + resultCountBonus, 1.0);
+            // Factor 5: Result count (10% weight)
+            var resultCountScore = Math.Min(results.Count / 5.0, 1.0);
             
-            _logger.LogDebug($"[ChatService] Confidence calculated - Avg: {avgScore:F2}, Diversity: {documentDiversity}, " +
-                           $"Count: {results.Count}, Final: {confidence:F2}");
+            // Composite confidence score (weighted)
+            var confidence = (avgScore * 0.4) +
+                            (scoreCeiling * 0.3) +
+                            (diversityScore * 0.2) +
+                            (resultCountScore * 0.1);
+            
+            // Penalize if no high-relevance match found
+            if (!hasHighRelevance && confidence > 0.65)
+            {
+                confidence *= 0.85; // Reduce confidence by 15% if no strong match
+                _logger.LogWarning($"[ChatService] Confidence reduced due to lack of high-relevance match");
+            }
+
+            // Final confidence capped at 1.0
+            confidence = Math.Min(confidence + qualityBonus, 1.0);
+            
+            _logger.LogDebug($"[ChatService] Confidence calculated - AvgScore: {avgScore:F2}, MaxScore: {maxScore:F2}, " +
+                           $"Diversity: {documentDiversity}, ResultCount: {results.Count}, Final: {confidence:F2}");
+
+            return confidence;
             
             return confidence;
         }

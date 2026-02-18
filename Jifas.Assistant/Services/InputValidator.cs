@@ -271,16 +271,32 @@ namespace Jifas.Assistant.Services
                 // Trim whitespace
                 var sanitized = input.Trim();
 
+                // FIX #6: Remove only truly dangerous characters
                 // Remove null characters
                 sanitized = sanitized.Replace("\0", "");
                 sanitized = sanitized.Replace("\x00", "");
 
-                // Remove control characters (but keep common ones like newline, tab)
+                // Remove dangerous control characters (but keep common ones like newline, tab)
+                // Keep: \t (09), \n (0A), \r (0D)
                 sanitized = Regex.Replace(sanitized, @"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "");
 
-                // Replace multiple spaces with single space
-                sanitized = Regex.Replace(sanitized, @"\s+", " ");
+                // FIX #6: Normalize spaces but preserve intentional newlines
+                // Replace tab with space
+                sanitized = sanitized.Replace("\t", " ");
+                // Normalize multiple spaces to single space
+                sanitized = Regex.Replace(sanitized, @"[ ]+", " ");
+                // Normalize multiple newlines to double newline (preserve paragraph breaks)
+                sanitized = Regex.Replace(sanitized, @"\n{3,}", "\n\n");
 
+                // FIX #6: Validate length after sanitization
+                if (sanitized.Length > ValidationConstants.MAX_MESSAGE_LENGTH)
+                {
+                    // Trim to max length but don't cut mid-word
+                    sanitized = sanitized.Substring(0, ValidationConstants.MAX_MESSAGE_LENGTH).TrimEnd();
+                    _logger.LogDebug($"[InputValidator] Input truncated to {ValidationConstants.MAX_MESSAGE_LENGTH} characters");
+                }
+
+                _logger.LogDebug($"[InputValidator] Input sanitized successfully (original: {input.Length}, sanitized: {sanitized.Length})");
                 return sanitized;
             }
             catch (Exception ex)

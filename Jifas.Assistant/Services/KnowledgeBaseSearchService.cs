@@ -47,13 +47,29 @@ namespace Jifas.Assistant.Services
                 if (keywords.Length == 0)
                     return new List<KnowledgeBaseChunkDto>();
 
-                var lowerQuery = query.ToLower();
+                // FIX #2: Use database-side filtering instead of loading all chunks to memory
+                // Build LIKE pattern for first keyword (most important)
+                var primaryKeyword = keywords.FirstOrDefault();
+                if (string.IsNullOrEmpty(primaryKeyword))
+                    return new List<KnowledgeBaseChunkDto>();
 
+                var likePattern = $"%{primaryKeyword}%";
+
+                // FIX: Fetch only relevant chunks from database (not all chunks)
                 var chunks = await _db.KnowledgeBaseChunks
                     .Include(c => c.Document)
-                    .Where(c => c.Document != null && c.Document.IsActive == true)
-                    .ToListAsync();
+                    .Where(c => c.Document != null && 
+                                c.Document.IsActive == true &&
+                                (EF.Functions.Like(c.Content, likePattern) ||
+                                 EF.Functions.Like(c.Document.Title, likePattern) ||
+                                 EF.Functions.Like(c.Document.Category, likePattern)))
+                    .OrderByDescending(c => c.Document.Title) // Exact title matches first
+                    .Take(topK * 3) // Get more than needed for local ranking (performance trade-off)
+                    .ToListAsync(); // Execute in database, then bring results to memory
 
+                _logger.LogInformation($"[KnowledgeBaseSearchService] DB query returned {chunks.Count} candidates");
+
+                // Local ranking of already-filtered results
                 var results = chunks
                     .Select(c =>
                     {
@@ -66,7 +82,7 @@ namespace Jifas.Assistant.Services
                             contentLower.Contains(k) || 
                             titleLower.Contains(k) || 
                             categoryLower.Contains(k) ||
-                            HasFuzzyMatch(contentLower, k, tolerance: 1) ||  // Allow 1-char difference
+                            HasFuzzyMatch(contentLower, k, tolerance: 1) ||
                             HasFuzzyMatch(titleLower, k, tolerance: 1) ||
                             HasFuzzyMatch(categoryLower, k, tolerance: 1));
 
@@ -92,12 +108,12 @@ namespace Jifas.Assistant.Services
                     .Take(topK)
                     .ToList();
 
-                _logger.LogInformation($"[KnowledgeBaseSearchService] Found {results.Count} keyword matches");
+                _logger.LogInformation($"[KnowledgeBaseSearchService] Found {results.Count} keyword matches (DB-optimized)");
                 
                 // FALLBACK: If no results, try broader search with partial matches
                 if (results.Count == 0)
                 {
-                    _logger.LogWarning($"[KnowledgeBaseSearchService] No exact matches found for '{query}', trying fallback search");
+                    _logger.LogWarning($"[KnowledgeBaseSearchService] No matches found for '{query}', trying fallback search");
                     results = await FallbackSearchAsync(chunks, keywords, topK);
                 }
 

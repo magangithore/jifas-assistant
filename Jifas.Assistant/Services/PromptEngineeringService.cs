@@ -54,13 +54,17 @@ namespace Jifas.Assistant.Services
 
         /// <summary>
         /// Build intelligent prompt by analyzing KB content and user intent
-        /// This creates a DYNAMIC prompt, not hardcoded
+        /// FIX #4: Query-type-specific prompts untuk better accuracy
         /// </summary>
         public async Task<string> BuildIntelligentPromptAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string sessionContext = null)
         {
             try
             {
                 _logger.LogInformation($"[PromptEngineering] Building intelligent prompt for: {userQuery}");
+
+                // FIX #4: Classify query type for smarter prompt engineering
+                var queryType = ClassifyQueryType(userQuery);
+                _logger.LogInformation($"[PromptEngineering] Query classified as: {queryType}");
 
                 // Step 1: Analyze the KB results to understand what we have
                 var contextAnalysis = await AnalyzeContextAsync(userQuery, kbResults);
@@ -72,7 +76,10 @@ namespace Jifas.Assistant.Services
                 // Step 3: Build the main prompt with proper context hierarchy
                 var mainPrompt = BuildMainPrompt(userQuery, kbResults, contextAnalysis, sessionContext);
 
-                // Step 4: Combine system + main prompt
+                // FIX #4: Build query-type-specific instructions
+                var querySpecificInstructions = BuildQuerySpecificInstructions(queryType, userQuery, kbResults);
+
+                // Step 4: Combine system + main prompt with enhanced instructions
                 var finalPrompt = $@"{systemPrompt}
 
 === KONTEKS DARI KNOWLEDGE BASE JIFAS ===
@@ -81,13 +88,20 @@ namespace Jifas.Assistant.Services
 
 PERTANYAAN USER: ""{userQuery}""
 
-INSTRUKSI JAWABAN:
+{querySpecificInstructions}
+
+INSTRUKSI UMUM JAWABAN:
 1. Gunakan HANYA informasi dari Knowledge Base di atas
 2. Jika ada beberapa bagian yang relevan, gabungkan menjadi jawaban lengkap
-3. Berikan langkah-langkah jika diperlukan (gunakan format bernomor)
+3. Format jawaban ramah namun profesional
 4. Jika informasi tidak cukup atau ada yang kurang jelas, katakan dengan terus terang
-5. Format jawaban ramah namun profesional
-6. Jika ada referensi ke dokumen atau menu, sebutkan nama lengkapnya
+5. Jika ada referensi ke dokumen atau menu, sebutkan nama lengkapnya
+
+CONFIDENCE GUIDELINE:
+- [DARI KB] untuk informasi yang jelas dari Knowledge Base
+- [PARTIAL] jika hanya sebagian informasi ditemukan
+- [KURANG JELAS] jika ada gap atau ambiguitas
+- JANGAN PERNAH guess atau extrapolate beyond KB
 
 RESPONS:";
 
@@ -96,7 +110,6 @@ RESPONS:";
             catch (Exception ex)
             {
                 _logger.LogError($"[PromptEngineering] Error building prompt: {ex.Message}");
-                // Fallback ke simple prompt
                 return BuildFallbackPrompt(userQuery, kbResults);
             }
         }
@@ -400,6 +413,73 @@ ATURAN:
 3. Gunakan Bahasa Indonesia profesional
 4. Berikan jawaban ringkas tapi lengkap
 5. Jika tidak tahu, katakan dengan jelas";
+        }
+
+        /// <summary>
+        /// FIX #4: Classify query type for smarter prompt engineering
+        /// </summary>
+        private string ClassifyQueryType(string query)
+        {
+            var lowerQuery = query.ToLower();
+            
+            if (lowerQuery.StartsWith("bagaimana") || lowerQuery.StartsWith("cara") || 
+                lowerQuery.Contains("langkah") || lowerQuery.Contains("step"))
+                return "HowTo";
+            
+            if (lowerQuery.StartsWith("apa") || lowerQuery.StartsWith("siapa") || 
+                lowerQuery.StartsWith("yang") || lowerQuery.Contains("definisi"))
+                return "Definition";
+            
+            if (lowerQuery.Contains("error") || lowerQuery.Contains("masalah") || 
+                lowerQuery.Contains("tidak bisa") || lowerQuery.Contains("error"))
+                return "Troubleshooting";
+            
+            if (lowerQuery.Contains("field") || lowerQuery.Contains("menu") || 
+                lowerQuery.Contains("modul") || lowerQuery.Contains("teknis"))
+                return "Technical";
+            
+            return "General";
+        }
+
+        /// <summary>
+        /// FIX #4: Build query-type-specific instructions
+        /// </summary>
+        private string BuildQuerySpecificInstructions(string queryType, string userQuery, List<KnowledgeBaseResult> kbResults)
+        {
+            return queryType switch
+            {
+                "HowTo" => @"INSTRUKSI KHUSUS UNTUK PERTANYAAN 'BAGAIMANA/CARA':
+- Berikan langkah-langkah yang jelas dan terstruktur (gunakan format bernomor)
+- Mulai dari yang paling dasar
+- Sertakan screenshot atau referensi menu jika ada di KB
+- Jelaskan setiap langkah dengan detail
+- Berikan tips atau catatan penting jika ada",
+
+                "Definition" => @"INSTRUKSI KHUSUS UNTUK PERTANYAAN DEFINISI/PENJELASAN:
+- Berikan definisi yang jelas dan singkat di awal
+- Jelaskan konteks penggunaan di JIFAS
+- Berikan contoh jika tersedia di KB
+- Hubungkan dengan fitur/modul lain jika relevan",
+
+                "Troubleshooting" => @"INSTRUKSI KHUSUS UNTUK PERTANYAAN MASALAH/ERROR:
+- Identifikasi kemungkinan penyebab error
+- Berikan solusi langkah-demi-langkah
+- Jika ada beberapa solusi, urutkan dari paling mudah ke paling kompleks
+- Sertakan pesan error atau kode jika disebutkan di KB
+- Rekomendasikan untuk hubungi support jika solusi tidak berhasil",
+
+                "Technical" => @"INSTRUKSI KHUSUS UNTUK PERTANYAAN TEKNIS/FIELD:
+- Jelaskan field/menu dengan detail
+- Tipe data dan format yang diterima
+- Validasi dan rules yang berlaku
+- Hubungan dengan field/modul lain
+- Contoh penggunaan atau input yang benar",
+
+                _ => @"INSTRUKSI KHUSUS:
+- Pahami konteks pertanyaan dengan baik
+- Berikan jawaban yang relevan dan terstruktur
+- Jika ada bagian yang tidak jelas, katakan dengan tegas"
+            };
         }
     }
 

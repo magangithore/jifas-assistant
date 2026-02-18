@@ -46,8 +46,27 @@ namespace Jifas.Assistant.Services
                 throw new InvalidOperationException("Gemini:ApiKey not configured in appsettings.json");
             }
 
+            // FIX #1: Validate embedding dimension consistency
+            var configuredDimension = int.TryParse(
+                configuration["Qdrant:EmbeddingDimensions"], 
+                out int dimension) ? dimension : 3072;
+            
+            const int EXPECTED_DIMENSION = 3072; // gemini-embedding-001 is 3072-dimensional
+            
+            if (configuredDimension != EXPECTED_DIMENSION)
+            {
+                var errorMsg = $"[CRITICAL] Embedding dimension mismatch! " +
+                    $"Expected {EXPECTED_DIMENSION} for gemini-embedding-001, " +
+                    $"but configured {configuredDimension}. " +
+                    $"Update Qdrant:EmbeddingDimensions in appsettings.json";
+                
+                _logger.LogError(errorMsg);
+                throw new InvalidOperationException(errorMsg);
+            }
+
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
-            _logger.LogInformation($"[GeminiEmbeddingService] Initialized with model: {_model}");
+            _logger.LogInformation($"[GeminiEmbeddingService] Initialized with model: {_model} ({EXPECTED_DIMENSION}-dimensional)");
+            _logger.LogInformation($"[GeminiEmbeddingService] Embedding dimension validated: {configuredDimension} dimensions");
         }
 
         public async Task<List<float>> GenerateEmbeddingAsync(string text)
