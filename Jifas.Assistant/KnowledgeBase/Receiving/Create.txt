@@ -1,0 +1,527 @@
+MODUL: RECEIVING - CREATE/EDIT INVOICE IK (Invoice Keputusan)
+
+TUJUAN:
+Halaman ini digunakan untuk membuat dokumen Invoice IK baru atau mengubah/mengedit
+dokumen Invoice IK yang sudah ada. Invoice IK adalah bukti penerimaan barang dari
+supplier/tenant yang disertai dengan informasi pajak dan detail alokasi biaya.
+
+A. ALUR PEMBUATAN INVOICE IK BARU (CREATE)
+1. TOMBOL TRIGGER:
+   - Klik tombol "Create Invoice IK" di halaman daftar Invoice IK
+
+2. INFORMASI HEADER YANG HARUS DIISI:
+
+   TAB 1: INVOICE IK
+   
+   KOLOM KIRI:
+   - Tanggal Dokumen (Date)           : Tanggal penerimaan barang
+   - Nomor Billing (Billing No.)      : Nomor referensi dari tagihan/invoice pihak ketiga
+   - Nomor Referensi (Ref No.)        : Nomor tambahan untuk referensi internal (opsional)
+   - Tenant                           : Siapa penyedia/supplier (HARUS DIPILIH)
+   - NPWP                             : Nomor identitas pajak penyedia (otomatis terisi)
+   - Alamat NPWP                      : Alamat dari pemilik NPWP (otomatis terisi)
+
+   KOLOM TENGAH:
+   - Pemohon (Applicant)              : Nama karyawan yang membuat dokumen (otomatis terisi dari login)
+   - Divisi                           : Divisi pemohon (otomatis terisi)
+   - Disetujui Oleh (Approved By)     : Atasan langsung pemohon (otomatis terisi)
+   - Aplikasi Sumber (Source App)     : Sumber dokumen berasal dari sistem mana (otomatis sesuai perusahaan)
+
+   KOLOM KANAN:
+   - Mata Uang (Currency)             : Pilih IDR atau mata uang asing (default IDR)
+   - Kurs (Rate)                      : Nilai tukar jika menggunakan mata uang asing
+   - Jumlah (Amount)                  : Total dari semua detail di bawah (otomatis terhitung)
+   - Jumlah Dasar (Base Amount)       : Total dari kolom Base Amount di detail (otomatis terhitung)
+   - DPP                              : Dasar Pengenaan Pajak, jumlah yang kena pajak
+   - Keterangan (Description)         : Penjelasan singkat tentang isi dokumen ini
+
+3. ISI DETAIL INVOICE IK:
+
+   Klik tombol "Request" di bagian "Detail IK" untuk menambah baris detail.
+   
+   Setiap baris detail harus berisi:
+   - Divisi                   : Divisi yang menerima biaya
+   - Department               : Departemen yang menerima biaya
+   - Jenis Permintaan         : Kategori/deskripsi biaya (pilih dari dropdown)
+   - COA                      : Chart of Account (otomatis terisi berdasarkan departemen dipilih)
+   - Jumlah Dasar (Base)      : Nilai sebelum pajak
+   - Jenis Pajak (Tax Type)   : Jenis pajak yang berlaku (PPN 10%, No Tax, dll)
+   - PPN (%)                  : Persentase pajak (otomatis muncul)
+   - PPN (Nominal)            : Nilai pajak dalam rupiah (otomatis terhitung)
+   - PPh (%)                  : Persentase pajak penghasilan (otomatis muncul)
+   - PPh (Nominal)            : Nilai pajak penghasilan (otomatis terhitung)
+   - Jenis PPh                : Tipe PPh yang digunakan (21%, 4%, dll)
+   - Jumlah Total             : Jumlah setelah pajak (otomatis terhitung)
+
+4. VALIDASI SEBELUM SIMPAN:
+
+   Sistem akan melakukan pengecekan otomatis:
+   Semua field wajib harus terisi
+   Kurs harus diisi jika menggunakan mata uang asing
+   Setiap baris detail harus memiliki jumlah dasar > 0
+   Setiap baris detail harus memiliki jenis pajak
+   Jika PPh ada, maka jenis PPh harus dipilih
+   Jumlah input (Amount) HARUS SAMA dengan total detail di bawah
+
+5. LAMPIRAN DOKUMEN (TAB 2):
+
+   Klik tab "Lampiran" untuk upload dokumen pendukung:
+   - Invoice asli
+   - PO (Purchase Order)
+   - Bukti penerimaan
+   - Dokumen lainnya yang diperlukan
+
+   Persyaratan file:
+   - Hanya format: JPG, PNG, PDF
+   - Maksimal ukuran: 2MB per file
+
+6. TOMBOL AKSI:
+   - Tombol "Next"   : Berpindah ke tab Lampiran
+   - Tombol "Create" : Menyimpan dokumen IK baru (setelah validasi OK)
+   - Tombol "Cancel" : Membatalkan dan kembali ke daftar
+
+B. ALUR EDIT/UBAH INVOICE IK YANG SUDAH ADA
+1. TOMBOL TRIGGER:
+   - Klik tombol "Action" di baris dokumen IK pada daftar
+
+2. TAMPILAN NOMOR DOKUMEN:
+   - Nomor IK akan ditampilkan di bagian atas (contoh: IK-2024-00001)
+
+3. PERUBAHAN FIELD YANG BISA DILAKUKAN:
+   Tergantung pada STATUS dokumen saat itu.
+
+4. STATUS DAN AKSI YANG TERSEDIA:
+
+   STATUS: "NEED FINANCE CHECKING" (Menunggu Pengecekan Finance)
+   Tombol "Update"   : Edit dokumen yang ada
+   Tombol "Checking" : Lanjutkan ke tahap pengecekan finance
+   Tombol "Void"     : Batalkan dokumen
+
+   STATUS: "NEED TAX APPROVAL" (Menunggu Persetujuan Pajak)
+   Tombol "Update"   : Edit dokumen (hanya bagian tertentu)
+   Tombol "Void"     : Batalkan dokumen
+
+   STATUS: "NEED POSTING" (Menunggu Posting ke Akuntansi)
+   Tombol "Update"   : Edit dokumen
+   Tombol "Void"     : Batalkan dokumen
+
+   STATUS: "NEED ACCOUNTING CHECKING" (Menunggu Pengecekan Akuntansi)
+   Tombol "Update"   : Edit dokumen
+   Tombol "Void"     : Batalkan dokumen
+
+   STATUS: "NEED CHECK DETAIL" (Harus Cek Detail)
+   Tombol "Update"   : Edit dokumen
+   Tombol "Void"     : Batalkan dokumen
+
+   STATUS: "READY TO PAY" (Siap Dibayar)
+   Tombol "Void"     : Batalkan dokumen
+      (Tidak bisa edit atau checking lagi)
+
+   STATUS: "PAID" (Sudah Dibayar) atau "ERROR" (Kesalahan)
+   Tombol "Void"     : Batalkan dokumen (jika untuk koreksi)
+      (Tidak bisa edit, hanya bisa batalkan)
+
+5. PERUBAHAN YANG TIDAK BISA DIEDIT:
+   - NPWP dan Alamat NPWP (berubah otomatis jika ganti Tenant)
+   - Pemohon, Divisi, Atasan
+   - Kolom otomatis: Amount, Base Amount, DPP, Total Amount Detail
+   - Detail grid saat dokumen sudah "READY TO PAY", "PAID", atau "ERROR"
+
+6. VALIDASI SAAT UPDATE:
+   Sama seperti saat create (semua field wajib, jumlah harus cocok, dll)
+
+C. FUNGSI TOMBOL DAN AKSI KHUSUS
+TOMBOL "VOID" (Membatalkan Dokumen):
+1. Fungsi: Menandai dokumen sebagai batal/tidak berlaku
+2. Alasan wajib: Harus memberikan alasan pembatalan
+3. Proses:
+   - Masukkan alasan pembatalan
+   - Konfirmasi pembatalan
+   - Dokumen akan berubah status menjadi "VOID"
+4. Catatan: Jika paket sudah dalam tahap lanjut, konsultasikan dengan atasan
+
+TOMBOL "CHECKING":
+1. Fungsi: Mengirimkan dokumen ke tahap pengecekan Finance
+2. Persyaratan: 
+   - Semua field sudah terisi dengan benar
+   - Semua detail sudah diisi dan valid
+   - Lampiran sudah dilengkapi (jika diperlukan)
+3. Setelah klik:
+   - Dokumen akan berubah status menjadi "NEED TAX APPROVAL"
+   - Akan diteruskan ke bagian Pajak untuk verifikasi
+
+TOMBOL "UPDATE":
+1. Fungsi: Menyimpan perubahan dokumen yang sudah ada
+2. Validasi: Sama seperti saat create
+3. Catatan: Hanya field tertentu yang bisa diubah sesuai status
+
+D. WARNA INDIKATOR STATUS (Di Daftar Invoice IK)
+WARNA HIJAU   : Status dengan kata "NEED" 
+                (Dokumen butuh perhatian/action)
+                Contoh: NEED CHECKING, NEED APPROVAL, NEED POSTING
+
+WARNA HITAM   : Status normal/proses
+                Contoh: READY TO PAY
+
+WARNA MERAH   : Status batalkan atau error
+                Contoh: VOID, ERROR, REMOVED
+
+E. INFORMASI TEKNIS KOLOM AMOUNT/JUMLAH
+STRUCTURE PERHITUNGAN:
+Base Amount (Jumlah Dasar)
+= Jumlah dari semua field "Base Amount" di setiap baris detail
+
+DPP (Dasar Pengenaan Pajak)
+= Jumlah dari semua "Base Amount" di row yang punya pajak
+  (Row dengan tax type "NT" - No Tax tidak dihitung)
+
+PPN Total
+= Penjumlahan dari semua nominal PPN di setiap baris
+
+PPh Total
+= Penjumlahan dari semua nominal PPh di setiap baris
+
+Total Amount (Amount)
+= Jumlah dari semua "Total Amount" di setiap baris detail
+= Base Amount + PPN + PPh untuk setiap baris
+= Harus SAMA dengan nilai di field "Amount" header
+
+CATATAN: 
+- Semua kolom amount otomatis terhitung dari detail
+- Field "Amount" di header harus sama dengan "Total Amount Detail"
+  Jika tidak sama, sistem tidak akan menerima simpan
+
+F. FLOW PERJALANAN DOKUMEN INVOICE IK
+
+1. CREATE (Pemohon membuat dokumen)
+   ↓
+2. FINANCE CHECKING (Bagian Finance review)
+   ↓
+3. TAX APPROVAL (Bagian Pajak approve)
+   ↓
+4. POSTING (Dokumen diposting ke GL)
+   ↓
+5. ACCOUNTING CHECKING (Bagian Akuntansi review)
+   ↓
+6. READY TO PAY (Siap untuk proses pembayaran)
+   ↓
+7. PAID (Pembayaran selesai)
+
+G. TIPS DAN TRIK PENGGUNAAN
+1. PENAMBAHAN DETAIL LEBIH CEPAT:
+   - Jika detail yang ditambah mirip dengan detail sebelumnya, salin dari
+     baris sebelumnya dan ubah yang perlu diubah saja
+
+2. PENGECEKAN JUMLAH:
+   - Selalu pastikan "Amount" di header sama dengan "Total Amount Detail"
+   - Jika berbeda, sistem akan menolak saat save
+
+3. PERUBAHAN TENANT:
+   - Jika ganti Tenant, NPWP dan Alamat akan otomatis updated
+   - Pastikan Tenant yang dipilih sudah terdaftar di Master Data
+
+4. MATA UANG ASING:
+   - Jika menggunakan mata uang bukan IDR, kurs akan otomatis terisi
+   - Di bawah tanggal yang dipilih, sistem cari kurs terbaru
+   - Jika kosong, isi manual sesuai kurs yang berlaku
+
+5. LAMPIRAN:
+   - Usahakan lampiran sudah lengkap sebelum dikirim untuk checking
+   - Nama file sebaiknya jelas dan deskriptif
+
+H. JIKA TERJADI ERROR/MASALAH
+ERROR: "Please fill required field before!"
+→ Ada field wajib yang belum diisi
+→ Periksa kembali semua kolom bertanda "*" (asterisk)
+
+ERROR: "Cannot continue to save! Please fill currency rate"
+→ Kurs harus diisi jika menggunakan mata uang asing
+→ Jika IDR, kurs bisa dikosongkan atau isi 1
+
+ERROR: "DPP amount cannot be zero!"
+→ Setiap detail harus punya jumlah dasar > 0
+
+ERROR: "Tax code must be selected!"
+→ Setiap detail harus punya jenis pajak
+
+ERROR: "PPH code must be selected!"
+→ Jika PPh (%) ada nilai, harus pilih jenis PPh
+
+ERROR: "Input amount MUST BE EQUAL with total base amount detail!"
+→ Jumlah yang diinput di field "Amount" tidak sama dengan total detail
+→ Periksa ulang perhitungan di detail grid
+
+CATATAN PENTING
+Dokumen Invoice IK adalah dokumen penting untuk akuntansi
+Pastikan semua data sudah benar sebelum submit
+Ada system approval workflow - tidak bisa langsung terbit
+Jika ada kesalahan setelah submit, gunakan fungsi VOID + buat baru
+Lampiran adalah bukti yang diperlukan untuk audit trail
+Jangan ubah dokumen setelah melewati tahap Checking (koordinasi dengan Finance)
+
+I. MODUL RECEIVING VOUCHER (RV) - DAFTAR & AKSI
+
+PERBEDAAN ANTARA IK, RV, DAN RECEIVING LAINNYA:
+IK (Invoice Keputusan) vs RV (Receiving Voucher):
+IK:
+- Dokumen penerimaan dari SUPPLIER/VENDOR
+- Ada invoice/tagihan dari pihak ketiga
+- Detail mencakup pajak (PPN, PPh)
+- Untuk barang/jasa dari pihak eksternal
+- Biasanya ada lampiran invoice asli
+
+RV (Receiving Voucher):
+- Dokumen penerimaan INTERNAL atau dari atm/kas
+- Bisa dari bank, transfer uang masuk, penerimaan kas
+- Tidak selalu ada pajak terlibat
+- Detail mencakup nomor cek/BG, nama bank, dsb
+- Dapat bersifat RV IK (terkait dengan IK) atau RV Non-IK (berdiri sendiri)
+
+II. TAMPILAN DAFTAR RECEIVING VOUCHER
+Halaman utama menampilkan list semua dokumen RV yang pernah dibuat.
+KOLOM-KOLOM YANG DITAMPILKAN:
+
+1. Tanggal (Date)
+   - Tanggal dokumen RV dibuat
+
+2. RV Type
+   - IK      : RV yang terikat dengan dokumen Invoice IK
+   - Non-IK  : RV yang berdiri sendiri (tidak ada IK)
+
+3. Nomor Dokumen (Doc No)
+   - Nomor unik dokumen RV yang digenerate otomatis
+   - Format: RV-[tahun]-[nomor urut]
+
+4. Keterangan (Description)
+   - Penjelasan singkat isi dokumen
+
+5. Nama Bank (Bank Name)
+   - Bank tujuan atau sumber dana
+   - Contoh: Bank BCA, Bank Mandiri, etc
+
+6. Mata Uang (Currency)
+   - Mata uang yang digunakan (IDR, USD, SGD, dll)
+
+7. Jumlah (Amount)
+   - Total penerimaan dalam dokumen ini
+
+8. Nama Penerima/Debtor
+   - Siapa yang menerima atau nama pihak yang terkait
+
+9. Status
+   - Status dokumen (sama model dengan IK)
+   - NEED FINANCE CHECKING, READY TO PAY, PAID, VOID, dll
+
+10. Tombol Action
+    - Klik untuk melihat detail atau melakukan aksi pada dokumen
+
+FILTER & PENCARIAN:
+
+- Klik langsung di kolom manapun untuk filter/search
+- Contoh: Klik kolom Tanggal, pilih tanggal spesifik
+- Contoh: Klik kolom Status, pilih status tertentu
+- Export: Tombol "Excel" untuk download daftar ke file Excel
+
+III. MEMBUAT RECEIVING VOUCHER - DUA PILIHAN
+
+Ada dua tombol untuk membuat RV:
+A. TOMBOL "CREATE RECEIVE IK" (RV untuk dokumen IK)
+   Gunakan ketika: Anda sudah punya dokumen Invoice IK dan akan membuat pembayaran/penerimaan ke IK tersebut
+   Alur:
+   1. Klik "Create Receive IK"
+   2. Sistem akan meminta Anda memilih dokumen IK mana yang akan "di-receive"
+   3. Data dari IK (jumlah, vendor, pajak) akan otomatis terisi
+   4. Anda hanya perlu menambah info bank dan detail pembayaran
+   5. Simpan → dokumen RV IK tercipta
+
+B. TOMBOL "CREATE RECEIVE NON IK" (RV yang berdiri sendiri)
+   Gunakan ketika: Anda menerima uang/kas yang tidak terkait dengan dokumen IK tertentu
+   Contoh penggunaan:
+   - Penerimaan kas dari pelanggan
+   - Transfer dari bank
+   - Penerimaan uang dari internal perusahaan
+   - Pajak refund
+   - Penerimaan lainnya yang tidak ada IK-nya
+   Alur:
+   1. Klik "Create Receive Non IK"
+   2. Isi data manual:
+      - Tanggal penerimaan
+      - Nama penerima/debtor
+      - Nama bank
+      - Nomor cek/BG (jika ada)
+      - Mata uang dan jumlah
+      - Keterangan
+   3. Detail dapat mencakup alokasi ke beberapa cost center
+   4. Simpan → dokumen RV Non-IK tercipta
+
+IV. INFORMASI PENTING SAAT MEMBUAT RV
+YANG HARUS DIISI:
+1. Tanggal Dokumen (Mandatory)
+   - Tanggal kapan uang diterima
+
+2. Nama Debtor/Penerima (Mandatory)
+   - Siapa yang menerima atau sumber uang
+   - Contoh: PT ABC, Bank BCA, Pelanggan XYZ
+
+3. Nama Bank (Mandatory)
+   - Bank mana yang terlibat penerimaan
+
+4. Mata Uang (Mandatory)
+   - IDR atau valuta asing
+
+5. Kurs (Jika mata uang asing bukan IDR)
+   - Nilai tukar terhadap IDR
+
+6. Jumlah (Mandatory)
+   - Total penerimaan
+
+7. Nomor Cek/BG (Jika ada)
+   - Nomor referensi jika pembayaran via cek atau BG
+   - Contoh: "CHK-123456" atau "BG-987654"
+
+8. Keterangan (Mandatory)
+   - Penjelasan singkat apa penerimaan ini
+
+YANG OTOMATIS TERISI (Tidak perlu edit):
+
+- Nomor dokumen RV (generate otomatis)
+- Informasi dari dokumen IK (jika RV untuk IK)
+- Data pajak dari IK terkait
+
+V. DETAIL PENERIMAAN (UNTUK RV NON-IK)
+Saat membuat RV Non-IK, Anda bisa menambah beberapa baris detail untuk alokasi:
+- Divisi tujuan
+- Department tujuan
+- Kategori/deskripsi penerimaan
+- Jumlah untuk setiap baris
+
+Total dari semua baris detail HARUS SAMA dengan jumlah utama.
+Contoh:
+  RV Non-IK Total: Rp 10.000.000
+  
+  Detail 1: Divisi A - Rp 6.000.000
+  Detail 2: Divisi B - Rp 4.000.000
+  Total:                Rp 10.000.000 (Cocok)
+
+VI. STATUS RV DAN AKSI YANG TERSEDIA
+Seperti dokumen IK, setiap dokumen RV memiliki status dan aksi yang berbeda:
+
+STATUS: "NEED FINANCE CHECKING" (Menunggu Pengecekan Finance)
+Tombol "Edit"  : Ubah detail dokumen
+Tombol "Action": Lanjut ke tahap checking
+
+STATUS: "READY TO PAY" (Siap Dibayar)
+Tambahan: Bisa dlihat informasi pembayaran yang sudah disetujui
+
+STATUS: "PAID" (Sudah Dibayar)
+Status final, dokumen hanya untuk referensi
+
+STATUS: "VOID" (Dibatalkan)
+Dokumen tidak berlaku lagi
+
+VII. INDIKATOR WARNA STATUS DI DAFTAR RV
+Sama dengan dokumen IK:
+WARNA HIJAU   : Status yang mengandung kata "NEED"  
+                (Butuh perhatian/action dari Anda)
+
+WARNA HITAM   : Status normal/running
+                (Dokumen sedang diproses)
+
+WARNA MERAH   : Status VOID, REJECTED, REMOVED
+                (Dokumen tidak berlaku/ditolak)
+
+VIII. PERBEDAAN RV IK vs RV NON-IK DI DAFTAR
+Kolom "RV Type" menunjukkan perbedaannya:
+RV TYPE = IK (Receiving for Invoice IK)
+  - Terkait: Dokumentasi pasti ada dokumen IK yang menjadi awalnya
+  - Data: Semua detail dari IK sudah terisi otomatis
+  - Flow: Proses pembayaran dari dokumen IK yang sudah diterima
+  - Edit: Terbatas, hanya bagian tertentu yang bisa diubah
+
+RV TYPE = Non-IK (Standalone Receiving)
+  - Terkait: Berdiri sendiri, tidak ada parent IK
+  - Data: Semua detail harus diisi manual dari mulai
+  - Flow: Penerimaan general/miscellaneous
+  - Edit: Lebih fleksibel, bisa edit lebih banyak
+
+IX. PERUSAHAAN DENGAN BATASAN (PT BP)
+CATATAN KHUSUS: Jika login dengan perusahaan "BP"
+  → Tombol "CREATE RECEIVE" dan "CREATE RECEIVE IK" akan DISABLED/tidak bisa diklik
+  → Artinya: PT BP tidak bisa membuat dokumen RV baru
+  → Alasan: Ada kebijakan khusus penanganan receiving untuk PT BP
+  → Solusi: Hubungi manager/finance head untuk process penerimaan PT BP
+
+X. TIPS MENGGUNAKAN RV
+1. KAPAN PAKAI RV TYPE IK?
+   - Ketika sudah ada dokumen Invoice IK
+   - Ketika akan mem-post money untuk dokumen IK tersebut
+   - Pastikan IK sudah dalam status "READY TO PAY"
+
+2. KAPAN PAKAI RV TYPE NON-IK?
+   - Penerimaan kas dari customer
+   - Transfer dari bank
+   - Penerimaan internal yang tidak ada invoice
+   - Penerimaan lain-lain
+
+3. VALIDASI SEBELUM SUBMIT:
+   - Total detail harus sama dengan amount header
+   - Info bank lengkap
+   - Nomor referensi jelas
+   - Keterangan menjelaskan
+
+4. EXPORT DAFTAR:
+   - Klik tombol "Excel" untuk download daftar RV
+   - Berguna untuk reporting atau backup data
+
+XI. TROUBLESHOOTING RV
+ERROR: "Tidak bisa membuat RV"
+→ Mungkin Anda login sebagai PT BP (ada batasan)
+→ Hubungi manager Anda
+
+ERROR: "Dokumen IK tidak ditemukan"
+→ Jika membuat RV IK, dokumen IK mungkin sudah VOID
+→ Cari dokumen IK yang statusnya "READY TO PAY"
+
+ERROR: "Total detail tidak cocok dengan amount"
+→ Jumlah semua baris detail harus sama dengan amount header
+→ Tambah atau kurangi baris detail sesuai kebutuhan
+
+TIDAK BISA EDIT SETELAH SUBMIT?
+→ Menunggu approval dari Finance, normalnya seperti itu
+→ Jika perlu ubah urgent, hubungi supervisor
+
+ALUR KESELURUHAN RECEIVING PROCESS
+IK (Create)
+  ↓
+  Pengecekan Finance
+  ↓
+Pajak Approval
+  ↓
+RV IK (Create) ← Di sini membuat RV untuk IK tersebut
+  ↓
+Finance Checking pada RV
+  ↓
+READY TO PAY
+  ↓
+PAID (Setelah pembayaran)
+
+Vs.
+
+RV Non-IK (Berdiri Sendiri)
+  ↓
+Finance Checking
+  ↓
+READY TO PAY
+  ↓
+PAID
+
+KESIMPULAN
+
+- IK = Dokumen invoice diterima (untuk pembayaran ke supplier)
+- RV IK = Dokumen penerimaan/posting pembayaran untuk IK  
+- RV Non-IK = Dokumen penerimaan kas/uang yang berdiri sendiri
+- Setiap dokumen punya workflow approval yang harus dilewati
+- Status sangat penting untuk mengetahui tahap proses
+- Jangan skip dokumen, harus lengkap sebelum submit
+
+

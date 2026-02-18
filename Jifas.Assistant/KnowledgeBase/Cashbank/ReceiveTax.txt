@@ -1,0 +1,896 @@
+DOKUMENTASI KNOWLEDGE BASE
+CB RECEIVING TAX APPROVAL
+
+A. PENGENALAN
+
+1. Definisi
+   Receiving Tax Approval adalah proses verifikasi dan persetujuan terhadap perhitungan 
+   pajak (PPN dan PPH) yang terkait dengan dokumen penerimaan kas/uang masuk. Proses ini 
+   memastikan bahwa setiap transaksi penerimaan kas memiliki perhitungan pajak yang akurat 
+   sebelum dilakukan posting ke buku besar.
+
+2. Tujuan Utama
+   - Memverifikasi keakuratan perhitungan PPN (Pajak Pertambahan Nilai/VAT) pada penerimaan
+   - Memastikan perhitungan PPH (Pajak Penghasilan) sesuai dengan peraturan
+   - Melakukan koreksi pajak jika diperlukan (pembulatan naik/turun)
+   - Mendokumentasikan persetujuan pajak untuk audit trail penerima kas
+   - Mencegah posting dokumen dengan data pajak yang salah
+
+3. Kapan Digunakan
+   - Setelah dokumen penerimaan kas dibuat dan melalui tahap finance checking
+   - Sebelum dokumen diposting ke sistem akuntansi
+   - Ketika terdapat kelengkapan dokumen pajak (PPN dan/atau PPH)
+   - Untuk penerimaan yang melibatkan perhitungan pajak (internal transfer, kredit investor, dll)
+
+4. Alur Singkat
+   Lihat dokumen penerimaan → Verifikasi detail penerimaan → Periksa perhitungan PPN 
+   → Periksa perhitungan PPH → Lakukan koreksi jika diperlukan → Setujui/Tolak 
+   → Dokumen siap untuk posting/pembukuan
+
+
+B. MENU UTAMA - DAFTAR DOKUMEN PENERIMAAN PAJAK
+
+1. Tampilan Utama
+   Menu ini menampilkan daftar lengkap semua dokumen penerimaan kas yang menunggu 
+   persetujuan pajak. Berikut kolom-kolom yang tersedia:
+
+   a) TANGGAL (Date)
+      - Tanggal dokumen penerimaan kas dibuat
+      - Format: DD/MM/YYYY
+      - Contoh: 20/02/2024 = penerimaan pada tanggal 20 Februari 2024
+
+   b) NOMOR RV (RV No / Document Number)
+      - Nomor referensi unik dokumen penerimaan kas
+      - Contoh: RV.2024.00089
+      - RV = Receiving (penerimaan)
+      - Digunakan untuk identifikasi dokumen dalam sistem
+
+   c) DESKRIPSI (Description)
+      - Keterangan singkat tentang dokumen penerimaan
+      - Contoh: "Penerimaan dari Pelanggan ABC", "Transfer Dana dari Head Office", "Penerimaan Kredit Investor"
+      - Membantu identifikasi cepat sumber penerimaan
+
+   d) MATA UANG (Currency)
+      - Jenis mata uang penerimaan
+      - Contoh: IDR (Rupiah), USD (Dolar), EUR (Euro)
+      - Untuk dokumentasi transaksi multinasional
+
+   e) PPN (Value Added Tax)
+      - Jumlah PPN pada penerimaan
+      - Format: 12.000.000,50 (dengan separator ribuan dan dua desimal)
+      - Ini adalah pajak pertambahan nilai 10% pada penerimaan
+
+   f) PPH (Income Tax)
+      - Jumlah PPH yang diperhitungkan
+      - Format: 2.500.000,00
+      - Beragam tipe (15%, 2%, dll sesuai jenis penerimaan)
+
+   g) JUMLAH TOTAL (Amount)
+      - Total akhir penerimaan setelah perhitungan pajak
+      - Rumus: DPP + PPN - PPH
+      - Jumlah yang benar-benar masuk ke rekening perusahaan
+
+   h) STATUS PAJAK (Tax Status)
+      - Status persetujuan pajak saat ini
+      - Kemungkinan nilai:
+        * "Need Approval" (Perlu Persetujuan) - warna HIJAU = butuh tindakan segera
+        * "Approved" (Disetujui) - warna HITAM = sudah final
+        * "Rejected" (Ditolak) - warna MERAH = butuh revisi
+        * "Posted" (Sudah Posting) - warna HITAM = sudah masuk sistem akuntansi
+        * "Void" (Dibatalkan) - warna MERAH = dokumen tidak berlaku
+
+2. Filter dan Pencarian
+   - Interface menampilkan default hanya dokumen dengan status "Need Approval"
+   - Anda dapat mengklik setiap kolom untuk memfilter data yang spesifik
+   - Contoh: Klik kolom "Tanggal" → pilih tanggal spesifik untuk melihat penerimaan 
+     pada periode tertentu
+
+3. Ekspor Data
+   - Tombol "Excel" di bagian atas untuk mengekspor semua data ke file Excel
+   - File yang dihasilkan: "Tax-CB Receiving-Export.xlsx"
+   - Berguna untuk laporan bulanan atau audit
+
+
+C. MENGAKSES DOKUMEN UNTUK PERSETUJUAN PAJAK
+
+1. Langkah Membuka Dokumen
+   a) Pilih dokumen dari daftar yang berstatus "Need Approval" (ada warna HIJAU)
+   b) Klik tombol "Approval" di sebelah kanan baris dokumen yang dipilih
+   c) Sistem akan membuka popup/form approval yang besar
+   d) Form akan menampilkan semua detail dokumen penerimaan dan pajak
+
+2. Form Approval akan dibuka dengan ukuran FULL SCREEN
+   - Memberikan ruang kerja yang luas untuk detail verifikasi
+   - Menampilkan tabs untuk Approval, PPN, PPH, dan File
+   - Semua field hanya untuk viewing (tidak bisa diedit di sini)
+
+3. Kunci Penting
+   - Setiap dokumen yang dibuka akan menampilkan Nomor RV di bagian atas
+   - Gunakan nomor ini untuk referensi saat berkomunikasi dengan bagian lain
+   - Contoh: "Approval untuk RV.2024.00089"
+
+
+D. MEMAHAMI DETAIL DOKUMEN PENERIMAAN
+
+1. Detail Header (Bagian Atas)
+   
+   a) TANGGAL DOKUMEN (Document Date)
+      - Kapan penerimaan kas dilakukan/proses
+      - Tidak bisa diubah di form ini (sudah ditentukan saat pembuatan)
+      
+   b) DARI (From / Pihak Pemberi)
+      - Siapa yang mengirimkan/memberikan uang
+      - Format: Kode Entitas | Nama Entitas
+      - Contoh: CUST.456 | PT Customer Indonesia
+      - ATAU: HEAD.001 | Head Office Pusat
+      - ATAU: INV.789 | Investor PT ABC
+      - Identifikasi sumber dana penerimaan
+      
+   c) BANK
+      - Bank mana yang menerima dana
+      - Format: Kode Bank | Nama Bank
+      - Contoh: BCA.001 | PT Bank Central Asia - Jakarta
+      - Menentukan rekening penerima dana
+      
+   d) NO REFERENSI (Reference Number)
+      - Nomor referensi dari pihak pemberi (nomor bukti transfer, no bukti bayar, dll)
+      - Contoh: TRF-20240220-12345
+      - Tracking penerimaan dengan dokumen pihak pemberi
+      
+   e) STATUS PAJAK (Tax Status)
+      - Status persetujuan pajak saat ini
+      - Contoh: "Need Approval"
+      - Berubah sesuai dengan tindakan approval/rejection
+
+2. Detail Keuangan (Bagian Bawah Kanan)
+   
+   a) MATA UANG (Currency)
+      - IDR = Rupiah (Indonesia)
+      - USD = Dolar Amerika
+      - EUR = Euro
+      - SGD = Dolar Singapura
+      - Dst sesuai kebutuhan bisnis
+      
+   b) KURS TUKAR (Exchange Rate)
+      - Apabila tidak menggunakan IDR, ada kurs konversi
+      - Contoh: USD 1 = IDR 15.500
+      - Untuk konversi total penerimaan ke IDR untuk laporan
+      
+   c) BASE AMOUNT (Dasar Perhitungan)
+      - Jumlah awal sebelum pajak
+      - Format: 100.000.000,00
+      - Basis untuk menghitung PPN dan PPH
+      
+   d) TOTAL DPP (Total Dasar Pengenaan Pajak)
+      - Akumulasi total DPP dari semua line items
+      - Ini adalah jumlah yang dikenakan pajak
+      - Contoh: 100.000.000,00
+      
+   e) TOTAL PPN (Total Value Added Tax)
+      - Total PPN pada penerimaan = DPP × 10%
+      - Contoh: Jika DPP 100.000.000 → PPN = 10.000.000
+      - PPN yang perusahaan terima dari pihak pemberi
+      
+   f) TOTAL PPH (Total Income Tax)
+      - Total PPH yang diperhitungkan pada penerimaan
+      - Bervariasi sesuai tipe PPH (15%, 2%, dll)
+      - Biasanya dikurangi dari penerimaan (ditanggung pihak pemberi)
+      - Contoh: 2.500.000,00
+      
+   g) TOTAL AMOUNT (Jumlah Akhir)
+      - Formula: Total DPP + Total PPN - Total PPH
+      - Contoh: 100.000.000 + 10.000.000 - 2.500.000 = 107.500.000
+      - INI ADALAH JUMLAH YANG BENAR-BENAR MASUK KE REKENING PERUSAHAAN
+
+3. Grid Detail Penerimaan
+   - Menampilkan breakdown per divisi/departemen penerima
+   - Kolom: Divisi, Department, COA Code, Deskripsi, Amount, Tax Code, 
+     PPN Amount, PPH Amount, Total
+   - Setiap baris adalah penerimaan untuk divisi/departemen yang berbeda
+   - Total semua baris di sini harus sama dengan Total Amount di header
+
+
+E. TAB APPROVAL - PERSETUJUAN AWAL
+
+1. Fungsi Tab Ini
+   - Menampilkan ringkasan dokumen penerimaan kas
+   - Menentukan apakah dokumen dapat disetujui atau perlu ditolak
+   - Melihat grid detail penerimaan
+   - Memberikan keterangan/catatan persetujuan
+
+2. Lingkup Persetujuan
+   - Verifikasi Total DPP sudah benar (sesuai penjumlahan detail)
+   - Verifikasi Total PPN sudah benar
+   - Verifikasi Total PPH sudah benar
+   - Memastikan calculation formula: DPP + PPN - PPH = Total Amount
+   - Total Amount tidak boleh melebihi dari jumlah yang diterima
+
+3. Grid Detail Penerimaan di Tab Approval
+   Menampilkan rincian lengkap:
+   - Division (Divisi) - pembagian organisasi mana yang menerima
+   - Department (Departemen) - departemen spesifik penerima
+   - COA Code (Kode Akun) - perkiraan/akun mana penerimaan dicatat
+   - Description (Deskripsi) - apa yang diterima
+   - Amount (Jumlah) - berapa yang diterima untuk item ini
+   - Tax Code (Kode Pajak) - tipe pajak apa (P, N, M, CS, dll)
+   - PPN Amount - PPN untuk item ini
+   - PPH Amount - PPH untuk item ini
+   - Total Amount - total untuk item
+
+4. Aturan Persetujuan Awal
+   APPROVE (Setuju):
+   - Total DPP sudah benar
+   - Total PPN sudah benar
+   - Total PPH sudah benar
+   - Seluruh data pihak pemberi, bank, tanggal valid
+   - Tidak ada anomali atau kesalahan perhitungan
+   - Bukti penerimaan sudah diterima (slip transfer, bukti bayar, dll)
+   
+   REJECT (Tolak):
+   - Ada ketidaksesuaian perhitungan
+   - Data pihak pemberi atau bank tidak valid
+   - Keterangan tidak jelas
+   - Ada data missing/kosong
+   - Jumlah yang tidak wajar atau tidak match dengan dokumen pemberi
+
+
+F. TAB PPN - VERIFIKASI PAJAK PERTAMBAHAN NILAI
+
+1. Definisi PPN pada Penerimaan
+   - Pada penerimaan: Perusahaan menerima uang yang sudah include PPN
+   - PPN ini adalah pajak yang sudah dibayar oleh pihak pemberi
+   - Untuk penerimaan dari pelanggan/sales, PPN adalah income perusahaan
+   - Harus didokumentasikan untuk kelengkapan pembukuan
+
+2. Komponen Tab PPN
+   
+   a) DPP/TAX BASE (Dasar Pengenaan Pajak)
+      - Jumlah total sebelum PPN 10%
+      - Ditampilkan untuk referensi (read-only, tidak bisa diubah)
+      - Contoh: 100.000.000,00
+   
+   b) PPN (Nilai Pajak)
+      - 10% dari DPP
+      - Contoh: 100.000.000 × 10% = 10.000.000
+      - Jumlah PPN yang diterima perusahaan
+   
+   c) NAMA WP (Nama Wajib Pajak)
+      - Nama pihak pemberi uang
+      - Contoh: "PT ABC Customer Indonesia" atau "PT HEAD Office"
+      - HARUS SESUAI dengan data pihak pemberi di master
+      
+   d) NPWP (Nomor Pokok Wajib Pajak)
+      - Nomor identitas pajak pihak pemberi di Dirjen Pajak
+      - Format: 00.000.000.0-000.000 (15 digit)
+      - Contoh: 12.345.678.9-098.765
+      - WAJIB DIISI untuk penerimaan dengan PPN
+   
+   e) ALAMAT WP (Alamat Wajib Pajak)
+      - Alamat resmi pihak pemberi sesuai registrasi NPWP
+      - Harus sama dengan data master pihak pemberi
+      - Ini untuk dokumentasi penerimaan
+
+3. Grid Detail PPN - List Invoice/Bukti Penerimaan
+   
+   Tujuan:
+   - Mendokumentasikan setiap bukti penerimaan dengan PPN
+   - Membuat referensi untuk pembukuan dan audit
+   - Melacak referensi dan tanggal setiap penerimaan
+   
+   Kolom-kolom yang ada:
+   
+   a) NO FAKTUR (Tax Invoice Number / Nomor Bukti)
+      - Nomor bukti penerimaan dari pihak pemberi
+      - Contoh: BKT-2024-00456 atau INV-456789
+      - Nomor referensi untuk tracking
+   
+   b) TANGGAL FAKTUR (Tax Invoice Date)
+      - Tanggal pembuatan bukti penerimaan oleh pihak pemberi
+      - Format: DD/MM/YYYY
+      - Harus sama atau sebelum tanggal dokumen penerimaan
+   
+   c) DPP
+      - Basis perhitungan pajak untuk penerimaan ini
+      - Contoh: 50.000.000,00 (untuk sebagian dari total DPP)
+   
+   d) PPN
+      - PPN untuk bukti ini = DPP × 10%
+      - Contoh: 5.000.000,00
+   
+   e) TAHUN (Year)
+      - Tahun dokumen penerimaan
+      - Auto-fill dari tanggal penerimaan
+      - Contoh: 2024
+   
+   f) BULAN (Period/Month)
+      - Bulan penerimaan
+      - Auto-fill dari tanggal penerimaan
+      - Contoh: 02 (Februari)
+
+4. Tombol SAVE untuk Tab PPN
+   - Digunakan untuk menyimpan perubahan detail PPN
+   - Hanya muncul jika ada perubahan
+   - VALIDASI: Total baris PPN Detail tidak boleh melebihi Total PPN di header
+   - Setelah save, grid akan refresh dengan data terbaru
+
+5. Aturan Persetujuan PPN
+   SETUJUI jika:
+   - NPWP pihak pemberi sudah valid (15 digit, format benar)
+   - Nama WP sudah sesuai dengan master pihak pemberi
+   - Alamat WP sudah sesuai registrasi
+   - Setiap bukti penerimaan/faktur memiliki nomor yang jelas
+   - Total baris = Total PPN header
+   - Bukti penerimaan original sudah diterima
+   
+   ✗ TOLAK / MINTA KOREKSI jika:
+   - NPWP belum terdaftar atau berbeda dari master
+   - Nama WP tidak konsisten dengan master pihak pemberi
+   - Bukti penerimaan/faktur nomor tidak jelas atau berbeda
+   - Tanggal bukti tidak konsisten dengan tanggal penerimaan
+   - Data pihak pemberi melengkapi tidak sesuai
+
+
+G. TAB PPH - VERIFIKASI PAJAK PENGHASILAN
+
+1. Definisi PPH pada Penerimaan
+   - PPH pada penerimaan adalah pajak yang dikenakan pada income
+   - Biasanya ditanggung oleh pihak pemberi, dikurangi dari penerimaan
+   - Harus disetor ke Dirjen Pajak oleh pihak pemberi
+   - Perusahaan mencatat sebagai pajak yang sudah dipotong dari penerimaan
+
+2. Komponen Tab PPH
+   
+   a) DPP/TAX BASE (Dasar Pengenaan Pajak)
+      - Jumlah total sebelum PPH
+      - Ditampilkan untuk referensi (read-only)
+      - Contoh: 100.000.000,00
+   
+   b) PPH BRUTO (Total Income Tax)
+      - Total PPH yang diperhitungkan pada penerimaan
+      - Format: 2.500.000,00
+      - Ini adalah jumlah yang dikurangi dari penerimaan
+   
+   c) NAMA WP (Nama Wajib Pajak)
+      - Nama pihak pemberi/pihak yang membayar PPH
+      - Harus sesuai dengan data master pihak pemberi
+   
+   d) NPWP (Nomor Pokok Wajib Pajak)
+      - Nomor identitas pajak pihak pemberi
+      - Format: sama seperti PPN (00.000.000.0-000.000)
+      - WAJIB DIISI untuk PPH valid
+   
+   e) ALAMAT WP (Alamat Wajib Pajak)
+      - Alamat resmi untuk dokumentasi pemotong pajak
+
+3. Tipe-tipe PPH yang Umum pada Penerimaan
+   
+   a) PPH PASAL 4(2) - FINAL
+      - Untuk penerimaan dari jenis layanan/barang khusus
+      - Rate: 2% (paling rendah)
+      - Contoh: Penerimaan dari sewa, jasa khusus
+   
+   b) PPH PASAL 15
+      - Untuk penerimaan dari non-resident/pihak asing
+      - Rate: 20-30%
+      - Untuk transaksi internasional
+   
+   c) PPH PASAL 23
+      - Untuk dividen, bunga, fee, komisi, dll
+      - Rate: 15% (umum untuk penerimaan fee)
+      - RATE SERING DIGUNAKAN untuk penerimaan khusus
+   
+   d) PPH PASAL 26
+      - Untuk penerimaan dari non-resident
+      - Rate: Tergantung jenis penghasilan
+
+4. Grid Detail PPH - List Bukti Pemotong Pajak
+   
+   Tujuan:
+   - Mendokumentasikan setiap bukti pemotong PPH dari pihak pemberi
+   - Membuat referensi untuk pembukuan dan pelaporan
+   - Melacak nomor form dan bukti pemotong
+   
+   Kolom-kolom yang ada:
+   
+   a) KODE FORMULIR (Form Code)
+      - Kode formulir pemotong pajak yang digunakan pihak pemberi
+      - Format: PPH-23 (untuk Pasal 23), PPH-4 (untuk Pasal 4(2)), dll
+      - Standard dari Dirjen Pajak
+   
+   b) NO FAKTUR PAJAK (Tax Invoice / Bukti Pemotong)
+      - Nomor bukti pemotong PPH dari pihak pemberi
+      - Ini adalah nomor referensi PPH yang dipotong
+   
+   c) TANGGAL FAKTUR (Tax Receiving Date)
+      - Tanggal pemotongan PPH dilakukan oleh pihak pemberi
+      - Biasanya sama tanggal penerimaan
+   
+   d) DPP
+      - Basis perhitungan PPH untuk entry ini
+      - Contoh: 100.000.000,00
+   
+   e) PPH
+      - PPH yang dipotong = DPP × Rate%
+      - Contoh: 100.000.000 × 15% = 15.000.000
+   
+   f) TAHUN (Year)
+      - Tahun dokumen penerimaan
+      - Auto-fill dari tanggal penerimaan
+   
+   g) BULAN (Month)
+      - Bulan penerimaan
+      - Auto-fill dari tanggal penerimaan
+
+5. Tombol PPH Type - Pemilihan Tipe PPH
+   - Dropdown untuk memilih tipe PPH (23, 4(2), 15, 26, dll)
+   - PENTING: Harus sesuai dengan jenis penerimaan
+   - Influensi persentase pajak yang dikurangi
+
+6. Aturan Persetujuan PPH
+   SETUJUI jika:
+   - NPWP pihak pemberi sudah valid
+   - Nama WP sesuai master pihak pemberi
+   - Tipe PPH sudah correct (23 untuk penerimaan fee, 4(2) untuk jasa khusus)
+   - Persentase PPH sesuai dengan tipe yang dipilih
+   - Total baris = Total PPH header
+   - Bukti pemotong pajak sudah diterima dari pihak pemberi
+   
+   ✗ TOLAK / MINTA KOREKSI jika:
+   - NPWP tidak ada atau berbeda
+   - Nama WP tidak sesuai master
+   - Tipe PPH tidak appropriate untuk jenis penerimaan
+   - Persentase PPH salah
+   - Bukti pemotong kurang atau nomor tidak jelas
+
+
+H. KOREKSI PAJAK (TAX CORRECTION)
+
+1. Kapan Diperlukan Koreksi Pajak
+   - Perhitungan PPN/PPH menghasilkan pecahan (contoh: 5.000.000,50)
+   - Peraturan pajak mengharuskan pembulatan ke rupiah penuh (tidak boleh 0,50)
+   - Sistem memiliki opsi pembulatan UP (naik ke 1) atau DOWN (turun ke 0)
+   - Untuk memastikan jumlah final penerimaan match dengan bank
+
+2. Cara Akses Tax Correction
+   a) Di tab "Approval", lihat tombol "Tax Correction" (warna biru)
+   b) Klik tombol ini untuk membuka window koreksi
+   c) Akan muncul popup besar dengan grid koreksi
+   d) Grid menampilkan setiap detail penerimaan yang bisa dikoreksi
+
+3. Grid Tax Correction
+   
+   Kolom-kolom:
+   
+   a) TAX CODE (Kode Pajak)
+      - Dropdown untuk memilih jenis pajak (NT, P, N, M, CS, dll)
+      - Dapat diubah jika ada kekeliruan saat pembuatan
+      - PERUBAHAN DI SINI AKAN UPDATE perhitungan PPN/PPH
+   
+   b) DPP (Dasar Pengenaan Pajak)
+      - Jumlah basis untuk setiap detail
+      - Hanya untuk reference (read-only)
+   
+   c) PPN
+      Terdiri dari 3 kolom:
+      - Existing: PPN yang sudah dihitung (read-only)
+      - Round: Pilihan pembulatan UP atau DOWN
+      - Correction: Hasil pembulatan (otomatis update saat pilih Round)
+   
+   d) PPH
+      Terdiri dari 4 kolom:
+      - Existing: PPH yang sudah dihitung (read-only)
+      - Round: Pilihan pembulatan UP atau DOWN
+      - Correction: Hasil pembulatan
+      - PPH Type: Tipe PPH (dropdown) - harus ada jika PPH > 0
+
+4. Proses Pembulatan
+   
+   Skenario Contoh:
+   - Perhitungan sistem: 5.000.000,50 (ada desimal 0,50)
+   - Opsi Round UP: 5.000.001,00 (naik 0,50)
+   - Opsi Round DOWN: 5.000.000,00 (turun 0,50)
+   
+   Pilih yang lebih sesuai dengan:
+   - Jumlah yang valid menurut peraturan
+   - Total penerimaan final yang disepakati dengan pihak pemberi
+
+5. Validasi Koreksi Pajak
+   - Total DPP detail tidak boleh melebihi DPP header
+   - Total PPN correction tidak boleh melebihi PPN header
+   - Total PPH correction tidak boleh melebihi PPH header
+   - Setiap PPH > 0 HARUS memiliki PPH Type yang dipilih
+   - Jika ada yang melanggar, sistem akan menolak SAVE
+
+6. Save dan Close Koreksi
+   - Tombol "Save" untuk menyimpan perubahan koreksi
+   - Tombol "Cancel" untuk membatalkan tanpa menyimpan
+   - Setelah Save, header dan detail akan di-update otomatis
+   - Dokumen siap untuk approval final
+
+
+I. WORKFLOW PERSETUJUAN/PENOLAKAN
+
+1. Skenario APPROVE (Menyetujui Dokumen)
+   
+   Langkah-langkah:
+   a) Pastikan sudah review Tab Approval - semua detail OK
+   b) Pastikan sudah review Tab PPN - bukti penerimaan lengkap dan valid
+   c) Pastikan sudah review Tab PPH - bukti pemotong lengkap dan valid
+   d) Jika ada koreksi pajak - sudah dilakukan via Tax Correction
+   e) Klik tombol "APPROVE" (tombol hijau)
+   f) Muncul konfirmasi: "Are you sure want to APPROVE TAX for document: [No RV]?"
+   g) Klik "Yes" untuk mengkonfirmasi
+   h) Sistem akan memproses persetujuan
+   i) Status berubah menjadi "APPROVED"
+   j) Dokumen siap untuk posting ke sistem akuntansi
+   k) Muncul notifikasi sukses
+
+2. Skenario REJECT (Menolak Dokumen)
+   
+   Langkah-langkah:
+   a) Identifikasi masalah yang tidak bisa didiamkan
+   b) Klik tombol "REJECT" (tombol merah)
+   c) Muncul popup untuk input alasan penolakan
+   d) Isi kolom "Reject Reason" dengan penjelasan singkat
+      Contoh: "NPWP pihak pemberi tidak match dengan bukti transfer"
+      Contoh: "Data pihak pemberi tidak terdaftar di master"
+   e) Klik "Yes" untuk mengkonfirmasi penolakan
+   f) Sistem akan memproses penolakan
+   g) Status berubah menjadi "REJECTED"
+   h) Notifikasi penolakan dikirim ke pembuat dokumen
+   i) Dokumen TIDAK AKAN posting, harus direvisi terlebih dahulu
+
+3. Hasil Approval/Rejection
+   - APPROVED: Dokumen masuk status "APPROVED" menunggu posting
+   - REJECTED: Dokumen masuk status "REJECTED" + alasan akan dikirim
+   - Pembuat dokumen akan mendapat notifikasi untuk revisi
+   - Setelah revisi, dokumen kembali ke status "Need Approval"
+
+4. Status Final
+   - "POSTED": Dokumen sudah masuk sistem akuntansi (final, tidak bisa diubah)
+   - "VOID": Dokumen dibatalkan (tidak berlaku lagi)
+   - "REMOVED": Dokumen dihapus dari sistem
+
+
+J. VALIDASI DAN ATURAN PERHITUNGAN
+
+1. Validasi Dasar yang SELALU Berlaku
+
+   a) FORMULA TOTAL AMOUNT HARUS SELALU BENAR
+      Formula: Total DPP + Total PPN - Total PPH = Total Amount
+      Contoh:
+      100.000.000 (DPP) + 10.000.000 (PPN) - 2.500.000 (PPH) = 107.500.000
+      
+      Jika tidak sesuai:
+      - Flag ERROR
+      - Minta revisi pembuat dokumen
+      - Tolak approval
+   
+   b) TOTAL BARIS DETAIL HARUS SAMA DENGAN HEADER
+      Validasi: Sum(DPP semua baris) = Total DPP header
+      Validasi: Sum(PPN semua baris) = Total PPN header
+      Validasi: Sum(PPH semua baris) = Total PPH header
+      
+      Jika tidak sesuai:
+      - Error calculation
+      - Revisi diminta sebelum approval
+   
+   c) NPWP WAJIB JIKA ADA PPN ATAU PPH
+      Aturan: Jika Total PPN > 0 atau Total PPH > 0, NPWP harus ada
+      Format NPWP: 00.000.000.0-000.000 (15 digit)
+      Validasi format harus benar, tidak boleh asal
+      
+      Contoh NPWP Valid: 12.345.678.9-098.765
+      Contoh NPWP Tidak Valid: 123456789098765 (tanpa format)
+   
+   d) BUKTI PENERIMAAN REFERENSI HARUS JELAS
+      Aturan: Setiap bukti harus punya nomor referensi yang jelas dan unik
+      Sistem akan auto-check kelengkapan bukti
+      Jika ada bukti yang incomplete, minta koreksi
+
+2. Validasi Perhitungan Pajak
+
+   a) PPN (Pajak Pertambahan Nilai)
+      Rumus: DPP × 10% = PPN
+      Contoh: 100.000.000 × 10% = 10.000.000
+      
+      Toleransi pembulatan: ±1 rupiah per item (untuk rounding error)
+      Jika berbeda lebih dari itu: ERROR
+      
+   b) PPH (Pajak Penghasilan)
+      Rumus: DPP × Rate% = PPH
+      Rate tergantung tipe:
+      - PPH Pasal 4(2): 2%
+      - PPH Pasal 23: 15% (atau rate lain sesuai kesepakatan)
+      - PPH Pasal 21: Bervariasi sesuai kategori
+      
+      Contoh: 100.000.000 × 15% = 15.000.000
+      
+      Validasi: Persentase harus match dengan tipe yang dipilih
+      Jika berbeda: Minta koreksi tipe PPH
+
+3. Aturan Persetujuan Khusus
+
+   a) JAM APPROVAL
+      - Ideal: Lakukan approval dalam 1-2 hari kerja setelah dokumen dibuat
+      - Untuk dokumen urgent (cash flow urgent): Approval HARI SAMA
+      - Untuk dokumen kompleks (multi-bukti): Approval dalam 3 hari
+      - Jangan rush: Kesalahan approval bisa jadi masalah audit
+      - Prioritas: Approval yang urgent (transfer bank diperlukan) di awal
+   
+   b) KOLABORASI DENGAN PIHAK PEMBERI
+      - Jika ada data tidak valid, hubungi pihak pemberi untuk verifikasi
+      - Minta copy bukti transfer/pembayaran asli dari pihak pemberi
+      - Bandingkan nomor referensi dan jumlah dengan dokumen
+      - Pastikan data pihak pemberi sudah update di master
+   
+   c) KOORDINASI DENGAN BAGIAN LAIN
+      - Jika ada pertanyaan teknis: Hubungi bagian pembuat dokumen
+      - Jika perlu persetujuan budget: Hubungi manager
+      - Jika ada masalah sistem: Hubungi support IT
+
+4. Error Handling (Solusi Jika Ada Masalah)
+
+   a) ERROR: "Total Amount tidak match dengan hitungan"
+      Solusi:
+      - Klik Calculate ulang di sistem
+      - Jika masih error, ada salah satu field yang tidak benar
+      - Check: Total DPP, Total PPN, Total PPH
+      - Tolak dan minta revisi
+   
+   b) ERROR: "NPWP tidak valid"
+      Solusi:
+      - Check format NPWP (harus 15 digit dengan separators)
+      - Bandingkan dengan master pihak pemberi
+      - Hubungi pihak pemberi untuk NPWP yang benar
+      - Update di master sebelum approval
+   
+   c) ERROR: "Bukti penerimaan/referensi tidak lengkap"
+      Solusi:
+      - Check apakah semua bukti sudah tercatat
+      - Hubungi pihak pemberi untuk bukti yang hilang
+      - Pastikan nomor referensi jelas dan dapat diidentifikasi
+      - Revisi dokumen sebelum approve
+   
+   d) ERROR: "PPH Type belum dipilih padahal PPH > 0"
+      Solusi:
+      - Buka Tax Correction
+      - Pilih tipe PPH yang sesuai di dropdown PPH Type
+      - Save koreksi
+      - Coba Approve lagi
+
+
+K. TIPS DAN BEST PRACTICES
+
+1. SEBELUM MULAI APPROVAL
+
+   a) Siapkan Dokumen Pendukung
+      - Fotocopy slip transfer/bukti pembayaran dari pihak pemberi
+      - Fotocopy bukti pemotong PPH (jika ada)
+      - Email konfirmasi dari pihak pemberi tentang transfer
+      - Reconciliation list antara sistem dan bukti fisik pihak pemberi
+      - Spreadsheet tracking penerimaan berdasarkan periode
+   
+   b) Set Reminder/Calendar
+      - Setiap approval HARUS dikerjakan dalam SLA (max 2 hari)
+      - Set reminder 1 hari sebelum deadline
+      - Prioritas dokumen yang penerimaan-nya urgent (cash flow)
+      - Koordinasikan dengan team jika ada cuti/izin
+
+2. SELAMA PROSES APPROVAL
+
+   a) Verifikasi Sistematis
+      - Buka Tab Approval DULU, pahami keseluruhan dokumen
+      - Baca deskripsi dokumen dengan teliti
+      - Check nama pihak pemberi, amount, tanggal
+      - Jika ada keraguan, TANYAKAN (jangan asal-asalan)
+   
+   b) Perhatian Khusus pada Detail Pajak
+      - PPN: Jika daftar bukti penerimaan kosong = FLAG (ada anomali)
+      - PPH: Jika ada PPH tapi tidak ada bukti pemotong = FLAG
+      - KPP pihak pemberi harus match dengan NPWP
+      - Update master pihak pemberi jika ada perubahan data
+   
+   c) Dokumentasi
+      - Jika ada koreksi, catat alasannya di kolom keterangan
+      - Screenshot bukti penerimaan jika ada nomor referensi external
+      - Keep email dari pihak pemberi tentang perubahan data
+      - Archive semua dokumen pendukung
+
+3. MENANGANI KASUS KHUSUS
+
+   a) Penerimaan dari Pihak Baru
+      - DOUBLE CHECK data pihak pemberi (nama, NPWP, alamat, bank)
+      - Verifikasi NPWP di website Dirjen Pajak (www.pajak.go.id)
+      - Jangan approve sampai data 100% valid
+      - Coordinate dengan bagian procurement/bagian terkait tentang pihak pemberi baru
+   
+   b) Penerimaan Multivaluta (USD, EUR, SGD, dll)
+      - Check kurs tukar apakah sesuai kurs tengah Bank Indonesia
+      - Jangan approve jika kurs terlalu jauh dari pasar
+      - Tanyakan ke finance tentang approval kurs
+      - Dokumentasikan kurs yang digunakan untuk audit
+   
+   c) Penerimaan Internal Transfer (antar divisi)
+      - Transfer dari head office atau divisi lain tidak selalu ada PPH
+      - Check apakah transfer ini sebagai advance fund atau final payment
+      - Verifikasi nomor referensi dengan dokumen pemberi
+      - Pastikan coding akun sudah benar di kedua divisi
+   
+   d) Penerimaan Kredit/Investor
+      - Jika penerimaan adalah kredit baru atau investasi, PPH bisa berbeda
+      - Verify dengan legal/finance tentang rate PPH
+      - Dokumentasikan dengan jelas sumber dana (loan agreement, share cert, dll)
+      - Track liabilitas/equity yang terbentuk dari penerimaan ini
+   
+   e) Penerimaan dengan Variance Kecil (beda 1-2 ribuan)
+      - Umum terjadi karena pembulatan pajak atau exchange rate
+      - Gunakan Tax Correction untuk handle pembulatan
+      - Jika variance > 1% dari yang diizinkan: Tolak dan minta koreksi
+
+4. AFTER APPROVAL - FOLLOW UP
+
+   a) Tandai Dokumen yang Sudah Approve
+      - Buat checklist untuk tracking
+      - Dokumentasikan tanggal approval
+      - Catat nama approver (Anda) untuk audit trail
+   
+   b) Koordinasi Posting
+      - Tanyakan ke bagian accounting kapan dokumen akan diposting
+      - Ensure posting dilakukan dalam 1-2 hari setelah approval
+      - Track status dokumen sampai menjadi "POSTED"
+   
+   c) Monthly Reconciliation
+      - Setiap akhir bulan, reconcile approval vs posting
+      - Buat file Excel summary: Jumlah dokumen, Total Amount, Total PPN, Total PPH
+      - Bandingkan dengan laporan akuntansi dan bank statement
+      - Kirim summary ke kepala bagian sebagai reporting
+
+5. PERFORMANCE TIPS
+
+   a) Kecepatan Approval
+      - Rata-rata waktu per dokumen: 5-10 menit (jika data OK)
+      - Jika ada masalah: 15-20 menit (untuk research dan clarify)
+      - Jangan rush: Kesalahan approval bisa jadi masalah audit
+      - Prioritas: Approval yang urgent (penerimaan di hari ini) di awal
+   
+   b) Accuracy Checking
+      - Double-check total amount sebelum approve
+      - Cross-check NPWP dengan master pihak pemberi
+      - Verify tanggal untuk consistency dengan bank statement
+      - Jika ragu: Jangan approve, tanyakan dulu
+   
+   c) Communication
+      - Setup group WhatsApp/Email untuk clarification cepat
+      - Jika ada masalah, communicate ASAP (jangan tunda)
+      - Reply rejection reason dengan jelas dan konstruktif
+      - Maintain good relationship dengan bagian pembuat dokumen
+
+
+L. SKENARIO PERTANYAAN UMUM
+
+1. Pertanyaan: "Kenapa ada penerimaan yang status 'Need Approval' tapi tidak muncul di list?"
+   Jawab:
+   - Kemungkinan dokumen sudah di-approve/reject oleh orang lain
+   - Coba refresh page (F5 atau reload)
+   - Filter mungkin aktif - resetkan filter dengan klik X
+   - Cek tanggal dokumen - harus dalam range yang ditampilkan
+   - Jika masih tidak ada: Hubungi IT support
+
+2. Pertanyaan: "Bagaimana jika Total DPP + PPN - PPH tidak match dengan slip transfer bank?"
+   Jawab:
+   - Ada ketidaksesuaian dalam kalkulasi atau pencatatan sistem
+   - Verifikasi manual: Total DPP + Total PPN - Total PPH = Total penerimaan
+   - Jika masih tidak cocok, lihat breakdown per item detail
+   - Tolak dokumen dan minta revisi dengan penjelasan perbedaan
+   - Jika sudah diverifikasi benar namun masih error: Hubungi IT
+
+3. Pertanyaan: "NPWP pihak pemberi tidak cocok dengan data master - apa yang harus dilakukan?"
+   Jawab:
+   - Hubungi pihak pemberi untuk NPWP yang benar
+   - Verifikasi di website pajak: www.pajak.go.id
+   - Update master data pihak pemberi dengan NPWP baru
+   - Jangan approve sampai NPWP cocok
+   - Dokumentasikan perubahan NPWP untuk audit trail
+
+4. Pertanyaan: "Ada lebih dari satu bukti penerimaan dengan nomor serupa - apakah boleh?"
+   Jawab:
+   - PERLU CLARIFY: Apakah ini bukti untuk penerimaan yang sama (multiple transfer) atau berbeda?
+   - Verifikasi dengan pihak pemberi: Apakah jumlah sama atau berbeda
+   - Jika sama: Ada kesalahan pencatatan - minta koreksi
+   - Jika berbeda: Nomor bukti yang berbeda OK, tapi harus teridentifikasi dengan jelas
+
+5. Pertanyaan: "Bagaimana approval jika jumlah penerimaan lebih kecil dari DPP yang di-invoice?"
+   Jawab:
+   - Contoh: Invoice 100.000.000 tapi hanya terima 95.000.000 (karena PPH dipotong)
+   - Ini NORMAL jika ada pemotongan PPH dari pihak pemberi
+   - Check apakah Formula: DPP (100M) + PPN (10M) - PPH (15M) = 95M? (sesuai)
+   - Jika formula sesuai: Approve (penerimaan netto sesuai perhitungan)
+   - Dokumentasikan pemotongan PPH untuk justifikasi verifikasi
+
+6. Pertanyaan: "PPH Type belum dipilih - apa solusinya?"
+   Jawab:
+   - Buka Tax Correction
+   - Di kolom PPH Type, pilih tipe yang sesuai:
+     * PPH 4(2) = untuk jenis penerimaan khusus, rate 2%
+     * PPH 23 = untuk penerimaan fee/komisi, rate 15%
+     * PPH 21 = jarang untuk penerimaan, lebih untuk pengeluaran
+   - Jika tidak tahu: Tanyakan ke pihak pemberi atau bagian tax
+   - Save Tax Correction
+   - Coba Approve lagi
+
+7. Pertanyaan: "Pihak pemberi tidak punya NPWP - apakah boleh approve?"
+   Jawab:
+   - Jika pihak pemberi tidak punya NPWP: Ada 2 opsi
+     * Gunakan Tax Code "NT" (No Tax) - tidak ada PPN/PPH pada penerimaan
+     * Atau clarify dengan pihak pemberi apakah mereka punya NPWP
+   - Perusahaan asing biasanya tidak punya NPWP Indonesia
+     * Gunakan Tax Code khusus untuk non-resident/asing
+     * PPH-nya higher rate sesuai perjanjian/perlakuan
+   - Jangan approve sampai jelas penanganannya
+
+8. Pertanyaan: "Apakah bisa approve jika masih ada data yang missing/format tidak jelas?"
+   Jawab:
+   - JANGAN approve data yang incomplete atau unclear
+   - Ini bisa jadi masalah audit nanti
+   - Better safe than sorry - minta koreksi
+   - Dokumentasikan apa yang missing untuk clarification
+   - Dalam SLA 2 hari: Ada cukup waktu untuk clarify
+
+9. Pertanyaan: "Bagaimana jika penerimaan adalah penggantian dari penerimaan sebelumnya yang rejected?"
+   Jawab:
+   - Lihat dokumen sebelumnya - apakah statusnya REJECTED?
+   - Verify apakah dokumen baru ini sudah terkoreksi sesuai alasan rejection
+   - Jika belum ada koreksi: Tanyakan ke pembuat dokumen
+   - Pastikan dokumen baru tidak duplikasi dengan dokumen lama
+   - Jika semuanya sudah terkoreksi: Boleh approve
+
+
+M. KESIMPULAN
+
+Proses Receiving Tax Approval adalah tahap KRITIS dalam workflow penerimaan kas. Beberapa poin penting:
+
+1. TANGGUNG JAWAB APPROVER
+   - Memastikan akurasi perhitungan pajak (PPN dan PPH) pada penerimaan
+   - Validasi kelengkapan dokumentasi pajak (bukti penerimaan, bukti pemotong)
+   - Verifikasi data NPWP dan pihak pemberi
+   - Melindungi perusahaan dari risiko pajak/audit terkait penerimaan
+
+2. COMPLIANCE & AUDIT TRAIL
+   - Setiap approval harus terdokumentasi dengan alasan yang jelas
+   - Rejection harus punya penjelasan konstruktif untuk koreksi
+   - Archiving semua dokumen pendukung untuk keperluan audit
+   - Monthly reporting untuk management tentang approval metrics
+
+3. EFISIENSI OPERASIONAL
+   - Target approval: 2 hari kerja max dari creation
+   - Komunikasi cepat dengan pembuat dokumen untuk clarify
+   - Sistem akan help-flag jika ada anomali
+   - Coordinate dengan accounting untuk posting timing
+
+4. BEST PRACTICES UTAMA
+   Selalu verifikasi formula: DPP + PPN - PPH = Total Amount penerimaan
+   NPWP harus valid dan sesuai master pihak pemberi
+   Bukti penerimaan harus lengkap dan nomor referensi jelas
+   PPH Type harus match dengan jenis penerimaan/pihak pemberi
+   Tax Correction untuk handling pembulatan rupiah
+   Documentation dan archiving untuk compliance
+   Monthly reconciliation untuk accuracy control
+   Cross-check dengan bank statement untuk validation
+
+5. KAPAN ASK FOR HELP
+   - Jika ada error system yang tidak bisa di-resolve
+   - Jika ada pertanyaan teknis perpajakan (hubungi tax team)
+   - Jika ada data pihak pemberi yang tidak valid (hubungi master data team)
+   - Jika ada urgent approval dengan timeline ketat (escalate ke manager)
+
+6. PENUTUP
+   Receiving Tax Approval adalah "gate keeper" sebelum dokumen penerimaan kas masuk 
+   sistem akuntansi. Dengan melakukan approval yang teliti, perusahaan dapat:
+   - Memastikan compliance dengan peraturan pajak pada penerimaan
+   - Mencegah error posting yang bisa jadi problem audit
+   - Maintain good relationship dengan pihak pemberi (data akurat)
+   - Protect financial integrity dari organisasi
+   - Ensure cash flow visibility dan accuracy
+
+   Approval yang baik = Penerimaan yang aman = Cash flow yang akurat = Audit yang smooth = Perusahaan yang comply

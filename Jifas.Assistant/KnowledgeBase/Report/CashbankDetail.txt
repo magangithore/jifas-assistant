@@ -1,0 +1,435 @@
+LAPORAN RINCI POSISI KAS BANK HARIAN (CASHBANK DETAIL DAILY)
+
+TUJUAN:
+Memberikan informasi DETAIL tentang setiap transaksi kas/bank yang terjadi dalam periode tertentu,
+termasuk nomor bukti, deskripsi transaksi, jumlah debit/kredit, dan saldo running balance setiap hari.
+Laporan ini membantu bagian finance untuk tracing transaksi detail dan verifikasi line-by-line setiap posting di bank.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan transaksi detail dalam bentuk tabel dengan setiap baris mewakili satu transaksi kas/bank.
+Memudahkan untuk tracking setiap debit dan kredit serta melihat dampaknya terhadap perubahan saldo.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Cashbank Detail Daily"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Bank (Bank)
+      - Klik dropdown "Bank"
+      - Daftar bank akan muncul berdasarkan perusahaan yang sudah dipilih
+      - Ketik untuk mencari bank tertentu (minimal 3 karakter)
+      - Pilih salah satu bank
+      - Contoh: "CAPIT - Bank Capital"
+      - Catatan: Field ini hanya aktif setelah memilih perusahaan
+      - Data akan otomatis difilter sesuai perusahaan yang dipilih
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan transaksi dari tanggal ini ke depan
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan transaksi hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil semua transaksi dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Waktu loading tergantung banyaknya transaksi dalam periode
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: LAPORAN RINCI POSISI KAS BANK HARIAN
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Nama Bank Rekening: Nama bank dan nomor rekening yang dipilih (contoh: "CAPIT - Bank Capital, No. Rekening : 2169195717")
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Detail Tabel Transaksi (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI TRANSAKSI:
+      - Tanggal              : Tanggal transaksi terjadi/diposting di bank
+      - No. Bukti            : Nomor bukti internal di sistem (reference number transaksi)
+      - No. Cek/Giro         : Nomor cek atau giro jika transaksi menggunakan instrumen ini
+      - Referensi            : Referensi tambahan dari dokumen sumber (nomor PO, nomor invoice, dll)
+      - Keterangan           : Deskripsi lengkap transaksi (tujuan transaksi, penerima/pengirim)
+
+      KOLOM MUTASI (PERUBAHAN SALDO):
+      - No. Ref./Debit       : Nomor referensi khusus untuk transaksi debit
+      - Mutasi Debit         : Jumlah pengeluaran/pengurangan dari rekening (dalam IDR)
+      - Mutasi Kredit        : Jumlah pemasukan/penambahan ke rekening (dalam IDR)
+
+      KOLOM SALDO (RUNNING BALANCE):
+      - Saldo IDR            : Saldo rekening setelah transaksi ini, dalam Rupiah
+      - Saldo USD            : Saldo rekening dalam US Dollar (jika ada)
+      - Total                : Total saldo keseluruhan dalam ekuivalen IDR
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      Tanggal: 07/01/2026 | No. Bukti: PVKI26010017
+      Keterangan: JIFAS (JABABEKA INTEGRATED FINANCE ACCOUNTING SYSTEM), DU/TS, PT
+      Mutasi Debit: 0 | Mutasi Kredit: 150.063
+      Saldo IDR: 150.063 | Saldo USD: 0
+
+      Baris 2:
+      Tanggal: 08/01/2026 | No. Bukti: PUKI26010012
+      Keterangan: Bayar heru seratus buat jajan
+      Mutasi Debit: 0 | Mutasi Kredit: -250.063
+      Saldo IDR: -250.063 | Saldo USD: 0
+
+      Baris 3:
+      Tanggal: 13/01/2026 | No. Bukti: PUKI26010015 | No. Cek: 45712
+      Keterangan: PIN Emas masa kerja karyawan - Test 1/12
+      Mutasi Debit: 0 | Mutasi Kredit: -10.250.063
+      Saldo IDR: -10.250.063 | Saldo USD: 0
+
+      Baris 4:
+      Tanggal: 12/01/2026 | No. Bukti: PUKI26010018
+      Keterangan: Perjalanan dinas ke bali
+      Mutasi Debit: 0 | Mutasi Kredit: -1.000.063
+      Saldo IDR: -11.250.063 | Saldo USD: 0
+
+   d) Baris TOTAL:
+      - Menampilkan total agregat dari semua transaksi
+      - Kolom "Mutasi Debit" menampilkan total semua debit yang keluar
+      - Kolom "Mutasi Kredit" menampilkan total semua kredit yang masuk
+      - Kolom "Saldo" menampilkan saldo akhir periode (balance terakhir)
+      - Contoh: Total = 1.138.004.344.059,2
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak halaman (banyak transaksi), bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. MUTASI DEBIT (Debit Mutation)
+   - Adalah transaksi yang mengurangi saldo (uang keluar dari rekening)
+   - Contoh: Pembayaran gaji, pembayaran invoice, withdrawal, transfer keluar
+   - Nilai selalu ditampilkan sebagai jumlah positif di kolom Mutasi Debit
+   - Dampak: Mengurangi saldo
+
+2. MUTASI KREDIT (Credit Mutation)
+   - Adalah transaksi yang menambah saldo (uang masuk ke rekening)
+   - Contoh: Penerimaan dari pelanggan, penerimaan bunga bank, transfer masuk
+   - Nilai selalu ditampilkan sebagai jumlah positif di kolom Mutasi Kredit
+   - Dampak: Menambah saldo
+
+3. RUNNING BALANCE (SALDO BERJALAN)
+   - Adalah saldo rekening setelah setiap transaksi diproses
+   - Saldo terus berubah seiring bertambahnya transaksi
+   - Rumus: Saldo Sebelumnya + Kredit - Debit
+   - Memudahkan tracing untuk melihat dampak setiap transaksi
+
+4. NO. BUKTI (Proof Number)
+   - Adalah nomor referensi internal dari sistem
+   - Digunakan untuk melacak transaksi di sistem
+   - Format biasanya: PVKI/PUKI + tanggal + nomor urut (contoh: PUKI26010015)
+   - P = Payment/Posting, V = Voucher, K = Bank/Kas, I = Input
+   - Angka = Tahun-Bulan-Urut
+
+5. NO. CEK/GIRO (Check/Giro Number)
+   - Adalah nomor dari instrumen pembayaran jika transaksi menggunakan cek atau giro
+   - Jika kosong, berarti transaksi tidak menggunakan cek/giro
+   - Digunakan untuk tracing instrumen pembayaran fisik
+   - Penting untuk bank reconciliation
+
+6. KETERANGAN (Description)
+   - Adalah deskripsi lengkap dari transaksi
+   - Membantu pemahaman apa tujuan transaksi tersebut
+   - Contoh: "Pembayaran Gaji Desember", "Penerimaan dari PT. XYZ", dll
+   - Sumber biasanya dari memo atau narasi dokumen sumber
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. BANK RECONCILIATION DETAIL
+   - Mencocokkan setiap transaksi di sistem dengan laporan bank
+   - Verifikasi line-by-line nomor bukti, tanggal, dan jumlah
+   - Identifikasi outstanding items (transaksi belum dikonfirmasi bank)
+   - Identifikasi NSF/bounced checks atau rejected transactions
+
+2. TRACING TRANSAKSI SPESIFIK
+   - Mencari transaksi tertentu berdasarkan tanggal atau nomor bukti
+   - Melihat dampak transaksi terhadap perubahan saldo
+   - Verifikasi bahwa transaksi tercatat dengan benar
+   - Menemukan transaksi yang hilang atau duplikasi
+
+3. ANALISIS CASHFLOW DETAIL
+   - Melihat setiap debit dan kredit secara individual
+   - Menganalisis pola pengeluaran dan pemasukan setiap hari
+   - Mengidentifikasi transaksi besar atau tidak normal
+   - Membantu forecasting cash position lebih akurat
+
+4. VERIFIKASI POSTING AKUNTANSI
+   - Memastikan setiap transaksi sudah diposting dengan benar di GL
+   - Verifikasi jumlah debit/kredit sesuai dokumen sumber
+   - Identifikasi error atau kesalahan posting
+   - Memastikan cut-off period transaksi benar
+
+5. AUDIT TRAIL & COMPLIANCE
+   - Menyediakan bukti lengkap setiap transaksi untuk audit
+   - Dokumentasi untuk regulasi perbankan dan pajak
+   - Arsip untuk investigasi jika ada masalah
+   - Evidence untuk internal control dan fraud detection
+
+6. CASH POSITION MONITORING
+   - Melihat pergerakan saldo setiap hari secara detail
+   - Monitoring untuk mendeteksi saldo negatif yang tidak direncanakan
+   - Membantu keputusan tentang short-term financing
+   - Alerting jika ada unusual transactions atau perubahan besar
+
+7. PAYMENT & RECEIPT VERIFICATION
+   - Memverifikasi bahwa semua payment sudah terposting dengan benar
+   - Memverifikasi bahwa semua receipt sudah diterima dan tercatat
+   - Tracking untuk pembayaran yang belum jelas statusnya
+   - Memastikan tidak ada payment atau receipt yang terlewat
+
+8. BANK API/INTEGRATION VERIFICATION
+   - Jika ada automated posting dari bank, verifikasi data akurat
+   - Deteksi discrepancy antara data bank dan sistem
+   - Memastikan automated process berjalan dengan benar
+   - Quality control untuk automated transaction posting
+
+9. INVESTIGATION & PROBLEM SOLVING
+   - Ketika ada perbedaan dengan bank, gunakan laporan ini untuk investigasi
+   - Trace backward untuk menemukan kapan terjadi perbedaan
+   - Membantu identifikasi penyebab masalah
+   - Dokumentasi untuk komunikasi dengan bank
+
+FITUR PERPINDAHAN BANK:
+Ketika pengguna mengubah bank (dengan perusahaan yang sama):
+- Klik dropdown "Bank" untuk memilih bank yang berbeda
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai bank baru
+- Semua transaksi dari bank baru akan ditampilkan
+- Data bank lama akan diganti dengan data bank baru
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan transaksi sesuai periode baru
+- Transaksi akan ditampilkan mulai dari tanggal awal hingga tanggal akhir
+- Saldo running balance akan dihitung ulang sesuai periode baru
+- Data periode lama akan diganti dengan data periode baru
+
+INTERPRETASI KOLOM MUTASI:
+
+1. MUTASI DEBIT vs MUTASI KREDIT
+   - Setiap transaksi HANYA ADA DI SALAH SATU kolom (Debit ATAU Kredit, tidak keduanya)
+   - Dalam satu baris, jika ada nilai di Mutasi Deheit, maka Mutasi Kredit kosong/0 (dan sebaliknya)
+   - Ini memudahkan sorting dan filtering
+
+2. READING YANG BENAR
+   - Jika Mutasi Kredit ada nilai → Uang MASUK
+   - Jika Mutasi Debit ada nilai → Uang KELUAR
+   - Jika kedua kosong → Ada yang tidak normal (periksa data)
+
+3. RUMUS SALDO RUNNING BALANCE
+   - Saldo Hari Ini = Saldo Kemarin + Mutasi Kredit - Mutasi Debit
+   - Contoh: Jika kemarin saldo 100.000 dan hari ini kredit 50.000, debit 20.000
+   - Maka saldo hari ini = 100.000 + 50.000 - 20.000 = 130.000
+
+CATATAN PENTING:
+
+1. Semua field filter (Company, Bank, From Date, To Date) harus diisi sebelum search
+2. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+3. Laporan hanya menampilkan transaksi yang tercatat di sistem
+4. Saldo running balance adalah saldo di SISTEM, belum tentu sama dengan saldo bank
+5. Untuk bank reconciliation, bandingkan dengan laporan bank resmi
+6. Jika ada perbedaan saldo sistem vs bank, investigasi menggunakan laporan ini
+7. Laporan dapat memiliki banyak halaman jika transaksi dalam periode besar
+8. Untuk perubahan filter, klik search kembali untuk refresh
+9. Laporan dapat diexport untuk analisis lanjutan atau presentasi
+10. Laporan ini read-only, tidak bisa mengedit data langsung
+11. Saldo dapat negatif jika pengeluaran lebih besar dari pemasukan (overdraft)
+12. Total baris menunjukkan jumlah agregat debit dan kredit selama periode
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter (Company, Bank, From, To) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah bank yang dipilih benar-benar punya transaksi di periode tersebut
+4. Coba ubah range tanggal ke yang lebih luas
+5. Mungkin periode tersebut memang tidak ada transaksi
+6. Klik tombol "Search" kembali untuk refresh
+7. Hubungi IT jika laporan tidak mau load sama sekali (ada error message)
+
+TIPS PENGGUNAAN:
+
+1. HARIAN POSTING CHECK
+   - Lakukan setiap hari pagi untuk verifikasi transaksi kemarin
+   - Bandingkan dengan bank alert/notification dari bank
+   - Pastikan semua transaksi sudah tercatat
+
+2. BANK RECONCILIATION WORKFLOW
+   Cara menggunakan laporan ini untuk bank reconciliation:
+   a) Ambil bank statement dari bank (dalam format yang apa saja)
+   b) Buka laporan ini dengan periode yang sama
+   c) Cross-check setiap transaksi satu per satu
+   d) Tandai transaksi yang sudah cocok
+   e) Identifikasi transaksi yang belum ada di laporan bank (outstanding)
+   f) Buat note/dokumentasi untuk outstanding items
+   g) Tekan book/reconcile ketika semua sudah cocok
+
+3. TRACING TRANSAKSI SPESIFIK
+   - Jika ada transaksi yang tidak jelas, use Ctrl+F untuk search
+   - Cari berdasarkan nomor bukti, tanggal, atau keterangan
+   - Verifikasi jumlahnya dengan dokumen sumber
+   - Cek apakah sudah tercatat di GL dengan benar
+
+4. ANALISIS POLA HARIAN
+   - Lihat transaksi mana yang selalu muncul setiap periode
+   - Identifikasi transaksi regular vs one-time transactions
+   - Gunakan untuk forecast dan budgeting
+
+5. EXPORT KE EXCEL UNTUK DEEP ANALYSIS
+   - Export laporan ke Excel
+   - Buat pivot table untuk analisis oleh jenis transaksi
+   - Buat chart untuk visualisasi trend
+   - Filter untuk kategori tertentu
+
+6. MULTI-BANK COMPARISON
+   - Ambil laporan untuk beberapa bank dengan periode yang sama
+   - Bandingkan pola dan jumlah transaksi
+   - Analisis utilization setiap bank
+   - Buat rekomendasi optimisasi
+
+7. CASH POSITION TRENDING
+   - Buat laporan untuk hari-hari tertentu dalam sebulan (misal: setiap awal bulan)
+   - Lihat trend perubahan saldo dari waktu ke waktu
+   - Proyeksikan posisi cash untuk periode depan
+   - Buat perencanaan untuk memastikan likuiditas
+
+8. INTERNAL AUDIT & COMPLIANCE DOCUMENTATION
+   - Print/export laporan setiap bulan untuk dokumentasi
+   - Arsip untuk file permanent
+   - Jika ada audit, gunakan sebagai bukti
+   - Catat semua unusual transactions atau adjustments
+
+TROUBLESHOOTING UMUM:
+
+MASALAH: "Laporan kosong, padahal harusnya ada transaksi"
+SOLUSI: 
+- Cek apakah periode sudah benar
+- Cek apakah bank yang dipilih sudah benar
+- Coba ubah range tanggal lebih luas
+- Pastikan tanggal "From" tidak lebih besar dari "To"
+
+MASALAH: "Saldo running balance tidak sesuai harapan"
+SOLUSI:
+- Verifikasi dari awal periode (mulai dari transaksi pertama)
+- Cek apakah ada transaksi yang terlewat atau duplikasi
+- Bandingkan dengan bank statement untuk verifikasi
+- Mungkin ada transaksi tidak tercatat
+
+MASALAH: "Jumlah transaksi sangat banyak, laporan tidak bisa load"
+SOLUSI:
+- Ubah periode yang lebih sempit
+- Coba cari per minggu atau per dekade (1-10, 11-20, 21-31)
+- Export dalam batch kecil
+- Hubungi IT jika sistem tidak responsif
+
+MASALAH: "Tidak bisa menemukan transaksi tertentu"
+SOLUSI:
+- Cek tanggal transaksi yang benar
+- Gunakan Ctrl+F untuk search di browser
+- Coba search dengan keterangan/deskripsi yang berbeda
+- Mungkin transaksi tidak tercatat (ada error dalam posting)
+
+MASALAH: "Saldo negatif, apakah itu normal?"
+SOLUSI:
+- Ya, bisa normal jika ada overdraft arrangement dengan bank
+- Verifikasi dengan bank statement untuk konfirmasi
+- Cek apakah ada automatic loan/credit line yang terpicu
+- Hubungi bank jika ada ketidakjelasan
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN BANK:
+   - Jika ada discrepancy, gunakan laporan ini untuk korespondensi
+   - Minta penjelasan untuk transaksi yang tidak cocok
+   - Verifikasi outstanding items bersama bank
+
+2. DENGAN AR/COLLECTIONS:
+   - Share laporan untuk lihat receipt dari customer
+   - Coordinate tentang penerimaan payment yang late/belum masuk
+   - Follow-up untuk payment yang expect masuk
+
+3. DENGAN AP/PROCUREMENT:
+   - Share laporan untuk lihat payment yang sudah dikeluarkan
+   - Verify cash outflow untuk purchase
+   - Coordinate tentang timing pembayaran
+
+4. DENGAN AUDIT INTERNAL:
+   - Sediakan laporan untuk audit procedures
+   - Jelaskan transaksi yang unusual atau besar
+   - Dokumentasi untuk audit findings
+
+5. DENGAN MANAJEMEN/CFO:
+   - Report status cash position berdasarkan laporan ini
+   - Highlight anomali atau issue
+   - Rekomendasi untuk optimization
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Cashbank Detail Daily berhubungan dengan:
+1. Bank Reconciliation Report - Untuk pencocokan bank detail
+2. Cashbank Recap Daily - Untuk summary/ringkasan (lebih ringkas)
+3. General Ledger - Untuk verifikasi posting akuntansi
+4. Cash Position Report - Untuk summary cash position
+5. Daily Cash Report - Untuk reporting kepada manajemen
+6. Financial Statement - Kas ditampilkan di Balance Sheet
+7. Payment Report - Untuk detail payment yang dikeluarkan
+8. Receipt Report - Untuk detail receipt yang diterima
+
+KAPAN GUNAKAN LAPORAN INI VS CASHBANK RECAP:
+
+GUNAKAN DETAIL JIKA:
+- Perlu lihat SETIAP transaksi individual
+- Melakukan bank reconciliation detail
+- Melakukan tracing transaksi spesifik
+- Investigasi atau problem solving
+- Audit atau verifikasi akurat
+
+GUNAKAN RECAP JIKA:
+- Hanya perlu lihat summary/ringkasan per hari
+- Monitoring saldo awal/akhir
+- Analisis high-level trend
+- Reporting ke manajemen (tidak perlu terlalu detail)
+- Ada banyak transaksi dan ingin view lebih sederhana

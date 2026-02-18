@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Jifas.Assistant.Models;
+using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
 
 namespace Jifas.Assistant.Services
@@ -75,8 +76,7 @@ namespace Jifas.Assistant.Services
             // ?? INITIALIZE PERFORMANCE METRICS
             var metrics = new PerformanceMetrics();
 
-            var isFirstMessage = string.IsNullOrWhiteSpace(request?.SessionId) || 
-                                 request.SessionId == Guid.NewGuid().ToString();
+            var isFirstMessage = string.IsNullOrWhiteSpace(request?.SessionId);
             
             var jifasIntroductionKey = $"JIFAS_Intro_{response.SessionId}";
             var hasSeenIntroduction = _cacheService.Get<bool>(jifasIntroductionKey);
@@ -114,7 +114,7 @@ namespace Jifas.Assistant.Services
                 var enableCache = _configuration.GetValue<bool>("Caching:EnableResponseCache");
                 if (enableCache && !string.IsNullOrWhiteSpace(userMessage))
                 {
-                    var cacheKey = $"Chat_Response_{userMessage.GetHashCode()}";
+                    var cacheKey = $"Chat_Response_{HashHelper.ToShortStableHash(userMessage)}";
                     var cachedResponse = _cacheService.Get<ChatResponse>(cacheKey);
                     cacheStopwatch.Stop();
                     metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
@@ -251,7 +251,7 @@ namespace Jifas.Assistant.Services
                  var suggestionsStopwatch2 = Stopwatch.StartNew();
                  if (enableCache)
                  {
-                     var suggestionCacheKey = $"Suggestions_{aiResponse.GetHashCode()}";
+                     var suggestionCacheKey = $"Suggestions_{HashHelper.ToShortStableHash(aiResponse)}";
                      var cachedResult = _cacheService.Get<List<string>>(suggestionCacheKey);
                      
                      if (cachedResult != null)
@@ -281,7 +281,7 @@ namespace Jifas.Assistant.Services
                 var cacheStopwatch2 = Stopwatch.StartNew();
                 if (enableCache && response.Success)
                 {
-                    var cacheKey = $"Chat_Response_{userMessage.GetHashCode()}";
+                    var cacheKey = $"Chat_Response_{HashHelper.ToShortStableHash(userMessage)}";
                     var cacheDuration = _configuration.GetValue<int>("Caching:ResponseCacheDurationHours", 24);
                     _cacheService.Set(cacheKey, response, cacheDuration * 60);
                 }

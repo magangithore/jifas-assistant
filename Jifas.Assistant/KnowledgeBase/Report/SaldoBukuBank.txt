@@ -1,0 +1,513 @@
+LAPORAN SALDO BUKU BANK (BANK STATEMENT BALANCE REPORT)
+
+TUJUAN:
+Memberikan informasi tentang pergerakan saldo dari BUKU BANK (bank statement/laporan dari bank) dalam periode tertentu.
+Laporan ini menampilkan setiap transaksi yang tercatat di bank beserta saldo running balance setelah setiap transaksi.
+Fungsi utama adalah untuk melakukan BANK RECONCILIATION dengan membandingkan posisi saldo sistem vs laporan bank.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan pergerakan saldo dari pihak BANK (bukan dari sistem internal), dengan detail transaksi dan
+running balance setiap hari. Laporan ini adalah "source of truth" dari posisi saldo menurut pihak bank.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Saldo Buku Bank"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Bank (Bank)
+      - Klik dropdown "Bank"
+      - Daftar bank akan muncul berdasarkan perusahaan yang sudah dipilih
+      - Ketik untuk mencari bank tertentu (minimal 2 karakter)
+      - Pilih salah satu bank
+      - Contoh: "CAPIT - Bank Capital"
+      - Catatan: Field ini hanya aktif setelah memilih perusahaan
+      - Data akan otomatis difilter sesuai perusahaan yang dipilih
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan transaksi dari bank mulai tanggal ini
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan transaksi hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari bank/source
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan data saldo buku bank (bank statement)
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: LAPORAN SALDO BUKU BANK
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Nama Bank & No. Rekening: Nama bank dan nomor rekening yang dipilih (contoh: "Rekening Bank : CAPIT - Bank Capital, No. Rekening : 2169195717")
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Detail Tabel Pergerakan Saldo Buku Bank (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI TRANSAKSI:
+      - Tanggal           : Tanggal transaksi dicatat oleh bank
+      - No. Bukti         : Nomor bukti/referensi transaksi dari bank
+      - No. Cek/Giro      : Nomor cek atau giro jika ada
+      - Referensi         : Nomor referensi tambahan
+      - Keterangan        : Deskripsi transaksi dari bank
+
+      KOLOM MUTASI (PERUBAHAN SALDO):
+      - No. Ref./Debit    : Nomor referensi untuk transaksi debit
+      - Mutasi Debit      : Jumlah pengeluaran menurut BANK
+      - Mutasi Kredit     : Jumlah pemasukan menurut BANK
+
+      KOLOM SALDO (RUNNING BALANCE MENURUT BANK):
+      - Saldo IDR         : Saldo menurut bank dalam Rupiah
+      - Saldo USD         : Saldo menurut bank dalam Dollar
+      - (Total)           : Total saldo keseluruhan
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      Tanggal: 07/01/2026 | No. Bukti: PVKI26010017
+      Keterangan: JIFAS JABABEKA INTEGRATED... 
+      Mutasi Debit: 0 | Mutasi Kredit: 150.063
+      Saldo IDR: 150.063 | Saldo USD: 0 | Total: -150.063
+
+      Baris 2:
+      Tanggal: 08/01/2026 | No. Bukti: PUKI26010012
+      Keterangan: Bayar heru seratus buat jajan jajan
+      Mutasi Debit: 0 | Mutasi Kredit: 250.063
+      Saldo IDR: -250.063 | Saldo USD: 0 | Total: -250.063
+
+      Baris 3:
+      Tanggal: 13/01/2026 | No. Bukti: RVKI26010003
+      Keterangan: JIFAS JABABEKA INTEGRATED...
+      Mutasi Debit: 545.010.000 | Mutasi Kredit: 0
+      Saldo IDR: 533.759.937 | Saldo USD: 0 | Total: 533.759.937
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak transaksi, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PERBEDAAN PENTING: BUKU BANK vs BUKU KAS (SISTEM)
+
+BUKU BANK (BANK STATEMENT - DARI BANK):
+- Saldo menurut BANK (pihak ketiga yang independen)
+- Biasanya lebih akurat sebagai referensi
+- Bisa ada delay dalam posting (ada transaksi belum clear)
+- Bisa ada bank fees, bunga, atau adjustments dari bank
+- Adalah "source of truth" untuk bank reconciliation
+
+BUKU KAS (DARI SISTEM INTERNAL):
+- Saldo menurut SISTEM INTERNAL perusahaan
+- Direkam saat transaksi dibuat di sistem
+- Biasanya lebih cepat tercatat tapi belum tentu sudah jelas di bank
+- Bisa ada error atau misposting di sistem
+- Perlu dicocokkan dengan buku bank untuk verifikasi
+
+RECONCILIATION:
+- Membandingkan BUKU BANK dengan BUKU KAS
+- Outstanding items biasanya ada (transaksi belum clear)
+- Tujuan: Memastikan kedua buku akhirnya sama
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. BANK RECONCILIATION UTAMA
+   - Laporan ini adalah basis utama untuk bank reconciliation
+   - Memposisikan saldo BANK sebagai starting point
+   - Dapat dibandingkan dengan saldo sistem (buku kas)
+   - Identifikasi perbedaan antara bank dan sistem
+
+2. VERIFIKASI SALDO BANK (BANK STATEMENT)
+   - Memverifikasi bahwa saldo dari bank sudah tercatat di sistem
+   - Mencocokkan dengan laporan bank yang diterima
+   - Identifikasi transaksi yang masuk/keluar dari bank
+   - Memastikan tidak ada transaksi yang terlewat
+
+3. IDENTIFIKASI OUTSTANDING ITEMS
+   - Outstanding Checks: Cek yang sudah dikeluarkan tapi belum clear
+   - Outstanding Deposits: Deposit yang sudah dikirim tapi belum dikonfirmasi bank
+   - Bank Charges: Biaya yang dipotong bank tapi belum di-record sistem
+   - NSF/Bounced Items: Transaksi yang ditolak bank
+
+4. DETEKSI FRAUD / UNUSUAL TRANSACTIONS
+   - Melihat transaksi yang tidak dikenali atau tidak diotorisasi
+   - Identifikasi transfer atau withdrawal yang tidak seharusnya
+   - Deteksi duplikasi atau posting error dari bank
+   - Alert untuk potential security breach
+
+5. CASH GAP ANALYSIS
+   - Menganalisis perbedaan antara saldo bank vs saldo sistem
+   - Memahami gap apa yang masih outstanding
+   - Planning untuk kapan saldo akan seimbang
+   - Forecasting cash position yang lebih akurat
+
+6. MONTHLY BANK RECONCILIATION
+   - Melakukan monthly closing untuk bank accounts
+   - Memastikan semua bulanan sudah balanced
+   - Prepare bank reconciliation statement
+   - Support untuk financial statement closing
+
+7. AUDIT TRAIL & COMPLIANCE
+   - Menyediakan bukti dari bank untuk audit
+   - Dokumentasi official dari bank (laporan statement)
+   - Compliance dengan banking regulations
+   - Transparency untuk internal/external audit
+
+8. FOLLOW-UP & RESOLUTION
+   - Tracking untuk outstanding items yang lama
+   - Follow-up dengan bank untuk transaksi unusual
+   - Resolution untuk discrepancies
+   - Quality control untuk banking operations
+
+9. CASH FORECAST & PLANNING
+   - Menggunakan saldo bank sebagai base untuk forecasting
+   - Planning untuk kebutuhan cash/financing
+   - Proyeksikan cash position berdasarkan historical pattern
+   - Koordinasi dengan treasury untuk cash management
+
+FITUR PERPINDAHAN BANK:
+Ketika pengguna mengubah bank (dengan perusahaan yang sama):
+- Klik dropdown "Bank" untuk memilih bank yang berbeda
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai bank baru
+- Semua transaksi dari bank baru akan ditampilkan
+- Data bank lama akan diganti dengan data bank baru
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan transaksi buku bank sesuai periode baru
+- Transaksi akan ditampilkan mulai dari tanggal awal hingga tanggal akhir
+- Saldo running balance akan dihitung ulang sesuai periode baru
+
+INTERPRETASI KOLOM:
+
+1. SALDO BUKU BANK MENUNJUKKAN SALDO MENURUT BANK
+   - Bukan saldo internal sistem
+   - Adalah saldo resmi yang diakui bank
+   - Berlaku mulai dari tanggal tertentu (tanggal posting bank)
+
+2. MUTASI DEBIT = UANG KELUAR (PENGELUARAN)
+   - Bank mengurangi saldo
+   - Contoh: Pembayaran check, withdrawal, transfer keluar, dll
+   - Nilai positif tapi berpengaruh mengurangi saldo
+
+3. MUTASI KREDIT = UANG MASUK (PEMASUKAN)
+   - Bank menambah saldo
+   - Contoh: Transfer in, deposit, bunga bank, dll
+   - Nilai positif dan menambah saldo
+
+4. TANGGAL DI LAPORAN INI = POSTING DATE DARI BANK
+   - Tanggal saat bank mencatat transaksi
+   - Bisa berbeda dengan tanggal instrumen (cek, dll)
+   - Tapi lebih penting karena inilah saat saldo berubah menurut bank
+
+CATATAN PENTING:
+1. Semua field filter (Company, Bank, From Date, To Date) harus diisi sebelum search
+2. Laporan ini adalah SALDO MENURUT BANK, bukan saldo sistem internal
+3. Untuk bank reconciliation, laporan ini dibandingkan dengan laporan cashbank detail (sistem)
+4. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+5. Running balance ditampilkan setelah setiap transaksi
+6. Saldo bisa negatif jika bank memberikan overdraft
+7. Data dikutip dari bank statement atau bank feed (automated download dari bank)
+8. Untuk perubahan filter, klik search kembali
+9. Laporan dapat diexport untuk bank reconciliation work paper
+10. Laporan ini read-only, tidak bisa mengedit data langsung
+11. Jika data tidak cocok dengan bank statement fisik, follow-up dengan bank
+
+LANGKAH-LANGKAH BANK RECONCILIATION:
+
+Cara menggunakan laporan ini untuk monthly bank reconciliation:
+
+STEP 1: AMBIL BANK STATEMENT
+- Minta bank statement dari bank (harian, weekly, atau bulanan)
+- Catat saldo awal dan saldo akhir periode
+
+STEP 2: BUKA LAPORAN INI
+- Buka Laporan Saldo Buku Bank dengan periode yang sama
+- Catat saldo awal dan saldo akhir menurut laporan
+
+STEP 3: COMPARE SALDO AWAL
+- Bandingkan saldo awal laporan dengan saldo awal statement
+- Jika sama: OK, lanjut ke step 4
+- Jika berbeda: Ada error di prior month, perlu investigate
+
+STEP 4: TRACE SETIAP TRANSAKSI
+- Cocokkan setiap transaksi di laporan dengan transaksi di bank statement
+- Tandai yang sudah cocok
+- Catat yang tidak cocok
+
+STEP 5: IDENTIFIKASI OUTSTANDING ITEMS
+- Outstanding Checks: Cek dikeluarkan sistem tapi belum clear di bank
+  Catat nomor cek dan jumlahnya
+  Subtract dari bank statement saldo
+  
+- Outstanding Deposits: Deposit belum masuk di bank
+  Catat tanggal dan jumlahnya
+  Add ke bank statement saldo
+  
+- Bank Fees/Charges: Biaya yang dipotong bank tapi belum di-record
+  Catat biayanya
+  Subtract dari saldo sistem
+  
+- Other Items: NSF, returned deposits, bunga, dll
+  Catat dan tentukan action
+
+STEP 6: RECONCILE
+- Hitung: Bank Statement Saldo Akhir + Deposits - Outstanding Checks ± Adjustments
+- Bandingkan dengan: Saldo Sistem Akhir ± Adjustments
+- Jika sama: BALANCED ✓
+- Jika berbeda: Terus investigasi perbedaan
+
+STEP 7: RECORD ADJUSTMENTS
+- Record bank charges di jurnal
+- Record bunga di jurnal
+- Record lainnya sesuai kebutuhan
+
+STEP 8: CLOSE RECONCILIATION
+- Update status reconciliation
+- File reconciliation workpaper
+- Dokumentasi untuk audit
+
+TIPS PENGGUNAAN:
+
+1. MONTHLY RECONCILIATION ROUTINE
+   - Lakukan setiap akhir bulan atau sesuai jadwal
+   - Jangan menunda, semakin cepat semakin mudah
+   - Gunakan laporan ini sebagai base
+
+2. COMPARE DENGAN SISTEM (CASHBANK DETAIL)
+   - Buka laporan ini (BANK) bersamaan dengan Cashbank Detail (SISTEM)
+   - Compare side-by-side untuk tracking
+   - Identifikasi mana yang ada di bank tapi tidak di sistem, atau sebaliknya
+
+3. EXCEL HELPER
+   - Export laporan ke Excel
+   - Buat kolom helper untuk mark which items reconciled
+   - Buat formula untuk menghitung outstanding items
+   - Simpan sebagai reconciliation workpaper
+
+4. OUTSTANDING ITEMS TRACKING
+   - Buat worksheet untuk track outstanding items
+   - Update setiap bulan
+   - Key yang lama (outstanding item> 30 hari) harus follow-up
+   - Jangan biarkan outstanding items "buang akal" terlalu lama
+
+5. BANK STATEMENT COMPARISON
+   - Print bank statement
+   - Cetak laporan ini
+   - Arrange side by side untuk manual comparison
+   - Tick off setiap line item yang reconciled
+
+6. VARIANCE ANALYSIS
+   - Jika ada perbedaan saldo, gunakan laporan ini untuk investigasi
+   - Check setiap transaksi untuk potential error
+   - Prioritaskan transaksi besar dahulu
+   - Trace backward dari tanggal terakhir
+
+7. COMMUNICATION WITH BANK
+   - Jika ada unusual transaction atau perbedaan, screenshot laporan ini
+   - Buat inquiry ke bank dengan data dari laporan ini
+   - Use laporan ini sebagai reference untuk follow-up
+
+8. AUDIT PREPARATION
+   - Export laporan monthly reconciliation untuk dokumentasi
+   - File untuk audit trail
+   - Siapkan supporting detail untuk auditor
+
+TROUBLESHOOTING UMUM:
+
+MASALAH: "Saldo di laporan tidak sesuai dengan bank statement"
+SOLUSI:
+- Cek apakah periode sudah tepat (comparing same period)
+- Cek apakah ada outstanding items (checks belum clear, deposits belum masuk)
+- Cek apakah ada bank charges/fees yang belum di-record
+- Follow-up dengan bank jika masih tidak cocok
+
+MASALAH: "Laporan kosong, tidak ada data transaksi"
+SOLUSI:
+- Cek apakah periode sudah benar
+- Cek apakah bank yang dipilih sudah benar
+- Coba ubah range tanggal lebih luas
+- Hubungi IT jika data source dari bank tidak ada
+
+MASALAH: "Data berbeda antara hari ke hari di laporan"
+SOLUSI:
+- Normal, saldo terus berubah seiring transaksi masuk/keluar
+- Verify setiap transaksi sesuai dengan order chronological
+- Check apakah ada transaksi yang duplikasi atau error
+
+MASALAH: "Saldo negatif di laporan"
+SOLUSI:
+- Bisa normal jika bank memberikan overdraft
+- Verify dengan bank statement
+- Follow-up dengan bank jika over-limit
+
+MASALAH: "Tidak bisa find laporan untuk periode tertentu"
+SOLUSI:
+- Cek apakah data bank tersedia untuk periode itu
+- Hubungi IT/Bank untuk data feed
+- Mungkin masih pending dari bank
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN BANK:
+   - Use laporan ini untuk komunikasi dengan bank
+   - Verify outstanding items dengan bank
+   - Follow-up unusual transactions
+   - Request untuk pending items
+
+2. DENGAN CASHIER / CASH HANDLER:
+   - Verify transaksi yang masuk/keluar dari kas
+   - Koordinasi untuk timing pembayaran
+   - Reconcile dengan cash book yang manual
+
+3. DENGAN INTERNAL AUDIT:
+   - Provide laporan untuk audit
+   - Explain discrepancies dan outstanding items
+   - Document reconciliation process
+
+4. DENGAN CONTROLLER / FINANCE HEAD:
+   - Provide monthly reconciliation summary
+   - Report status balanced or not balanced
+   - Highlight any significant variances
+   - Recommendation untuk action items
+
+5. DENGAN AP/AR TEAM:
+   - Communicate about payment/receipt yang outstanding
+   - Follow-up untuk late items
+   - Coordinate reconciliation efforts
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Saldo Buku Bank berhubungan dengan:
+1. Cashbank Detail Daily - Detail transaksi sistem (untuk compare dengan ini)
+2. Cashbank Recap Daily - Summary saldo sistem (untuk reconciliation)
+3. Daily Cash Report - Reporting posisi cash
+4. Bank Reconciliation Report - Formal reconciliation statement
+5. General Ledger - Untuk verifikasi GL posting
+6. Financial Statement - Cash position di Balance Sheet
+
+WORKFLOW BANK RECONCILIATION BULANAN:
+
+TIMELINE: Biasanya dilakukan 5-10 hari setelah closing month
+
+DAY 1-2: TERIMA DATA
+- Terima bank statement dari bank
+- Download automated bank feed jika available
+- Organize data untuk review
+
+DAY 3-5: PREPARATION
+- Buka Laporan Saldo Buku Bank
+- Compare dengan bank statement
+- Identify outstanding items
+- Review laporan Cashbank Detail
+
+DAY 6-8: RECONCILIATION
+- Reconcile setiap transaksi
+- Identify dan document discrepancies
+- Trace untuk unusual items
+- Prepare reconciliation analysis
+
+DAY 9-10: FINALIZATION
+- Record journal entries untuk adjustments
+- Update GL accounts
+- Prepare reconciliation statement
+- Approval dari supervisor
+- File untuk documentation
+
+SALDO BUKU BANK vs OTHER REPORTS CHEAT SHEET:
+
+LAPORAN INI (SALDO BUKU BANK):
+Menampilkan SALDO MENURUT BANK
+Gunakan untuk bank reconciliation
+Gunakan untuk verify transaksi dari bank
+Basis untuk outstanding items analysis
+
+CASHBANK DETAIL:
+Menampilkan SALDO MENURUT SISTEM
+Gunakan untuk internal tracing
+Lebih terawal posting (bisa belum clear bank)
+Detail setiap transaksi internal
+
+CASHBANK RECAP:
+Summary saldo bulanan
+Ringkasan debit/kredit
+Less detail tapi overview lebih jelas
+
+UNTUK RECONCILIATION:
+Bandingkan INI (Buku Bank) dengan CASHBANK DETAIL (Sistem)
+Hasilkan BANK RECONCILIATION STATEMENT
+Archive untuk audit trail
+
+BEST PRACTICES:
+
+1. TIMELY RECONCILIATION
+   - Jangan tunda reconciliation
+   - Semakin cepat semakin mudah track
+   - Ideal: setiap minggu atau maksimal 2 minggu
+
+2. DOCUMENTATION
+   - Simpan copy laporan untuk setiap reconciliation
+   - Catat semua outstanding items
+   - Document semua adjustments
+   - File untuk audit trail
+
+3. INVESTIGATION MINDSET
+   - Jangan abaikan discrepancies kecil
+   - Sering kecil-kecilan menjadi masalah besar
+   - Always investigate dan trace to source
+
+4. COMMUNICATION
+   - Keep bank informed soal outstanding items
+   - Follow-up yang lama-lama
+   - Eskalate jika ada masalah
+   - Maintain good relationship dengan bank
+
+5. AUTOMATION
+   - If possible, automate reconciliation
+   - Use bank API/feed untuk faster posting
+   - Reduce manual effort
+   - Increase accuracy
+
+6. TRAINING & KNOWLEDGE
+   - Train staff tentang reconciliation process
+   - Share best practices
+   - Document procedure
+   - Regular training refresh

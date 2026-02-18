@@ -1,0 +1,546 @@
+LAPORAN INQUIRY CB (CASHIER BOOK INQUIRY / INQUIRY CASH PAYMENT)
+
+TUJUAN:
+Memberikan informasi DETAIL tentang setiap transaksi pembayaran/pengeluaran kas yang telah dilakukan dan tercatat di sistem.
+Laporan ini menampilkan daftar lengkap semua voucher pembayaran (payment vouchers) dengan detail lengkap termasuk 
+deskripsi pembayaran, jumlah, bank pengeluaran, dan data penerima pembayaran.
+Membantu divisi finance untuk tracking, verifikasi, dan kontrol atas setiap pengeluaran kas dari perusahaan.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan inquiry detail Cash Book (CB) dalam bentuk tabel yang menampilkan setiap pembayaran/voucher
+secara individual dengan informasi lengkap per transaksi termasuk identitas bank, nominal, dan tujuan pembayaran.
+
+ALUR PROSES (FLOW):
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Inquiry CB"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Status (Status)
+      - Klik dropdown "Status"
+      - Sistem akan menampilkan 3 opsi:
+        * "All Status" - Untuk melihat semua status (Posted dan Unposted)
+        * "Posted" - Untuk melihat hanya yang sudah di-POST (pembayaran sudah diakui)
+        * "Unposted" - Untuk melihat hanya yang BELUM di-POST (pembayaran masih pending)
+      - Default: "All Status"
+      - Catatan: Status menunjukkan apakah pembayaran sudah tercatat di sistem
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan pembayaran dari tanggal ini
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan pembayaran hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua pembayaran yang sesuai filter
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: INQUIRY CB
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 4")
+
+   b) Detail Tabel Pembayaran/Voucher CB (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Company      : Kode perusahaan (contoh: KI)
+      - Doc. No.     : Nomor dokumen pembayaran/voucher (contoh: PVKI26010001)
+      - Date         : Tanggal pembayaran dilakukan
+      - Description  : Deskripsi/narasi pembayaran (tujuan/keterangan)
+      - Currency     : Mata uang pembayaran (IDR, USD, EUR, dll)
+
+      KOLOM NILAI:
+      - Amount       : Jumlah nominal pembayaran
+      - Total (IDR)  : Total nilai pembayaran dalam Rupiah
+
+      KOLOM IDENTIFIKASI TRANSAKSI:
+      - Bank         : Bank pengeluaran (dari bank mana dana dikeluarkan)
+      - Creditor     : Nama vendor/penerima pembayaran (siapa yang diinvoice/AP)
+      - Debtor       : Nama customer/pihak lain yang terkait (jika ada)
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      Company: KI | Doc: PVKI26010001 | Date: 02/01/2026
+      Description: Payment CV PV - Pembayaran mengunakan Playwright | Test Playwright 1/2
+      Currency: IDR | Amount: 54.500.000 | Total (IDR): 54.500.000
+      Bank: BCA | Creditor: PHITAGORAS GLOBAL DUTA, PT | Debtor: -
+
+      Baris 2:
+      Company: KI | Doc: PVKI26010002 | Date: 09/01/2026
+      Description: Payment CB PV - Pembayaran mengunakan Playwright | Test 11/17
+      Currency: IDR | Amount: 56.000.000 | Total (IDR): 56.000.000
+      Bank: BCA | Creditor: PHITAGORAS GLOBAL DUTA, PT | Debtor: -
+
+      Baris 3:
+      Company: KI | Doc: PVKI26010003 | Date: 02/01/2026
+      Description: Pembayaran PUM u/ tanjung lesung | Test with Playwright 11/25
+      Currency: IDR | Amount: 50.000.000 | Total (IDR): 50.000.000
+      Bank: BCA | Creditor: PHITAGORAS GLOBAL DUTA, PT | Debtor: -
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak pembayaran, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu (contoh: Page 1 of 4)
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+1. CB (CASHIER BOOK / CASH BOOK)
+   - Adalah catatan/buku terkait pergerakan kas keluar (pengeluaran) dari perusahaan
+   - Setiap pengeluaran kas dicatat sebagai satu transaksi di CB
+   - CB berbeda dengan AP/AR: AP/AR adalah piutang-hutang (tidak kontan), CB adalah pengeluaran kas kontan
+   - Laporan ini menunjukkan semua pembayaran yang telah dilakukan via bank/cash
+   - Contoh: Pembayaran kepada vendor, gaji karyawan, biaya operasional, dll
+
+2. DOC. NO. (NOMOR DOKUMEN PEMBAYARAN/VOUCHER)
+   - Adalah nomor referensi unik untuk setiap pembayaran di sistem
+   - Format: PV + Kode Perusahaan + Tahun + Bulan + Urut (contoh: PVKI26010001)
+   - PV = Payment Voucher
+   - K = Kode Perusahaan (KI untuk Kawasan Industri)
+   - I = Input
+   - 26 = Tahun 2026
+   - 01 = Bulan Januari
+   - 0001 = Urut pembayaran
+   - Digunakan untuk trace pembayaran & reference
+
+3. DESCRIPTION (DESKRIPSI PEMBAYARAN)
+   - Adalah penjelasan singkat tentang tujuan atau jenis pembayaran
+   - Contoh: "Payment CV PV - Pembayaran mengunakan Playwright"
+   - Contoh: "Pembayaran PUM u/ tanjung lesung"
+   - Contoh: "Pembayaran CB u/ tanjung lesung"
+   - Berguna untuk identify jenis/kategori pembayaran
+   - Penting untuk audit trail & dokumentasi
+
+4. AMOUNT (JUMLAH PEMBAYARAN)
+   - Adalah total nominal uang yang dikeluarkan dalam satu transaksi pembayaran
+   - Format: Angka dengan pemisah ribuan
+   - Contoh: 54.500.000 (IDR)
+   - Contoh: 56.000.000 (IDR)
+   - Ini adalah jumlah yang sesungguhnya dikeluarkan dari bank/kas
+
+5. TOTAL (IDR)
+   - Adalah total nilai pembayaran dalam mata uang IDR (Rupiah)
+   - Biasanya sama dengan Amount (jika Amount sudah dalam IDR)
+   - Tapi jika Amount dalam USD/EUR/dll, Total (IDR) akan ter-konversi ke IDR
+   - Rumus: Total (IDR) = Amount × Exchange Rate (jika mata uang bukan IDR)
+   - Berguna untuk consolidate cash outflow dalam mata uang lokal
+
+6. BANK (BANK PENGELUARAN)
+   - Adalah bank dari mana dana/kas dikeluarkan untuk pembayaran
+   - Contoh: BCA, CAPIT, STCHD, KASEU, MDR$
+   - Setiap pembayaran harus dari rekening bank perusahaan
+   - Penting untuk bank reconciliation & cash management
+   - Membantu track posisi kas per bank
+
+7. CREDITOR (PENERIMA PEMBAYARAN)
+   - Adalah vendor/supplier/pihak yang menerima pembayaran kas
+   - Contoh: PHITAGORAS GLOBAL DUTA, PT
+   - Bisa juga: Nama karyawan (untuk gaji), nama vendor (untuk supplies), dll
+   - Identitas ini penting untuk tracking pembayaran & audit
+
+8. DEBTOR (PIHAK TERKAIT - OPTIONAL)
+   - Adalah customer atau pihak lain yang terkait dengan pembayaran (jika ada)
+   - Biasanya kosong (separator "-") untuk pembayaran ke vendor/operational
+   - Contoh: Jika bayar DP ke customer, maka customer adalah Debtor
+   - Opsional - tidak semua pembayaran punya Debtor
+
+9. CURRENCY (MATA UANG PEMBAYARAN)
+   - Adalah mata uang dalam nomor transaksi pembayaran
+   - Contoh: IDR (Rupiah Indonesia), USD (Dolar Amerika), EUR (Euro)
+   - Jika currency bukan IDR, ada konversi otomatis ke IDR di kolom Total (IDR)
+   - Berguna untuk forex exposure monitoring
+
+10. STATUS (POSTED vs UNPOSTED)
+    - POSTED: Pembayaran sudah di-post di sistem CB (pengeluaran sudah diakui)
+             → Sudah tercatat di GL (General Ledger)
+             → Sudah dicatat di Bank Reconciliation
+             → Final & tidak bisa diubah
+    
+    - UNPOSTED: Pembayaran belum di-post di sistem CB
+               → Masih dalam draft atau pending approval
+               → Belum tercatat di GL
+               → Belum included dalam bank reconciliation
+               → Status: PENDING posting
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+1. TRACKING & VERIFICATION PENGELUARAN KAS
+   - Melihat setiap pembayaran/pengeluaran kas yang telah dilakukan
+   - Memverifikasi bahwa setiap pembayaran tercatat di sistem
+   - Tracking untuk memastikan pembayaran sesuai dengan purchase order atau invoice
+   - Matching dengan dokumen pendukung (invoice, bukti transfer, dll)
+
+2. INQUIRY & PENCARIAN PEMBAYARAN
+   - Mencari pembayaran tertentu berdasarkan vendor, tanggal, atau amount
+   - Trace specific pembayaran untuk investigasi
+   - Find pembayaran untuk follow-up atau verification
+   - Search by nomor dokumen atau nomor referensi
+
+3. CASH FLOW ANALYSIS & CONTROL
+   - Melihat total pengeluaran kas per periode
+   - Analyze cash outflow by bank, vendor, atau kategori pembayaran
+   - Monitor cash position dan cash balance
+   - Budget vs actual untuk pengeluaran operasional
+
+4. BANK RECONCILIATION & VERIFICATION
+   - Verify pembayaran yang tercatat di sistem dengan bank statement
+   - Identify outstanding pembayaran yang belum clear di bank
+   - Bank reconciliation untuk setiap bank yang dimiliki
+   - Support untuk monthly bank reconciliation
+
+5. BUDGET CONTROL & COST MANAGEMENT
+   - Monitor pengeluaran actual vs budget
+   - Identify over-budget atau unusual expenses
+   - Cost control untuk setiap kategori pembayaran
+   - Budget per vendor atau cost center
+
+6. VENDOR & SUPPLIER MANAGEMENT
+   - Track total pembayaran per vendor
+   - Analyze supplier payment trend
+   - Monitor supplier performance & payment history
+   - Support untuk vendor relationship management
+
+7. AUDIT TRAIL & DOCUMENTATION
+   - Dokumentasi lengkap setiap pengeluaran kas
+   - Audit trail untuk financial audit & compliance
+   - Supporting documentation untuk tax purposes
+   - Record keeping sesuai regulasi
+
+8. PAYMENT VERIFICATION & SETTLEMENT
+   - Verify pembayaran sudah diterima oleh payee
+   - Identify payment yang dispute atau belum settlement
+   - Follow-up untuk pembayaran yang gagal
+   - Reconcile dengan acknowledgement dari payee
+
+9. MONTH-END & YEAR-END CLOSING
+   - Support untuk closing process saat end of period
+   - Verify semua pembayaran periode sudah tercatat (Posted)
+   - GL reconciliation untuk cash account
+   - Complete audit file untuk closing
+
+FITUR PERPINDAHAN STATUS:
+Ketika pengguna mengubah status (dengan company yang sama):
+- Klik dropdown "Status" untuk filter Posted, Unposted, atau All Status
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai status filter yang baru
+- Akan tampil hanya pembayaran dengan status yang dipilih
+
+Contoh:
+- Filter Status = "Posted" → Hanya pembayaran yang sudah di-post yang tampil
+- Filter Status = "Unposted" → Hanya pembayaran yang belum di-post yang tampil
+- Filter Status = "All Status" → Semua pembayaran (posted + unposted) tampil
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan pembayaran sesuai periode baru
+- Pembayaran akan ditampilkan mulai dari tanggal awal hingga tanggal akhir
+- Data periode lama akan diganti dengan data periode baru
+
+CATATAN PENTING:
+1. Semua field filter (Company, Status, From Date, To Date) harus diisi sebelum search
+2. Laporan menampilkan DETAIL setiap pembayaran/voucher (tidak summary)
+3. Satu baris = satu pembayaran/voucher
+4. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+5. Total (IDR) adalah nilai pembayaran dalam Rupiah (dengan konversi jika perlu)
+6. Status filter bisa "All Status", "Posted", atau "Unposted"
+7. Bank adalah pengeluaran dari rekening bank mana
+8. Creditor adalah vendor/supplier penerima pembayaran
+9. Amount adalah nominal pembayaran dalam currency asli
+10. Untuk perubahan filter, klik search kembali
+11. Laporan dapat diexport untuk analisis lebih lanjut
+12. Laporan ini read-only, tidak bisa mengedit data langsung
+13. Format tanggal: DD/MM/YYYY
+14. CB mencatat pengeluaran KAS KONTAN (bukan hutang/piutang)
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+1. Pastikan semua filter (Company, Status, From, To) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah perusahaan yang dipilih benar-benar punya pembayaran di periode tersebut
+4. Coba ubah status ke "All Status" untuk rule out status filter
+5. Coba ubah range tanggal lebih luas
+6. Mungkin periode tersebut memang tidak ada pembayaran
+7. Klik tombol "Search" kembali untuk refresh
+8. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+1. DAILY/WEEKLY CASH CONTROL
+   - Setiap hari/minggu buka laporan ini
+   - Monitor pembayaran yang sudah dilakukan
+   - Verify dengan bank transaction/bank statement
+   - Check balance dengan cash position
+
+2. FIND SPECIFIC PAYMENT
+   - Use Search filter dengan date range yang sempit untuk quick find
+   - Cari by vendor nama untuk see semua pembayaran ke vendor tertentu
+   - Use nomor dokumen untuk locate pembayaran spesifik
+   - Ctrl+F di browser untuk search dalam halaman
+
+3. CASH FLOW MONITORING
+   - Monitor total cash outflow per hari/minggu/bulan
+   - Analyze pembayaran pattern
+   - Forecast cash needs untuk periode mendatang
+   - Compare dengan budget allocation
+
+4. BANK RECONCILIATION SUPPORT
+   - Dari bank statement, identify pembayaran yang belum clear
+   - Use laporan ini untuk verify dengan internal record
+   - Identify outstanding items yang perlu follow-up
+   - Settlement untuk payment yang aged
+
+5. EXPORT TO EXCEL FOR ANALYSIS
+   - Export laporan ke Excel
+   - Buat column helper untuk: Aging (days since payment), Payment method
+   - Pivot table untuk analysis by vendor, amount range, bank
+   - Sort by bank atau vendor untuk different perspective
+
+6. RECONCILIATION WITH VENDOR
+   - Dari vendor invoice/statement, identify pembayaran yang tercatat
+   - Use laporan ini untuk confirm pembayaran sudah proceed ke vendor
+   - Identify payment yang dispute atau belum diterima
+   - Follow-up untuk acknowledgement dari vendor
+
+7. BUDGET VARIANCE ANALYSIS
+   - Identify pembayaran actual vs budget plan
+   - Analyze variance untuk setiap kategori pengeluaran
+   - Complete analysis untuk forecast next period
+   - Budget revision jika diperlukan
+
+8. MONTH-END CASH POSITION REPORT
+   - Buka laporan untuk bulan yang closing
+   - Sum total pengeluaran kas per bulan
+   - Verify dengan GL cash account balance
+   - Complete audit file & documentation
+
+SKENARIO UMUM INQUIRY:
+SKENARIO 1: "Cari pembayaran tertentu untuk vendor"
+Action:
+1. Pilih Company
+2. Pilih Status = All Status atau Posted
+3. Pilih periode yang relevan
+4. Klik Search
+5. Use Ctrl+F di browser untuk search nama vendor
+6. Atau export ke Excel dan filter by Creditor
+
+SZENARIO 2: "Lihat total pembayaran per vendor untuk periode"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted (untuk confirmed payment)
+3. Pilih periode (misal: 1 bulan atau quarter)
+4. Klik Search
+5. Export ke Excel
+6. Pivot table atau SUMIF by Creditor untuk total pembayaran
+7. Sort by total descending untuk top vendors
+
+SKENARIO 3: "Bank reconciliation - find payment di sistem"
+Action:
+1. Terima bank statement
+2. Find pembayaran yang tercatat di bank
+3. Search di laporan ini menggunakan amount atau tanggal
+4. Verify nomor dokumen & reference
+5. Mark sebagai reconciled atau investigate discrepancy
+
+SKENARIO 4: "Monthly cash outflow report untuk cash position"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted
+3. Pilih periode = bulan yang ditanyakan
+4. Klik Search
+5. Sum total seluruh pembayaran = cash outflow bulan
+6. Compare dengan opening cash + cash in
+7. Result = closing cash balance
+
+TROUBLESHOOTING UMUM:
+MASALAH: "Pembayaran tidak muncul di laporan meskipun sudah dilakukan"
+SOLUSI:
+- Check apakah pembayaran sudah di-post di sistem
+- Check apakah status filter mencakup pembayaran (All Status)
+- Check apakah date range mencakup tanggal pembayaran
+- Filter dengan tanggal lebih luas untuk confirm ada atau tidak
+- Hubungi IT jika pembayaran tidak ada di system
+
+MASALAH: "Total Amount tidak sesuai dengan bank statement"
+SOLUSI:
+- Check apakah ada currency conversion (jika USD/EUR → IDR)
+- Check jumlah di invoice asli vs sistem
+- Verify tidak ada cancel atau return yang belum dicatat
+- Check apakah pembayaran belum clear di bank (outstanding item)
+- Clarify dengan bank untuk discrepancy
+
+MASALAH: "Pembayaran belum tercatat di GL/GL belum balance"
+SOLUSI:
+- Check apakah pembayaran status sudah POST
+- POST yang belum post untuk include di GL
+- Verify GL account number & amount
+- Run GL reconciliation setelah posting
+- Contact accounting untuk GL adjustment jika perlu
+
+MASALAH: "Bank reconciliation tidak balance dengan laporan"
+SOLUSI:
+- Check outstanding item - pembayaran sudah clear di bank?
+- Check apakah ada bank fee atau adjusted amount
+- Identify item yang hanya di GL tapi belum di bank
+- Identify item hanya di bank tapi belum di GL
+- Adjust untuk bank reconciliation
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+1. DENGAN VENDOR/SUPPLIER:
+   - Share pembayaran detail untuk confirmation & acknowledgement
+   - Verify bahwa pembayaran sudah diterima oleh vendor
+   - Clarify untuk discrepancies atau disputed amounts
+   - Confirm payment terms & future payment schedule
+
+2. DENGAN PROCUREMENT:
+   - Provide CB detail untuk match dengan PO
+   - Verify pembayaran sesuai dengan goods received
+   - Identify 3-way mismatch (PO vs Receiving vs Payment)
+   - Follow-up untuk early payment discount
+
+3. DENGAN BANK/TREASURY:
+   - Regular reporting atas payment activity
+   - Daily/weekly cash position update
+   - Bank reconciliation support
+   - Cash management & liquidity planning
+
+4. DENGAN TAX/COMPLIANCE:
+   - Verify pembayaran untuk tax purposes (PPH potong, PPN, dll)
+   - Support untuk tax audit & documentation
+   - Ensure semua payment tercatat untuk tax reporting
+   - Payment record retention untuk compliance
+
+5. DENGAN MANAGEMENT/CFO:
+   - Report total cash outflow & position
+   - Highlight unusual payment atau anomali
+   - Analyze spending trend & vendor concentration
+   - Budget vs actual untuk cash management
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+Laporan Inquiry CB berhubungan dengan:
+1. Laporan Bank Reconciliation - Untuk match CB dengan bank statement
+2. Laporan AP (Accounts Payable) - Untuk verify pembayaran dari AP
+3. Laporan Cashbook/Bank Book - Untuk summary cash position per bank
+4. Laporan PUM - Untuk verify pembayaran uang muka
+5. General Ledger - Untuk verify posting cash payment ke GL
+6. Budget Report - Untuk compare actual payment vs budget
+7. Financial Statement - Cash outflow included dalam cash flow statement
+8. Vendor Statement Reconciliation - Untuk vendor payment confirmation
+
+WORKFLOW NORMAL UNTUK CASH PAYMENT:
+STEP 1: APPROVAL INVOICE/REQUIREMENT
+- Invoice diterima dari vendor
+- Invoice di-approve untuk pembayaran
+- Payment date ditentukan (sesuai term pembayaran)
+- Status: Ready for Payment
+
+STEP 2: CREATE PAYMENT VOUCHER
+- Voucher pembayaran dibuat di sistem
+- Amount, bank, vendor diisi
+- Status: Unposted (pending posting)
+
+STEP 3: PAYMENT EXECUTION
+- Fund transfer dilakukan via bank
+- Check/transfer diterbitkan
+- Reference number dicatat
+- Status: Payment Processed
+
+STEP 4: POSTING DI SISTEM
+- Payment voucher di-post ke sistem
+- GL account di-update
+- Status: Posted
+- Cash position di-update
+
+STEP 5: BANK CONFIRMATION
+- Bank statement diterima
+- Payment di-confirm in bank statement
+- Status: Bank Cleared
+
+STEP 6: RECONCILIATION
+- Payment di-reconcile dengan internal record
+- Vendor confirmation diterima
+- Document untuk file
+- Closed/Settled
+
+BEST PRACTICES:
+1. TIMELY RECORDING
+   - Record pembayaran segera setelah executed
+   - Target: Same day atau next business day
+   - Ensure accurate GL posting
+
+2. PAYMENT VERIFICATION
+   - Verify pembayaran sesuai dengan invoice/PO
+   - Check amount & bank transfer detail
+   - Ensure 3-way match sebelum posting
+
+3. BANK RECONCILIATION
+   - Regular (daily/weekly) bank rec procedures
+   - Identify outstanding items promptly
+   - Clear discrepancies timely
+
+4. CASH MANAGEMENT
+   - Monitor cash balance per bank
+   - Forecast cash needs untuk planning
+   - Optimize cash flow & working capital
+
+5. DOCUMENTATION
+   - Keep all supporting payment documents
+   - File organized per payment atau vendor
+   - Retention sesuai policy
+
+6. APPROVAL PROCESS
+   - Clear approval authority established
+   - All payments approved sebelum processing
+   - Documentation untuk audit trail
+
+7. VENDOR MANAGEMENT
+   - Regular communication dengan vendor
+   - Track payment history per vendor
+   - Negotiate term & discount
+
+KEYS TO REMEMBER:
+1. One row = One payment/voucher (detail level)
+2. Status = Posted/Unposted untuk tracking di GL
+3. Total (IDR) = Final payment amount (dalam Rupiah)
+4. Bank = Pengeluaran dari rekening bank mana
+5. CB adalah pengeluaran KAS KONTAN (bukan hutang/piutang)
+6. Amount adalah nominal yang benar-benar dikeluarkan
+7. Creditor adalah vendor/supplier penerima pembayaran
+8. Always match dengan invoice/PO sebelum posting
+9. Regular bank reconciliation support
+10. Keep for audit trail & compliance documentation

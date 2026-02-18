@@ -1,0 +1,695 @@
+
+MODUL APPROVAL OF UNIDENTIFIED RV - DOKUMENTASI KNOWLEDGE BASE
+
+Dokumentasi ini dirancang untuk staff Finance dan Accounting yang mengelola 
+dokumen Sales Receive (RV) dengan status UNIDENTIFIED CUSTOMER. 
+
+Fokus diberikan pada alur bisnis dan workflow persetujuan, bukan aspek teknis.
+
+A. APA ITU UNIDENTIFIED RV DAN KAPAN TERJADI?
+
+UNIDENTIFIED RV adalah dokumen Sales Receive (penerimaan uang) yang:
+- Uang sudah masuk ke rekening bank perusahaan ✓
+- Tapi BELUM TAHU siapa pelanggan/debiturnya ✗
+- Belum bisa dialokasikan ke invoice spesifik ✗
+- Menunggu IDENTIFIKASI dan APPROVAL
+
+KAPAN TERJADI UNIDENTIFIED RV?
+
+Skenario 1: TRANSFER TANPA KETERANGAN
+- Pelanggan transfer uang via bank
+- Tidak ada note atau reference yang jelas
+- Belum bisa cocokkan dengan database pelanggan
+- Misal: Transfer Rp 50 juta tanpa tulisan apa
+
+Skenario 2: VIRTUAL ACCOUNT ERROR
+- Bank kirim notif transfer dari VA
+- Tapi data pelanggan di VA tidak sesuai dengan invoice
+- System belum bisa otomatis identifikasi
+- Perlu verifikasi manual
+
+Skenario 3: PEMBAYARAN DARI PIHAK KETIGA
+- Pelanggan A yang membayar invoice milik pembeli lain
+- Sistem tidak otomatis tahu mapping-nya
+- Perlu identifikasi siapa yang sebenarnya pembayar
+
+Skenario 4: PEMBAYARAN DEPOSIT TANPA INVOICE
+- Pelanggan baru deposit uang
+- Belum ada invoice yang outstanding
+- Belum bisa langsung alokasikan ke receiving invoice
+- Sistem tandai sebagai unidentified dulu
+
+STATUS YANG DIPAKAI:
+- "NEED APPROVAL" - Dokumen unidentified menunggu persetujuan
+- "APPROVED" - Sudah diidentifikasi dan disetujui
+- "REJECTED" - Ditolak/dibatalkan karena tidak valid
+
+B. MENU UTAMA - DAFTAR UNIDENTIFIED RV yang PERLU APPROVAL
+
+TAMPILAN GRID DAFTAR:
+
+Kolom-kolom yang ditampilkan:
+
+1. DOC NO (Dokumen Nomor)
+   - Nomor identitas dokumen RV yang unidentified
+   - Auto-generated oleh sistem
+   - Gunakan untuk referensi
+
+2. DOC DATE (Tanggal Dokumen)
+   - Tanggal kapan uang masuk ke bank
+   - Urut terbaru di atas (descending)
+
+3. BANK (Bank)
+   - Nama rekening bank yang menerima uang
+   - Identifikasi dari mana uang masuk
+
+4. DESCRIPTION (Keterangan)
+   - Deskripsi penerimaan/catatan yang ada
+   - Informasi yang bisa membantu identifikasi
+
+5. AMOUNT (Jumlah Uang)
+   - Total uang yang diterima
+   - Format currency dengan 2 desimal
+
+6. STATUS (Status)
+   - Kondisi dokumen saat ini
+   - "NEED APPROVAL" = perlu disetujui
+   - "APPROVED" = sudah diidentifikasi
+   - "REJECTED" = ditolak
+
+TOOLBAR:
+- Excel Export: Download daftar ke file Excel untuk laporan backup
+
+FILTER & PENCARIAN:
+- Bisa filter per kolom dengan klik di header
+- Search Doc No untuk cari dokumen spesifik
+- Filter by date range
+- Filter by status
+
+SORTING:
+- Default: Tanggal terbaru di atas (untuk prioritas approval terbaru)
+
+C. ALUR APPROVAL UNIDENTIFIED RV
+
+STEP 1: LIHAT DAFTAR DOKUMEN YANG PERLU APPROVAL
+   ↓
+STEP 2: BUKA DOKUMEN YANG PALING ATAS (PERLU APPROVAL)
+        - Status harus "NEED APPROVAL"
+        - Item di grid hanya tampil jika punya status dengan "NEED"
+   ↓
+STEP 3: CARI INFORMASI IDENTIFIKASI
+        Dari mana dapat info pelanggan?
+        - Hubungi bagian sales / customer service
+        - Cari dari bank statement keterangan transfer
+        - Cek dari nomor referensi / kode pembayaran
+        - Cross-check dengan database pelanggan
+   ↓
+STEP 4: IDENTIFIKASI SIAPA PELANGGANNYA
+        Tanyakan:
+        - Siapa nama pelanggan yang sebenarnya?
+        - Untuk invoice/tagihan mana?
+        - Berapa nominal yang seharusnya?
+        - Apakah ada pajak/potongan?
+   ↓
+STEP 5: KLIK TOMBOL "APPROVE"
+        - Tombol APPROVE hanya aktif untuk dokumen dengan status "NEED APPROVAL"
+        - Tombol akan disabled (grayed out) jika status sudah APPROVED/REJECTED
+   ↓
+STEP 6: KONFIRMASI APPROVAL
+        - Dialog akan muncul bertanya konfirmasi
+        - Pastikan info yang diidentifikasi sudah benar
+        - Klik "OK" untuk lanjut
+   ↓
+STEP 7: SISTEM PROSES APPROVAL
+        - Backend system akan update dokumen
+        - Identifikasi customer akan tersimpan
+        - Dokumen bisa masuk ke workflow normal RV
+   ↓
+STEP 8: GRID REFRESH OTOMATIS
+        - Daftar akan update
+        - Dokumen yang sudah approved akan hilang dari list (karena status bukan "NEED" lagi)
+        - Tombol APPROVE untuk dokumen itu akan disabled
+
+D. BAGIAN-BAGIAN DARI DOKUMEN UNIDENTIFIED RV
+
+INFORMASI HEADER (YANG DITAMPILKAN DI GRID):
+
+1. DOC_NO
+   - Nomor dokumen unik
+   - Digunakan untuk referensi di approval
+   - Contoh: "RVU-2024-001"
+
+2. DOC_DATE
+   - Tanggal dokumen dibuat (tanggal uang diterima)
+
+3. BANK_CODE
+   - Kode bank tempat uang diterima
+   - Diambil dari master bank
+   - Contoh: "BCA", "BNI", "MANDIRI"
+
+4. VA_CD (VIRTUAL ACCOUNT CODE)
+   - Nomor virtual account jika ada
+   - Opsional, bisa kosong jika transfer manual
+   - Berguna untuk identifikasi
+
+5. CUS_CD & CUS_NME (CUSTOMER CODE & NAME)
+   - Belum final saat unidentified
+   - Akan diupdate setelah approval
+
+6. KAV_REF (KAVLING REFERENCE)
+   - Nomor kavling jika untuk pembeli property
+   - Opsional
+
+7. DESCS (DESCRIPTION)
+   - Deskripsi/catatan penerimaan
+   - Input dari user yang buat dokumen
+   - Sumber informasi identifikasi
+
+8. TRECV_AMT (TOTAL RECEIVE AMOUNT)
+   - Jumlah total uang yang diterima
+   - Currency dalam IDR atau foreign currency
+
+9. TBASE_AMT (TOTAL BASE AMOUNT)
+   - Jumlah dasar sebelum pajak
+   - Provisional, akan final saat diidentifikasi
+
+10. ALLOC_CD & ALLOC_AMT (ALLOCATION CODE & AMOUNT)
+    - Alokasi sementara
+    - Akan direvisi setelah identifikasi final
+
+11. CAT_CD (CATEGORY CODE)
+    - Kategori transaksi
+    - Membantu classifikasi jenis penerimaan
+
+12. ACTION_STATUS
+    - Status dokumen
+    - Nilai: "NEED APPROVAL", "APPROVED", "REJECTED"
+
+E. TOMBOL APPROVE - CARA KERJA
+
+TAMPILAN TOMBOL:
+- Kolom paling kanan di grid
+- Label: "APPROVE"
+- Warna: BIRU (primary button)
+
+KONDISI TOMBOL AKTIF (BISA DIKLIK):Status dokumen = "NEED APPROVAL" (atau mengandung kata "NEED")Dokumen sudah masuk dalam database dengan data validUser punya akses role untuk approve
+
+KONDISI TOMBOL DISABLED (TIDAK BISA DIKLIK):
+✗ Status = "APPROVED" (sudah approval)
+✗ Status = "REJECTED" (sudah ditolak)
+✗ Status = dokumen normal lainnya (bukan NEED approval status)
+✗ User tidak punya role/permission untuk approve
+
+TAMPILAN DISABLED:
+- Tombol akan menjadi abu-abu (grayed out)
+- Cursor tidak responsif saat hover
+- Tidak bisa diklik
+
+PROSES SAAT KLIK APPROVE:
+
+1. Validation Check
+   - Sistem pastikan status = "NEED APPROVAL"
+   - Check doc_no tidak kosong
+   - Verify user punya access
+
+2. Confirmation Dialog
+   - Popup muncul bertanya konfirmasi
+   - Teks: "Are you sure want to APPROVE unidentified customer in document [DOC_NO]?"
+   - 2 pilihan: OK (approve) atau CANCEL (abaikan)
+
+3. API Call ke Backend
+   - URL: /ApprovalUnidentified/Approve?docNo=[NOMOR DOKUMEN]
+   - Method: POST
+   - Header: Authorization token
+   - Proses update di database
+
+4. Success Handler
+   - Jika berhasil, popup alert muncul
+   - Isi: pesan sukses dari server
+   - Grid otomatis refresh untuk lihat update terbaru
+
+5. Error Handler
+   - Jika gagal, alert error muncul
+   - Isi: pesan error dari server
+   - Dokumen tetap unidentified
+   - Coba lagi setelah issue teratasi
+
+6. Auto Refresh
+   - Grid secara otomatis reload data
+   - Dokumen yang sudah approved hilang dari list
+   - Tombol APPROVE dia akan disabled
+
+F. PROSEDUR APPROVAL STEP-BY-STEP
+
+LANGKAH 1: BUKA MENU APPROVAL UNIDENTIFIED RV
+Login ke sistem JIFAS
+Pergi ke Receiving → Approval of Unidentified RV
+Grid akan menampilkan daftar dokumen pending
+
+LANGKAH 2: PILIH DOKUMEN YANG PALING PRIORITAS
+Lihat kolom STATUS - pastikan "NEED APPROVAL"
+Lihat kolom AMOUNT - prioritaskan nominal besar
+Lihat kolom DOC_DATE - prioritaskan tanggal lama
+Dokumentasikan nomor dokumen (DOC_NO)
+
+LANGKAH 3: INVESTIGASI & IDENTIFIKASI
+Baca deskripsi di kolom DESCRIPTION
+Cek bank code - dari mana uang masuk
+Hubungi Customer Service / Sales
+Tanyakan: "Ada transfer Rp XXX dari siapa?"
+Cross-check dengan database pelanggan
+Verify: Nama, kode, invoice reference
+
+LANGKAH 4: VERIFIKASI DATA IDENTIFIKASI
+Pastikan sudah dapat jawaban untuk:
+-Nama lengkap pelanggan
+-Kode pelanggan di sistem
+-Nomor invoice yang dibayar (jika ada)
+-Jumlah cocok dengan nominal yang diterima
+-Ada pajak/potongan yang perlu dicatat
+-Approval dari supervisor (jika diperlukan)
+
+LANGKAH 5: KLIK TOMBOL "APPROVE" DI GRID
+Perhatikan kolom paling kanan "Action"
+Tombol "APPROVE" harus warna biru aktif
+Jika grayed out, doc_no tidak bisa itu (lihat status)
+Klik tombol APPROVE
+
+LANGKAH 6: CONFIRM DIALOG MUNCUL
+Baca pesan: "Are you sure want to APPROVE..."?
+Pastikan nomor dokumen (DOC_NO) sesuai
+Review kembali kalau sudah identifikasi dengan benar
+Jika YAKIN: Klik OK
+Jika RAGU: Klik CANCEL
+
+LANGKAH 7: TUNGGU PROSES SELESAI
+Loading indicator muncul (animated spinner)
+Backend system update dokumen
+Associasi identitas pelanggan ke dokumen
+Dokumen masuk ke normal workflow RV
+
+LANGKAH 8: APPROVAL BERHASIL
+Alert/notification sukses muncul
+Pesan berisi status update dari server
+Grid otomatis refresh
+Dokumen yang sudah approved hilang dari list
+Lanjut ke dokumen berikutnya (jika ada)
+
+G. INFORMASI YANG DIBUTUHKAN UNTUK IDENTIFIKASI
+
+DARI MANA DAPAT INFORMASI?
+
+Sumber 1: BANK STATEMENT / BANK NOTIFICATION
+- Nama pengirim (jika tertera)
+- Kode/nomor referensi transfer
+- Tanggal dan jam transfer
+- Bank asal transfer (jika transfer antar bank)
+
+Sumber 2: VIRTUAL ACCOUNT SYSTEM (JIKA ADA)
+- Sistem VA umumnya auto-kirim notif ke email
+- Berisikan customer code yang terkait VA
+- Invoice reference
+- Confirmation number
+
+Sumber 3: CUSTOMER SERVICE / SALES TEAM
+- Tanyakan "Ada penerimaan dari siapa?"
+- Minta konfirmasi nominal dan tanggal
+- Cek apakah ada PO atau kontrak terkait
+- Verify nama pelanggan di database
+
+Sumber 4: DATABASE MASTER CUSTOMER
+- Buka Master Data → Customer/Debtor
+- Cari berdasarkan nama / kode
+- Verifikasi bank account dan VA
+- Cross-check dengan dokumen unidentified
+
+Sumber 5: PAYMENT RECORD / AR AGING
+- Lihat AR aging report
+- Cari invoice dengan jumlah yang match
+- Identifikasi pelanggan dari invoice itu
+- Verifikasi tanggal jatuh tempo
+
+DATA YANG HARUS DIVERIFIKASI SEBELUM APPROVE:
+
+□ Nama Pelanggan - Sudah dapat verifikasi siapa
+□ Kode Pelanggan - Sudah dapat kode di system
+□ Nominal - Jumlah uang match dengan invoice
+□ Invoice Reference - Tahu invoice mana yang dibayar
+□ Tanggal - Transfer tanggal sesuai dengan dokumen
+□ Basis Alokasi - Tahu mau dialokasikan ke mana
+□ Approval dari Atasan - Sudah approve untuk identifikasi ini
+
+JIKA DATA TIDAK LENGKAP:
+→ JANGAN APPROVE dulu
+→ Lanjutkan investigasi
+→ Tanyakan ke finance manager
+→ Atau marking dokumen sebagai "perlu escalation"
+
+H. VALIDASI & PENGECEKAN SEBELUM APPROVE
+
+VALIDASI OTOMATIS SISTEM:
+
+1. Status Check
+Hanya dokumen dengan status "NEED APPROVAL" bisa di-approve
+   ✗ Dokumen dengan status "APPROVED" sudah tidak perlu approval
+   ✗ Dokumen dengan status "REJECTED" sudah ditolak sebelumnya
+
+2. Document Number Check
+DOC_NO harus ada dan tidak kosong
+   ✗ Jika kosong, there's system error, report ke IT
+
+3. Authorization Token Check
+User harus punya valid session token
+User harus punya role/permission untuk "Approve Unidentified"
+   ✗ Jika tidak, akan error "Unauthorized"
+
+VALIDASI MANUAL YANG HARUS DILAKUKAN USER:
+
+1. Nominal Match Check
+   □ Amount di grid = nominal yang diterima di bank statement
+   □ Jika tidak match → ada kemungkinan dokumentasi yang salah
+
+2. Customer Verification
+   □ Nama pelanggan sudah dikonfirmasi benar
+   □ Kode pelanggan sudah dapat di system
+   □ Status pelanggan aktif (tidak blacklist/inactive)
+
+3. Invoice Linking
+   □ Sudah dapat tahu invoice mana yang ini bayari
+   □ Jumlah cocok dengan outstanding amount
+   □ Tanggal tagihan sesuai (tidak overage)
+
+4. Documentation Completeness
+   □ Bank information lengkap
+   □ Description mencukupi untuk audit trail
+   □ Approval authority sudah involved
+
+5. Timeline Reasonableness
+   □ Doc date tidak jauh di masa lalu (> 90 hari)
+   □ Jika terlalu lama, mungkin ada issue
+   □ Eskalasi jika dokumen sudah sangat lama
+
+JIKA ADA YANG TIDAK COCOK:
+→ JANGAN APPROVE
+→ Hubungi Finance Manager
+→ Dokumentasikan masalah yang ditemukan
+→ Tunggu instruksi lebih lanjut
+
+I. ERROR & TROUBLESHOOTING
+
+ERROR 1: TOMBOL APPROVE TIDAK AKTIF (GRAYED OUT)
+- PENYEBAB: Status dokumen bukan "NEED APPROVAL"
+- SOLUSI:
+  □ Cek kolom STATUS, apa nilai sebenarnya?
+  □ Jika sudah APPROVED, itu normal (tidak perlu di-approve lagi)
+  □ Jika sudah REJECTED, dokumen sudah ditolak sebelumnya
+  □ Jika ada status lain, hubungi supervisor
+
+ERROR 2: "UNAUTHORIZED" - TIDAK BOLEH APPROVE
+- PENYEBAB: User tidak punya role/permission untuk approval
+- SOLUSI:
+  □ Verifikasi user role - apakah sudah jadi "Approver"?
+  □ Cek permission di Master User Role
+  □ Hubungi IT untuk grant akses "Approve Unidentified RV"
+  □ Refresh login setelah permission diubah
+
+ERROR 3: "DATABASE ERROR" SETELAH KLIK APPROVE
+- PENYEBAB: Sistem backend error saat process
+- SOLUSI:
+  □ Tunggu beberapa menit, sistem mungkin sedang maintenance
+  □ Coba refresh browser (F5)
+  □ Coba klik APPROVE lagi
+  □ Jika masih error, hubungi IT Support
+
+ERROR 4: GRID TIDAK REFRESH SETELAH APPROVAL
+- PENYEBAB: Browser cache atau network issue
+- SOLUSI:
+  □ Menekan tombol Refresh (⟳) di toolbar
+  □ Tekan F5 untuk refresh page
+  □ Clearing browser cache (Ctrl+Shift+Delete)
+  □ Tunggu API response selesai (lihat loading indicator)
+
+ERROR 5: "DOC NO NOT FOUND" SETELAH APPROVE
+- PENYEBAB: Dokumen sudah deleted atau database issue
+- SOLUSI:
+  □ Cek apakah dokumen benar-benar ada di database
+  □ Lihat di grid, apakah ada doc_no itu?
+  □ Hubungi database administrator
+  □ Check backend logs untuk error detail
+
+ERROR 6: APPROVAL RESPONSE TIDAK JELAS
+- PENYEBAB: Server mengirim pesan error yang tidak informatif
+- SOLUSI:
+  □ Screenshot error message
+  □ Catat doc_no yang error
+  □ Hubungi Finance Manager atau IT
+  □ Minta escalation jika diperlukan
+
+ERROR 7: TOMBOL APPROVE MENGHILANG ATAU BERUBAH
+- PENYEBAB: Kolom atau permission berubah
+- SOLUSI:
+  □ Cek apakah page sudah refresh?
+  □ Cek permission, apakah masih valid?
+  □ Coba logout dan login ulang
+  □ Clear cache dan reload page
+
+J. SITUASI KHUSUS & EDGE CASES
+
+SITUASI 1: PEMBAYARAN DARI PIHAK KETIGA
+Misal: Customer A bayar invoice milik Customer B
+
+IDENTIFIKASI:
+- Tanyakan ke pengirim: "Ini bayaran siapa?"
+- Verifikasi dengan database kedua customer
+- Catat siapa pengirim dan siapa yang dimaksud
+
+APPROVAL:
+- Approve dengan identitas yang dimaksud (penerima invoice)
+- Dokumentasikan siapa pengirimnya (bisa di catatan)
+- Accounting akan handle rekonsilasi nanti
+
+---
+
+SITUASI 2: PEMBAYARAN PARTIAL / SEBAGIAN
+Misal: Invoice 100 juta, tapi yang masuk 50 juta
+
+IDENTIFIKASI:
+- Tanyakan: Ini pembayaran invoice apa? Sebagian atau penuh?
+- Verifikasi dengan sales bahwa memang partial allowed
+- Catat jumlah dan balance yang masih outstanding
+
+APPROVAL:
+- Approve sebagai pembayaran partial
+- Amount harus sesuai (50 juta, bukan 100 juta)
+- Sisa 50 juta akan masuk sebagai partial payment
+
+---
+
+SITUASI 3: OVERPAYMENT / PEMBAYARAN LEBIH
+Misal: Invoice 100 juta, tapi yang masuk 105 juta
+
+IDENTIFIKASI:
+- Tanyakan: Apakah ini dengan sengaja overpay?
+- Verifikasi apakah ada invoice lain dari customer itu
+- Cek apakah ada biaya tambahan yang seharusnya dibayar
+
+APPROVAL:
+- Approve dengan nominal yang masuk (105 juta)
+- Sistem akan handle overpayment
+- Biasanya dikonversi ke customer deposit atau credit note
+
+---
+
+SITUASI 4: PEMBAYARAN UNTUK ADVANCE / DEPOSIT
+Misal: Customer baru deposit 50 juta, belum ada invoice
+
+IDENTIFIKASI:
+- Verifikasi bahwa ini adalah advance/deposit sengaja
+- Catat pelanggannya
+- Dokumentasi tujuan (untuk invoice apa nanti)
+
+APPROVAL:
+- Approve as advance/deposit
+- Alokasi temporary ke deposit account
+- Nanti akan digunakan untuk offset invoice saat customer order
+
+---
+
+SITUASI 5: DOKUMEN YANG SUDAH LAMA (> 30 HARI)
+Misal: Dokumen masih NEED APPROVAL tapi sudah 60 hari
+
+IDENTIFIKASI:
+- Investigasi kenapa belum bisa di-identify
+- Tanyakan ke CS apakah ada error atau pending issue
+- Check dengan accounting apakah ada blocker
+
+APPROVAL:
+- Jika sudah dapat informasi, silakan approve
+- Jika TIDAK bisa dapat info, eskalasi ke Finance Manager
+- Jangan biarkan dokumen hanging terlalu lama (compliance issue)
+
+K. BEST PRACTICES & TIPS
+
+TIP 1: PRIORITAS APPROVAL BERDASARKAN NOMINAL
+- Approve dokumen dengan nominal TERBESAR terlebih dahulu
+- Nominal besar lebih kritis untuk cash flow
+- Nominal kecil bisa di-approve belakangan
+
+TIP 2: PRIORITAS APPROVAL BERDASARKAN TANGGAL
+- Selalu approve yang PALING LAMA PENDING
+- Semakin lama pending, semakin perlu urgent
+- Jangan biarkan dokumen stuck lebih dari 30 hari
+
+TIP 3: DOKUMENTASI INVESTIGASI
+- Catat siapa yang anda tanya untuk identifikasi
+- Catat sumber informasi (email, chat, call, dll)
+- Simpan di attachment/notes untuk audit trail
+
+TIP 4: DOUBLE-CHECK SEBELUM KLIK APPROVE
+- Baca DOC_NO tiga kali sebelum confirm
+- Verifikasi amount sebelum approve
+- Pastikan customer name sudah tepat
+- Jangan approve sambil sibuk atau tergesa-gesa
+
+TIP 5: KOLABORASI DENGAN CUSTOMER SERVICE
+- Bangun hubungan baik dengan CS/Sales team
+- Mereka lebih tahu customer behavior
+- Ask them untuk help identifikasi customer
+- Share feedback jika ada pattern tertentu
+
+TIP 6: BUAT INTERNAL NOTE / MEMO
+- Untuk dokumen yang susah di-identify
+- Catat langkah investigasi yang sudah dilakukan
+- Catat alasan akhir approve/reject
+- Berguna untuk follow-up jika ada query
+
+TIP 7: APPROVAL WORKFLOW CONSISTENCY
+- Selalu ikuti prosedur yang sama
+- Jangan skip step validasi demi speed
+- Consistency penting untuk compliance
+- Quality approval lebih baik dari quantity
+
+TIP 8: MONITOR DASHBOARD
+- Lihat berapa banyak dokumen pending approval
+- Track berapa lama rata-rata approval time
+- Identify bottleneck atau pattern
+- Report ke supervisor untuk improvement
+
+L. ALUR KESELURUHAN UNIDENTIFIED RV
+
+[1] UANG MASUK KE BANK
+        ↓
+[2] SISTEM TIDAK BISA IDENTIFY CUSTOMER OTOMATIS
+        ↓
+[3] SYSTEM CREATE UNIDENTIFIED RV DOKUMEN
+    Status: "NEED APPROVAL"
+        ↓
+[4] DOKUMEN MASUK KE APPROVAL QUEUE
+    (Di menu "Approval of Unidentified RV")
+        ↓
+[5] STAFF FINANCE LIHAT DAFTAR PENDING DOCS
+        ↓
+[6] INVESTIGASI & IDENTIFIKASI CUSTOMER
+    - Hubungi Customer Service
+    - Cek bank statement
+    - Verify dengan database
+        ↓
+[7] KLIK TOMBOL "APPROVE" DI DOKUMEN
+        ↓
+[8] CONFIRM DIALOG MUNCUL
+    - Double check doc_no dan amount
+    - Klik OK untuk confirm
+        ↓
+[9] SISTEM PROCESS APPROVAL
+    - Backend update database
+    - Assign customer ke dokumen
+    - Update status ke "APPROVED"
+        ↓
+[10] GRID REFRESH OTOMATIS
+    - Dokumen hilang dari pending list
+    - Status berubah ke "APPROVED"
+    - Ready untuk normal workflow
+        ↓
+[11] DOKUMEN MASUK NORMAL RV WORKFLOW
+    - Finance checking → Tax approval → Accounting
+    - Sama seperti dokumen RV normal lainnya
+        ↓
+[12] SELESAI & POSTED
+    - Tercatat di General Ledger
+    - Part dari financial statements
+
+M. PERBANDINGAN: UNIDENTIFIED vs NORMAL RV
+
+UNIDENTIFIED RV:
+Kondisi: Customer belum diketahui
+Status: "NEED APPROVAL" atau "APPROVED" atau "REJECTED"
+Menu khusus: "Approval of Unidentified RV"
+Tombol: APPROVE (untuk identifikasi)
+Workflow: Approval → Identified → Normal RV workflow
+User yang handle: Finance/Cash Management team
+Focus: Identifikasi customer yang benar
+
+NORMAL RV:
+Kondisi: Customer sudah diketahui dari awal
+Status: NEED CHECKING → NEED TAX → NEED ACCOUNTING → READY/PAID
+Menu: "Receive of Sales"
+Tombol: Edit, Void, Checking, Update, Save
+Workflow: Create → Check → Approve → Post
+User yang handle: Finance/Accounting team
+Focus: Allocation dan approval workflow
+
+KEY DIFFERENCE:
+- UNIDENTIFIED = Butuh IDENTIFY siapa pelanggannya dulu
+- NORMAL = Pelanggan sudah tahu, fokus ke APPROVE workflow
+
+N. KESIMPULAN & CATATAN PENTING
+Unidentified RV adalah dokumen penerimaan uang yang customer-nya belum diketahui
+Dokumen ini perlu APPROVAL untuk mengidentifikasi pelanggan sebelum bisa enter normal workflow
+Tombol APPROVE hanya aktif untuk dokumen dengan status "NEED APPROVAL"
+Sebelum approve, HARUS identifikasi dan verifikasi siapa pelanggan sebenarnya
+Sumber informasi: Bank statement, Virtual Account, Customer Service, Database
+Pastikan BOLD CHECK sebelum klik approve:
+  - Nominal cocok?
+  - Customer nama benar?
+  - Invoice reference ada?
+  - Pajak/adjustment sudah dicatat?
+Setelah approve, dokumen masuk normal RV approval workflow
+Jika ada error atau unclear, JANGAN approve - escalate ke supervisor
+Grid otomatis refresh setelah approval berhasil
+Dokumen yang sudah approved / rejected tidak perlu approve lagi
+
+O. PERTANYAAN UMUM (FAQ)
+
+Q: Bagaimana kalau tidak bisa identifikasi customer sampai kapan?
+A: Hubungi Finance Manager untuk escalation. Ada SLA/deadline yang harus dipenuhi.
+   Jangan biarkan dokumen hanging terlalu lama (> 30 hari). Bisa masalah compliance.
+
+Q: Kalau nominal tidak cocok dengan invoice, bisa approve?
+A: Tidak. Harus ada penjelasan dari customer kenapa nominal beda.
+   Bisa partial payment, overpayment, atau error. Verifikasi dulu.
+
+Q: Yang approve harus staff tertentu atau semua finance bisa?
+A: Biasanya hanya staff yang punya role "Approver" atau lebih senior.
+   Cek dengan supervisor, user permission mungkin perlu di-grant oleh IT.
+
+Q: Setelah approve, bisa di-cancel atau di-undo?
+A: Secara sistem tidak ada "undo" untuk approval. Jika salah, buat dokumen baru
+   atau hubungi IT untuk database correction (jarang-jarang dilakukan).
+
+Q: Berapa lama waktu normal approval biasanya?
+A: Tergantung kesulitan identifikasi. Normal 1-3 hari.
+   Jika sudah 7 hari masih pending, something is wrong. Cek dengan manager.
+
+Q: Bagaimana jika customer di-identify tapi ternyata salah?
+A: Dokumentasikan issue-nya. Hubungi IT untuk database correction.
+   Buat dokumen RV baru yang benar. Void dokumen yang salah.
+
+Q: Virtual Account info tidak jelas, bagaimana identifikasi?
+A: Hubungi Bank untuk klarifikasi. Minta statement detail.
+   Atau tanyakan ke Customer Service apakah dapat info dari komunikasi customer.
+
+Q: Approval rejected, bisa di-approve lagi nanti?
+A: Tergantung policy. Biasanya buat dokumen baru saja (lebih clean).
+   Discussion dengan Finance Manager untuk best approach.
+
+END OF DOCUMENTATION

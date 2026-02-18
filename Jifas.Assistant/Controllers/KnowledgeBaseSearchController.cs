@@ -123,7 +123,7 @@ namespace Jifas.Assistant.Controllers
     /// </summary>
     public class SemanticSearchRequest
     {
-        public float[] Embedding { get; set; }
+        public float[]? Embedding { get; set; }
         public int TopK { get; set; } = 5;
     }
 
@@ -132,8 +132,8 @@ namespace Jifas.Assistant.Controllers
     /// </summary>
     public class KnowledgeBaseSearchRequest
     {
-        public string Query { get; set; }
-        public float[] Embedding { get; set; }
+        public string? Query { get; set; }
+        public float[]? Embedding { get; set; }
         public int TopK { get; set; } = 5;
     }
 }

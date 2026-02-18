@@ -1,0 +1,608 @@
+LAPORAN BUDGET VERSUS REALISASI (LAPORAN REALISASI BUDGET)
+
+TUJUAN:
+Memberikan informasi RINGKASAN perbandingan antara Budget Allocation dengan Realisasi/Pengeluaran Aktual untuk semua account di satu department.
+Laporan ini menampilkan setiap account (COA) dengan 3 kolom utama: Budget (rencana), Real (realisasi/actual), Variance (selisih).
+Membantu management untuk monitoring budget realization, mengidentifikasi over-budget, dan melakukan budget control atas pengeluaran aktual yang sudah terjadi.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan summary budget versus realization dalam bentuk tabel yang menampilkan semua account di satu department 
+dalam satu periode tertentu. Setiap baris = satu account dengan perbandingan budget alokasi vs actual spending yang sudah ter-realisasi.
+Berguna untuk quick overview actual spending vs plan untuk budget control & financial decision making.
+
+ALUR PROSES (FLOW):
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Budget vs Realization"
+   - Sistem menampilkan form filter dengan 5 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+      - Selection ini akan trigger cascade untuk Division
+
+   b) Pilih Divisi (Division)
+      - Klik dropdown "Division"
+      - Sistem akan menampilkan daftar divisi untuk perusahaan yang dipilih
+      - Ketik untuk mencari divisi tertentu (minimal 2 karakter)
+      - Pilih satu divisi sesuai kebutuhan
+      - Contoh: "HO - Holding"
+      - Catatan: Division dropdown hanya aktif setelah Company dipilih
+      - Selection ini akan trigger cascade untuk Department
+
+   c) Pilih Department (Department)
+      - Klik dropdown "Department"
+      - Sistem akan menampilkan daftar department untuk divisi yang dipilih
+      - Ketik untuk mencari department tertentu (minimal 2 karakter)
+      - Pilih satu department sesuai kebutuhan
+      - Contoh: "FA - Finance Accounting"
+      - Catatan: Department dropdown hanya aktif setelah Division dipilih
+      - Semua account di department ini akan di-display
+
+   d) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Laporan akan menampilkan realisasi/pengeluaran dari tanggal ini
+
+   e) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Laporan akan menampilkan realisasi/pengeluaran sampai tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua account untuk department dengan budget vs realisasi
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Judul Laporan: LAPORAN BUDGET REALISASI
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Tabel Ringkasan Budget vs Realisasi (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Budget Code    : Kode COA (Chart of Account) untuk account (contoh: 60205.0300.0000)
+      - Description    : Deskripsi lengkap account (contoh: EXPENSES - GA - Professional Services - Audit and Tax Consultancy)
+
+      KOLOM PERBANDINGAN:
+      - Budget         : Jumlah budget alokasi untuk account (budget plan)
+      - Real           : Jumlah realisasi/pengeluaran aktual yang sudah terjadi (actual spending)
+      - Variance       : Selisih = Budget - Real (positif = under-budget, negatif = over-budget)
+
+   c) Contoh Data di Laporan:
+
+      Row 1 (Asset Account - Under-Budget):
+      Budget Code: 10103.0101.0600
+      Description: ASSETS - Current Assets - Receivable - Trade Receivable - Property - Office
+      Budget: 1.666.666.666.664 | Real: 11.877.966.708 | Variance: 1.654.788.699.956
+      (Budget sangat besar, spending kecil = banyak sisa budget)
+
+      Row 2 (Asset Account - Over-Budget):
+      Budget Code: 10198.0105.0100
+      Description: ASSETS - Current Assets - Others Assets - Advance - PUM - Pembelian Tanah dan Aktiva Lain
+      Budget: 0 | Real: 149.017.891 | Variance: -149.017.891
+      (Budget 0 tapi sudah ada spending = over-budget, excess -149.017.891)
+
+      Row 3 (Expense Account - No Activity):
+      Budget Code: 60205.0100.0000
+      Description: EXPENSES - GA - Professional Services - Legal or Lawyer
+      Budget: 0 | Real: 0 | Variance: 0
+      (Tidak ada budget dan tidak ada spending = inactive account)
+
+      Row 4 (Expense Account - Over-Budget):
+      Budget Code: 60205.0300.0000
+      Description: EXPENSES - GA - Professional Services - Audit and Tax Consultancy
+      Budget: 0 | Real: 16.880.000 | Variance: -16.880.000
+      (Budget 0 tapi sudah ada spending = over-budget, excess -16.880.000)
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak account, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. BUDGET VS REALIZATION REPORT
+   - Adalah laporan SUMMARY (ringkasan) untuk semua account di satu department
+   - Menampilkan budget alokasi vs actual spending (realisasi) dalam satu periode
+   - Setiap baris = satu account, bukan detail transaksi
+   - REALISASI = Pengeluaran aktual yang sudah tercatat/posted di sistem
+   - Format: Satu baris per account dengan 3 nilai: Budget, Real, Variance
+
+2. BUDGET (ANGGARAN / RENCANA)
+   - Adalah jumlah uang yang dialokasikan untuk setiap account di awal periode
+   - Budget adalah TARGET/RENCANA yang ditetapkan oleh management
+   - Bisa 0 (account tidak di-budget) atau nilai tertentu (account punya budget)
+   - Ditetapkan sebelum periode dimulai
+   - Contoh: Budget untuk Professional Services = 100 juta
+
+3. REAL / REALISASI (PENGELUARAN AKTUAL)
+   - Adalah jumlah uang yang benar-benar sudah dikeluarkan/spending aktual dalam periode
+   - REAL = Actual Spending yang sudah tercatat & Posted di sistem
+   - Berbeda dengan "Committed" = REAL hanya yang sudah payment/clear (bukan AP pending)
+   - Termasuk: Pembayaran invoice, cash yang dikeluarkan, realisasi PUM, dll
+   - Bertambah seiring banyaknya pembayaran/spending actual selama periode
+   - Contoh: Real spending untuk Professional Services = 80 juta (dari payment actual)
+
+4. VARIANCE (SELISIH / DEVIASI)
+   - Adalah perbedaan antara budget alokasi dengan realisasi aktual
+   - Rumus: Variance = Budget - Real
+   - Variance POSITIF = Budget Surplus (budget > spending, belum habis)
+   - Variance NEGATIF = Budget Deficit/Over-Budget (spending > budget, sudah over)
+   - Berguna untuk identify accounts yang masalah atau concern
+
+5. OVER-BUDGET (MELAMPAUI BUDGET)
+   - Terjadi ketika Real > Budget (Variance negatif)
+   - Berarti sudah mengeluarkan lebih banyak dari yang dialokasikan
+   - Critical condition - perlu budget top-up atau cost reduction
+   - Not allowed tanpa approval khusus
+   - Contoh: Budget 50 juta, tapi real spending 80 juta → Over 30 juta
+
+6. UNDER-BUDGET (BELUM MENGGUNAKAN SEMUA BUDGET)
+   - Terjadi ketika Real < Budget (Variance positif)
+   - Berarti belum mengeluarkan seluruh budget yang dialokasikan
+   - Comfortable position - masih ada buffer untuk future spending
+   - Bisa digunakan untuk approval transaksi baru dalam periode
+   - Contoh: Budget 100 juta, real spending 60 juta → Sisa 40 juta
+
+7. REALISASI (ACTUALS)
+   - Adalah pengeluaran nyata/faktual yang sudah terjadi
+   - Berbeda dengan "Commitment" yang masih dalam status AP/belum bayar
+   - REAL = Sudah bayar & clearing di bank (kontan/cash)
+   - REAL = Actual impact pada bank balance & cash position
+   - Lebih conservative daripada "Committed" untuk cash management
+
+8. ACTUAL SPENDING vs COMMITTED
+   - COMMITTED = Invoice/PUM terima tapi belum bayar (AP stage)
+   - REAL = Invoice sudah dibayar & cash dikeluarkan (CB stage)
+   - Real lebih rendah dari Committed (ada AP yang belum dibayar)
+   - Real = Lebih akurat untuk actual cash position
+   - Laporan ini fokus pada REAL (actual cash), bukan commitment
+
+9. EXIT vs ENTRY
+   - Entry Stage: Invoice terima → di-commit (AP recorded)
+   - Exit Stage: Invoice dibayar → di-realisasi (Cash dikeluarkan)
+   - Laporan ini tracking EXIT (actual cash out), bukan entry
+   - Real = berapa actual cash sudah keluar, bukan berapa AP terima
+
+10. PERIOD / PERIODE (FROM DATE - TO DATE)
+    - Adalah rentang waktu untuk laporan
+    - Real spending dihitung dari transaksi payment yang terjadi dalam periode ini
+    - Budget bisa sepanjang tahun, tapi laporan bisa untuk subset periode
+    - Contoh: Laporan untuk 01/01/2026 s/d 13/02/2026 = 44 hari spending
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. QUICK BUDGET MONITORING
+   - Lihat overall budget position untuk department
+   - Quick view actual spending vs plan
+   - Summary untuk leadership review
+   - End-of-period actual spending check
+
+2. OVER-BUDGET IDENTIFICATION
+   - Identify account yang sudah over-budget (variance negatif)
+   - Critical untuk cash management & budget control
+   - Early warning system untuk overspending
+   - Risk mitigation untuk cash constraint
+
+3. ACTUAL SPENDING ANALYSIS
+   - Analyze perbedaan budget plan vs actual spending
+   - Investigate accounts dengan large variance
+   - Understand root cause (forecast miss atau pricing issue)
+   - Planning untuk budget adjustment
+
+4. CASH POSITION MONITORING
+   - Monitor actual cash outflow per account
+   - See real spending (bukan commitment) untuk working capital
+   - Link dengan bank position & cash management
+   - Actual cash impact assessment
+
+5. REALIZATION vs BUDGET
+   - Compare budget target vs actual result
+   - Performance evaluation atas spending discipline
+   - Budget accuracy assessment untuk future planning
+   - Lesson learned untuk budget forecast improvement
+
+6. BUDGET REALLOCATION DECISION
+   - Identify account dengan surplus (dapat direallocationkan)
+   - Identify account dengan deficit (butuh emergency funding)
+   - Delta calculation untuk budget adjustment strategy
+   - Fund allocation optimization
+
+7. DEPARTMENT BUDGET ACCOUNTABILITY
+   - Support department manager untuk spending control
+   - Actual spending visibility untuk accountability
+   - Approve/reject new spending based on remaining budget
+   - Budget discipline enforcement
+
+8. MANAGEMENT REPORTING & CONTROL
+   - Budget report untuk CFO/management
+   - Actual result vs plan for executive review
+   - Budget compliance status reporting
+   - Strategic budget planning & adjustment
+
+9. MONTH-END / PERIOD CLOSING
+   - Final real spending verification
+   - GL reconciliation dengan actual payment
+   - Variance explanation & close-out
+   - Final budget position untuk period closed
+
+CARA MEMBACA VARIANCE:
+
+1. VARIANCE POSITIF (SURPLUS / UNDER-BUDGET)
+   Berarti: Budget > Real (spending lebih kecil dari budget)
+   Status: Comfortable, belum habis budget
+   Action: Monitor untuk efficient utilization atau save untuk next period
+   Contoh: Budget 100M, Real 60M → Variance +40M (masih ada 40M)
+
+2. VARIANCE NEGATIF (DEFICIT / OVER-BUDGET)
+   Berarti: Budget < Real (spending lebih besar dari budget)
+   Status: Alert/Critical, sudah melampaui budget
+   Action: Emergency funding needed atau cost reduction
+   Contoh: Budget 50M, Real 80M → Variance -30M (excess 30M)
+
+3. VARIANCE ZERO (EXACT MATCH)
+   Berarti: Budget = Real (perfect match)
+   Status: Fully utilized, no room for more
+   Action: Monitor tight, tidak ada buffer
+   Contoh: Budget 100M, Real 100M → Variance 0
+
+4. VARIANCE TIDAK APPLICABLE (BUDGET = 0)
+   Berarti: Account tidak punya allocated budget
+   Status: Depends on Real (jika ada real = full amount over-budget)
+   Action: Emergency budget allocation needed jika ada spending
+   Contoh: Budget 0, Real 50M → Variance -50M (full amount over)
+
+PERBEDAAN REAL vs COMMITTED:
+
+REAL (REALISASI / ACTUAL SPENDING):
+Hanya transaksi yang sudah di-POST & PAYMENT sudah clear
+Actual cash keluar dari bank account
+Tercatat di Cash Book/CB (pembayaran sudah done)
+Final & tidak bisa berubah lagi
+Impact pada bank balance & working capital
+Conservative measure untuk cash position
+
+COMMITTED (KOMITMEN / PENGGUNAAN):
+Termasuk AP yang belum dibayar (belum exit kas)
+Sudah ada invoice tapi belum ada pembayaran
+Recorded tapi cash belum clear
+Bisa change jika ada cancel atau adjustment
+Impact pada GL tapi belum impact pada cash
+Liberal measure untuk budget consumption
+
+DALAM LAPORAN INI: Menggunakan REAL = Actual Cash Out (lebih konservatif)
+
+FITUR CASCADE (DEPENDENT DROPDOWN):
+Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
+
+Urutan cascade:
+1. Company (mandiri) → aktifkan Division
+2. Division (cascading dari Company) → aktifkan Department
+3. Department (cascading dari Division) → aktif untuk filtering account
+4. From Date & To Date (independent date pickers)
+
+Contoh flow:
+- Pilih Company "KI" → Division dropdown aktif, tampil divisi di KI
+- Pilih Division "HO" → Department dropdown aktif, tampil department di HO
+- Pilih Department "FA" → Display semua account milik FA dengan budget vs real
+- Atur From/To date untuk period interest
+- Klik Search
+
+CATATAN PENTING:
+
+1. Semua filter (Company, Division, Department, From Date, To Date) harus diisi
+2. Laporan menampilkan SUMMARY per account (tidak detail transaksi)
+3. Satu baris = satu account (COA), bukan satu pembayaran/transaksi
+4. Real = Actual Spending (sudah cash keluar, bukan commitment)
+5. Variance negatif = Over-budget condition (critical)
+6. Budget adalah rencana awal, Real adalah actual spending result
+7. Real ≤ Committed (Real subset yang sudah dibayar dari Committed)
+8. Kolom hanya 3: Budget, Real, Variance
+9. Untuk detail, gunakan Budget Card atau Budget vs Committed report
+10. Laporan dapat diexport untuk deeper analysis
+11. Laporan ini read-only, tidak bisa mengedit data langsung
+12. Format tanggal: DD/MM/YYYY
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter sudah terisi (Company, Division, Department, From, To)
+2. Pastikan cascade sudah complete (jangan skip salah satu dropdown)
+3. Verify bahwa Department pilihan punya account yang punya payment/real spending
+4. Coba ubah date range lebih luas untuk check ada data atau tidak
+5. Possibility: Department tidak ada payment dalam periode atau tidak ada real spending
+6. Try period berbeda untuk verify laporan working
+7. Check: Ada commitment tapi belum ada payment (belum real)?
+8. Klik tombol "Search" kembali untuk refresh
+9. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+
+1. DAILY CASH SPENDING MONITORING
+   - Check laporan ini setiap hari untuk actual spending
+   - Monitor account dengan over-budget (variance negatif)
+   - Quick alert jika ada unusual spending
+   - Daily cash position update
+
+2. IDENTIFY OVER-BUDGET ACCOUNT
+   - Sort/filter untuk variance negatif
+   - Identify mana accounts paling over
+   - Prioritize untuk emergency funding atau cost control
+   - Escalate jika needed
+
+3. BUDGET VS PLAN REALIZATION ANALYSIS
+   - Analyze perbedaan budget plan vs actual result
+   - Identify account dengan large variance
+   - Investigate root cause (forecast miss, price adjustment, etc)
+   - Lesson learned untuk next budget planning
+
+4. ACTUAL CASH FLOW MANAGEMENT
+   - Monitor actual spending vs plan
+   - Working capital & cash position tracking
+   - Link dengan bank statement untuk reconciliation
+   - Cash management & liquidity planning
+
+5. EXPORT FOR DETAILED ANALYSIS
+   - Export ke Excel untuk deeper drill-down
+   - Add analysis column, chart, atau trend
+   - Compare dengan previous period
+   - Year-to-date accumulation analysis
+
+6. DEPARTMENT SPENDING ACCOUNTABILITY
+   - Use laporan untuk department spending review
+   - Discuss over-budget situation dengan team
+   - Plan untuk spending control & cost reduction
+   - Budget discipline enforcement
+
+7. FORECAST NEXT PERIOD BUDGET
+   - Use actual spending data untuk next period
+   - Baseline dari current period realization
+   - Better budgeting untuk future periods
+   - Budget accuracy improvement
+
+8. MONTH-END CASH RECONCILIATION
+   - Run laporan untuk bulan closed
+   - Verify all payment recorded as real
+   - Reconcile dengan GL & bank statement
+   - Complete for period close-out
+
+SKENARIO UMUM INQUIRY:
+
+SZENARIO 1: "Check actual spending untuk Finance Accounting department today"
+Action:
+1. Pilih Company = KI
+2. Pilih Division = HO
+3. Pilih Department = Finance Accounting (FA)
+4. Pilih From = hari pertama bulan / tahun
+5. Pilih To = hari ini
+6. Klik Search
+7. Lihat semua account dengan budget vs actual spending
+
+SZENARIO 2: "Find account yang sudah over-budget untuk cash emergency"
+Action:
+1. Run laporan untuk department
+2. Look untuk Variance kolom yang negatif (merah)
+3. Sort by variance untuk identify paling critical
+4. Calculate berapa emergency funding needed
+5. Report ke CFO untuk cash disbursement approval
+
+SZENARIO 3: "Analyze actual spending vs budget untuk bulan lalu"
+Action:
+1. Pilih period = tanggal 1-31 bulan lalu
+2. Run laporan untuk semua department
+3. Calculate total variance per department
+4. Identify account dengan high variance
+5. Prepare variance explanation untuk management
+
+SZENARIO 4: "Forecast cash position untuk next month planning"
+Action:
+1. Run laporan untuk current month YTD
+2. Calculate daily burn rate untuk spend pattern
+3. Project remaining period spending
+4. Forecast total month-end actual spending
+5. Compare dengan available cash & budget
+
+TROUBLESHOOTING UMUM:
+MASALAH: "Account dengan variance negatif (over-budget) sangat besar"
+SOLUSI:
+- Verify budget allocation awal period (confirm berapa allocated)
+- Check actual payment yang tercatat (invoice sudah dibayar?)
+- Validate jumlah payment dalam sistem
+- Communicate dengan department untuk explanation
+- Plan immediate cash funding atau spending halt
+
+MASALAH: "Real spending jauh lebih kecil dari committed"
+SOLUSI:
+- Normal - ada AP yang belum dibayar (belum exit kas)
+- Invoice terima (committed) tapi belum payment (real)
+- This is expected behavior untuk accrual accounting
+- Monitor pending AP untuk expect payment timing
+- Plan cash untuk when AP akan dibayar
+
+MASALAH: "Variance berbeda antara laporan Committed vs Real"
+SOLUSI:
+- Normal - Committed include unpaid AP, Real hanya paid
+- Committed > Real (committed include pending AP)
+- To reconcile: Real + Unpaid AP = Total Committed
+- Check AP aging untuk identify payment-pending items
+- This is expected & correct behavior
+
+MASALAH: "Laporan real spending lebih tinggi dari bank statement?"
+SOLUSI:
+- Possible: System posting belum match bank clearing
+- Check timing - payment posted system tapi belum clearing bank
+- Outstanding check yang belum clear di bank
+- Timing difference antara system post vs bank clear
+- Reconcile untuk identify outstanding items
+
+MASALAH: "Data tidak muncul meskipun ada commitment di budget card"
+SOLUSI:
+- Commitment ada tapi payment belum dilakukan
+- Real = 0 untuk item yang belum dibayar
+- Check payment status - invoice still AP atau sudah CB?
+- Look untuk payment voucher untuk corresponding invoice
+- Possible: Invoice belum dibayar = tidak ada real spending
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN DEPARTMENT MANAGER:
+   - Share actual spending status untuk cost control awareness
+   - Discuss over-budget situation untuk solution
+   - Plan spending reduction atau budget emergency request
+   - Performance vs plan accountability
+
+2. DENGAN TREASURY/CASH MANAGEMENT:
+   - Daily actual spending report untuk cash position
+   - Forecast cash need per account/department
+   - Working capital planning & bank coordination
+   - Payment schedule planning untuk liquidity
+
+3. DENGAN PROCUREMENT:
+   - Provide actual spending position untuk next approval
+   - Identify available budget per account
+   - Prevent over-budget commitment
+   - Budget impact monitoring dari new PO
+
+4. DENGAN GL/ACCOUNTING:
+   - Reconcile real spending vs GL posting
+   - Verify actual payment recorded correctly
+   - Support GL reconciliation & period closing
+   - Payment authorization & GL entry coordination
+
+5. DENGAN CFO/MANAGEMENT:
+   - Monthly actual spending report vs plan
+   - Budget performance & variance analysis
+   - Emergency funding request (jika over-budget)
+   - Strategic spending & cost control decisions
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Budget Realization berhubungan dengan:
+1. Laporan Budget vs Committed - Untuk compare Real vs Committed
+2. Laporan Budget Card - Untuk drill-down detail per account
+3. Laporan Budget Control - Untuk summary budget position
+4. Laporan AP (Accounts Payable) - Untuk pending payment detail
+5. Laporan CB/Payment - Untuk actual payment detail
+6. Laporan Bank Reconciliation - Untuk bank match actual spending
+7. General Ledger - Untuk GL posting vs actual spending
+8. Cash Flow Statement - Untuk actual cash outflow reporting
+
+WORKFLOW NORMAL UNTUK BUDGET REALIZATION:
+
+STEP 1: BUDGET PLANNING & ALLOCATION
+- Budget ditetapkan untuk setiap account di department
+- Allocation based pada forecast & operational plan
+- Budget dialokasikan di awal periode
+- Status: Budget Allocated
+
+STEP 2: COMMITMENT (INVOICE APPROVAL)
+- Invoice diterima & approved untuk payment
+- Commitment terjadi di GL (AP recorded)
+- Amount di-commit terhadap budget
+- Variance berubah (berkurang dari surplus)
+- Status: Committed (belum keluar kas)
+
+STEP 3: PAYMENT EXECUTION (CASH OUT)
+- Invoice dibayar via bank transfer/check
+- Payment voucher created & posted (Real)
+- Cash dikeluarkan dari bank account
+- Real spending update (impact working capital)
+- Status: Realized (actual cash out)
+
+STEP 4: REALIZATION TRACKING
+- Monitor actual spending vs budget
+- Identify over-budget atau variance
+- Alert jika ada issue
+- Daily/weekly monitoring
+- Status: Active Monitoring
+
+STEP 5: PERIOD CLOSING
+- Run final realization report
+- Verify all payment recorded
+- Reconcile dengan GL & bank
+- Period close-out
+- Status: Period Closed
+
+BEST PRACTICES:
+
+1. REGULAR MONITORING
+   - Daily/weekly check actual spending report
+   - Identify issue early (before too late)
+   - Proactive cash management
+   - Prevent over-budget surprise
+
+2. BUDGET DISCIPLINE
+   - Don't approve spending beyond available budget
+   - Enforce budget policy strictly
+   - Accountability per department
+   - Cost consciousness culture
+
+3. ACCURATE FORECASTING
+   - Learn dari actual spending pattern
+   - Better budget forecast untuk next period
+   - Improve budgeting accuracy
+   - Reduce variance
+
+4. PROMPT COMMUNICATION
+   - Report actual spending regularly
+   - Alert manager untuk over-budget immediately
+   - Variance explanation prepared
+   - Transparency to management
+
+5. CASH MANAGEMENT
+   - Link actual spending dengan cash position
+   - Forecast cash need untuk spending
+   - Optimize payment timing
+   - Working capital management
+
+6. DEPARTMENT ENGAGEMENT
+   - Regular meeting dengan department spending review
+   - Increase cost awareness
+   - Collaborative planning
+   - Shared accountability
+
+7. SYSTEM ACCURACY
+   - Verify budget master data correct
+   - Payment posting timely & accurate
+   - GL reconciliation regular
+   - System data integrity
+
+KEYS TO REMEMBER:
+1. Real = Actual Spending (cash out dari bank, bukan commitment)
+2. Variance = Budget - Real (positif = surplus, negatif = over)
+3. Over-budget = negative variance (real > budget)
+4. One row = One account/COA (not one transaction)
+5. Period = Date range (From/To) untuk spending accumulation
+6. Cascade mandatory: Company → Division → Department
+7. Budget = Plan, Real = Actual result
+8. Real ≤ Committed (Real = paid portion from Committed)
+9. Negative variance = Priority untuk investigation & action
+10. Keep for audit trail & budget management documentation

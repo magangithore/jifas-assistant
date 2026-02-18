@@ -1,0 +1,538 @@
+LAPORAN INQUIRY DAILY CASH FLOW
+
+DESKRIPSI LAPORAN:
+Laporan ini menampilkan aliran kas harian perusahaan dalam dua sudut pandang:
+1. Ringkasan (Summary) - Perbandingan Budget vs Realisasi per akun kas
+2. Detail - Informasi transaksi detail per Department, Division, dan COA
+
+Laporan ini membantu tim finance dan accounting memantau apakah pengeluaran dan 
+penerimaan kas sesuai dengan budget yang telah ditetapkan setiap harinya.
+
+
+SECTION 1: ALUR PROSES (FLOW) PENGGUNAAN
+
+TAHAP 1: MEMILIH PERIODE DAN FILTER
+   • Pilih Perusahaan (wajib) - Pilih dari daftar perusahaan yang tersedia
+   • Pilih Divisi (wajib) - Filter berdasarkan divisi/departemen tertentu
+     (Opsi "-- ALL DIVISION --" tersedia jika ingin melihat semua divisi)
+   • Tentukan Periode:
+     - Tanggal Awal (From) - Hari mulai pengecekan
+     - Tanggal Akhir (To) - Hari akhir pengecekan
+   • Kurs Akhir Bulan (optional) - Masukkan nilai tukar rupiah (Rp) jika ada transaksi
+     mata uang asing untuk konversi akurat
+   • Kurs Akhir Bulan Berjalan (optional) - Nilai tukar untuk periode berjalan
+
+TAHAP 2: KLIK TOMBOL SEARCH
+   • Sistem akan melakukan validasi:
+     - Memastikan semua field wajib sudah terisi
+     - Memastikan tanggal awal tidak lebih besar dari tanggal akhir
+   • Jika ada error, sistem akan menampilkan pesan
+
+TAHAP 3: TAMPILAN RINGKASAN (DAILY CASH FLOW TAB)
+   • Grid atas menampilkan 2 tab:
+     Tab 1: "Daily Cash Flow" → Ringkasan akun kas utama
+     Tab 2: "Daily Cash Flow Detail" → Data transaksi detail
+   
+   • Grid Summary menampilkan kolom:
+     - Description (Deskripsi Akun Kas)
+     - Budget Amt (Jumlah Budget)
+     - Actual Amt (Jumlah Realisasi/Aktual)
+     - Budget Acuan (Budget Referensi Kumulatif)
+     - Actual Acuan (Realisasi Kumulatif)
+
+TAHAP 4: TAMPILAN DETAIL (DAILY CASH FLOW DETAIL TAB)
+   • Grid bawah menampilkan rincian transaksi dengan pengelompokan per akun kas
+   • Setiap grup akun menunjukkan:
+     - Nomor Akun Kas (cf_code) - sebagai pengelompokan
+     - Division (Div) - Divisi pengeluaran/pemasukan
+     - Department (Dept) - Departemen pengeluaran/pemasukan
+     - COA (Cost of Account) - Kode akun biaya/pendapatan
+     - Deskripsi COA - Penjelasan akun
+     - Actual Amount - Jumlah transaksi
+
+TAHAP 5: EXPORT DATA
+   • Tombol Excel di setiap grid memungkinkan export ke file .xlsx
+   • File secara otomatis bernama:
+     - "Inquiry Daily Cash Flow.xlsx" (untuk ringkasan)
+     - "Inquiry Daily Cash Flow Detail.xlsx" (untuk detail)
+
+
+SECTION 2: PEMAHAMAN ISTILAH & KONSEP PENTING
+
+1. DAILY CASH FLOW (ALIRAN KAS HARIAN)
+   = Laporan yang menunjukkan berapa banyak uang masuk dan keluar dari kas 
+     perusahaan dalam periode waktu tertentu
+
+2. BUDGET AMT (JUMLAH BUDGET)
+   = Target pengeluaran atau penerimaan kas yang telah direncanakan sebelumnya
+   = Angka yang menjadi acuan untuk mengontrol pengeluaran
+
+3. ACTUAL AMT (JUMLAH AKTUAL/REALISASI)
+   = Jumlah uang yang benar-benar keluar atau masuk (realisasi nyata)
+   = Dibandingkan dengan Budget Amt untuk melihat apakah sesuai rencana
+
+4. BUDGET ACUAN (BUDGET REFERENSI)
+   = Akumulasi/total dari Budget Amt dari awal periode hingga hari tersebut
+   = Menunjukkan total budget yang direncanakan (running total)
+
+5. ACTUAL ACUAN (REALISASI KUMULATIF)
+   = Akumulasi/total dari Actual Amt dari awal periode hingga hari tersebut
+   = Menunjukkan total realisasi yang telah terjadi (running total)
+
+6. DIVISI (DIVISION)
+   = Unit organisasi tingkat lanjut dalam perusahaan
+   = Contoh: HO (Head Office), GA (General Affairs), FA (Finance & Accounting)
+
+7. DEPARTEMEN (DEPARTMENT)
+   = Sub-unit dari divisi
+   = Contoh: Finance (Keuangan), HR (SDM), Operations (Operasional)
+
+8. COA (CHART OF ACCOUNT / KODE AKUN)
+   = Nomor kode untuk setiap jenis biaya, pendapatan, atau aset kas
+   = Format: Periode.Account.Code (contoh: 70201.9800.0000)
+
+9. KURS (EXCHANGE RATE / NILAI TUKAR)
+   = Nilai tukar mata uang asing terhadap Rupiah
+   = Digunakan untuk konversi transaksi dalam USD, EUR, atau mata uang lain
+
+10. PERIODE (DATE RANGE)
+    = Jangka waktu analisis dari tanggal awal (From) hingga tanggal akhir (To)
+    = Dapat dipilih per hari, seminggu, sebulan, atau periode lainnya
+
+
+SECTION 3: KEGUNAAN PRAKTIS LAPORAN INI
+
+1. MONITORING KESELARASAN ANGGARAN
+   Memonitor apakah pengeluaran/penerimaan kas sesuai dengan budget yang 
+   telah ditetapkan. Jika Actual Amt jauh lebih besar dari Budget Amt, 
+   ada indikasi overspending.
+
+2. IDENTIFIKASI VARIANS (PERBEDAAN)
+   Membandingkan Budget vs Actual untuk menemukan dimana terjadi perbedaan 
+   signifikan. Baik itu pengeluaran lebih tinggi atau lebih rendah dari rencana.
+
+3. ANALISIS DETAIL TRANSAKSI
+   Melihat rincian transaksi per akun, departemen, dan divisi untuk memahami 
+   darimana uang berasal atau kemana uang pergi secara detail.
+
+4. PERENCANAAN KAS (CASH PLANNING)
+   Data harian membantu tim finance merencanakan kebutuhan kas untuk hari-hari 
+   berikutnya. Jika realisasi tinggi, mungkin perlu persiapan kas lebih banyak.
+
+5. PENGENDALIAN ANGGARAN (BUDGET CONTROL)
+   Dengan melihat tren daily cash flow, manajemen dapat melakukan kontrol 
+   proaktif terhadap pengeluaran yang tidak terkendali.
+
+6. REKONSILIASI KAS BANK
+   Data detail cocokkan dengan laporan bank untuk memastikan tidak ada 
+   kesalahan pencatatan atau transaksi yang terlewat.
+
+7. ANALISIS TREN KAS
+   Dengan data harian untuk periode panjang, dapat dianalisis pola aliran 
+   kas: hari apa biasanya pengeluaran besar, kapan penerimaan besar, dll.
+
+8. PENDUKUNG KEPUTUSAN INVESTASI
+   Jika ada surplus kas setiap hari, finance dapat merencanakan investasi 
+   jangka pendek (deposito, instrumen pasar uang, dll).
+
+9. IDENTIFIKASI BOTTLENECK/KEMACETAN
+   Jika ada biaya tertentu (COA) yang selalu overbudget, itu tanda perlu 
+   ditinjau ulang alokasi biaya untuk akun tersebut.
+
+
+SECTION 4: FITUR & KOMPONEN LAPORAN
+
+FILTER YANG TERSEDIA:
+
+✓ Company (Perusahaan) - WAJIB
+  • Dropdown list ke database master perusahaan
+  • Sistem secara otomatis filter divisi berdasarkan perusahaan yang dipilih
+  • Jika ada perubahan perusahaan, divisi akan direset otomatis
+
+✓ Division/Divisi (Divisi/Unit) - WAJIB
+  • Dropdown list dinamis berdasarkan perusahaan yang dipilih
+  • Opsi "-- ALL DIVISION --" tersedia untuk melihat semua divisi
+  • Pengaruh: Data akan difilter berdasarkan divisi terpilih
+
+✓ From Date (Tanggal Awal) - WAJIB
+  • Date picker untuk memilih tanggal mulai
+  • Format sesuai pengaturan sistem (biasanya dd/MM/yyyy)
+  • Default: Hari ini (today)
+
+✓ To Date (Tanggal Akhir) - WAJIB
+  • Date picker untuk memilih tanggal akhir
+  • Format sesuai pengaturan sistem
+  • Default: Hari ini (today)
+  • Validasi: Tidak boleh lebih kecil dari tanggal awal
+
+✓ Kurs Akhir Bulan (Exchange Rate End of Month) - OPSIONAL
+  • Numeric input field
+  • Untuk input nilai tukar Rp terhadap USD pada akhir bulan
+  • Digunakan untuk konversi transaksi USD ke Rp dengan kurs formal
+  • Default: Kosong/0
+
+✓ Kurs Akhir Bulan Berjalan (Exchange Rate Current Month) - OPSIONAL
+  • Numeric input field
+  • Untuk input nilai tukar Rp terhadap USD pada periode berjalan
+  • Digunakan untuk pembandingandan untuk melihat perbedaan kurs
+  • Default: Kosong/0
+
+TOMBOL UTAMA:
+• Search (Cari) - Menjalankan query ke API untuk mengambil data sesuai filter
+• Export Excel - Menu otomatis di setiap grid untuk export ke Excel
+
+STRUKTUR GRID RINGKASAN:
+Deskripsi (Description column)
+  Level 1: Akun Kas Utama (contoh: "ARUS KAS DARI AKTIVITAS OPERASI")
+  Level 2: Sub-kategori (indented 1.5em)
+   Level 3: Item detail (indented 3em)
+Budget Amount (Rp. format dengan pemisah ribuan)
+Actual Amount (Rp. format dengan pemisah ribuan)
+Budget Acuan (Rp. format dengan pemisah ribuan)
+ Actual Acuan (Rp. format dengan pemisah ribuan)
+
+STRUKTUR GRID DETAIL:
+Division (Div) - Kode divisi
+Department (Dept) - Kode departemen
+COA - Kode akun
+COA Description - Penjelasan akun
+Actual Amount (Rp. format)
+ Grouped by: Cash Flow Account (cf_code) dengan agregasi SUM jumlah
+
+Pengelompokan otomatis menampilkan: "Description: [COA] - [Deskripsi] ([Total Rp])"
+
+
+SECTION 5: DATA & PERHITUNGAN
+
+ASAL DATA:
+• Data diambil dari database JIFAS melalui API endpoint:
+  - /reports/inquiry/dailycashflow (untuk ringkasan)
+  - /reports/inquiry/dailycashflow/detail (untuk detail)
+
+PENETAPAN PARAMETER KE SERVER:
+Saat klik Search, sistem mengirimkan ke API:
+  ✓ company = Kode perusahaan yang dipilih
+  ✓ divisi = Kode divisi yang dipilih
+  ✓ startDate = Format: YYYYMMDD (contoh: 20260101 untuk 1 Jan 2026)
+  ✓ endDate = Format: YYYYMMDD (contoh: 20260131 untuk 31 Jan 2026)
+  ✓ kursAkhirBulan = Nilai kurs akhir bulan (default: 0)
+  ✓ kursAkhirBulanBerjalan = Nilai kurs bulan berjalan (default: 0)
+  ✓ rounded = 1 (pembulatan/rounding aktif)
+
+TIPE DATA KOLOM:
+Grid Header:
+  • cf_descs (Text) = Deskripsi akun kas
+  • budget_amt (Number) = Jumlah budget dalam Rp
+  • actual_amt (Number) = Jumlah aktual dalam Rp
+  • budget_accum (Number) = Kumulatif budget dalam Rp
+  • actual_accum (Number) = Kumulatif aktual dalam Rp
+
+Grid Detail:
+  • cf_code (Text) = Kode akun kas (untuk pengelompokan)
+  • div_cd (Text) = Kode divisi
+  • dept_cd (Text) = Kode departemen
+  • coa_cd (Text) = Kode Chart of Account
+  • descs (Text) = Deskripsi COA
+  • amount (Number) = Jumlah transaksi dalam Rp
+
+KHUSUS GRID HEADER:
+• Field cf_fill menentukan apakah kolom numeric ditampilkan atau dikosongkan
+• Jika cf_fill = false (tidak ada transaksi), maka kolom amount dikosongkan
+• Tujuan: Menghindari tampilan data nol atau nilai default jika tidak ada 
+  aktivitas transaksi
+
+INDENTASI OTOMATIS:
+Berdasarkan struktur hierarki akun:
+• Akun tingkat 1 (spasi 0) = Tidak ada indentasi
+• Akun tingkat 2 (spasi 1) = Indentasi 1.5 em
+• Akun tingkat 3 (spasi 2+) = Indentasi 3 em
+
+
+SECTION 6: INTERPRETASI DATA & ANALISIS VARIANS
+
+SCENARIO 1: ACTUAL SESUAI BUDGET
+   Budget Amt: Rp. 100.000.000
+   Actual Amt: Rp. 100.000.000
+   ► ANALISIS: ✓ Pengeluaran/penerimaan sesuai rencana, pengendalian baik
+
+SCENARIO 2: ACTUAL LEBIH BESAR DARI BUDGET (OVERSPEND)
+   Budget Amt: Rp. 100.000.000
+   Actual Amt: Rp. 125.000.000
+   Varians: Rp. 25.000.000 (Overspend 25%)
+   ► ANALISIS: ⚠ Ada pengeluaran yang tidak terencana atau underestimation 
+     saat penyusunan budget. Perlu investigasi penyebabnya.
+
+SCENARIO 3: ACTUAL LEBIH KECIL DARI BUDGET (UNDERSPEND)
+   Budget Amt: Rp. 100.000.000
+   Actual Amt: Rp. 75.000.000
+   Varians: Rp. 25.000.000 (Underspend 25%)
+   ► ANALISIS: ✓ Pengeluaran lebih terkontrol dari rencana. Bisa berarti:
+     - Efisiensi biaya berhasil diterapkan
+     - Ada aktivitas yang tertunda
+     - Ada kesalahan pengalokasian budget yang terlalu tinggi
+
+SCENARIO 4: KAS NEGATIF / DEFICIT
+   Jika Actual Acuan menunjukkan angka negatif atau tidak mampu menutupi 
+   kewajiban yang harus dibayar:
+   ► ANALISIS: ⚠ Ada cash flow problem, perlu immediate action:
+     - Tunda pengeluaran non-urgent
+     - Kejar penerimaan (pembayaran pelanggan)
+     - Persiapkan pembiayaan tambahan (loan/kredit)
+
+PERBANDINGAN ANTAR PERIODE:
+Jalankan laporan untuk 2-3 periode berbeda untuk melihat tren:
+   • Jika Actual Amt konsisten naik → Indikasi inflasi biaya atau bertambahnya 
+     volume aktivitas
+   • Jika Actual Amt konsisten turun → Indikasi penghematan atau penurunan 
+     volume aktivitas
+
+
+SECTION 7: CATATAN PENTING & BATASAN LAPORAN
+
+1. DATA HARIAN AKTUAL
+   Laporan menampilkan data berdasarkan periode yang dipilih. Data diambil dari 
+   dokumen/transaksi yang sudah diinput ke sistem (status Posted/terekam).
+
+2. PENGARUH DIVISI
+   Jika memilih divisi tertentu, data diproduksi hanya untuk divisi tersebut. 
+   Gunakan opsi "-- ALL DIVISION --" jika ingin melihat data keseluruhan.
+
+3. NILAI KURS
+   Untuk perusahaan yang melakukan transaksi multikurrency (USD, EUR, dll), 
+   input nilai kurs penting untuk konversi akurat ke Rp. Jika tidak diinput, 
+   sistem gunakan kurs default dari master data.
+
+4. STRUKTUR HIERARKI AKUN
+   Struktur deskripsi (spacing) di Grid Summary menunjukkan hierarki akun. 
+   Ini adalah struktur COA dari master data, tidak dapat diubah dari laporan.
+
+5. TANGGAL VALIDASI
+   Sistem otomatis validasi:
+   • Tanggal awal tidak boleh lebih besar dari tanggal akhir
+   • Kedua tanggal harus dalam format yang benar
+   • Jika ada error, sistem tolak dengan pesan yang jelas
+
+6. PERFORMA LAPORAN
+   Untuk periode panjang (> 3 bulan) dengan volume data besar (jutaan transaksi), 
+   laporan mungkin agak lambat dalam loading. Gunakan periode yang lebih pendek 
+   untuk performa lebih responsif.
+
+7. EKSPOR DATA KE EXCEL
+   Fitur export dimulai dari halaman yang sedang ditampilkan. Jika grid 
+   berpagination, pastikan sudah lihat semua halaman atau gunakan opsi 
+   "allPages: true" untuk export semua data.
+
+8. ROUNDING/PEMBULATAN
+   Parameter "rounded: 1" menandakan sistem sudah melakukan pembulatan otomatis 
+   untuk nilai desimal yang sangat kecil. Ini untuk menghindari angka-angka 
+   yang tidak praktis dalam laporan bisnis.
+
+9. SINKRONISASI DENGAN BANK
+   Data di laporan ini adalah data dari sistem accounting JIFAS, belum tentu 
+   sama dengan bank statement. Lakukan rekonsiliasi terpisah dengan laporan bank.
+
+10. AKURASI DATA HISTORIS
+    Data periode yang sudah lalu (> 1 tahun) mungkin tidak lengkap karena 
+    purging/archive data. Hubungi IT jika perlu data historis yang lebih lama.
+
+11. PENGARUH CHANGE ATAU ADJUSTMENT
+    Jika ada adjustment posting atau reverse dokumen pada periode laporan, 
+    data akan recalculate otomatis saat run laporan.
+
+12. TIMEZONE CONSIDERATION
+    Sistem menggunakan timezone default server. Pastikan tanggal yang digunakan 
+    sudah sesuai dengan periode yang diinginkan.
+
+
+SECTION 8: TROUBLESHOOTING & COMMON ISSUES
+
+ISSUE #1: "Please fill required field before continue!"
+PENYEBAB: Ada field yang masih kosong (Company, Divisi, From, To)
+SOLUSI:
+  • Pastikan semua field dengan indikator (*) sudah diisi
+  • Tutup dan buka kembali browser jika dropdown tidak mau respond
+  • Ganti browser jika tetap tidak bisa
+
+ISSUE #2: "Start date cannot be greater than end date!"
+PENYEBAB: Tanggal awal yang dipilih lebih besar dari tanggal akhir
+SOLUSI:
+  • Pastikan tanggal "From" lebih kecil dari tanggal "To"
+  • Contoh yang benar: From = 01/01/2026, To = 31/01/2026
+  • Jika ingin data 1 hari saja, gunakan tanggal yang sama untuk From dan To
+
+ISSUE #3: Grid/Tabel tidak menampilkan data
+PENYEBAB: Bisa karena beberapa hal:
+  a) Tidak ada transaksi untuk periode/divisi yang dipilih
+  b) API server error/down
+  c) User tidak memiliki permission untuk divisi tersebut
+SOLUSI:
+  • Coba ubah periode ke bulan sebelumnya yang pasti ada transaksi
+  • Cek koneksi internet
+  • Coba login ulang atau hubungi IT jika tetap error
+  • Pastikan user sudah diberikan akses ke divisi terkait
+
+ISSUE #4: Angka menampilkan "Rp." (format tidak lengkap)
+PENYEBAB: Lebar kolom terlalu sempit atau format currency error
+SOLUSI:
+  • Drag border kolom untuk perlebar (double-click auto-width)
+  • Refresh halaman (F5)
+  • Update browser ke versi terbaru
+
+ISSUE #5: Excel export file corrupted atau tidak bisa dibuka
+PENYEBAB: File mungkin terpotong atau browser issue
+SOLUSI:
+  • Download ulang file
+  • Gunakan browser lain (Chrome/Firefox/Edge)
+  • Cek disk space di komputer
+  • Restart komputer jika tetap bermasalah
+
+ISSUE #6: Export button tidak terlihat
+PENYEBAB: UI element tidak terender sempurna
+SOLUSI:
+  • Zoom out halaman (Ctrl + Mouse Wheel atau Ctrl + -)
+  • Refresh halaman (Ctrl + F5 untuk clear cache)
+  • Gunakan monitor/resolusi yang lebih besar
+
+
+SECTION 9: TIPS PENGGUNAAN & BEST PRACTICES
+
+TIP #1: MULAI DARI SUMMARY DULU SEBELUM DETAIL
+Pertama kali jalankan laporan, lihat grid Summary (ringkasan) untuk mendapat 
+gambaran besar. Jika ada varians signifikan, baru drill-down ke grid Detail 
+untuk investigasi penyebabnya.
+
+TIP #2: GUNAKAN FILTER DIVISI UNTUK FOKUS INVESTIGASI
+Jika ingin lihat cash flow divisi tertentu (misal GA/General Affairs), pilih 
+divisi itu dulu. Ini lebih mudah daripada melihat semua divisi yang mungkin 
+ratusan detail baris.
+
+TIP #3: BANDINGKAN DENGAN PERIODE SEBELUMNYA
+Jika Anda curiga ada anomali, jalankan laporan untuk periode yang sama tahun 
+lalu. Bandingkan apakah pola cash flow normal atau ada perubahan signifikan.
+
+TIP #4: GUNAKAN EXCEL UNTUK ANALISIS LEBIH LANJUT
+Export data ke Excel, buat pivot table, atau chart untuk analisis tren yang 
+lebih dalam. Excel lebih fleksibel untuk manipulasi data.
+
+TIP #5: SIMPAN EXCEL HASIL LAPORAN UNTUK AUDIT TRAIL
+Setiap periode, simpan hasil export dengan naming: 
+"DailyCashFlow_[CompanyCode]_[Period].xlsx"
+Ini berguna untuk compliance dan audit historis.
+
+TIP #6: CROSS-CHECK DENGAN BANK STATEMENT
+Sebelum approval/closing, pastikan total kas di laporan sudah dicocokkan dengan 
+bank statement. Ada perbedaan? Cek outstanding/pending item.
+
+TIP #7: SET KURS YANG SAMA DENGAN FINANCE DEPARTMENT
+Jika ada transaksi multikurrency, pastikan kurs yang diinput sama dengan 
+yang digunakan finance department untuk avoid discrepancy.
+
+TIP #8: UNDERSTAND BUDGET PLANNING PROSES
+Untuk membaca Budget Amt dengan tepat, Anda harus understand bagaimana budget 
+dibuat dan dialokasikan di sistem. Hubungi planning team jika tidak jelas.
+
+
+SECTION 10: SKENARIO PENGGUNAAN PRAKTIS
+
+SKENARIO 1: DAILY CLOSING by FINANCE HEAD
+Setiap hari jam 5 sore, Finance Head menjalankan laporan ini untuk:
+  • Memastikan semua transaksi hari itu sudah masuk sistem
+  • Membandingkan actual kas dengan budget
+  • Mengidentifikasi jika ada pengeluaran darurat yang tidak direncanakan
+  • Memberikan status ke direktur/GM sebelum rapat closing
+
+Parameter yang digunakan:
+  - Company: PT. Kawasan Industri Jababeka
+  - Division: Semua divisi (ALL DIVISION)
+  - From/To: Tanggal hari ini
+  - Kurs: Input kurs hari itu
+
+Output: Grafik/summary untuk presentasi direktur hari itu
+
+SKENARIO 2: BUDGET MONITORING MINGGUAN by FINANCE MANAGER
+Setiap akhir minggu, Finance Manager menjalankan untuk:
+  • Melihat apakah ada departemen yang overspend
+  • Mengingatkan departemen untuk kontrol pengeluaran
+  • Update forecast kas untuk minggu depan
+  • Planning perhitungan bonus operasional
+
+Parameter yang digunakan:
+  - Company: PT. Kawasan Industri Jababeka
+  - Division: Per divisi (run berkali-kali, satu divisi per run)
+  - From/To: Tanggal awal hingga akhir minggu
+  - Kurs: Kurs standar minggu
+
+Output: Report per divisi untuk follow-up dengan department heads
+
+SKENARIO 3: INVESTIGASI VARIANCE by ACCOUNTING MANAGER
+Jika ada varians besar (Actual >>Budget), Accounting Manager menjalankan untuk:
+  • Drill-down ke detail grid
+  • Lihat akun mana yang over-budget
+  • Cross-check dengan supporting documents/invoice
+  • Update budget jika diperlukan adjustment
+
+Parameter yang digunakan:
+  - Company: PT. Kawasan Industri Jababeka
+  - Division: Divisi yang diduga over
+  - From/To: Periode penuh bulan tersebut
+  - Kurs: Kurs akhir bulan
+
+Output: Detail list untuk koreksi anggaran atau investigasi lebih lanjut
+
+SKENARIO 4: BANK RECONCILIATION by BANKER
+Sebelum tutup bulan, Banker/Kasir menjalankan untuk:
+  • Cross-check kas di sistem dengan bank statement
+  • Identifikasi outstanding/pending item
+  • Update cash position akurat
+  • Persiapan laporan kas untuk audit
+
+Parameter yang digunakan:
+  - Company: Sesuai bank account
+  - Division: Semua (jika kas pooling) atau per divisi (jika terpisah)
+  - From/To: Tanggal awal hingga akhir periode
+  - Kurs: Kurs akhir bulan untuk conversion
+
+Output: Checklist reconciliation untuk supervisor approval
+
+
+SECTION 11: KEY POINTS TO REMEMBER
+
+✓ Laporan menampilkan DAILY cash flow dalam dua view:
+  1. Summary (ringkasan per akun) vs Detail (rincian transaksi)
+
+✓ Data dibandingkan dengan BUDGET untuk identifikasi varians pengeluaran/
+  penerimaan kas yang tidak sesuai rencana
+
+✓ Filter WAJIB adalah: Company, Division, From Date, To Date
+  (Kurs bersifat optional untuk konversi multikurrency)
+
+✓ Grid Summary menunjukkan hierarki akun dengan indentasi otomatis:
+  - Levelnya menunjukkan struktur akun dari COA master
+  - Lebih dalam = lebih detail
+
+✓ Grid Detail menampilkan SETIAP transaksi dengan pengelompokan per cash flow 
+  account, sehingga Anda dapat investigate kedetail transaksi individual
+
+✓ Data KUMULATIF (Budget Acuan & Actual Acuan) membantu tracking apakah 
+  pengeluaran total perperiode sudah sesuai rencana
+
+✓ Fitur EXPORT ke Excel memudahkan analisis lebih lanjut, pivot table, grafik 
+  tren, dll.
+
+✓ VARIANS dianalisis: Jika Actual < Budget = Underspend (mungkin efisiensi), 
+  Jika Actual > Budget = Overspend (alert/investigasi)
+
+✓ CASH POSITION NEGATIF adalah signal warning untuk immediate action (cari 
+  tambahan kas/defer pengeluaran)
+
+✓ Laporan ini adalah ACCOUNTING data, bukan bank statement. Cross-check dengan 
+  bank untuk reconciliation lengkap.
+
+✓ Best practice: Jalankan SUMMARY dulu, lalu DETAIL jika perlu investigasi. 
+  Gunakan Excel untuk analisis trend jangka panjang.
+
+✓ Untuk leverage MAXIMUM dari laporan ini:
+  - Understand COA structure dari company Anda
+  - Know bagaimana budget dialokasikan
+  - Regular monitoring (daily/weekly/monthly)
+  - Link dengan KPI performance dan bonus operasional

@@ -1,0 +1,953 @@
+
+MODUL CB PAYMENT (CASHBOOK PAYMENT) - DOKUMENTASI KNOWLEDGE BASE
+
+Dokumentasi ini dirancang untuk staff Finance dan Accounting yang mengelola 
+dokumen pembayaran (Cashbook Payment) di sistem JIFAS.
+
+Fokus diberikan pada alur bisnis dan workflow pembayaran, bukan aspek teknis.
+
+A. APA ITU CB PAYMENT DAN KAPAN DIGUNAKAN?
+
+CB PAYMENT (CASHBOOK PAYMENT) adalah dokumen untuk mencatat:
+- PENGELUARAN UANG dari kas/bank perusahaan
+- Pembayaran ke vendor/supplier atas barang/jasa yang diterima
+- Pembayaran lainnya (gaji, royalti, pajak, dll)
+
+MENGAPA PERLU CB PAYMENT?
+
+Setiap pengeluaran uang perusahaan harus tercatat:
+Untuk kontrol kas dan likuiditas perusahaan
+Untuk transparansi penggunaan uang ke management
+Untuk keperluan audit dan compliance
+Untuk matching dengan invoice/tagihan supplier
+Untuk reporting keuangan dan laporan arus kas
+
+JENIS PEMBAYARAN:
+
+1. PEMBAYARAN DENGAN CEK (Check)
+   - Pengeluaran uang menggunakan cek atau BG (banker's guarantee)
+   - Ada tanggal cek, tanggal pembayaran, tanggal jatuh tempo
+   - Biasanya untuk nominal besar atau pembayaran ke supplier penting
+   - Harus ada data cek dari master cek/BG
+
+2. PEMBAYARAN TRANSFER (Non-Cek)
+   - Pengeluaran uang via transfer bank/online
+   - Hanya ada tanggal dokumen pembayaran saja
+   - Untuk pembayaran cepat atau nominal kecil
+   - Lebih fleksibel, bisa instant
+
+KAPAN MEMBUAT CB PAYMENT?
+
+Sebelum membuat CB Payment, pastikan:
+Ada invoice/tagihan dari supplier yang sudah terima barang/jasa
+Nominal dan detail sudah dikonfirmasi dengan vendor
+Approval dari manager sudah didapat (jika diperlukan)
+Akun/COA sudah disiapkan untuk alokasi biaya
+
+ALUR SINGKAT CB PAYMENT:
+
+[1] Terima invoice/tagihan dari vendor
+        ↓
+[2] Buat dokumen CB Payment di sistem
+        ↓
+[3] Isi detail pembayaran: vendor, bank, nominal, COA, pajak
+        ↓
+[4] Submit untuk approval/checking
+        ↓
+[5] Ketua Finance checking dan approve dokumen
+        ↓
+[6] Dokumen siap untuk proses pembayaran ke bank
+        ↓
+[7] Uang transfer/cek dikeluarkan, posting ke sistem
+
+B. MENU UTAMA - DAFTAR CB PAYMENT
+
+TAMPILAN GRID UTAMA:
+
+Menu utama menampilkan daftar semua dokumen CB Payment dalam bentuk tabel.
+
+KOLOM-KOLOM YANG DITAMPILKAN:
+
+1. Date (Tanggal) - Tanggal pembayaran dokumen dibuat
+2. Doc No (Nomor Dokumen) - Nomor unik dokumen sistem (auto-generated)
+3. Cek/BG No - Nomor cek/BG (isi jika pembayaran via cek)
+4. Vendor - Nama penerima/vendor yang dibayar
+5. Bank - Bank/rekening yang digunakan untuk transfer
+6. Ref Doc - Nomor referensi invoice/tagihan dari vendor (opsional)
+7. Description - Keterangan pembayaran (rincian apa yang dibayar)
+8. Currency - Mata uang pembayaran (IDR/USD/dll)
+9. Amount - Nominal total yang dibayarkan
+10. Status - Status dokumen dalam workflow approval
+11. Action - Tombol untuk edit/view detail dokumen
+
+FITUR TOOLBAR:
+
+- Tombol "CB Payment" (Biru)
+  Untuk membuat dokumen CB Payment baru
+
+- Tombol "EXCEL"
+  Untuk export daftar ke file Excel
+
+- Filter Row
+  Setiap kolom punya input filter untuk pencarian
+  Contoh: Filter by tanggal tertentu, vendor tertentu, status tertentu
+
+SORTING:
+
+Default grid disort by Tanggal (Descending) = dokumen terbaru di atas
+
+Bisa di-sort by kolom lain dengan klik header kolom.
+
+C. MEMBUAT CB PAYMENT BARU - STEP BY STEP
+
+LANGKAH 1: BUKA FORM BUAT DOKUMEN BARU
+Klik tombol "CB Payment" di toolbar
+Form popup akan terbuka besar
+Title akan menunjukkan "Create CB Payment"
+Form terbagi jadi: Header (informasi utama) dan Detail (alokasi COA)
+
+---
+
+LANGKAH 2: PILIH JENIS PEMBAYARAN (PAYMENT METHOD)──
+
+DROPDOWN: "Payment Method" (wajib diisi)
+
+Dua pilihan:
+CEK (untuk pembayaran via cek/BG)
+NON CEK atau TRANSFER (untuk pembayaran transfer/online)
+
+APA BEDANYA?
+
+CEK:
+  Perlu isi: Nomor Cek, Tanggal Cek, Tanggal Bayar, Tanggal Jatuh Tempo
+  Data cek bisa auto-fill dari master cek yang tersedia
+  Untuk pengeluaran formal yang besar
+
+NON CEK/TRANSFER:
+  Hanya perlu isi: Tanggal Dokumen saja
+  Lebih sederhana, tidak perlu data cek
+  Untuk transfer online/cash yang cepat
+
+BAGAIMANA MEMILIH?
+
+Jika punya nomor cek → Pilih CEK
+Jika transfer via bank → Pilih NON CEK
+Jika belum tahu, tanya ke Ketua Finance
+
+LANGKAH 3: ISI BAGIAN HEADER (INFORMASI UTAMA)
+
+FORM DIBAGI 2 KOLOM: KIRI dan KANAN
+
+KOLOM KIRI:
+
+A. PURPOSE (TUJUAN PEMBAYARAN) - WAJIB DIISI
+   Dropdown pilih tujuan pembayaran:
+      Purchase Payment = Pembayaran invoice pembelian barang
+      Employee Payment = Pembayaran gaji/honor karyawan
+      Sisa PUM = Pembayaran sisa pesanan uang muka karyawan
+      (ada pilihan lain sesuai setting perusahaan)
+
+B. TO (KEPADA SIAPA) - WAJIB DIISI
+   Dropdown pilih vendor/penerima:
+      Mulai mengetik nama vendor
+      Sistem akan filter dari master vendor
+      Klik untuk select vendor
+      Vendor code akan auto-fill di samping
+
+   KHUSUS UNTUK EMPLOYEE SET (Payment Sisa PUM):
+   Akan menampilkan daftar karyawan bukan vendor
+
+C. BANK (REKENING PEMBAYARAN) - WAJIB DIISI
+   Dropdown pilih rekening bank:
+      Mulai ketik kode atau nama bank
+      Sistem filter bank yang aktif
+      Setiap bank punya currency (IDR, USD, dll)
+      Klik select akan auto-fill:
+        Bank Code
+        Currency Code
+      Sistem auto-calc exchange rate untuk currency non-IDR
+
+D. REF DOC (REFERENSI DOKUMEN) - OPSIONAL
+   Isi nomor invoice/tagihan dari vendor
+   Contoh: INV-001234-2024
+   Untuk tracing pembayaran ke invoice asli
+
+E. Untuk CEK, muncul tambahan:
+
+   CEK/BG NO - WAJIB
+   Nomor cek yang akan digunakan
+   Bisa pilih dari dropdown (master cek tersedia)
+   Atau ketik manual jika belum terdaftar
+
+   DATE OF ISSUE - WAJIB
+   Tanggal pengeluaran/terbit cek
+   Biasanya sama dengan tanggal dokumen
+
+   PAID DATE - WAJIB
+   Tanggal cek akan dibayarkan ke bank
+   Validasi: TIDAK BOLEH lebih besar dari DUE DATE
+
+   DUE DATE - WAJIB
+   Tanggal jatuh tempo cek (akhir pembayaran)
+   Validasi: TIDAK BOLEH lebih kecil dari PAID DATE
+
+---
+
+KOLOM KANAN:
+
+A. CURRENCY & RATE (MATA UANG & KURS)
+   Currency Code: Auto-fill dari bank yang dipilih
+   Rate: Auto-calc dari bank rate (jika currency non-IDR)
+     Untuk IDR: Rate disabled (otomatis 1)
+     Untuk USD/JPY/dll: Bisa edit rate manual
+   Berfungsi untuk konversi ke IDR jika pembayaran foreign currency
+
+B. BANK AMOUNT (NOMINAL YANG DIBAYARKAN) - WAJIB DIISI
+   Nominal uang yang dikeluarkan dari bank
+   Dalam mata uang pembayaran (IDR/USD/dll)
+   Contoh: 50,000,000.00
+
+C. BASE AMOUNT (READONLY - AUTO-CALC)
+   Total DPP (Dasar Pengenaan Pajak) dari detail
+   Otomatis hitung dari detail COA yang diisi
+
+D. TOTAL DPP (READONLY - AUTO-CALC)
+   Total DPP dari detail yang ada pajak
+   Untuk keperluan pajak dan reporting
+
+E. TOTAL PPN (READONLY - AUTO-CALC)
+   Pajak Pertambahan Nilai total
+   Otomatis hitung dari detail
+
+F. TOTAL PPH (READONLY - AUTO-CALC)
+   Pajak Penghasilan total
+   Otomatis hitung dari detail
+
+G. TOTAL AMOUNT (READONLY - AUTO-CALC)
+   Total akhir = BASE AMOUNT + PPN - PPH
+   HARUS SAMA dengan BANK AMOUNT (validasi saat save)
+
+H. IN WORDS (READONLY - AUTO-CALC)
+   Nominal dalam tulisan (terbilang)
+   Contoh: "Lima Puluh Juta Rupiah"
+   Auto-generate saat nominal diisi
+
+I. DESCRIPTION (DESKRIPSI) - WAJIB DIISI
+   Keterangan detail pembayaran
+   Contoh: "Pembayaran Invoice INV-001234 untuk pembelian material"
+   Area text besar, bisa multiple line
+
+---
+
+LANGKAH 4: ISI DETAIL PEMBAYARAN (ALOKASI COA)
+
+Di bawah header form, ada GRID DETAIL untuk menjabarkan alokasi biaya.
+
+GRID MENAMPILKAN KOLOM:
+
+1. Division (WAJIB) - Divisi mana yang memiliki biaya ini
+2. Department (WAJIB) - Departemen mana yang memiliki biaya ini
+3. COA Code (WAJIB) - Kode akun accounting untuk alokasi
+4. Description (readonly) - Auto-fill deskripsi COA yang dipilih
+5. Amount (WAJIB) - Nominal untuk COA ini
+6. Tax Code (WAJIB) - Kode pajak (NT=No Tax, 10%=PPN, N0=special)
+7. PPN Amount (readonly) - Auto-calc PPN untuk baris ini
+8. PPH Amount (readonly) - Auto-calc PPH untuk baris ini
+9. PPH Type - Jenis PPH (23, 24, 26, dll) - WAJIB jika ada PPH
+10. Total Amount (readonly) - Auto-calc total baris
+11. Delete - Tombol hapus baris
+
+CARA MENAMBAH DETAIL:
+
+1. Klik tombol "Add COA" di toolbar grid
+2. Baris baru akan ditambah
+3. Isi satu per satu:
+   - Pilih Division
+   - Pilih Department (akan filter by division)
+   - Pilih COA Code (akan filter by division+department)
+   - Deskripsi auto-fill dari COA
+   - Isi AMOUNT (nominal)
+   - Pilih TAX CODE:
+     NT = Tidak ada pajak
+     10% = PPN normal
+     N0 = PPN khusus (special case)
+   - PPN & PPH akan auto-hitung berdasarkan tax code
+   - Jika PPH > 0, WAJIB isi PPH TYPE
+4. Tekan Enter atau Tab untuk confirm
+
+CONTOH DETAIL PEMBAYARAN:
+
+Invoice INV-001234 senilai 100 juta dari supplier, isi seperti ini:
+
+Row 1: Pembelian Material
+Division: Pabrik
+Department: Produksi
+COA: 5010 (Raw Material)
+Amount: 85,000,000.00
+Tax Code: 10% (PPN)
+PPN: 8,500,000.00
+PPH: 0
+Total: 93,500,000.00
+
+Row 2: Asuransi Pengiriman (jika terpisah)
+Division: Pabrik
+Department: Logistik
+COA: 5020 (Shipping Cost)
+Amount: 6,500,000.00
+Tax Code: NT (No Tax)
+PPN: 0
+PPH: 0
+Total: 6,500,000.00
+
+TOTAL DETAIL = 93,500,000 + 6,500,000 = 100,000,000 (cocok dengan BANK AMOUNT)
+
+---
+
+LANGKAH 5: REVIEW SEMUA DATA
+────────────────────────────
+
+Sebelum SAVE, pastikan:
+
+Semua field required sudah diisi (bertanda *)
+Bank Amount SAMA dengan Total Amount
+  Jika belum sama, ada warning saat save
+Currency Rate sudah diisi (jika currency non-IDR)
+Detail minimal ada 1 baris (tidak boleh kosong)
+Setiap detail yang ada PPH > 0 sudah isi PPH Type
+Deskripsi cukup jelas untuk reference
+
+---
+
+LANGKAH 6: SIMPAN DOKUMEN
+─────────────────────────
+
+1. Klik tombol "SAVE" (Biru) di bawah form
+2. Sistem melakukan validasi:
+   Cek semua field required terisi
+   Cek Bank Amount = Total Amount (tolerance 1 untuk setiap PPH item)
+   Cek Currency Rate tidak 0
+   Cek detail ada dan valid
+   Cek PPH Type mandatory jika PPH > 0
+3. Jika ada error:
+   Ada pesan error
+   Perbaiki field yang error
+   Klik SAVE lagi
+4. Jika semua OK:
+   Dialog konfirmasi "Are you sure want to CREATE?"
+   Klik OK untuk confirm
+5. Sistem akan process:
+   Kirim data ke server
+   Hitung dan validasi pajak
+   Generate nomor dokumen unik
+   Simpan ke database
+6. Hasil:
+   Pesan sukses: "Document created successfully"
+   OR pesan error jika ada problem
+   Grid auto-refresh dengan dokumen baru
+
+---
+
+LANGKAH 7: DOKUMEN DITERIMA DAN MASUK WORKFLOW
+
+Setelah dibuat, dokumen akan:
+
+Status akan berubah ke: "NEED FINANCE CHECKING"
+Warna hijau di grid (untuk diperhatikan)
+Menunggu Ketua Finance untuk checking
+Bisa di-view, tapi tidak bisa edit lagi
+
+Notifikasi akan dikirim ke:
+Ketua Finance / Head of Cashier
+Email notification tentang dokumen baru pending
+
+D. EDIT / UPDATE CB PAYMENT (MENGUBAH DOKUMEN)
+
+KAPAN BISA EDIT?
+
+Dokumen CBD Payment hanya bisa di-EDIT jika status masih "NEED":
+NEED FINANCE CHECKING
+NEED ACCOUNTING CHECKING
+NEED TAX APPROVAL
+NEED CHECK DETAIL
+
+Jika dokumen sudah dalam status lain (COMPLETE, POSTED, REMOVED, dll):
+Tidak bisa di-edit lagi
+
+CARA EDIT DOKUMEN:
+
+1. Cari dokumen di grid (filter by nomor atau vendor)
+2. Klik tombol "action" (warna biru) di baris dokumen
+3. Form akan terbuka (title: "Checking CB Payment" atau "Preview CB Payment")
+4. Field yang bisa di-edit:
+   Description
+   Detail: Amount dan Tax Code (di baris detail)
+
+5. Field yang READ-ONLY (tidak bisa edit):
+   Doc No
+   Payment Method (Cek/Non-Cek)
+   Vendor
+   Bank
+   Tanggal (apapun)
+   Total calculations (otomatis)
+
+6. Jika ada perubahan detail:
+   Edit field amount atau tax code
+   Sistem auto-recalc PPN/PPH
+   Total Amount akan auto-update
+   Klik tombol "Update" untuk simpan perubahan
+
+TOMBOL DI FORM EDIT:
+
+Tergantung status dokumen:
+
+STATUS "NEED FINANCE CHECKING":
+Tombol "UPDATE" - untuk update data
+Tombol "CHECKING" - untuk approving (checking OK)
+Tombol "VOID" - untuk membatalkan dokumen
+
+STATUS "NEED ACCOUNTING CHECKING":
+Tombol "VOID" - untuk membatalkan
+"CHECKING" tidak tampil (sudah di-checking oleh finance)
+
+STATUS "NEED TAX APPROVAL":
+Tombol "VOID" - untuk membatalkan
+Menunggu Tax Approval sebelum posting
+
+STATUS LAIN/FINAL:
+Hanya tombol "VOID" yang tampil (jika perlu batalkan)
+Dokumen mostly read-only view only
+
+CONTOH EDIT:
+
+Dokumen sudah dibuat tapi ada kesalahan di nominal detail:
+
+1. Buka dokumen (klik action button)
+2. Lihat grid detail
+3. Cari baris yang salah nominalnya
+4. Double-klik pada cell Amount
+5. Ubah nominalnya
+6. Tab/Enter untuk pindah cell lain
+7. Sistem auto-recalc:
+   PPN auto-calculate ulang
+   Total Amount auto-update
+   Header total juga update
+8. Klik tombol "UPDATE" untuk simpan perubahan
+9. Konfirmasi dialog
+10. Klik OK
+11. Dokumen ter-update dengan data baru
+
+E. WORKFLOW & STATUS DOKUMEN
+
+CB PAYMENT MEMILIKI WORKFLOW APPROVAL YANG KETAT
+
+STATUS PROGRESSION:
+
+[1] NEED FINANCE CHECKING (Warna Hijau)
+    Baru dibuat oleh Finance Staff
+    Ketua Finance/Cashier harus check & approve
+    Checking dilakukan dengan membuka form dan review
+    Action: Klik "CHECKING" button untuk approve
+
+        ↓
+
+[2] NEED ACCOUNTING CHECKING (jika ada pajak)
+    Finance sudah checking OK
+    Lanjut ke accounting untuk validate pajak
+    Action: Accounting staff klik "CHECKING" untuk approve
+
+        ↓
+
+[3] NEED TAX APPROVAL (jika ada PPN/PPH > 0)
+    Accounting sudah validate
+    Tax department harus approve perhitungan pajak
+    Action: Tax staff approval di menu Tax Approval
+
+        ↓
+
+[4] NEED CHECK DETAIL / READY TO POST
+    Semua approval selesai
+    Menunggu cek final detail sebelum posting ke GL
+    Action: Ketua Finance final check
+
+        ↓
+
+[5] COMPLETE / POSTED (Warna Hitam)
+    Sudah di-posting ke General Ledger
+    Dokumen final, tidak bisa di-edit lagi
+    Hanya bisa di-view atau di-VOID jika ada kesalahan
+
+---
+
+STATUS KHUSUS:
+
+VOID (Warna Merah)
+Dokumen dibatalkan/dihapus
+Biasanya karena ada kesalahan di pembayaran
+Alasan VOID harus dicatat
+Dokumen VOID harus di-reverse di GL
+
+REMOVED (Warna Merah)
+Dokumen dihapus dari sistem
+Status final, tidak bisa diapa-apakan
+Biasanya karena soft delete
+
+---
+
+WARNA INDIKATOR STATUS:
+
+🟢 HIJAU = Ada aksi yang harus dilakukan (NEED CHECKING)
+⚫ HITAM = Status normal ongoing atau final posted
+🔴 MERAH = Final tidak approve (VOID/REMOVED) atau error
+
+F. VALIDASI & PENGECEKAN OTOMATIS
+
+SEBELUM SAVE, SISTEM MELAKUKAN VALIDASI OTOMATIS:
+
+VALIDASI FIELD REQUIRED:
+
+✗ Error: "Please fill required field before continue to save!"
+  Penyebab: Ada field wajib yang kosong
+  Solusi: Cek field yang bertanda * (required)
+
+VALIDASI CURRENCY RATE:
+
+✗ Error: "Cannot continue to save! Please fill currency rate"
+  Penyebab: Currency non-IDR tapi rate masih 0
+  Solusi: Isi exchange rate untuk currency yang digunakan
+
+VALIDASI AMOUNT MATCHING:
+
+✗ Error: "Bank amount must be equal with Total Amount"
+  Penyebab: Bank Amount ≠ Total Amount (dengan tolerance)
+  
+  Tolerance dihitung:
+  1 IDR per item yang ada tax (PPN/PPH) > 0
+  Contoh: Jika ada 3 item dengan tax, tolerance = 3 IDR
+  Ini untuk mengakomodasi pembulatan pajak
+  
+  Solusi:
+     Review detail amount dan bank amount
+     Pastikan detail sudah lengkap dan benar
+     Pastikan tax code sudah dipilih dengan benar
+     Cek manual jika ada selisih > tolerance
+
+VALIDASI DETAIL:
+
+✗ Error: "Please fill Payment Detail before continue to save!"
+  Penyebab: Grid detail kosong (0 baris)
+  Solusi: Tambah minimal 1 baris detail dengan COA
+
+✗ Error: "Please fill PPH Type before continue to save!"
+  Penyebab: Ada baris dengan PPH > 0 tapi PPH Type kosong
+  Solusi: Untuk setiap baris dengan PPH, pilih PPH Type (23, 24, 26, dll)
+
+VALIDASI TANGGAL CEK:
+
+✗ Error: "Paid Date cannot later than Due Date!"
+  Penyebab: Paid Date > Due Date
+  Solusi: Sesuaikan tanggal, Paid Date harus ≤ Due Date
+
+✗ Error: "Due Date cannot earlier than Paid Date!"
+  Penyebab: Due Date < Paid Date
+  Solusi: Sesuaikan, Due Date harus ≥ Paid Date
+
+VALIDASI REFERENCE DOC:
+
+Saat meninggalkan field Ref Doc:
+Sistem auto-check apakah nomor invoice sudah ada
+Jika ada, muncul notifikasi
+Berguna untuk detect duplikat pembayaran
+
+G. VOID / PEMBATALAN DOKUMEN
+
+KAPAN PERLU VOID DOKUMEN?
+
+Dokumen CB Payment perlu di-VOID jika:
+Ada kesalahan posting (salah nominam, vendor, bank, dll)
+Pembayaran dibatalkan (vendor membatalkan invoice)
+Pembayaran never terjadi (cek hilang, transfer gagal)
+Transfer double / duplikat
+Ada perubahan substansi yang significant
+
+CARA VOID DOKUMEN:
+
+1. Buka dokumen (klik action button)
+2. Klik tombol "VOID" (Merah) di bawah form
+3. Dialog VOID akan pop-up:
+   Message: "[DOC NO] would be voided. Please input the reason below:"
+   Text field untuk alasan void
+   Tombol: Continue, Cancel
+
+4. ISI ALASAN VOID (wajib)
+   Contoh: "Pembayaran dibatalkan oleh vendor"
+   Contoh: "Transfer gagal, belum diterima"
+   Harus spesifik dan jelas
+
+5. Klik tombol "CONTINUE"
+6. Dialog konfirmasi: "Are you sure want to VOID document: [DOC NO]?"
+7. Klik "OK" untuk final void
+8. Sistem akan:
+   Update status dokumen ke VOID
+   Catat alasan void
+   Create reverse entry di GL jika sudah posted
+   Notifikasi staff yang terlibat
+
+HASIL VOID:
+
+Status dokumen berubah ke VOID (warna merah)
+Dokumen tidak bisa di-edit lagi
+Dokumentasi void reason tersimpan untuk audit
+Jika sudah posted, GL entry akan di-reverse otomatis
+Untuk pembuat bisa buat dokumen baru yang benar
+
+H. PRINTING & EXPORT
+
+PRINT DOKUMEN:
+
+1. Buka dokumen (klik action button)
+2. Di toolbar form ada tombol "Print" (icon printer)
+3. Klik Print
+4. Browser print dialog muncul
+5. Pilih printer atau "Save as PDF"
+6. Dokumen akan print dengan layout resmi:
+   Header: Company name, nomor dokumen, tanggal
+   Detail: Vendor, bank, amount, tax info
+   Line items: COA detail dengan amount
+   Footer: Signature line untuk approval
+
+PRINT BERGUNA UNTUK:
+
+Bukti pembayaran ke bank/vendor
+Dokumentasi untuk audit file
+Approval signature (untuk cek payment)
+Record keeping fisik
+
+EXPORT KE EXCEL:
+
+1. Di grid daftar utama, klik tombol "EXCEL" (toolbar)
+2. Dialog akan muncul atau file auto-download
+3. File PDF/Excel berisi semua dokumen CB Payment:
+   Periode: sesuai filter yang aktif
+   Semua kolom: nomor, tanggal, vendor, bank, amount, status
+   Bisa di-sort by kolom apa saja
+   Bisa di-filter lebih lanjut di Excel
+   Bisa di-analisis atau di-share ke management
+
+EXPORT BERGUNA UNTUK:
+
+Reporting pengeluaran kas per vendor
+Cash flow analysis
+Management reporting
+Tax reporting (list of payments)
+Reconciliation dengan bank statement
+
+I. SPECIAL CASES & SCENARIOS
+
+CASE 1: PEMBAYARAN KARYAWAN (PUM PAYMENT)
+
+Jika Payment Method untuk Sisa PUM:
+
+Perubahan:
+"To" field akan menampilkan daftar KARYAWAN (bukan vendor)
+Vendor code akan terisi kode karyawan
+Bank biasanya hanya rekening IDR (currency controller ketat)
+Detail biasanya 1 baris: reimbursement/tunjangan
+
+Alur sama, tapi:
+Vendor yang dipilih adalah karyawan
+Nominal adalah sisa yang harus dikembalikan
+COA biasanya untuk employee expense account
+
+---
+
+CASE 2: PEMBAYARAN MULTIPLE INVOICE (1 CEKK UNTUK BANYAK INVOICE)
+
+Jika 1 dokumen untuk bayar beberapa invoice:
+
+Contoh:
+Invoice INV-001 dari Vendor A: 50 juta
+Invoice INV-002 dari Vendor A: 30 juta
+1 cek untuk total 80 juta
+
+Cara handling:
+Isi Vendor: Vendor A (sama)
+Isi Ref Doc: INV-001 (atau gabung: INV-001, INV-002)
+Detail split by invoice paling baik:
+  Row 1: Amount 50 juta
+  Row 2: Amount 30 juta
+  Total: 80 juta
+Bank Amount: 80 juta
+
+Tips:
+Jika banyak invoice, buat 1 dokumen per invoice lebih baik
+Multi-invoice dalam 1 dokumen cuma untuk kasus exception
+Dokumentasi harus jelas (description field)
+
+---
+
+CASE 3: TRANSAKSI FOREIGN CURRENCY
+
+Jika pembayaran dalam USD/JPY/currency lain:
+
+Setup:
+Pilih bank dengan currency USD (misalnya)
+Currency Code auto-fill: USD
+Exchange Rate: Auto-calc dari rate bank, bisa manual edit
+Amount: Isi dalam USD (contoh: 10,000.00)
+
+Perhitungan:
+Bank Amount: 10,000 USD
+Dalam IDR: 10,000 × exchange rate (misalnya 15,500) = 155,000,000 IDR
+Detail: Isi dalam USD, tapi tax calculation base dari IDR
+Total Amount (IDR): dihitung di header
+
+Validasi:
+Jika currency ≠ IDR, rate field WAJIB diisi
+Rate tidak boleh 0
+Validasi amount SAMA tetap berlaku (nominal USD vs total header)
+
+---
+
+CASE 4: PEMBAYARAN DENGAN PARTIAL ADVANCE
+
+Jika pembayaran partial atas invoice:
+
+Contoh:
+Invoice total: 100 juta
+Pembayaran pertama (down payment): 50 juta
+Pembayaran kedua (pelunasan): 50 juta
+
+Cara handling:
+Buat 2 dokumen CB Payment terpisah
+Doku 1: Amount 50 juta, Ref Doc: INV-001
+Doku 2: Amount 50 juta, Ref Doc: INV-001 (same invoice)
+Atau di Ref Doc tulis: "INV-001 DP" vs "INV-001 FINAL"
+
+Atau dalam 1 dokumen:
+Hanya jika amount dan detail sedang (untuk clarity)
+Detail split: 50 + 50 juta
+Description: "Pembayaran DP INV-001"
+
+---
+
+CASE 5: REIMBURSEMENT / RETURN
+
+Jika vendor mengembalikan uang (reimbursement):
+
+Harus handling di accounting, bukan CB Payment Create:
+Ini adalah debit memo dari vendor
+Biasanya dihandle di modul Receiving/Return
+Atau consult dengan ketua accounting
+
+Jangan buat CB Payment untuk receive money (itu Sales Receive/RV):
+CB Payment adalah untuk PENGELUARAN
+RV adalah untuk PENERIMAAN
+Jangan campur
+
+J. TROUBLESHOOTING & ERROR
+
+ERROR 1: "Cannot validate Ref No"
+- Penyebab: Ref Doc field diisi tapi system tidak bisa validate
+- Solusi:
+  □ Check format nomor invoice benar
+  □ Pastikan vendor/invoice sudah registered di sistem
+  □ Biarkan field kosong jika tidak penting
+  □ Hubungi IT jika validasi tidak berfungsi
+
+ERROR 2: "No. Cek/BG sudah digunakan atau kadaluarsa"
+- Penyebab: Nomor cek yang dipilih sudah pernah digunakan atau expired
+- Solusi:
+  □ Pilih nomor cek lain dari dropdown
+  □ Pastikan tanggal due date cek masih berlaku
+  □ Jika cek hilang, buat dokumen VOID untuk cek lama
+  □ Request cek baru ke bagian cek/bank
+
+ERROR 3: "Field is required" atau validation failed
+- Penyebab: Ada field yang belum diisi atau input tidak valid
+- Solusi:
+  □ Lihat field mana yang error (biasanya di-highlight merah)
+  □ Isi semua field yang bertanda * (required)
+  □ Pastikan format data benar (tanggal, nominal, dll)
+  □ Tidak boleh ada symbol/character aneh di field
+
+ERROR 4: "Paid Date cannot later than Due Date"
+- Penyebab: Tanggal pembayaran cek lebih besar dari due date
+- Solusi:
+  □ Periksa tanggal: Paid Date harus ≤ Due Date
+  □ Sesuaikan tanggal yang benar
+  □ Tanya bank atau vendor tentang payment timeline cek
+
+ERROR 5: "Cannot continue to save! Please fill currency rate"
+- Penyebab: Currency non-IDR tapi exchange rate masih kosong/0
+- Solusi:
+  □ Jika currency IDR: Rate auto-disable, tidak perlu isi
+  □ Jika currency USD/JPY/dll: Isi rate sesuai kurs hari
+  □ Contoh: 1 USD = 15,500 IDR → isi 15500
+  □ Cek ke treasury untuk rate resmi perusahaan hari itu
+
+ERROR 6: "Bank amount must be equal with Total Amount"
+- Penyebab: Nominal yang dikeluarkan ≠ total dari detail
+- Solusi:
+  □ Review semua detail line (sum = total)
+  □ Pastikan amount per baris sudah benar
+  □ Pastikan tax code sudah dipilih (PPN/PPH akan auto-calc)
+  □ Jika detail sudah benar, sesuaikan Bank Amount
+  □ Atau tambah/kurangi detail jika ada nominal yang tertinggal
+
+ERROR 7: Grid / form tidak load atau loading lama
+- Penyebab: Koneksi internet lambat atau server error
+- Solusi:
+  □ Tunggu loading selesai (refresh browser)
+  □ Coba logout dan login ulang
+  □ Clear browser cache
+  □ Coba di browser lain
+  □ Hubungi IT jika masih error
+
+ERROR 8: "Cash book detail is locked / cannot edit"
+- Penyebab: Dokumen sudah dalam status final (POSTED/REMOVED)
+- Solusi:
+  □ Dokumen yang sudah posted tidak bisa di-edit
+  □ Jika harus koreksi, harus VOID dokumen lama + buat baru
+  □ Hubungi Ketua Finance untuk discuss
+
+K. TIPS & BEST PRACTICE
+
+TIP 1: SEGERA BUAT DOKUMEN SAAT INVOICE TERIMA
+- Jangan delay pembuatan CB Payment
+- Semakin cepat dibuat, semakin cepat approval flow
+- Deadline approval target: max 3 hari kerja
+
+TIP 2: ISI DETAIL REFERENCE LENGKAP
+- Selalu isi Ref Doc dengan nomor invoice dari vendor
+- Gunakan Description yang jelas dan spesifik
+- Ini membantu untuk tracing dan reconciliation
+- Contoh baik: "Pembayaran INV-2024-00123 untuk pembelian 100 unit keramik WC"
+- Contoh buruk: "Pembayaran vendor"
+
+TIP 3: SPLIT INVOICE PER DOKUMEN
+- Jika 1 invoce = 1 dokumen CB Payment
+- Lebih mudah untuk tracking dan reconciliation
+- Cocok dengan invoice asli dari vendor
+- Exception: Hanya untuk 1 vendor 1 hari (batch payment)
+
+TIP 4: VALIDATE AMOUNT SEBELUM SAVE
+- Pastikan detail amount = bank amount
+- Tulis di kalkulator atau excel untuk double-check
+- Jangan asal-asalan, kesalahan amount besar biayanya
+- Cek: DPP + PPN - PPH = Total Amount
+
+TIP 5: COORDINATE DENGAN VENDOR
+- Pastikan vendor sudah terkirim e-mail notif pembayaran
+- Confirm bank account vendor (account number, swift code)
+- Pastikan no cek/BG correct jika paid via cek
+- Ini prevent payment ke account yang salah
+
+TIP 6: PRINT DAN SIGN DOCUMENT
+- Untuk cek payment: print dokumen dan sign sebelum kirim cek
+- Dokumentasi untuk file (audit trail)
+- Tanda tangan approval dari Ketua Finance / Cashier
+- File fisik disimpan dengan invoice vendor sebagai bukti
+
+TIP 7: RECONCILE DENGAN BANK STATEMENT
+- Setiap akhir bulan, reconciliate CB Payment dengan bank statement
+- Cocokkan: Tanggal, nomor, amount
+- Pastikan semua payment sudah clear di bank
+- Catat outstanding items (belum clear)
+
+TIP 8: MONITOR STATUS DOCUMENT
+- Ada dokumen yang 'stuck' di NEED CHECKING > 5 hari?
+- Follow-up dengan approv (Ketua Finance)
+- Jangan delay, bisa affect cash flow dan supplier relationship
+- Setup reminder di task list pribadi
+
+TIP 9: TAX HANDLING YANG BENAR
+- Jika ada PPN, pastikan supplier memiliki NPWP
+- Jika ada PPH, pastikan sudah tahu tax type (23, 24, 26)
+- Coordinate dengan tax team saat ada uncertainty
+- Jangan random pilih tax code, impact pajak berbeda
+
+TIP 10: KEEP GOOD FILE ARCHIVE
+- Simpan print out CB Payment bersama invoice asli
+- Archive by vendor, by month, by year
+- Untuk audit dan reference di tahun depan
+- Digital file juga harus backup di network drive
+
+L. PERTANYAAN UMUM (FAQ)
+
+Q: Apa bedanya CB Payment dengan RV (Receiving Voucher)?
+A: - CB Payment = PENGELUARAN uang (bayar vendor, gaji, dll)
+   - RV = PENERIMAAN uang (terima dari pelanggan)
+   - Kebalikan! Jangan sampai tertukar.
+
+Q: Bisa bikin CB Payment tanpa invoice?
+A: Sebaiknya ada invoice dulu. Tapi jika tidak ada (misal advance), isi
+   description field lengkap dengan alasan pembayaran. Minimal harus ada
+   approval dari manager.
+
+Q: Apakah nominal harus EXACT sama dengan invoice?
+A: Ya, payment harus match invoice amount (termasuk pajak). Jika ada
+   discount/allowance, harus ada debit memo dari vendor. Jangan bayar asal.
+
+Q: Bisa bayar multiple vendor dalam 1 dokumen?
+A: Tidak disarankan. Buat 1 dokumen per vendor. Jika terpaksa 1 dokumen
+   untuk 2+ vendor (rare case), harus ada approval Ketua Finance dulu.
+
+Q: Bagaimana jika payment via bank transfer dengan currency asing?
+A: Pilih bank dengan currency yang sesuai, system auto-fill exchange rate,
+   bisa edit rate manual jika perlu. Amount diisi dalam currency asli
+   (contoh: 10,000 USD), total akan auto-calc dalam IDR.
+
+Q: Bisakah edit dokumen setelah APPROVED?
+A: Tidak bisa (read-only). Jika ada kesalahan setelah approved, harus
+   VOID dokumen lama dan buat dokumen baru yang benar. Koordinasi dengan
+   Ketua Finance.
+
+Q: Apa itu "NEED FINANCE CHECKING" status?
+A: Status awal dokumen yang baru dibuat, menunggu approval dari Ketua
+   Finance atau Head of Cashier. Ketua Finance harus buka dokumen,
+   review, dan klik "CHECKING" untuk approve.
+
+Q: Apakah PPH Type wajib diisi?
+A: Hanya WAJIB jika ada PPH amount > 0. Jika tidak ada PPH (tax code NT
+   atau tax rate 0%), PPH Type bisa kosong.
+
+Q: Bagaimana jika sebelum posting, ada amount yang perlu di-adjust?
+A: Dokumen masih dalam NEED CHECKING status, bisa di-edit dengan klik
+   action button, edit amount, klik UPDATE. System auto-recalc pajak.
+
+Q: Cek sudah hilang, bagaimana?
+A: 1) Buat dokumen CB Payment baru dengan cek yang berbeda. 2) VOID cek
+   yang hilang (dengan alasan "cek hilang/rusak"). 3) Buat dokumen baru
+   dengan cek pengganti. Koordinasi dengan bank untuk cancel cek lama.
+
+Q: Bagaimana jika detail grid tidak tampil atau error?
+A: Refresh browser atau re-open form. Jika masih error, hubungi IT.
+   Jangan force-save dokumen jika ada error di grid.
+
+M. KESIMPULAN & CATATAN PENTING
+
+CB PAYMENT adalah dokumen WAJIB untuk setiap pengeluaran uang
+
+Ada WORKFLOW KETAT: Create → Finance Checking → Accounting Check → 
+  Tax Approval → Posting. Jangan skip langkah.
+
+VALIDASI KETAT: Amount harus match, tax harus correct, PPH Type wajib
+  jika ada PPH. Ini untuk mencegah error posting ke GL.
+
+DETAIL SEBANYAK MUNGKIN: Semakin detail (divide by COA), semakin baik
+  untuk analysis dan accounting trail.
+
+DOKUMENTASI JELAS: Reference doc, description yang detail membantu
+  tracing dan trouble-shooting di masa depan.
+
+APPROVAL TEPAT WAKTU: Monitor status document, jangan biarkan stuck.
+  Tepat waktu approval = cash flow lancar.
+
+KEEP AUDIT TRAIL: Print dokumen, arsip dengan invoice, backup digital.
+  Untuk compliance dan reference auditor.
+
+CONSULT FIRST: Jika ada uncertainty (tax code, currency rate, special
+  case), tanya ke Ketua Finance dulu sebelum save. Lebih baik aman.
+
+MONTHLY RECONCILIATION: Cocokkan CB Payment dengan bank statement
+  untuk memastikan semua payment OK dan nothing pending.

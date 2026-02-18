@@ -1,0 +1,311 @@
+LAPORAN DEPOSITO AKTIF
+
+TUJUAN:
+Memberikan informasi lengkap tentang semua deposito (dana yang disetorkan di bank) yang masih aktif
+berdasarkan perusahaan dan periode bulan tertentu. Laporan ini membantu bagian finance untuk monitoring,
+tracking, dan management dana deposito yang ditempatkan di berbagai bank.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan daftar semua deposito yang masih aktif/belum jatuh tempo dalam bentuk table yang
+komprehensif, meliputi detail bank, nomor deposito, jumlah dana, dan nilai dalam berbagai mata uang.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Deposito Aktif"
+   - Sistem menampilkan form filter dengan beberapa field input
+   - Form filter terletak di bagian atas laporan
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan yang aktif di sistem yang ditampilkan
+
+   b) Pilih Periode (Period)
+      - Klik dropdown "Period"
+      - Sistem akan menampilkan daftar 12 bulan dalam 1 tahun
+      - Pilih bulan sesuai periode yang ingin dilihat
+      - Contoh bulan: Januari, Februari, Maret, April, Mei, Juni, Juli, Agustus, September, Oktober, November, Desember
+      - Laporan akan menampilkan deposito AKTIF pada bulan tersebut
+
+3. KLIK TOMBOL SEARCH
+   - Setelah kedua filter terisi (Company dan Period), klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data deposito dari database
+   - Saat proses berjalan, akan muncul loading indicator (status "Loading...")
+   - Waktu loading tergantung banyaknya deposito yang aktif
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: LAPORAN DEPOSITO AKTIF
+      - Periode: Nama bulan dan tahun (contoh: "Period 1" = Januari)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Pagination menunjukkan halaman berapa dan total halaman (contoh: "Page 1 of 2")
+
+   b) Detail Tabel Deposito (Terdiri dari kolom):
+      - No.                  : Nomor urut deposito dalam laporan
+      - Nama Bank            : Nama bank tempat deposito ditempatkan (contoh: BCA, BNI, Mandiri, Bank Capital, dll)
+      - No. Deposito         : Nomor referensi/identitas deposito di bank
+      - Periode Deposito     : Periode waktu deposito berlaku (biasanya 1 bulan, 3 bulan, 6 bulan, 1 tahun, dll)
+      - Mata Uang            : Mata uang deposito (IDR, USD, EUR, GBP, HKD, SGD, dll)
+      - Nilai Mula Uang      : Nilai awal/pokok deposito saat ditempatkan
+      - Nilai Dalam Forex    : Nilai deposito ketika dikonversi ke mata uang forex (jika deposito bukan IDR)
+      - Nilai Regulis        : Nilai deposito saat diterbitkan/diciptakan atau nilai final
+
+   c) Contoh Data di Laporan:
+      1. Bank: BANK NAGA (70s2) - No: 08DI504304700-2
+         Periode: 1 bulan | Mata Uang: IDR | Nilai: 4.308.500
+
+      2. Bank: BCA (001) - No: 546-030-1001
+         Periode: 1 bulan | Mata Uang: IDR | Nilai: 648.210.503
+
+      3. Bank: BCA (001) - No: 546-030-1001
+         Periode: 1 bulan | Mata Uang: IDR | Nilai: 648.210.503
+
+      4. Bank: Deutsche Bank - No: 60091429
+         Periode: 1 | Mata Uang: USD | Nilai: 32.000 | Nilai Forex: 174.646.400
+
+      5. Bank: Bank Mandiri IDR - No: 1560007976250
+         Periode: 1 | Mata Uang: IDR | Nilai: 10.500.000
+
+   d) Ringkasan Total:
+      - Baris TOTAL menampilkan jumlah total semua deposito (dalam IDR atau USD sesuai data)
+      - Contoh: TOTAL = 39.455.967.291 (IDR) | 23.042.287.537.643 (IDR equivalent)
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak halaman, bisa berpindah halaman
+      - Tombol panah untuk halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan (zoom in/out)
+      - Tombol refresh untuk reload/memperbarui data yang sama
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+FITUR PERPINDAHAN PERIODE:
+Ketika pengguna mengubah periode (dengan perusahaan yang sama):
+- Klik dropdown "Period" untuk memilih bulan yang berbeda
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai periode (bulan) baru
+- Semua data deposito untuk bulan tersebut akan ditampilkan
+- Data periode lama akan diganti dengan data periode baru
+
+FITUR PERPINDAHAN PERUSAHAAN:
+Ketika pengguna mengubah perusahaan (dengan periode yang sama):
+- Klik dropdown "Company" untuk memilih perusahaan yang berbeda
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai perusahaan baru
+- Semua deposito dari perusahaan baru akan ditampilkan
+- Data perusahaan lama akan diganti dengan data perusahaan baru
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. MONITORING DEPOSITO AKTIF
+   - Melihat semua deposito yang masih aktif/berlaku pada periode tertentu
+   - Memverifikasi bahwa semua deposito tercatat di sistem
+   - Melakukan tracking deposito apa saja yang posisinya aktif
+   - Mengidentifikasi deposito yang akan jatuh tempo/berakhir
+
+2. CASH MANAGEMENT & LIKUIDITAS
+   - Mengetahui dana total yang di-deposit di berbagai bank
+   - Merencanakan kebutuhan cash flow jangka pendek/menengah
+   - Memantau distribusi dana di berbagai bank (diversifikasi)
+   - Mengoptimalkan penempatan dana untuk mendapat bunga/return terbaik
+
+3. ANALISIS INVESTASI & RETURN
+   - Melihat nilai deposito awal dibanding nilai saat ini (jika ada perubahan)
+   - Menganalisis return/bunga yang diterima dari deposito
+   - Membandingkan rate/tingkat bunga antar bank
+   - Membantu keputusan untuk roll-over atau pencairan deposito
+
+4. REKONSILIASI BANK & VERIFIKASI
+   - Mencocokkan data deposito di sistem dengan laporan bank
+   - Memverifikasi nomor deposito di laporan bank dengan sistem
+   - Memastikan nilai deposito sesuai antara sistem dan bank
+   - Identifikasi ketidaksesuaian atau perbedaan data
+
+5. ANALISIS MATA UANG & FOREX
+   - Melihat komposisi deposito dalam berbagai mata uang (IDR, USD, EUR, dll)
+   - Melakukan analisis exposure terhadap fluktuasi mata uang
+   - Membandingkan nilai dalam mata uang lokal vs forex
+   - Membantu keputusan tentang diversifikasi mata uang
+
+6. PELAPORAN MANAJEMEN
+   - Menyiapkan laporan posisi deposito untuk manajemen
+   - Memberikan informasi status cash yang di-invest dalam bentuk deposito
+   - Membantu projeksi cash inflow saat deposito jatuh tempo
+   - Menyediakan data untuk budget forecasting
+
+7. COMPLIANCE & AUDIT
+   - Menyediakan bukti tertulis untuk audit internal/eksternal
+   - Dokumentasi untuk keperluan regulasi dan peraturan
+   - Arsip untuk verifikasi transaksi dan aliran dana
+   - Evidensi untuk risk management dan control internal
+
+8. PERENCANAAN PENGAKHIRAN DEPOSITO
+   - Melihat deposito mana yang akan segera jatuh tempo
+   - Merencanakan apakah akan di-roll over atau dicairkan
+   - Mengatur untuk mencairkan dana pada waktu yang tepat
+   - Mengkoordinasikan dengan bank untuk proses pencairan
+
+JENIS-JENIS AKUN BANK YANG DITAMPILKAN:
+
+Laporan ini menampilkan deposito dari berbagai jenis bank:
+
+1. BANK UMUM NASIONAL
+   - BCA (Bank Central Asia)
+   - BNI (Bank Negara Indonesia)
+   - Mandiri (Bank Mandiri)
+   - Bank Naga
+   - Contoh: "BCA (001)" dengan nomor deposito "546-030-1001"
+
+2. BANK ASING/INTERNASIONAL
+   - Deutsche Bank (Bank Jerman)
+   - Bank Mandiri USD (Deposito dalam Dollar)
+   - Bank NSF USD
+   - Contoh: "Deutsche Bank" dengan deposito dalam USD
+
+3. LAYANAN KHUSUS
+   - Kas Valuta (Kas dalam mata uang asing)
+   - Reserve Account (Akun cadangan/reserve)
+   - Contoh: "Kas Valuta" dengan berbagai mata uang
+
+PENGERTIAN KOLOM PERIODE DEPOSITO:
+
+Kolom "Periode Deposito" menunjukkan jangka waktu deposito:
+- "1" atau "1 bulan"  : Deposito jangka pendek selama 1 bulan
+- "3" atau "3 bulan"  : Deposito selama 3 bulan (kuartal)
+- "6" atau "6 bulan"  : Deposito selama 6 bulan (setengah tahun)
+- "12" atau "1 tahun" : Deposito jangka panjang selama 1 tahun
+
+Periode ini penting untuk:
+- Menentukan kapan deposito akan jatuh tempo
+- Perencanaan pencairan dana
+- Analisis likuiditas
+
+MATA UANG YANG MUNGKIN DITAMPILKAN:
+
+1. IDR (Indonesian Rupiah)
+   - Mata uang lokal Indonesia
+   - Deposito dengan nilai dalam rupiah
+
+2. USD (US Dollar)
+   - Mata uang dollar Amerika
+   - Berguna untuk transaksi internasional
+   - Exposur terhadap perkembangan nilai dollar
+
+3. EUR (Euro)
+   - Mata uang Eropa
+   - Untuk transaksi dengan negara-negara Eropa
+
+4. GBP (British Pound)
+   - Mata uang Inggris
+   - Untuk transaksi dengan Inggris/negara Commonwealth
+
+5. HKD (Hong Kong Dollar)
+   - Mata uang Hong Kong
+   - Untuk transaksi dengan Hong Kong
+
+6. SGD (Singapore Dollar)
+   - Mata uang Singapura
+   - Untuk transaksi regional di Asia Tenggara
+
+CATATAN PENTING:
+1. Kedua field filter (Company dan Period) harus diisi sebelum search
+2. Laporan hanya menampilkan deposito yang AKTIF pada periode tersebut
+3. Deposito yang sudah jatuh tempo atau dicairkan tidak ditampilkan
+4. Nilai dalam mata uang forex adalah konversi/estimasi pada tanggal laporan dibuat
+5. Nilai dapat berubah jika ada bunga/selisih pada saat pencairan
+6. Untuk perubahan filter, klik search kembali
+7. Laporan dapat diexport dalam berbagai format untuk analisis lanjutan
+8. Data yang ditampilkan hanya untuk perusahaan yang dipilih, bukan seluruh perusahaan
+9. Jika tidak ada deposito aktif, laporan akan menampilkan tabel kosong tanpa error
+10. Laporan ini read-only, tidak bisa mengedit data langsung (harus melalui modul deposito)
+11. TOTAL baris menampilkan jumlah keseluruhan deposito aktif pada periode tersebut
+12. Untuk laporan multi-halaman, semua halaman harus diperiksa untuk melihat seluruh deposit
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan kedua filter (Company dan Period) sudah terisi
+2. Cek apakah periode yang dipilih sudah sesuai dengan tahun yang dimaksud
+3. Cek apakah perusahaan yang dipilih benar-benar punya deposito di periode tersebut
+4. Mungkin tidak ada deposito aktif pada periode tersebut (semua sudah jatuh tempo)
+5. Klik tombol "Search" kembali untuk refresh
+6. Hubungi IT jika laporan tidak mau load sama sekali (ada error)
+
+TIPS PENGGUNAAN:
+
+1. CEPAT CEK DEPOSITO BULAN INI
+   - Pilih Company (perusahaan)
+   - Pilih Period = bulan saat ini
+   - Klik Search
+   - Lihat semua deposito aktif bulan ini
+
+2. ANALISIS DEPOSITO HISTORIS
+   - Lakukan report untuk beberapa bulan sebelumnya
+   - Bandingkan posisi, jumlah, dan mata uang
+   - Lihat trend penempatan dana di deposito
+
+3. PERSIAPAN CASH FLOW
+   - Cek deposito yang akan jatuh tempo di bulan depan
+   - Lihat jumlah dan mata uang
+   - Rencanakan pencairan atau roll-over
+
+4. ANALISIS RETURN INVESTASI
+   - Catat nilai deposito awal
+   - Bandingkan dengan nilai saat ini/nilai regulis
+   - Hitung return/bunga yang diterima
+   - Gunakan untuk evaluasi performance bank
+
+5. EXPORT UNTUK MEETING/RAPAT
+   - Klik export ke format Excel atau PDF
+   - Bisa ditampilkan di meeting atau dikirim ke manajemen
+   - Edit/analisis lebih lanjut di Excel jika diperlukan
+
+6. MONITORING MULTI-BANK
+   - Lihat distribusi deposito di berbagai bank
+   - Analyisis konsentrasi risiko (apakah terlalu banyak di 1 bank)
+   - Pertimbangkan diversifikasi ke bank lain
+
+7. AUDIT & COMPLIANCE
+   - Print laporan setiap bulan untuk dokumentasi
+   - Simpan file export untuk backup
+   - Bandingkan dengan konfirmasi bank untuk verifikasi
+   - Gunakan sebagai bukti untuk audit eksternal
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+1. DENGAN TREASURY/CASH MANAGEMENT:
+   - Berikan laporan untuk perencanaan cash positioning
+   - Diskusi tentang deposito mana yang akan dicairkan
+   - Koordinasi perubahan deposito
+
+2. DENGAN AUDIT INTERNAL:
+   - Sediakan laporan untuk keperluan audit
+   - Berikan penjelasan tentang posisi deposito
+   - Dokumentasi untuk file audit
+
+3. DENGAN MANAJEMEN:
+   - Report periodic tentang posisi deposito
+   - Analisis return dan perbandingan dengan target
+   - Rekomendasi untuk optimisasi penempatan dana
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Deposito Aktif berhubungan dengan:
+1. Laporan Neraca (Balance Sheet) - Deposito tampil di asset/current asset
+2. Laporan Cash Flow - Deposito mempengaruhi cash inflow saat jatuh tempo
+3. Laporan Bank Reconciliation - Untuk verifikasi posisi deposito
+4. Laporan Investasi - Deposito adalah bagian dari investasi jangka pendek

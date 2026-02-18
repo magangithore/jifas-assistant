@@ -1,0 +1,812 @@
+MODUL TAX APPROVAL (PERSETUJUAN PAJAK) - DOKUMENTASI KNOWLEDGE BASE
+
+Dokumentasi ini dirancang untuk staff Finance dan Accounting yang mengelola 
+proses persetujuan pajak untuk dokumen Invoice (IK) dan Sales Receive (RV).
+
+Fokus diberikan pada alur bisnis dan workflow persetujuan, bukan aspek teknis.
+
+A. APA ITU TAX APPROVAL DAN KAPAN DIGUNAKAN?
+
+TAX APPROVAL adalah tahap persetujuan terhadap perhitungan pajak dari dokumen:
+1. Invoice (IK) - penerimaan barang dari supplier
+2. Sales Receive (RV) - penerimaan uang dari pelanggan
+
+MENGAPA PERLU TAX APPROVAL?
+
+Pajak adalah komponen penting dalam setiap transaksi bisnis:
+- PPN (Pajak Pertambahan Nilai / VAT) - pajak atas nilai tambah barang/jasa
+- PPH (Pajak Penghasilan) - pajak atas penghasilan perusahaan
+- Perhitungan pajak harus benar untuk kepatuhan perpajakan
+
+Sistem memerlukan persetujuan dari Tax Department untuk:
+✓ Memverifikasi perhitungan pajak sudah tepat
+✓ Memastikan data pajak (NPWP, nama WP) lengkap dan benar
+✓ Mencocokkan dengan peraturan pajak yang berlaku
+✓ Mencegah kesalahan pajak yang bisa merugikan perusahaan
+
+ALUR SINGKAT TAX APPROVAL:
+
+[1] Dokumen IK/RV dibuat dengan data pajak awal
+        ↓
+[2] Masuk ke menu Tax Approval untuk verifikasi
+        ↓
+[3] Tax Staff periksa dan approve/reject/lakukan tax correction
+        ↓
+[4] Jika approved, dokumen lanjut ke tahap akuntansi
+        ↓
+[5] Jika rejected, dokumen kembali ke pembuat untuk diperbaiki
+
+B. MENU UTAMA - 3 TAB UTAMA
+
+Menu Tax Approval memiliki 3 tab berbeda yang sama pentingnya. Setiap tab 
+memhandle jenis dokumen tertentu.
+
+TAB 1: INVOICE (IK) - PERSETUJUAN PAJAK INVOICE PENERIMAAN
+-------
+Fungsi: Menyetujui perhitungan pajak untuk dokumen Invoice (IK)
+Untuk: Pajak pada barang/jasa yang diterima dari supplier
+Jenis Pajak yang Dikelola: PPN, PPH, PPN N0
+
+Kolom utama yang ditampilkan:
+- Date: Tanggal dokumen IK dibuat
+- IK No: Nomor Invoice dari supplier
+- Billing No: Nomor kuitansi/billing reference
+- Description: Keterangan barang/jasa
+- Currency: Mata uang transaksi
+- PPN: Jumlah pajak pertambahan nilai
+- PPH: Jumlah pajak penghasilan
+- Amount: Total jumlah invoice
+- Status: Status persetujuan pajak (NEED APPROVAL, APPROVED, REJECTED, dll)
+- Action: Tombol untuk approval/reject dokumen
+
+---
+
+TAB 2: RECEIVING (RV) - PERSETUJUAN PAJAK SALES RECEIVE
+-------
+Fungsi: Menyetujui perhitungan pajak untuk dokumen Receiving (RV)
+Untuk: Pajak pada uang yang diterima dari pelanggan
+Jenis Pajak yang Dikelola: PPN, PPH
+
+Kolom utama yang ditampilkan:
+- Date: Tanggal dokumen RV dibuat
+- RV No: Nomor Receiving Voucher
+- Description: Keterangan penerimaan uang
+- Currency: Mata uang transaksi
+- PPN: Jumlah pajak pertambahan nilai
+- PPH: Jumlah pajak penghasilan
+- Amount: Total jumlah uang yang diterima
+- Status: Status persetujuan pajak
+- Action: Tombol untuk approval/reject dokumen
+
+---
+
+TAB 3: INVOICE SLIP (FAKTUR PAJAK) - UPLOAD DAN KELOLA FAKTUR PAJAK
+-------
+Fungsi: Upload dan kelola invoice slip/faktur pajak masukan
+Untuk: Pencatatan faktur pajak dari supplier untuk input SPT/pelaporan
+Jenis Pajak: PPN Masukan (Input VAT)
+
+Kolom utama yang ditampilkan:
+- Reference Number: Nomor referensi/billing code
+- Customer NPWP: NPWP supplier/pembuat faktur
+- Customer Name: Nama supplier
+- Tax Invoice Number: Nomor faktur pajak
+- Tax Invoice Date: Tanggal faktur pajak
+- DPP: Dasar Pengenaan Pajak (tax base)
+- DPP Nilai Lain: DPP dengan perhitungan alternatif
+- PPN: Jumlah PPN dalam faktur
+- Action: Tombol untuk edit, lihat detail, atau hapus
+
+Fitur khusus Tab 3:
+- Tombol "Upload Faktur" untuk import data dari file Excel
+- Bisa view/edit detail setiap faktur
+- Export ke Excel untuk reporting
+
+C. ALUR APPROVAL PAJAK - STEP BY STEP
+
+LANGKAH 1: BUKA MENU TAX APPROVAL
+Login ke sistem JIFAS
+Buka menu Receiving → Tax Approval
+Pilih tab yang ingin dikerja (IK, RV, atau Invoice Slip)
+
+LANGKAH 2: LIHAT DAFTAR DOKUMEN YANG PERLU APPROVAL
+Sistem menampilkan grid dengan dokumen-dokumen pending
+Lihat kolom STATUS - pastikan ada yang "NEED APPROVAL"
+Sort by Date untuk lihat dokumen tertua (lebih urgent)
+Sort by Amount untuk lihat yang nominal terbesar
+
+LANGKAH 3: PILIH DOKUMEN UNTUK DIPROSES
+Klik tombol "Approval" di kolom Action
+Form popup akan terbuka dengan detail dokumen
+Sistem akan menampilkan form dengan beberapa bagian:
+   - Tab "Approval" (informasi dasar dokumen)
+   - Tab "PPN" (detail pajak PPN jika ada)
+   - Tab "PPN N0" (detail pajak PPN khusus jika ada)
+   - Tab "PPH" (detail pajak PPH jika ada)
+
+LANGKAH 4: REVIEW DATA DI TAB APPROVAL (TAB PERTAMA)──────
+Form terbagi jadi 2 bagian: Kiri dan Kanan
+
+BAGIAN KIRI - INFORMASI DOKUMEN:
+Date: Tanggal dokumen (readonly)
+Debtor/Vendor: Siapa pembuat dokumen
+Billing No: Nomor referensi
+Description: Deskripsi dokumen (bisa edit)
+No. Cek B/G: Nomor cek/BG jika ada (RV saja)
+Ref No: Nomor referensi lain
+Status: Status persetujuan saat ini
+
+BAGIAN KANAN - INFORMASI KEUANGAN & PAJAK:
+Bank: Bank tempat penerimaan (RV saja)
+Currency: Mata uang transaksi
+Base Amount: Jumlah dasar sebelum pajak
+Total DPP: Total Dasar Pengenaan Pajak
+Total PPN: Total Pajak Pertambahan Nilai
+Total PPH: Total Pajak Penghasilan
+Total Amount: Total akhir termasuk pajak
+
+GRID DETAIL DI BAWAH:
+Division: Divisi yang menerima/mengeluarkan barang
+Department: Departemen terkait
+Description: Detail deskripsi item
+COA Code: Kode akun akuntansi
+Amount: Jumlah per item
+Tax Code: Jenis pajak untuk item ini
+PPN Amount: Jumlah PPN per item
+PPH Amount: Jumlah PPH per item
+Total Amount: Total per item
+
+LANGKAH 5: REVIEW DATA PPN (JIKA ADA - TAB PPN)
+Jika dokumen ada komponen PPN, tab "PPN" akan menampilkan:
+
+HEADER INFO:
+DPP/Tax Base: Jumlah dasar pajak
+PPN: Jumlah PPN yang dihitung
+WP Name: Nama Wajib Pajak (supplier/pelanggan)
+NPWP: Nomor NPWP Wajib Pajak
+WP Address: Alamat Wajib Pajak
+
+GRID DETAIL PPN:
+Tax Invoice: Nomor faktur pajak dari supplier
+Tax Receive Date: Tanggal terima faktur pajak
+DPP: Dasar Pengenaan Pajak per faktur
+PPN: Jumlah PPN per faktur
+Year: Tahun pajak
+Period: Bulan pajak
+
+ACTION BUTTONS:
+Save: Simpan perubahan data PPN
+Cancel: Batal perubahan
+
+NILAI YANG HARUS DIPERHATIKAN:
+✓ Total DPP di detail HARUS TIDAK LEBIH BESAR dari DPP header
+✓ Total PPN di detail HARUS TIDAK LEBIH BESAR dari PPN header
+✓ NPWP harus valid dan lengkap (format: XX.XXX.XXX.X-XXX.XXX)
+✓ WP Name dan Address harus terisi
+
+LANGKAH 6: REVIEW DATA PPH (JIKA ADA - TAB PPH)──
+Jika dokumen ada komponen PPH, tab "PPH" akan menampilkan:
+
+HEADER INFO:
+DPP/Tax Base: Jumlah dasar pajak
+PPH: Jumlah PPH yang dihitung
+WP Name: Nama Wajib Pajak
+NPWP: Nomor NPWP
+WP Address: Alamat Wajib Pajak
+
+GRID DETAIL PPH:
+Form Code: Kode form SPT (mis: 1721-A1)
+Tax Invoice: Nomor bukti potong/surat setoran
+Tax Receiving Date: Tanggal terima bukti potong
+DPP: Dasar Pengenaan Pajak
+PPH: Jumlah PPH
+Year: Tahun pajak
+Period: Bulan pajak
+
+ACTION BUTTONS:
+Save: Simpan perubahan data PPH
+Cancel: Batal perubahan
+
+VALIDASI YANG HARUS DIPERHATIKAN:
+✓ Total DPP di detail HARUS TIDAK LEBIH BESAR dari DPP header
+✓ Total PPH di detail HARUS TIDAK LEBIH BESAR dari PPH header
+✓ NPWP harus valid (format: XX.XXX.XXX.X-XXX.XXX)
+✓ Form Code harus sesuai dengan regulasi SPT pajak
+✓ WP Name dan Address harus terisi lengkap
+
+LANGKAH 7: LAKUKAN APPROVAL ATAU REJECTION
+──────────────────────────────────────────
+
+Di bagian bawah form, ada 3 tombol utama:
+
+TOMBOL 1: "TAX CORRECTION" (Biru)
+────────────────────────────────
+Fungsi: Lakukan koreksi perhitungan pajak (rounding, adjustment)
+Kapan digunakan: Jika ada selisih perhitungan atau perlu adjustment rounding
+
+Proses Tax Correction:
+1. Klik tombol "Tax Correction"
+2. Window popup muncul dengan grid detail item
+3. Untuk setiap item yang perlu koreksi:
+   - Pilih "Round" option (UP atau DOWN) untuk PPN
+   - Pilih "Round" option (UP atau DOWN) untuk PPH
+   - Sistem auto-hitung correction value
+   - Review corrected amount yang ditampilkan
+4. Klik "Save" untuk simpan koreksi
+5. Klik "Cancel" untuk abaikan
+
+Validasi dalam Tax Correction:
+✓ Tidak bisa ada PPH tanpa PPH Type terisi
+✓ Setiap item harus punya valid tax code
+✓ Corrected amount akan di-highlight hijau setelah di-set
+
+---
+
+TOMBOL 2: "APPROVE" (Hijau)
+────────────────────────────
+Fungsi: Setujui dokumen dan pajak yang tercatat
+Status setelah: Dokumen berubah ke status APPROVED atau lanjut ke tahap berikutnya
+
+Proses Approval:
+1. Pastikan sudah review semua data di tab Approval, PPN, PPH
+2. Pastikan semua data NPWP dan amount sudah BENAR
+3. Klik tombol "APPROVE"
+4. Dialog konfirmasi muncul:
+   "Are you sure want to APPROVE TAX for document: [DOC_NO]?"
+5. Klik "OK" untuk confirm
+6. Sistem akan memproses dan update database
+7. Dialog sukses muncul: persetujuan berhasil
+8. Form otomatis tutup dan grid refresh
+9. Dokumen hilang dari daftar (karena status sudah APPROVED)
+
+TIPS SEBELUM APPROVE:
+✓ Pastikan DPP calculation sudah benar
+✓ Pastikan PPN dan PPH sudah sesuai dengan peraturan
+✓ Pastikan NPWP tersedia dan valid (untuk pelaporan SPT)
+✓ Pastikan tidak ada error atau warning di form
+✓ Double-check nominal amount sesuai dokumen asli
+
+---
+
+TOMBOL 3: "REJECT" (Merah)
+──────────────────────────
+Fungsi: Menolak dokumen karena ada masalah/kesalahan yang perlu diperbaiki
+Status setelah: Dokumen kembali ke pembuat dengan catatan alasan penolakan
+
+Proses Rejection:
+1. Klik tombol "REJECT"
+2. Window popup muncul untuk input alasan penolakan
+3. Isikan alasan mengapa dokumen ditolak (WAJIB diisi):
+   - Contoh: "NPWP tidak valid"
+   - Contoh: "PPN calculation salah, seharusnya 10% bukan 5%"
+   - Contoh: "WP Address tidak lengkap"
+4. Klik "Yes" untuk confirm rejection
+5. Dialog konfirmasi lagi muncul
+6. Klik "OK" untuk final rejection
+7. Sistem akan update status dokumen ke REJECTED
+8. Form otomatis tutup
+9. Email notifikasi dikirim ke pembuat dokumen dengan alasan
+
+ALASAN REJECTION YANG SERING:
+✗ Perhitungan PPN tidak sesuai dengan rate yang berlaku
+✗ NPWP tidak lengkap atau tidak valid (harus 15 digit)
+✗ Nama Wajib Pajak tidak sesuai dengan NPWP
+✗ Alamat WP tidak lengkap
+✗ PPH Type tidak dipilih atau tidak sesuai
+✗ DPP atau Tax Base calculation tidak valid
+✗ Currency Rate tidak sesuai dengan kurs berlaku
+
+D. TAB KHUSUS: INVOICE SLIP / FAKTUR PAJAK
+
+TAB INI DIGUNAKAN UNTUK MENGELOLA FAKTUR PAJAK MASUKAN (PPN MASUKAN)
+
+APA YANG DIMAKSUD FAKTUR PAJAK?
+
+Faktur Pajak adalah dokumen resmi dari supplier yang berisi:
+- Nomor Faktur (format: XXX/XXX/XXXX/XXX dimulai dari 00000000001)
+- Tanggal Faktur
+- Data supplier (NPWP, nama, alamat)
+- Data pembeli (NPWP, nama)
+- Barang/jasa yang dijual dengan detail
+- DPP (Dasar Pengenaan Pajak)
+- PPN (Pajak Pertambahan Nilai)
+- Total dengan pajak
+
+MENGAPA PERLU KELOLA FAKTUR PAJAK?
+
+Untuk keperluan:
+- Input SPT (Surat Pemberitahuan) pajak perusahaan ke DJP
+- Restitusi PPN jika ada kredit pajak
+- Audit trail dan compliance
+- Rekonsiliasi dengan supplier
+
+FITUR DI TAB INVOICE SLIP:
+
+1. GRID DAFTAR FAKTUR
+   Menampilkan semua faktur yang pernah diupload dengan kolom:
+   - Reference Number: Nomor referensi/billing code
+   - Customer NPWP: NPWP supplier
+   - Customer Name: Nama supplier
+   - Tax Invoice Number: Nomor Faktur Pajak resmi
+   - Tax Invoice Date: Tanggal Faktur Pajak
+   - DPP: Jumlah nilai barang/jasa (dasar pajak)
+   - DPP Nilai Lain: Jika ada DPP dengan perhitungan alternatif
+   - PPN: Jumlah PPN dalam faktur
+   - Action buttons: Edit (mata), Hapus (trash icon)
+
+2. TOMBOL "UPLOAD FAKTUR"
+   Untuk mengimport data faktur pajak dari file Excel
+   
+   Proses Upload:
+   a) Klik tombol "Upload Faktur"
+   b) File dialog muncul untuk pilih file
+   c) Pilih file Excel (.xlsx) yang berisi data faktur
+   d) Klik "Upload"
+   e) Sistem akan parse file dan show preview
+   f) Review preview data
+   g) Klik "Submit" untuk simpan ke database
+   h) Grid otomatis refresh dengan data baru
+   
+   Format File Excel yang perlu disiapkan:
+   Column 1: Nomor Faktur Pajak
+   Column 2: Tanggal Faktur
+   Column 3: NPWP Pembeli
+   Column 4: Nama Pembeli
+   Column 5: DPP
+   Column 6: PPN
+   Column 7: Periode Pajak (bulan)
+   Column 8: Tahun Pajak
+(kolom lainnya sesuai kebutuhan)
+
+3. TOMBOL EDIT (MATA)
+   Untuk melihat/edit detail faktur yang sudah di-upload
+   
+   Form Edit menampilkan (readonly):
+   - Transaction Number: Nomor transaksi di sistem
+   - Customer NPWP: NPWP supplier
+   - Customer Name: Nama supplier
+   - Tax Invoice Number: Nomor faktur
+   - Tax Invoice Date: Tanggal faktur
+   - DPP: Dasar pengenaan pajak
+   - DPP Nilai Lain: DPP alternatif (jika ada)
+   - PPN: Jumlah PPN
+   - Reference Number: Nomor referensi
+   
+   Tombol:
+   - Back: Kembali ke daftar tanpa simpan
+
+4. TOMBOL HAPUS (TRASH ICON)
+   Untuk menghapus faktur dari database
+   
+   Proses Hapus:
+   a) Klik icon trash
+   b) Konfirmasi dialog muncul bertanya: "Delete?"
+   c) Klik "Yes" untuk confirm
+   d) Data akan didelete dan grid refresh
+   e) Tombol akan disabled jika tidak bisa delete (status tertentu)
+
+5. TOMBOL EXCEL (EXPORT)
+   Download daftar semua faktur ke file Excel untuk:
+   - Backup/archive
+   - Reporting
+   - Analisis lebih lanjut
+
+E. STATUS & WARNA INDIKATOR
+
+SETIAP DOKUMEN DALAM GRID MEMILIKI STATUS YANG BERBEDA
+
+STATUS YANG MUNGKIN TAMPIL:
+
+1. NEED APPROVAL (Warna: HIJAU)
+   Arti: Dokumen sudah siap tapi belum disetujui pajak
+   Apa yang bisa dilakukan: Bisa di-APPROVE atau di-REJECT
+   
+2. NEED TAX CHECKUP / NEED FINANCE CHECKING (Warna: HIJAU)
+   Arti: Masih perlu checking dari finance/tax team lebih detail
+   Apa yang bisa dilakukan: Review kemudian APPROVE atau REJECT
+
+3. APPROVED (Warna: HITAM/NORMAL)
+   Arti: Sudah disetujui, pajak nya valid
+   Apa yang bisa dilakukan: Tidak bisa di-edit, hanya bisa dilihat
+   Status akan terus berganti sesuai workflow (ke tahap akutansi)
+
+4. REJECTED / REJECTED TAX (Warna: MERAH)
+   Arti: Ditolak karena ada masalah di perhitungan pajak
+   Apa yang bisa dilakukan: 
+   - Pembuat dokumen harus buat dokumen baru yang benar
+   - Tidak bisa edit dokumen rejected, harus VOID + buat baru
+   
+5. VOID (Warna: MERAH)
+   Arti: Dokumen dibatalkan
+   Apa yang bisa dilakukan: Tidak bisa apa-apa, dokumentasi saja
+   
+6. REMOVED / REVERSED (Warna: MERAH)
+   Arti: Dokumen dihapus/di-reverse
+   Apa yang bisa dilakukan: Tidak bisa apa-apa
+   
+7. POSTED / PAID (Warna: HITAM)
+   Arti: Sudah di-posting ke GL, dokumen final
+   Apa yang bisa dilakukan: Hanya bisa dilihat, tidak bisa diedit
+
+WARNA INDIKATOR ARTI:
+
+🟢 HIJAU = Ada action yang perlu dilakukan (NEED APPROVAL/CHECKING)
+🔴 MERAH = Status tidak baik atau final tidak approve (REJECTED/VOID/REMOVED)
+⚫ HITAM = Status normal ongoing atau final completed (APPROVED/POSTED/PAID)
+
+F. VALIDASI & PENGECEKAN PAJAK
+
+SEBELUM APPROVE, SISTEM MELAKUKAN VALIDASI OTOMATIS
+
+VALIDASI PPN:
+
+1. NPWP Check
+   ✓ Format NPWP harus 15 digit: XX.XXX.XXX.X-XXX.XXX
+   ✗ Error jika NPWP kurang dari 15 digit atau format salah
+   
+2. WP Name Check
+   ✓ Nama Wajib Pajak harus terisi
+   ✗ Error jika kosong atau hanya karakter spasi
+   
+3. WP Address Check
+   ✓ Alamat WP harus lengkap (minimal 10 karakter)
+   ✗ Error jika kosong atau alamat tidak jelas
+   
+4. DPP vs Tax Invoice Detail
+   ✓ Total DPP dari detail faktur HARUS ≤ DPP header
+   ✗ Error jika total detail > header (tidak balance)
+   
+5. PPN vs Tax Invoice Detail
+   ✓ Total PPN dari detail faktur HARUS ≤ PPN header
+   ✗ Error jika total detail > header (tidak balance)
+   
+6. PPN Calculation
+   ✓ PPN harus sesuai dengan rate yang berlaku (10% atau 0% untuk NT)
+   ✗ Error jika PPN tidak cocok perhitungan
+
+---
+
+VALIDASI PPH:
+
+1. Form Code Check
+   ✓ Kode form SPT harus valid (contoh: 1721-A1, 1721-A2)
+   ✗ Error jika kode tidak valid atau tidak terdaftar
+   
+2. PPH Type Check
+   ✓ Jika ada komponen PPH, HARUS ada PPH Type yang dipilih
+   ✗ Error: "PPH Type cannot be NULL" jika ada PPH tapi tipe belum dipilih
+   
+3. NPWP Check (sama seperti PPN)
+   
+4. DPP vs Detail Check (sama seperti PPN)
+
+5. PPH vs Detail Check
+   ✓ Total PPH dari detail HARUS ≤ PPH header
+   ✗ Error jika tidak balance
+
+---
+
+ERROR MESSAGE UMUM:
+
+Error: "Total DPP detail CANNOT GREATER THAN DPP header!"
+Solusi: Cek ulang detail faktur, mungkin ada duplikat atau nilai salah
+
+Error: "Total PPN detail CANNOT GREATER THAN PPN header!"
+Solusi: Cek perhitungan PPN di detail, pastikan sesuai header
+
+Error: "NPWP not found in master data"
+Solusi: Verifikasi NPWP supplier di master, atau hubungi admin
+
+Error: "Cannot continue to save tax correction. PPH Type is mandatory"
+Solusi: Sebelum tax correction, pastikan semua PPH Type sudah dipilih
+
+G. TAX CORRECTION - KOREKSI PERHITUNGAN PAJAK
+
+KAPAN PERLU TAX CORRECTION?
+
+Tax Correction diperlukan jika:
+1. Ada selisih pembulatan (rounding difference) di perhitungan
+2. Perlu adjustment PPH atau PPN karena peraturan baru
+3. Ada perubahan tax rate yang perlu di-adjust
+4. Ada kesalahan kalkulasi yang perlu diperbaiki (tanpa reject)
+
+PROSES TAX CORRECTION:
+
+1. BUKA FORM APPROVAL DOKUMEN
+Sudah buka documen IK/RV di form popup
+
+2. KLIK TOMBOL "TAX CORRECTION"
+Window baru akan muncul dengan grid detail untuk koreksi
+
+3. REVIEW GRID DETAIL
+   Grid menampilkan kolom-kolom:
+   Tax Code: Jenis pajak di item ini
+   DPP: Dasar pengenaan pajak (tidak bisa edit)
+   PPN Section:
+   │  Existing: PPN lama yang saat ini terpakai
+   │  Round: Pilihan pembulatan (UP/DOWN)
+   │  Correction: Nilai PPN yang sudah dikkoreksi
+   PPH Section:
+   │  Existing: PPH lama
+   │  Round: Pilihan pembulatan (UP/DOWN)
+   │  Correction: Nilai PPH yang sudah dikoreksi
+   │  PPH Type: Jenis PPH yang digunakan
+(item detail lainnya)
+
+4. UNTUK SETIAP ITEM YANG PERLU KOREKSI:
+
+   STEP 1: PILIH TAX CODE (jika perlu ganti)
+   - Klik pada kolom "Tax Code"
+   - Pilih tax code dari dropdown
+   - Sistem akan auto-recalculate PPN dan PPH berdasarkan tax code baru
+   - Correction value otomatis update
+
+   STEP 2: PILIH METODE PEMBULATAN PPN
+   - Klik dropdown "Round" di kolom PPN
+   - Pilih: "UP" (pembulatan ke atas) atau "DOWN" (ke bawah)
+   - Sistem akan hitung correction value
+   - Correction amount akan di-highlight hijau
+
+   STEP 3: PILIH METODE PEMBULATAN PPH
+   - Klik dropdown "Round" di kolom PPH
+   - Pilih: "UP" atau "DOWN"
+   - Sistem hitung dan tampilkan correction value
+   - Amount akan di-highlight hijau
+
+   STEP 4: PASTIKAN PPH TYPE SUDAH DIPILIH
+   - Jika ada PPH amount > 0, WAJIB ada  PPH Type
+   - Klik dropdown "PPH Type"
+   - Pilih jenis PPH yang sesuai
+   - Jangan boleh kosong jika ada PPH!
+
+5. REVIEW SEMUA CORRECTION VALUES
+   - Lihat kolom "Correction" untuk PPN dan PPH
+   - Pastikan semua nilai sudah masuk akal
+   - Jangan ada nilai negatif atau sangat besar yang tidak logis
+
+6. KLIK TOMBOL "SAVE"
+   - Konfirmasi dialog muncul
+   - Pastikan final review semua correction
+   - Klik "OK" untuk confirm dan simpan
+   - Data akan di-update di database
+   - Tax Correction selesai
+
+7. ATAU KLIK TOMBOL "CANCEL"
+   - Abaikan semua perubahan yang sudah dibuat
+   - Kembali ke form approval tanpa simpan
+
+TIPS TAX CORRECTION:
+✓ Gunakan UP untuk pembulatan konservatif (lebih aman untuk cash out)
+✓ Gunakan DOWN untuk pembulatan agresif (lebih hitung menghemat)
+✓ Selalu pastikan total correction tidak mengubah DPP/base amount
+✓ PPH Type HARUS dipilih jika ada PPH, jangan sampai lupa
+✓ Dokumentasikan alasan koreksi untuk audit trail
+
+H. TROUBLESHOOTING & ERROR
+
+MASALAH 1: TOMBOL APPROVE TIDAK AKTIF (GRAYED OUT)
+- PENYEBAB: Status dokumen bukan "NEED APPROVAL"
+- SOLUSI:
+  □ Cek kolom STATUS, apakah sudah APPROVED atau REJECTED?
+  □ Jika sudah APPROVED, itu normal (tidak perlu di-approve lagi)
+  □ Jika REJECTED, pembuat harus buat dokumen baru
+
+MASALAH 2: FORM KELUAR TIBA-TIBA TANPA TERSIMPAN
+- PENYEBAB: Ada error/validation yang tidak tertangani dengan baik
+- SOLUSI:
+  □ Cek console browser untuk error message
+  □ Coba buka dokumen lagi dari grid
+  □ Hubungi IT jika masalah persisten
+
+MASALAH 3: DATA NPWP TIDAK BISA DIISI
+- PENYEBAB: Field readonly atau permission issue
+- SOLUSI:
+  □ NPWP field bisa readonly jika sudah from dokumen utama
+  □ Hubungi pembuat dokumen untuk ubah di dokumen IK/RV
+  □ Jangan paksa edit di Tax Approval form
+
+MASALAH 4: ERROR "NPWP not valid"
+- PENYEBAB: Format NPWP tidak sesuai aturan
+- SOLUSI:
+  □ Format NPWP harus: XX.XXX.XXX.X-XXX.XXX (15 digit dengan separator)
+  □ Contoh benar: 11.111.111.1-111.111
+  □ Contoh salah: 11111111111111 (tanpa separator)
+  □ Verifikasi di master NPWP jika masih error
+
+MASALAH 5: "Cannot continue - PPH Type is NULL"
+- PENYEBAB: Ada PPH tapi PPH Type belum dipilih
+- SOLUSI:
+  □ Di form detail PPH, WAJIB ada PPH Type yang dipilih
+  □ Klik dropdown "PPH Type" dan pilih yang sesuai
+  □ Contoh: 23, 24, 26 sesuai peraturan
+  □ Jangan kosongkan jika ada PPH amount
+
+MASALAH 6: GRID DETAIL PPN/PPH TIDAK MUNCUL
+- PENYEBAB: Tidak ada komponen PPN/PPH di dokumen
+- SOLUSI: Normal, dokumentnya memang tidak punya PPN/PPH
+  □ Cek di dokumen asli (IK/RV), apakah sudah ada PPN/PPH?
+  □ Jika tidak ada, tab PPN/PPH akan kosong atau hidden
+  □ Jangan paksa isi jika tidak diperlukan
+
+MASALAH 7: "Upload file failed - wrong format"
+- PENYEBAB: File bukan .xlsx atau struktur tidak sesuai
+- SOLUSI:
+  □ Pastikan file adalah Excel (.xlsx), bukan .xls atau format lain
+  □ Periksa kolom di Excel sesuai template yang diminta
+  □ Jangan ada merged cells atau format aneh
+  □ Save file dalam format .xlsx
+
+MASALAH 8: DATA TIDAK TERLIHAT SETELAH UPLOAD
+- PENYEBAB: Upload berhasil tapi data belum refresh
+- SOLUSI:
+  □ Tunggu beberapa detik, grid mungkin sedang load
+  □ Klik tombol Refresh (⟳) di toolbar
+  □ Coba logout dan login kembali
+  □ Clear browser cache jika masih tidak muncul
+
+I. ALUR KESELURUHAN TAX APPROVAL
+
+[1] DOKUMEN IK/RV DIBUAT (STAGE: CREATE)
+    Data invoice/penerimaan sudah lengkap
+    Perhitungan pajak dibuat secara otomatis
+    Status awal: NEED CHECKING atau NEED APPROVAL
+        ↓
+[2] DOKUMEN MASUK KE TAX APPROVAL QUEUE
+    Sistem set status: NEED APPROVAL
+    Dokumen tampil di grid tax approval
+        ↓
+[3] TAX STAFF BUKA DOKUMEN DI FORM APPROVAL
+    Review data di tab "Approval"
+    Review data pajak di tab "PPN" dan "PPH" (jika ada)
+    Lakukan validasi:
+       - NPWP valid?
+       - WP Name dan Address lengkap?
+       - Perhitungan PPN/PPH sesuai?
+       - DPP cocok dengan detail?
+        ↓
+[4] DECISION: KETIGA PILIHAN
+
+    PILIHAN A: APPROVE (SETUJU)
+    Klik tombol "APPROVE"
+    Confirm dialog
+    Status berubah: APPROVED
+    Dokumen masuk tahap akuntansi
+    Dokumen tidak bisa di-edit lagi dari tax form
+
+    PILIHAN B: REJECT (TOLAK)
+    Klik tombol "REJECT"
+    Input alasan penolakan (WAJIB)
+    Confirm dialog
+    Status berubah: REJECTED
+    Email notifikasi ke pembuat dokumen
+    Pembuat harus buat dokumen baru yang benar
+
+    PILIHAN C: TAX CORRECTION (KOREKSI)
+    Ada masalah minor yang bisa dikoreksi
+    Klik "TAX CORRECTION"
+    Pilih rounding method (UP/DOWN) untuk PPN/PPH
+    Pastikan PPH Type ada jika ada PPH
+    Klik "SAVE" untuk simpan koreksi
+    Lalu APPROVE atau REJECT sebagaimana biasanya
+    Koreksi akan terupdate di dokumen
+
+[5] DOKUMEN UPDATE STATUS DI GRID
+    Dokumen yang sudah approved/rejected hilang dari list NEED APPROVAL
+    Untuk approved: lanjut ke tahap akuntansi
+    Untuk rejected: pembuat akan dapat notifikasi
+
+[6] FOLLOW UP
+    - Audit trail tercatat siapa yang approve/reject dan kapan
+    - Dokumen tidak bisa diedit setelah final status
+    - Invoice Slip digunakan untuk input SPT dan pelaporan
+
+J. TIPS & BEST PRACTICE
+
+TIP 1: PRIORITAS APPROVAL
+- Prioritaskan dokumen dengan nominal BESAR terlebih dahulu
+- Prioritaskan dokumen yang SUDAH LAMA pending
+- Jangan biarkan dokumen stuck lebih dari 5 hari kerja
+
+TIP 2: VALIDASI NPWP
+- Selalu verifikasi NPWP di master data sebelum approve
+- Pastikan format NPWP sah untuk supply chain tersebut
+- Jangan approve jika NPWP tidak cocok dengan nama WP
+
+TIP 3: DOKUMENTASI TAX CORRECTION
+- Jika melakukan tax correction, catat alasannya (rounding/rate change)
+- Dokumentasi berguna untuk audit jika diminta DJP
+- Update catatan di description jika ada perubahan penting
+
+TIP 4: KOORDINASI DENGAN FINANCE
+- Jika ada dokumen yang curiga (PPN aneh dll), tanyakan ke Finance dulu
+- Jangan approve tanpa yakin, lebih baik REJECT dan diskusi
+- Koordinasi untuk dokumen dengan amount sangat besar
+
+TIP 5: MONITOR REJECTION RATE
+- Track berapa banyak dokumen yang di-REJECT
+- Jika rejection rate tinggi untuk vendor tertentu, ada issue pattern
+- Hubungi vendor/pembuat untuk training atau koreksi sistemik
+
+TIP 6: USE TAX CORRECTION DENGAN BIJAK
+- Gunakan tax correction hanya untuk hal-hal minor (rounding 500-5000 saja)
+- Jika perbedaan calculated > 10% dari header amount, REJECT saja jangan koreksi
+- Dokumentasikan alasan koreksi untuk audit trail
+
+TIP 7: INVOICE SLIP MANAGEMENT
+- Upload invoice slip secara regular, jangan ditumpuk
+- Sebelum SPT deadline, pastikan semua invoice slip sudah terupload
+- Export grid dan reconcile dengan supplier untuk meyakinkan
+
+TIP 8: FOLLOW TIMING
+- Jangan delay approval lebih dari 3 hari kerja
+- Approval cepat membantu dokumen masuk akuntansi dan laporan tepat waktu
+- Set reminder jika ada dokumen pending lama
+
+K. PERTANYAAN UMUM (FAQ)
+
+Q: Bagaimana kalau NPWP supplier belum terdaftar di sistem?
+A: Hubungi admin untuk register NPWP baru di master data.
+   Jangan approve dokumen dengan NPWP tidak terdaftar.
+
+Q: Boleh approve meski WP Address belum lengkap?
+A: TIDAK BOLEH. Alamat WP lengkap adalah requirement untuk pelaporan SPT.
+   Hubungi pembuat dokumen untuk lengkapi data.
+
+Q: Apa perbedaan PPN dan PPN N0?
+A: PPN Normal (reguler 10%) vs PPN N0 (special case tertentu).
+   PPN N0 biasanya untuk barang/jasa khusus yang tidak kena PPN reguler.
+   Handle di tab terpisah kalau dokumen punya keduanya.
+
+Q: Boleh mengganti tax rate saat tax correction?
+A: TIDAK recommended. Jika rate salah di dokumen asli, REJECT saja.
+   Pembuat harus buat dokumen baru dengan rate yang benar.
+
+Q: Bagaimana kalau PPN/PPH hasil koreksi lebih kecil dr sebelumnya?
+A: Normal, bisa terjadi dari rounding atau peraturan baru.
+   Dokumentasikan alasan koreksi untuk audit trail.
+
+Q: Invoice slip bisa di-edit setelah upload?
+A: Bisa via form edit yang readonly (view only sebetulnya).
+   Kalau perlu change data, hapus dan upload ulang yang baru.
+
+Q: Berapa maksimal file size untuk upload faktur?
+A: 5 MB per file. Jika lebih besar, split menjadi beberapa file lebih kecil.
+
+Q: Apa yang terjadi kalau reject dokumen?
+A: Pembuat dokumen dapat notifikasi dengan alasan rejection.
+   Status dokumen berubah ke REJECTED.
+   Pembuat harus buat dokumen baru dengan perbaikan.
+
+Q: Bisa apa batch approve multiple dokumen sekaligus?
+A: TIDAK, harus satu-satu. Buka form, review, approve, lalu lanjut dokumen berikutnya.
+   Ini untuk memastikan setiap dokumen sudah review dengan teliti.
+
+Q: Tax status dokumen tidak pernah berubah, kenapa?
+A: Mungkin tidak ada trigger untuk update. Coba:
+   - Refresh page (F5)
+   - Logout dan login ulang
+   - Hubungi IT kalau masih bermasalah
+
+L. KESIMPULAN & CATATAN PENTING
+
+✓ Tax Approval adalah tahap KRITIS dalam workflow dokumen finansial
+
+✓ Tiga tab (IK, RV, Invoice Slip) punya flow dan tujuan yang berbeda tapi penting
+
+✓ Ada 3 aksi utama: APPROVE (setuju), REJECT (tolak), TAX CORRECTION (koreksi)
+
+✓ DATA PAJAK HARUS BENAR sebelum approve - ini penting untuk compliance DJP
+
+✓ NPWP, WP Name, dan WP Address WAJIB lengkap untuk setiap dokumen
+
+✓ Jika ada masalah, lebih baik REJECT dan diskusi daripada approve tanpa yakin
+
+✓ Tax Correction hanya untuk hal minor, masalah major harus REJECT
+
+✓ Invoice Slip perlu diupload timely untuk siap saat SPT deadline
+
+✓ Setiap approval/rejection tercatat di audit trail untuk compliance
+
+✓ Jangan delay approval - dokumen perlu cepat masuk akuntansi untuk laporan tepat waktu
+
+END OF DOCUMENTATION

@@ -1,0 +1,592 @@
+LAPORAN COMMITTED VERSUS REALIZATION (LAPORAN KOMITMEN VERSUS REALISASI)
+
+TUJUAN:
+Memberikan informasi RINGKASAN perbandingan antara Committed (invoice terima/AP entry) dengan Realization (pembayaran actual/cash out) 
+untuk semua account di satu department dalam satu periode.
+Laporan ini menunjukkan "gap" antara kapan commitment terjadi dan kapan actual payment dilakukan.
+Membantu management untuk monitoring payment status, AP aging, dan cash flow timing untuk better working capital management.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan summary committed versus realization dalam bentuk tabel yang menampilkan setiap account 
+dengan dua nilai utama: Committed (berapa sudah di-AP entry) dan Real (berapa sudah dibayar).
+Berguna untuk understand payment execution, AP outstanding, dan timing gap antara commitment vs payment.
+
+ALUR PROSES (FLOW):
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Committed vs Realization"
+   - Sistem menampilkan form filter dengan 5 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+      - Selection ini akan trigger cascade untuk Division
+
+   b) Pilih Divisi (Division)
+      - Klik dropdown "Division"
+      - Sistem akan menampilkan daftar divisi untuk perusahaan yang dipilih
+      - Ketik untuk mencari divisi tertentu (minimal 2 karakter)
+      - Pilih satu divisi sesuai kebutuhan
+      - Contoh: "HO - Holding"
+      - Catatan: Division dropdown hanya aktif setelah Company dipilih
+      - Selection ini akan trigger cascade untuk Department
+
+   c) Pilih Department (Department)
+      - Klik dropdown "Department"
+      - Sistem akan menampilkan daftar department untuk divisi yang dipilih
+      - Ketik untuk mencari department tertentu (minimal 2 karakter)
+      - Pilih satu department sesuai kebutuhan
+      - Contoh: "FA - Finance Accounting"
+      - Catatan: Department dropdown hanya aktif setelah Division dipilih
+      - Semua account di department ini akan di-display
+
+   d) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Laporan akan menampilkan commitment & realization dari tanggal ini
+
+   e) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Laporan akan menampilkan commitment & realization sampai tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua account dengan committed vs realization
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Judul Laporan: LAPORAN COMMITTED VERSUS REALIZATION
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Tabel Committed vs Realization (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Budget Code    : Kode COA (Chart of Account) untuk account (contoh: 10103.0101.0600)
+      - Description    : Deskripsi lengkap account (contoh: ASSETS - Current Assets - Receivable - Trade Receivable)
+
+      KOLOM PERBANDINGAN:
+      - Committed      : Jumlah invoice/AP yang sudah di-entry di sistem (sudah commitment)
+      - Real           : Jumlah pembayaran yang sudah dilakukan (sudah cash out/realization)
+      - Variance       : Selisih = Committed - Real (positif = ada AP belum dibayar, negatif = error/unusual)
+
+   c) Contoh Data di Laporan:
+
+      Row 1 (Asset - Sebagian Dibayar):
+      Budget Code: 10103.0101.0600
+      Description: ASSETS - Current Assets - Receivable - Trade Receivable - Property - Office
+      Committed: 10.803.372.727 | Real: 11.877.966.708 | Variance: -1.074.593.982
+      (Committed < Real = sudah dibayar lebih dari committed, unusual/error)
+
+      Row 2 (Asset - Belum Semuanya Dibayar):
+      Budget Code: 10198.0105.0100
+      Description: ASSETS - Current Assets - Others Assets - Advance - PUM
+      Committed: 155.019.556 | Real: 149.017.891 | Variance: 6.001.665
+      (Committed > Real = ada AP belum dibayar, masih outstanding)
+
+      Row 3 (Expense - Tidak Ada):
+      Budget Code: 60205.0100.0000
+      Description: EXPENSES - GA - Professional Services - Legal or Lawyer
+      Committed: 0 | Real: 0 | Variance: 0
+      (Tidak ada commitment & tidak ada realization = inactive)
+
+      Row 4 (Expense - Fully Paid):
+      Budget Code: 60205.0300.0000
+      Description: EXPENSES - GA - Professional Services - Audit and Tax Consultancy
+      Committed: 16.880.000 | Real: 16.880.000 | Variance: 0
+      (Committed = Real = fully paid, variance 0)
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak account, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+1. COMMITTED VS REALIZATION REPORT
+   - Adalah laporan SUMMARY untuk compare AP (commitment) vs Payment (realization)
+   - Fokus pada "gap" antara kapan invoice entry vs kapan payment executed
+   - Setiap baris = satu account, ringkasan semua transaksi account tersebut
+   - Penting untuk AP aging, payment tracking, working capital management
+   - Format: Satu baris per account dengan Committed, Real, Variance
+
+2. COMMITTED (KOMITMEN / ACCOUNTS PAYABLE)
+   - Adalah total invoice/AP yang sudah di-entry di sistem
+   - Sudah tercatat di GL sebagai hutang/liability
+   - Tapi BELUM semua dibayar (masih ada unpaid AP)
+   - Cumulative dari semua invoice yang diterima dalam periode
+   - Contoh: Invoice terima dari A=10jt, dari B=5jt → Committed=15jt
+
+3. REAL / REALIZATION (REALISASI / CASH PAYMENT)
+   - Adalah total pembayaran/cash yang benar-benar sudah dikeluarkan
+   - Sudah di-post sebagai CB (Payment/Cash Book)
+   - Cash sudah clear dari bank account
+   - Tidak semua committed akan jadi real dalam periode yang sama
+   - Contoh: Dari committed 15jt, bayar 12jt → Real=12jt
+
+4. VARIANCE (SELISIH / OUTSTANDING AP)
+   - Adalah perbedaan antara committed dengan realization
+   - Rumus: Variance = Committed - Real
+   - Variance POSITIF = Ada AP belum dibayar (outstanding AP)
+   - Variance NEGATIF = Pay lebih dari committed (unusual/error)
+   - Variance ZERO = Fully paid, tidak ada outstanding
+
+5. OUTSTANDING AP (ACCOUNTS PAYABLE BELUM BAYAR)
+   - Adalah AP yang sudah tercatat tapi belum dibayar
+   - Variance Positif = Besar outstanding AP
+   - Penting untuk AP aging, payment planning, cash forecast
+   - Priority untuk payment berdasarkan due date
+   - Contoh: Committed 100jt, Real 60jt → Outstanding 40jt
+
+6. PAYMENT EXECUTION
+   - Adalah proses pembayaran dari AP entry sampai cash out
+   - Timing Gap = waktu antara entry date sampai payment date
+   - Bisa immediate payment atau 30/60/90 hari kemudian
+   - Depends pada term pembayaran (payment term negotiated)
+   - Short gap = good working capital, long gap = need monitoring
+
+7. AP AGING
+   - Adalah analisis umur AP berdasarkan outstanding amount
+   - Current: Tidak lewat payment term
+   - 30+ days: Sudah lewat payment term 30 hari
+   - 60+ days: Sudah lewat 60 hari (high priority)
+   - 90+ days: Sudah lewat 90 hari (critical, perlu escalation)
+   - Laporan ini show total outstanding per account
+
+8. REALIZATION RATE / PAYMENT RATE
+   - Adala rasio berapa persen AP sudah dibayar
+   - Rumus: Real / Committed × 100%
+   - Contoh: Real 80jt / Committed 100jt = 80% paid
+   - Semakin tinggi = semakin cepat pembayaran
+   - Semakin rendah = banyak outstanding AP
+
+9. CASH TIMING / WORKING CAPITAL TIMING
+   - Adalah timing antara kapan commitment vs kapan cash out
+   - Long timing = better untuk cash flow (delay payment)
+   - Short timing = worse untuk cash position (cash out cepat)
+   - Depends pada payment term & vendor negotiation
+   - Important untuk working capital management
+
+10. PAYMENT TERM / CONDITION
+    - Adalah kesepakatan kapan pembayaran harus dilakukan
+    - Contoh: Net 30 (bayar 30 hari), Net 60, COD (Cash on Delivery)
+    - Affects variance size & payment planning
+    - Longer term = bigger gap antara committed & real
+    - Important untuk invoice processing & payment planning
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+1. AP AGING & OUTSTANDING MONITORING
+   - Lihat berapa AP belum dibayar (outstanding) per account
+   - Variance positif = besar outstanding AP
+   - Priority untuk payment follow-up
+   - Alert untuk over-aged AP
+
+2. PAYMENT EXECUTION TRACKING
+   - Monitor berapa sudah paid vs berapa belum bayar
+   - Real = Paid Amount, Committed = Total Amount
+   - Payment rate calculation untuk progress
+   - Payment status awareness
+
+3. CASH FLOW PLANNING
+   - Forecast cash need berdasarkan outstanding AP
+   - Committed = total liability, Real = sudah paid
+   - Plan cash untuk pay outstanding in next period
+   - Working capital management
+
+4. WORKING CAPITAL MANAGEMENT
+   - Monitor timing gap antara commitment & realization
+   - Large gap = good untuk cash (delay payment)
+   - Small gap = pressure untuk cash (quick payment)
+   - Optimize payment term untuk working capital
+
+5. VENDOR PAYMENT PRIORITY
+   - Identify AP yang sudah due atau overdue
+   - Priority payment based pada payment term
+   - Schedule payment untuk avoid penalty
+   - Vendor relationship management
+
+6. CASH POSITION FORECAST
+   - Outstanding AP = future cash commitment
+   - Plan cash requirement untuk pay outstanding
+   - Forecast monthly/weekly cash need
+   - Liquidity planning
+
+7. BUDGET VS ACTUAL PAYMENT
+   - Compare budget dengan actual payment (real)
+   - Check berapa payment vs budget alocation
+   - Identify reason untuk variance
+   - Payment control & budget adherence
+
+8. MONTH-END / PERIOD CLOSING
+   - Verify semua AP period sudah recorded
+   - Check outstanding AP untuk accrual
+   - GL reconciliation untuk AP account
+   - Period close-out support
+
+9. AUDIT & COMPLIANCE
+   - Supporting document untuk AP audit
+   - Verify commitment & realization matching
+   - Documentation untuk audit trail
+   - Compliance dengan accounting standard
+
+CARA MEMBACA VARIANCE:
+1. VARIANCE POSITIF (OUTSTANDING AP / UNPAID)
+   Berarti: Committed > Real (banyak AP belum dibayar)
+   Status: Normal - ada AP outstanding
+   Action: Plan payment, monitor for due date
+   Contoh: Committed 100M, Real 60M → Variance +40M (40M belum bayar)
+
+2. VARIANCE NEGATIF (UNUSUAL - OVER-PAYMENT)
+   Berarti: Committed < Real (sudah bayar lebih dari committed)
+   Status: Alert - unusual condition
+   Action: Investigate root cause (error entry?)
+   Contoh: Committed 50M, Real 60M → Variance -10M (bayar kelebihan)
+
+3. VARIANCE ZERO (FULLY PAID)
+   Berarti: Committed = Real (semua AP sudah dibayar)
+   Status: Normal - account fully settled
+   Action: Monitor untuk next period transactions
+   Contoh: Committed 100M, Real 100M → Variance 0 (sudah lunas)
+
+4. COMMITTED = 0, REAL = 0 (NO ACTIVITY)
+   Berarti: Tidak ada commitment & tidak ada realization
+   Status: Inactive account (no transaction)
+   Action: Normal - ignore until ada new transaction
+   Contoh: Committed 0, Real 0 → Variance 0 (dormant)
+
+PERBEDAAN ANTARA LAPORAN-LAPORAN:
+BUDGET vs COMMITTED:
+Kolom: Budget (plan), Committed (AP entry), Variance
+Focus: Budget consumption (sudah pakai berapa dari budget yang dialokasi)
+Stage: Commitment stage (sudah entry tapi belum bayar)
+Meaning: Berapa dari plan sudah di-commit
+
+BUDGET vs REALIZATION:
+Kolom: Budget (plan), Real (actual payment), Variance
+Focus: Budget to actual spending (plan vs actual cash out)
+Stage: Payment stage (actual cash dikeluarkan)
+Meaning: Berapa dari plan sudah di-bayar (actual)
+
+COMMITTED vs REALIZATION:
+Kolom: Committed (AP), Real (payment), Variance
+Focus: Payment execution (berapa AP sudah dibayar)
+Stage: Gap antara commitment & payment
+Meaning: Outstanding AP & payment progress
+
+FITUR CASCADE (DEPENDENT DROPDOWN):
+Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
+
+Urutan cascade:
+1. Company (mandiri) → aktifkan Division
+2. Division (cascading dari Company) → aktifkan Department
+3. Department (cascading dari Division) → aktif untuk filtering account
+4. From Date & To Date (independent date pickers)
+
+Contoh flow:
+- Pilih Company "KI" → Division dropdown aktif
+- Pilih Division "HO" → Department dropdown aktif
+- Pilih Department "FA" → Display FA account committed vs real
+- Atur From/To date untuk periode
+- Klik Search
+
+CATATAN PENTING:
+1. Semua filter (Company, Division, Department, From, To) harus diisi
+2. Laporan menampilkan SUMMARY per account (tidak detail transaksi)
+3. Satu baris = satu account (COA), ringkasan semua invoice account
+4. Committed = Total AP entry untuk account
+5. Real = Total payment untuk account
+6. Variance = Berapa outstanding AP (committed - real)
+7. Positive variance = Normal (ada AP belum bayar)
+8. Negative variance = Unusual (error atau over-payment)
+9. Untuk detail invoice, gunakan Budget Card atau AP Inquiry report
+10. Laporan dapat diexport untuk analysis
+11. Laporan ini read-only, tidak bisa mengedit data
+12. Format tanggal: DD/MM/YYYY
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+1. Pastikan semua filter sudah terisi (Company, Division, Department, From, To)
+2. Pastikan cascade complete (jangan skip dropdown)
+3. Verify Department pilihan punya invoice/AP dalam periode
+4. Coba ubah date range lebih luas
+5. Possibility: Period tidak ada AP atau belum ada payment
+6. Try department lain untuk test laporan working
+7. Check: Apakah ada AP masih belum di-post (unposted)?
+8. Klik Search lagi untuk refresh
+9. Hubungi IT jika issue persist
+
+TIPS PENGGUNAAN:
+1. DAILY AP OUTSTANDING MONITORING
+   - Check berapa AP belum dibayar (positive variance)
+   - Priority follow-up untuk payment
+   - Alert untuk aging AP
+   - Daily payment planning
+
+2. PAYMENT EXECUTION TRACKING
+   - Monitor Payment rate (Real/Committed %)
+   - Identify slow payment account
+   - Better payment schedule planning
+   - Vendor relationship based on payment
+
+3. AP AGING ANALYSIS
+   - Large positive variance = potential aging issue
+   - Investigate reason untuk delayed payment
+   - Plan untuk accelerate payment jika needed
+   - Monitor untuk over-aged AP
+
+4. WORKING CAPITAL OPTIMIZATION
+   - Monitor committed (future liability)
+   - Optimize payment timing
+   - Negotiate payment term untuk better working capital
+   - Cash cycle improvement
+
+5. CASH FLOW FORECASTING
+   - Outstanding AP (variance) = future cash need
+   - Plan cash untuk pay outstanding
+   - Weekly/monthly cash forecast
+   - Liquidity management
+
+6. VENDOR MANAGEMENT
+   - Payment performance per vendor
+   - On-time payment track record
+   - Communication dengan vendor untuk payment
+   - Relationship based on payment history
+
+7. BUDGET PAYMENT ANALYSIS
+   - Compare Real (actual payment) vs Budget
+   - Identify if payment ada kelampauan atau kurang
+   - Payment discipline monitoring
+   - Budget utilization tracking
+
+8. MONTH-END CLOSING SUPPORT
+   - Verify semua AP periode sudah recorded (committed)
+   - Outstanding AP disclosure untuk closing
+   - GL reconciliation AP account
+   - Accrual provision jika needed
+
+SKENARIO UMUM INQUIRY:
+SZENARIO 1: "Lihat total AP belum bayar per account untuk FA department"
+Action:
+1. Pilih Company = KI
+2. Pilih Division = HO
+3. Pilih Department = FA
+4. Pilih From = bulan ini awal
+5. Pilih To = hari ini
+6. Klik Search
+7. Lihat Variance (positif) = outstanding AP per account
+8. Prioritize highest variance untuk payment
+
+SZENARIO 2: "Check payment rate - berapa sudah dibayar vs berapa invoice"
+Action:
+1. Run laporan untuk period
+2. Calculate untuk setiap account: Real / Committed
+3. Higher % = faster payment, Lower % = slower payment
+4. Identify slow payment account
+5. Investigate & improve payment process
+
+SZENARIO 3: "Forecast cash need untuk outstanding AP"
+Action:
+1. Lihat Variance positif (outstanding AP total)
+2. Sum semua variance = total outstanding AP
+3. Multiply dengan weight (berapa % yang due next week/month)
+4. Result = cash forecast untuk next period
+5. Plan cash disbursement
+
+SZENARIO 4: "AP aging - identify overdue payment"
+Action:
+1. Export laporan ke Excel
+2. Buat helper column: Invoice Date + Payment Term = Due Date
+3. Calculate Days Late = Today - Due Date
+4. Filter untuk Days Late > 0 (overdue)
+5. Prioritize untuk payment atau escalate vendor
+
+TROUBLESHOOTING UMUM:
+MASALAH: "Variance negatif (committed < real) - sudah bayar kelebihan?"
+SOLUSI:
+- Verify payment vraag twice (possible double payment?)
+- Check apakah ada credit memo yang belum di-record
+- Check apakah ada return atau discount yang belum applied
+- Investigate untuk identify reason
+- Correct entry jika ada error
+
+MASALAH: "Large positive variance - AP sangat outstanding"
+SOLUSI:
+- Normal jika ada term panjang (Net 60/90)
+- Check payment term untuk account
+- Verify payment not yet scheduled
+- Plan payment sesuai due date
+- Follow up dengan vendor jika overdue
+
+MASALAH: "Variance tidak match dengan payment term"
+SOLUSI:
+- Check invoice date & approved payment date
+- Calculate expected payment date based on term
+- Identify delays dalam payment process
+- Improve payment processing speed
+- Monitor untuk on-time payment target
+
+MASALAH: "Data tidak muncul (committed & real = 0)"
+SOLUSI:
+- Normal untuk inactive account
+- Check apakah ada AP dalam period tersebut
+- Try wider date range untuk verify
+- Possible: AP belum posting (unposted)
+- Try period lain untuk test laporan
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+1. DENGAN ACCOUNTING/GL:
+   - Verify AP committed vs GL posting
+   - Support GL reconciliation
+   - Payment posting timing
+   - Accrual provision untuk closing
+
+2. DENGAN TREASURY/CASH:
+   - Daily outstanding AP report
+   - Cash forecast untuk payment
+   - Payment schedule optimization
+   - Vendor payment arrangement
+
+3. DENGAN PROCUREMENT:
+   - AP status per vendor/PO
+   - Payment performance tracking
+   - Vendor management & communication
+   - Discount optimization (early payment)
+
+4. DENGAN DEPARTMENT/MANAGER:
+   - Report AP outstanding per department
+   - Explain reason untuk delayed payment
+   - Cost/budget impact dari payment timing
+   - Approval untuk payment acceleration
+
+5. DENGAN AUDIT:
+   - AP aging support untuk audit
+   - Payment verification & approval trail
+   - Provision for doubtful payment
+   - Compliance verification
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+Laporan Committed vs Realization berhubungan dengan:
+1. Laporan AP Aging - Untuk detail AP berdasarkan umur
+2. Laporan Budget Card - Untuk drill-down transaction detail
+3. Laporan Budget vs Committed - Untuk budget consumption
+4. Laporan Budget vs Realization - Untuk budget to actual payment
+5. Laporan Payment - Untuk detail pembayaran actual
+6. Laporan AP Subledger - Untuk detail GL posting per vendor
+7. General Ledger - Untuk AP account balance verification
+8. Cash Flow Statement - Untuk payment impact pada cash
+
+WORKFLOW NORMAL UNTUK AP & PAYMENT:
+
+STEP 1: INVOICE RECEIPT
+- Vendor kirim invoice
+- Invoice received & verified
+- Status: Invoice Received
+
+STEP 2: AP ENTRY (COMMITMENT)
+- Invoice entry ke sistem
+- Amount di-committed terhadap budget
+- GL posting AP account
+- Committed bertambah
+- Status: Committed
+
+STEP 3: AP APPROVAL & SCHEDULING
+- AP di-review & approve
+- Payment scheduled sesuai payment term
+- Payment plan dibuat
+- Status: Approved for Payment
+
+STEP 4: PAYMENT EXECUTION (REALIZATION)
+- Payment diproses via bank/check
+- Cash dikeluarkan
+- Real spending tercatat
+- Variance berkurang (sudah dibayar)
+- Status: Realized/Paid
+
+STEP 5: RECONCILIATION
+- Payment match dengan AP entry
+- Vendor acknowledgement diterima
+- AP closed/cleared
+- Status: Settled
+
+BEST PRACTICES:
+
+1. TIMELY PAYMENT
+   - Pay sesuai payment term
+   - Avoid over-aged AP
+   - Maintain vendor relationship
+   - Leverage discount jika available
+
+2. CASH FLOW MANAGEMENT
+   - Monitor outstanding AP
+   - Plan cash requirement
+   - Optimize payment timing
+   - Working capital optimization
+
+3. ACCURATE TRACKING
+   - Verify commitment & realization match
+   - Reconcile AP regularly
+   - Correct entry promptly
+   - Maintain audit trail
+
+4. VENDOR COMMUNICATION
+   - Regular AP status report
+   - Payment schedule notification
+   - Problem resolution timely
+   - Relationship management
+
+5. BUDGET ADHERENCE
+   - Link payment to budget
+   - Monitor payment vs budget
+   - Cost control dalam payment
+   - Variance management
+
+6. PERIOD CLOSING
+   - Verify AP recording complete
+   - Outstanding AP disclosure
+   - GL reconciliation
+   - Provision management
+
+7. PAYMENT DISCIPLINE
+   - Enforce payment process
+   - On-time payment target
+   - Performance tracking
+   - Continuous improvement
+
+KEYS TO REMEMBER:
+
+1. Committed = Total AP entry (sudah hutang tercatat)
+2. Real = Total payment (sudah cash out)
+3. Variance = Committed - Real (berapa outstanding AP)
+4. Positive variance = Normal (ada AP belum bayar)
+5. Negative variance = Unusual (investigate error)
+6. One row = One account (summary semua invoice account)
+7. Period = Date range untuk commitment & payment
+8. Cascade mandatory: Company → Division → Department
+9. Payment rate = Real / Committed % (berapa sudah dibayar)
+10. Keep untuk AP aging & payment tracking documentation

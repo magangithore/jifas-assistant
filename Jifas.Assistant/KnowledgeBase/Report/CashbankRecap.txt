@@ -1,0 +1,383 @@
+LAPORAN CASHBANK DAILY (REKAP HARIAN KAS & BUKU BANK)
+
+TUJUAN:
+Memberikan informasi detail tentang posisi saldo kas dan buku bank secara harian, dengan breakdown berdasarkan
+perusahaan, bank, dan periode tanggal tertentu. Laporan ini membantu bagian finance untuk monitoring, verifikasi,
+dan rekonsiliasi antara saldo kas di sistem dengan saldo buku bank dari bank yang bersangkutan.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan rekapitulasi saldo kas dan buku bank dalam bentuk tabel yang menunjukkan saldo awal bulan,
+mutasi debit/kredit selama periode, dan saldo akhir bulan dalam dua mata uang (IDR dan USD).
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Cashbank Daily"
+   - Sistem menampilkan form filter dengan 5 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Bank (Bank)
+      - Klik dropdown "Bank"
+      - Daftar bank akan muncul berdasarkan perusahaan yang sudah dipilih
+      - Ketik untuk mencari bank tertentu (minimal 2 karakter)
+      - Pilih salah satu bank
+      - Contoh: "CAPIT - Bank Capital - 2169195717"
+      - Catatan: Field ini hanya aktif setelah memilih perusahaan
+      - Data akan otomatis difilter sesuai perusahaan yang dipilih
+
+   c) Nomor Akun Bank (Bank Account No)
+      - Field ini OTOMATIS TERISI saat memilih bank
+      - Pengguna tidak perlu mengisi (read-only/disabled)
+      - Contoh: "2169195717"
+      - Menunjukkan nomor akun/rekening di bank yang dipilih
+
+   d) Masukkan Rate/Kurs (Rate)
+      - Klik field "Rate" untuk mengisi kurs/rate
+      - Masukkan nilai kurs yang ingin digunakan untuk konversi
+      - Format: Angka dengan 2 desimal
+      - Contoh: "2169" atau "14000"
+      - Default value (nilai awal): 14000
+      - Catatan: Rate digunakan untuk konversi saldo dari USD ke IDR
+      - Range: 0 hingga 99999
+      - Untuk mengubah rate, hapus nilai lama dan ketik nilai baru
+
+   e) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY (contoh: 01/01/2026)
+      - Default: Tanggal hari ini
+
+   f) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY (contoh: 13/02/2026)
+      - Default: Tanggal hari ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dengan rate yang ditentukan
+   - Akan muncul loading indicator saat sistem mengambil dan mengolah data
+   - Waktu loading tergantung banyaknya transaksi dalam periode
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Judul Laporan: REKAPITULASI SALDO KAS & BUKU BANK HARIAN
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Detail Tabel Saldo Kas & Buku Bank (Terdiri dari kolom):
+
+      Kelompok SALDO AWAL BULAN (Opening Balance):
+      - Saldo Awal Bulan IDR : Saldo pembukaan bulan dalam Rupiah
+      - Saldo Awal Bulan USD : Saldo pembukaan bulan dalam Dollar
+
+      Kelompok MUTASI (Movement/Changes):
+      - Mutasi Debet        : Jumlah pengeluaran/pengurangan saldo selama periode
+      - Mutasi Kredit       : Jumlah pemasukan/penambahan saldo selama periode
+
+      Kelompok SALDO AKHIR BULAN (Closing Balance):
+      - Saldo Akhir Bulan IDR : Saldo penutupan bulan dalam Rupiah (Awal + Kredit - Debet)
+      - Saldo Akhir Bulan USD : Saldo penutupan bulan dalam Dollar
+      
+      - Saldo Nm Bank (Nama Bank): Informasi saldo dari buku bank
+      - Total Eqv. IDR        : Total saldo akhir ketika dikonversi ke IDR menggunakan rate yang dipilih
+
+   c) Kolom Utama Tabel:
+      1. Nama Bank          : Nama bank tempat akun disimpan
+      2. No. Account        : Nomor akun/rekening di bank tersebut
+      3. Currency           : Mata uang akun (IDR, USD, dll)
+      4. Saldo Awal Bulan   : Saldo awal dalam dua kolom (IDR & USD)
+      5. Mutasi Debet       : Pengeluaran dalam periode
+      6. Mutasi Kredit      : Pemasukan dalam periode
+      7. Saldo Akhir Bulan  : Saldo akhir dalam dua kolom (IDR & USD)
+      8. Total Eqv. IDR     : Total dalam rupiah setelah konversi dengan rate
+
+   d) Contoh Data di Laporan:
+
+      Bank Capital (2169195717) - IDR:
+      - Saldo Awal Bulan IDR: 0 | USD: 0
+      - Mutasi Debet: 23.000.579.199,99 | Kredit: 12.250.063
+      - Saldo Akhir Bulan IDR: 23.000.566.949,92 | USD: 0
+      - Total Eqv. IDR: 23.000.545.449,929
+
+      Bank Capital (2169195717) - IDR (Baris kedua):
+      - Saldo Awal Bulan IDR: 23.000.566.949,92 | USD: 0
+      - Mutasi Debet: 0 | Kredit: 21.500.000
+      - Saldo Akhir Bulan IDR: 23.000.545.449,92 | USD: 0
+      - Total Eqv. IDR: 23.000.545.449,929
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak halaman, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan (zoom sesuai preferensi)
+      - Tombol refresh untuk reload/memperbarui data dengan parameter yang sama
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. SALDO AWAL BULAN (Opening Balance)
+   - Adalah saldo akun pada tanggal pertama bulan atau awal periode
+   - Nilainya tetap sama untuk setiap harinya (tidak berubah)
+   - Menjadi basis perhitungan untuk saldo akhir
+
+2. MUTASI DEBET (Debit Mutation)
+   - Adalah pengeluaran uang/pengurangan saldo
+   - Contoh: Pembayaran gaji, pembayaran invoice, transfer ke bank lain
+   - Semakin besar nilai ini, semakin banyak uang yang keluar
+
+3. MUTASI KREDIT (Credit Mutation)
+   - Adalah pemasukan uang/penambahan saldo
+   - Contoh: Penerimaan dari pelanggan, penerimaan bunga bank, transfer masuk
+   - Semakin besar nilai ini, semakin banyak uang yang masuk
+
+4. SALDO AKHIR BULAN (Closing Balance)
+   - Adalah saldo akun pada akhir periode/akhir bulan
+   - Dihitung: Saldo Awal + Mutasi Kredit - Mutasi Debet
+   - Merupakan saldo yang tersisa di rekening
+
+5. RATE/KURS (Exchange Rate)
+   - Adalah nilai tukar antara mata uang (biasanya USD ke IDR)
+   - Digunakan untuk konversi saldo dalam USD ke dalam IDR
+   - Default: 14000 (artinya 1 USD = 14.000 IDR)
+   - Pengguna bisa mengubah rate sesuai kurs resmi yang berlaku
+
+6. TOTAL EQV. IDR (Total Equivalent IDR)
+   - Adalah total saldo akhir ketika semua mata uang dikonversi ke IDR
+   - Rumus: (Saldo IDR) + (Saldo USD × Rate)
+   - Memudahkan untuk melihat total saldo dalam satu mata uang
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. MONITORING SALDO HARIAN
+   - Melihat posisi saldo kas di bank setiap hari
+   - Memverifikasi bahwa saldo tersebut tercatat dengan benar di sistem
+   - Melakukan pengecekan harian untuk cash management
+   - Mengidentifikasi perubahan saldo yang tidak terduga
+
+2. BANK RECONCILIATION (REKONSILIASI BANK)
+   - Mencocokkan saldo di sistem (Book Balance) dengan saldo laporan bank (Bank Statement)
+   - Identifikasi perbedaan antara saldo di sistem vs laporan bank
+   - Melakukan adjustment jika ada perbedaan (outstanding items, bank fees, dll)
+   - Memastikan akurasi pencatatan transaksi di sistem
+
+3. VERIFIKASI MUTASI/TRANSAKSI
+   - Melihat jumlah pengeluaran (debet) dan pemasukan (kredit) dalam periode
+   - Memverifikasi bahwa semua transaksi tercatat dengan benar
+   - Mengidentifikasi transaksi yang mungkin belum di-record atau duplikasi
+   - Memastikan kesesuaian antara bukti transaksi dan pencatatan sistem
+
+4. CASH FLOW MONITORING & FORECASTING
+   - Menganalisis tren saldo untuk perencanaan cash flow
+   - Memproyeksikan kebutuhan cash di masa depan
+   - Mengidentifikasi periode ketika saldo mencukupi atau defisit
+   - Membantu keputusan tentang borrowing atau investment
+
+5. ANALISIS LIKUIDITAS
+   - Melihat total saldo kas yang tersedia (liquidity position)
+   - Menganalisis kurang lebihnya kas dibanding target/budget
+   - Membantu keputusan tentang transfer antar bank atau pencairan deposito
+   - Monitoring untuk memastikan likuiditas tetap terjaga
+
+6. PELAPORAN MANAJEMEN
+   - Menyiapkan laporan posisi kas untuk manajemen
+   - Memberikan dashboard tentang status cash position
+   - Membantu pengambilan keputusan manajemen tentang alokasi dana
+   - Reporting untuk board atau stakeholder eksternal
+
+7. ANALISIS MULTI-MATA UANG
+   - Melihat komposisi saldo dalam USD dan IDR
+   - Menganalisis eksposur terhadap fluktuasi kurs
+   - Membantu keputusan tentang diversifikasi mata uang
+   - Monitoring risk dari currency fluctuation
+
+8. DOKUMENTASI & AUDIT
+   - Menyediakan bukti tertulis untuk audit internal/eksternal
+   - Dokumentasi untuk keperluan regulasi dan compliance
+   - Arsip untuk verifikasi transaksi dan aliran kas
+   - Evidence untuk risk management dan internal control
+
+9. ANALISIS TREND & PATTERN
+   - Melihat trend perubahan saldo (naik/turun)
+   - Mengidentifikasi pola pengeluaran dan pemasukan
+   - Membantu deteksi anomali atau transaksi tidak normal
+   - Useful untuk fraud detection dan internal control
+
+FITUR PERPINDAHAN BANK:
+Ketika pengguna mengubah bank (dengan perusahaan yang sama):
+- Klik dropdown "Bank" untuk memilih bank yang berbeda
+- Nomor akun (Account No) akan OTOMATIS berubah sesuai bank baru
+- Klik tombol "Search" untuk refresh laporan
+- Isi Rate kurs jika ingin mengubah (bisa gunakan rate lama atau rate baru)
+- Data di laporan akan diperbarui sesuai bank terbaru
+- Semua data saldo akan disesuaikan dengan periode tanggal yang masih aktif
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Rate bisa tetap sama atau diubah sesuai kebutuhan
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan data saldo sesuai periode baru
+- Mutasi (Debet/Kredit) akan dihitung ulang untuk periode baru
+- Data lama akan diganti dengan data periode baru
+
+FITUR RATE/KURS:
+
+Mengapa ada field "Rate"?
+- Rate digunakan untuk konversi saldo USD ke IDR
+- Biasanya pengguna menggunakan kurs resmi BI atau kurs bank yang berlaku
+- Setiap periode bisa menggunakan rate berbeda (kurs selalu berubah)
+- Memudahkan untuk melihat total saldo dalam satu mata uang (IDR)
+- Membantu analisis ketika ada transaksi/saldo dalam multiple currencies
+
+Bagaimana cara menentukan rate?
+- Cek kurs resmi BI (Bank Indonesia) untuk hari tersebut
+- Atau gunakan kurs dari bank yang digunakan perusahaan
+- Masukkan ke field "Rate" sebelum klik Search
+- Contoh: Jika kurs BI hari ini 1 USD = 15.500 IDR, maka masukkan 15500
+
+CATATAN PENTING:
+
+
+1. Semua field filter harus diisi sebelum search (Company, Bank, Rate, From Date, To Date)
+2. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+3. Laporan hanya menampilkan saldo dan mutasi yang tercatat di sistem
+4. Nomor akun (Account No) otomatis terisi, tidak perlu diisi manual
+5. Nilai dalam USD akan menampilkan 0 jika tidak ada saldo dalam mata uang tersebut
+6. Rate yang digunakan akan mempengaruhi total ekuivalen IDR
+7. Saldo Awal Bulan untuk semua hari dalam bulan yang sama adalah IDENTIK (tidak berubah)
+8. Mutasi Debet dan Kredit adalah AKUMULASI dari awal bulan hingga tanggal laporan
+9. Untuk perubahan filter, klik search kembali
+10. Laporan dapat diexport untuk analisis lanjutan atau presentation
+11. Laporan ini read-only, tidak bisa mengedit data langsung
+12. Jika tidak ada data, laporan akan menampilkan tabel kosong
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter (Company, Bank, Rate, From, To) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah bank yang dipilih benar-benar punya data di periode tersebut
+4. Cek apakah Rate diisi dengan angka yang benar (tidak kosong)
+5. Coba ubah range tanggal ke yang lebih luas
+6. Klik tombol "Search" kembali untuk refresh
+7. Jika masih tidak ada, mungkin benar-benar tidak ada data periode/bank tersebut
+8. Hubungi IT jika laporan tidak mau load sama sekali (ada error message)
+
+TIPS PENGGUNAAN:
+
+
+1. CEPAT CEK POSISI CASH HARI INI
+   - Pilih Company dan Bank
+   - Jangan ubah tanggal (default sudah tanggal hari ini)
+   - Masukkan Rate hari ini (cek BI rate atau bank rate)
+   - Klik Search
+   - Lihat saldo cash dan total dalam IDR
+
+2. HARIAN RECONCILIATION (SETIAP HARI)
+   - Buka laporan ini setiap pagi
+   - Bandingkan Saldo Akhir di laporan dengan Saldo di laporan bank
+   - Jika ada perbedaan, investigate dan catat sebagai outstanding item
+
+3. ANALISIS MULTI-BANK
+   - Lakukan search untuk setiap bank yang digunakan perusahaan
+   - Jumlahkan total dari semua bank untuk melihat total cash position
+   - Analisis distribusi cash antar bank (apakah seimbang atau ada konsentrasi)
+
+4. PERBANDINGAN PERIODE
+   - Ambil laporan untuk tanggal yang sama periode berbeda (misal: 13 Feb 2025 vs 13 Feb 2026)
+   - Bandingkan saldo untuk melihat trend year-over-year
+   - Identifikasi apakah ada perubahan signifikan
+
+5. EXPORT UNTUK RECLASSIFICATION
+   - Export ke Excel format
+   - Gunakan di Excel untuk analisis lebih detail
+   - Buat pivot table untuk analisis multi-dimensional
+   - Share ke berbagai stakeholder dalam format Excel
+
+6. RATE MANAGEMENT
+   - Update rate setiap hari jika ingin akurat (gunakan rate hari tersebut)
+   - Atau gunakan rate bulanan yang lebih stabil
+   - Catat rate yang digunakan untuk referensi
+   - Gunakan rate yang sama untuk laporan yang dibandingkan
+
+7. CASH FORECAST
+   - Lihat trend Mutasi Kredit (pemasukan) dan Debet (pengeluaran)
+   - Project saldo untuk periode depan berdasarkan trend ini
+   - Siapkan contingency plan jika forecast menunjukkan cash defisit
+   - Koordinasikan dengan treasury/cash management untuk actions
+
+8. AUDIT TRAIL UNTUK RECONCILIATION
+   - Simpan output laporan setiap hari/minggu/bulan
+   - Gunakan sebagai audit trail untuk reconciliation
+   - Jika ada perbedaan untuk hari tertentu, cari penyebabnya
+   - Dokumentasikan semua adjustments yang dibuat
+
+TROUBLESHOOTING UMUM:
+
+MASALAH: "Field Account No tidak terisi otomatis"
+SOLUSI: Pastikan Anda sudah memilih bank terlebih dahulu, baru Account No akan autofill
+
+MASALAH: "Data laporan tidak sesuai dengan bank statement"
+SOLUSI: Bisa ada outstanding checks atau pending transactions, lakukan adjustment & dokumentasikan
+
+MASALAH: "Total di Excel berbeda ketika diimport"
+SOLUSI: Pastikan format date dan number sudah benar, cek desimal separator
+
+MASALAH: "Rate tidak bisa diubah"
+SOLUSI: Field rate menerima angka 0-99999 dengan 2 desimal, hapus & ketik ulang
+
+MASALAH: "Laporan hanya menampilkan 1 baris per bank"
+SOLUSI: Normal jika hanya ada 1 currency per bank, scroll kanan untuk lihat kolom lain
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN BANK:
+   - Minta bank statement dan bandingkan dengan laporan
+   - Verifikasi nomor akun dan saldo
+   - Follow-up untuk outstanding items
+
+2. DENGAN TREASURY/CASH MANAGEMENT:
+   - Share laporan untuk perencanaan cash positioning
+   - Koordinasi tentang transfer antar bank
+   - Diskusi tentang kebutuhan working capital
+
+3. DENGAN INTERNAL AUDIT:
+   - Sediakan laporan untuk keperluan audit
+   - Jelaskan semua adjustments yang dilakukan
+   - Dokumentasi untuk file audit
+
+4. DENGAN MANAJEMEN:
+   - Report posisi cash kepada CFO/Finance Head
+   - Highlight apakah ada cash shortfall atau excess
+   - Rekomendasi untuk optimisasi cash position
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Cashbank Daily berhubungan dengan:
+1. Bank Reconciliation Report - Untuk detail pencocokan saldo
+2. Daily Cash Report - Untuk summary cash position
+3. General Ledger - Untuk verifikasi akun kas di GL
+4. Budget vs Actual Report - Untuk analisis cash vs budget
+5. Financial Statement - Kas ditampilkan di Balance Sheet sebagai Current Asset

@@ -1,0 +1,545 @@
+LAPORAN INQUIRY PUM (DETAIL PENCAIRAN UANG MUKA)
+
+TUJUAN:
+Memberikan informasi DETAIL tentang setiap pencairan (payment) uang muka yang telah dilakukan dari kas/bank.
+Laporan ini menampilkan daftar lengkap semua transaksi pembayaran uang muka dengan detail lengkap termasuk
+deskripsi, mata uang, jumlah, bank yang digunakan, dan siapa yang menerima (kreditor).
+Membantu divisi finance untuk tracking dan verifikasi setiap pencairan uang muka.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan inquiry (pencarian/penelusuran) detail PUM dalam bentuk tabel yang menampilkan
+setiap pencairan uang muka secara individual dengan informasi lengkap per transaksi.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Inquiry PUM"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Status (Status)
+      - Klik dropdown "Status"
+      - Sistem akan menampilkan 3 opsi:
+        * "All Status" - Untuk melihat semua transaksi (Posted dan Unposted)
+        * "Posted" - Untuk melihat hanya yang sudah di-POST (PU sudah diakui sistem)
+        * "Unposted" - Untuk melihat hanya yang BELUM di-POST (PU masih pending)
+      - Default: "All Status"
+      - Catatan: Status untuk filtering data
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan PU dari tanggal ini
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan PU hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua transaksi PU yang sesuai filter
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: INQUIRY PU (atau INQUIRY PUM)
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 2")
+
+   b) Detail Tabel PUM/PU (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Company         : Kode perusahaan (contoh: KI)
+      - Doc. No.        : Nomor dokumen PU (contoh: PUKI26010001)
+      - Date            : Tanggal pencairan/pembayaran uang muka
+      - Description     : Deskripsi/narasi dari pencairan (tujuan uang muka)
+      - Currency        : Mata uang transaksi (IDR, USD, dll)
+      - Amount          : Jumlah uang yang dicairkan dalam mata uang asli
+      - Bank            : Nama bank dari mana dana dicairkan
+      - Total (IDR)     : Total jumlah dalam Rupiah (hasil konversi jika bukan IDR)
+      - Creditor        : Nama orang/pihak yang menerima uang muka
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      Company: KI | Doc: PUKI26010001 | Date: 05/01/2026
+      Description: Endorsement - Test 12/29
+      Currency: IDR | Amount: 4.000.000 | Bank: BCA
+      Total (IDR): 4.000.000 | Creditor: Heru Suseno
+
+      Baris 2:
+      Company: KI | Doc: PUKI26010002 | Date: 06/01/2026
+      Description: Payment Non IDR - Test 1/6
+      Currency: USD | Amount: 100 | Bank: MAN90
+      Total (IDR): 100 | Creditor: Heru Suseno
+
+      Baris 3:
+      Company: KI | Doc: PUKI26010003 | Date: 07/01/2026
+      Description: (kosong)
+      Currency: IDR | Amount: 10.000.000 | Bank: MDR66
+      Total (IDR): 10.000.000 | Creditor: Heru Suseno
+
+      Baris 4:
+      Company: KI | Doc: PUKI26010005 | Date: 06/01/2026
+      Description: Pengembalian Uang Jamninan - Test 1/6
+      Currency: IDR | Amount: 10.000.000 | Bank: BMDRI
+      Total (IDR): 10.000.000 | Creditor: Heru Suseno
+
+      Baris 5:
+      Company: KI | Doc: PUKI26010007 | Date: 08/01/2026
+      Description: Pembelian Katalog Testing 2026 - Heru Quality Assurance
+      Currency: IDR | Amount: 339.459.996 | Bank: BCA
+      Total (IDR): 339.459.996 | Creditor: Heru Suseno
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak transaksi, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. PU / PUM (PENCAIRAN UANG MUKA)
+   - Adalah transaksi pembayaran/pencairan uang muka dari kas atau bank
+   - Uang diberikan kepada karyawan atau pihak ketiga untuk keperluan tertentu
+   - Harus ada UMK (pengajuan) terlebih dahulu sebelum bisa di-PU
+   - Ditulis dokumen bukti pengeluaran kas/bank
+   - Setiap PU harus dapat di-tracenya ke UMK yang sesuai
+   - Contoh: Uang muka Rp 5.000.000 untuk perjalanan dinas dicairkan tanggal 05 Januari
+
+2. DOC. NO. (NOMOR DOKUMEN)
+   - Adalah nomor referensi unik untuk setiap transaksi PU
+   - Format biasanya: PUKI/PUKM + Tanggal + Urut (contoh: PUKI26010001)
+   - P = Payment/Pencairan
+   - U = Uang Muka
+   - K = Kas/Bank
+   - I = Input
+   - 26 = Tahun 2026
+   - 01 = Bulan Januari
+   - 0001 = Urut transaksi
+   - Digunakan untuk trace/reference dalam komunikasi dan verifikasi
+
+3. DESCRIPTION (DESKRIPSI)
+   - Adalah narasi/penjelasan tujuan dari pencairan uang muka
+   - Contoh: "Perjalanan Dinas ke Jakarta", "PUM untuk Rapat Meeting", dll
+   - Membantu understanding tentang tujuan uang yang dikeluarkan
+   - Bisa kosong jika tidak ada deskripsi spesifik
+   - Penting untuk audit trail dan compliance
+
+4. CURRENCY (MATA UANG)
+   - Adalah mata uang transaksi
+   - IDR = Rupiah Indonesia (mata uang lokal)
+   - USD = Dolar Amerika (untuk transaksi internasional)
+   - Atau mata uang lain (EUR, SGD, dll)
+   - Penting untuk tracking forex exposure
+
+5. AMOUNT (JUMLAH)
+   - Adalah jumlah uang yang dicairkan dalam mata uang asli
+   - Format: Angka dengan pemisah ribuan
+   - Contoh: 4.000.000 (empat juta)
+   - Wajib positif (tidak boleh negatif)
+
+6. BANK
+   - Adalah nama bank atau kas dari mana dana dicairkan
+   - Contoh: BCA, BNI, Mandiri, BCAJM, dll
+   - Jika "KAS" berarti dana keluar dari kas kecil (bukan bank)
+   - Penting untuk bank reconciliation
+
+7. TOTAL (IDR)
+   - Adalah jumlah uang dalam mata uang Rupiah
+   - Jika currency adalah IDR: Total = Amount
+   - Jika currency bukan IDR: Total = Amount × Kurs (dikonversi ke IDR)
+   - Digunakan untuk analisis dalam satu mata uang (Rupiah)
+
+8. CREDITOR (PENERIMA)
+   - Adalah nama orang atau pihak yang menerima uang muka
+   - Biasanya nama karyawan
+   - Contoh: Heru Suseno, Abdul Rochman, dll
+   - Penting untuk tracing dan audit
+
+9. STATUS (POSTED vs UNPOSTED)
+   - POSTED: Transaksi PU sudah diakui dan di-post di sistem akunting
+             → Sudah tercatat di GL (General Ledger)
+             → Dapat dilaporkan dalam financial statements
+             → Proses PU sudah final
+   
+   - UNPOSTED: Transaksi PU belum di-post di sistem akunting
+              → Masih dalam review atau approval
+              → Belum tercatat di GL
+              → Belum bisa dilaporkan secara resmi
+              → Masih PENDING completion
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+1. TRACKING & VERIFICATION PUM
+   - Melihat setiap transaksi PU yang telah dilakukan
+   - Memverifikasi bahwa jumlah dan deskripsi sudah benar
+   - Tracing untuk melihat siapa yang menerima uang
+   - Matching dengan bukti fisik/dokumen
+
+2. DETAIL INQUIRY / PENCARIAN
+   - Mencari transaksi PU tertentu berdasarkan tanggal, amount, atau creditor
+   - Trace specific transaksi untuk investigasi
+   - Find transaksi berdasarkan UMK reference
+   - Search by deskripsi atau tujuan uang
+
+3. CASH OUTFLOW ANALYSIS
+   - Melihat detail setiap pengeluaran uang muka
+   - Analisis berapa total PUM per bulan/periode
+   - Identifikasi transaksi besar atau tidak normal
+   - Cash flow planning berdasarkan PU aktual
+
+4. BANK RECONCILIATION SUPPORT
+   - Matching transaksi PU dengan bank statement
+   - Verify bahwa uang sudah clear di bank
+   - Identify outstanding atau pending PU yang belum clear
+   - Supporting detail untuk reconciliation
+
+5. CREDITOR/EMPLOYEE TRACKING
+   - Melihat setiap PU yang diberikan kepada karyawan tertentu
+   - Analisis pengeluaran per employee
+   - Identify pola atau anomali
+   - Supporting untuk employee expense management
+
+6. ACCOUNT CODE VERIFICATION
+   - Verify bahwa setiap PU sudah di-charge ke cost center/account yang benar
+   - Matching dengan budget atau departement
+   - Compliance dengan allocation rules
+   - Cost control & monitoring
+
+7. MULTI-CURRENCY ANALYSIS
+   - Melihat komposisi PU dalam berbagai mata uang
+   - Analisis forex exposure
+   - Konversi ke IDR untuk unified view
+   - Currency management
+
+8. UNPOSTED ITEM FOLLOW-UP
+   - Identify transaksi PU yang masih UNPOSTED
+   - Follow-up untuk completion/posting
+   - Ensure timely recording di GL
+   - Month-end/year-end closing support
+
+9. AUDIT & COMPLIANCE
+   - Provide audit trail untuk setiap PU
+   - Supporting document untuk internal/external audit
+   - Compliance dengan company policy
+   - Documentation untuk regulasi/perpajakan
+
+FITUR PERPINDAHAN STATUS:
+Ketika pengguna mengubah status (dengan company yang sama):
+- Klik dropdown "Status" untuk filter Posted, Unposted, atau All Status
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai status filter yang baru
+- Akan tampil hanya transaksi dengan status yang dipilih
+
+Contoh:
+- Filter Status = "Posted" → Hanya PU yang sudah di-post yang tampil
+- Filter Status = "Unposted" → Hanya PU yang belum di-post yang tampil
+- Filter Status = "All Status" → Semua PU (posted + unposted) tampil
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan transaksi PU sesuai periode baru
+- Transaksi akan ditampilkan mulai dari tanggal awal hingga tanggal akhir
+- Data periode lama akan diganti dengan data periode baru
+
+CATATAN PENTING:
+1. Semua field filter (Company, Status, From Date, To Date) harus diisi sebelum search
+2. Laporan menampilkan DETAIL setiap transaksi PU (tidak summary)
+3. Satu baris = satu transaksi PU
+4. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+5. Total (IDR) adalah konversi nilai dalam Rupiah (untuk unified view)
+6. Status filter bisa "All Status", "Posted", atau "Unposted"
+7. Creditor adalah penerima uang (biasanya employee name)
+8. Untuk perubahan filter, klik search kembali
+9. Laporan dapat diexport untuk analisis lanjutan
+10. Laporan ini read-only, tidak bisa mengedit data langsung
+11. Jika ada PU yang tidak match dengan UMK, harus investigate
+12. Format tanggal: DD/MM/YYYY
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+1. Pastikan semua filter (Company, Status, From, To) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah perusahaan yang dipilih benar-benar punya PU di periode tersebut
+4. Coba ubah status ke "All Status" untuk rule out status filter
+5. Coba ubah range tanggal lebih luas
+6. Mungkin periode tersebut memang tidak ada transaksi PU
+7. Klik tombol "Search" kembali untuk refresh
+8. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+1. DAILY/WEEKLY PU REVIEW
+   - Setiap hari/minggu buka laporan ini
+   - Cek PU mana yang sudah POST dan mana yang masih UNPOSTED
+   - Follow-up UNPOSTED untuk completion
+   - Verify data dengan UMK yang sesuai
+
+2. FIND SPECIFIC TRANSACTION
+   - Use Search filter dengan date range yang sempit untuk quick find
+   - Cari by creditor name untuk see semua PU untuk orang tersebut
+   - Use description untuk find PU dengan tujuan tertentu
+   - Ctrl+F di browser untuk search dalam halaman
+
+3. EXPORT TO EXCEL FOR ANALYSIS
+   - Export laporan ke Excel
+   - Buat column helper untuk: Status, Creditor, Amount category, etc
+   - Pivot table untuk analysis by creditor, month, bank, etc
+   - Sort by amount descending untuk find top spends
+   - Filter untuk see pattern/anomali
+
+4. MATCHING WITH UMK
+   - Open Laporan UMK bersamaan dengan ini
+   - Cocok satu per satu untuk verify matching
+   - Identify PU yang tidak punya UMK (anomali)
+   - Document discrepancies
+
+5. BANK RECONCILIATION SUPPORT
+   - Dari bank statement, identify PU transactions
+   - Use laporan ini untuk find matching PU
+   - Verify jumlah dan tanggal
+   - Identify yang masih pending/outstanding
+
+6. EMPLOYEE ACCOUNTABILITY
+   - Group by creditor untuk see total PU per employee
+   - Identify employee dengan high spending
+   - Follow-up untuk timely realization (RU)
+   - Track untuk prevent outstanding PU
+
+7. MONTH-END CLOSING
+   - Buka laporan untuk bulan yang closing
+   - Verify semua PU sudah tercatat
+   - Identify UNPOSTED yang harus di-post
+   - Prepare journal entries untuk accrual/adjustment
+
+8. CURRENCY ANALYSIS
+   - Filter untuk melihat non-IDR PU
+   - Analyze forex impact
+   - Verify konversi rate yang digunakan
+   - Monitor currency exposure
+
+SKENARIO UMUM INQUIRY:
+SKENARIO 1: "Cari PU untuk karyawan tertentu"
+Action:
+1. Pilih Company
+2. Pilih Status = All Status
+3. Pilih periode yang luas (misal: 1 bulan)
+4. Klik Search
+5. Use Ctrl+F di browser untuk search nama karyawan
+6. Atau export ke Excel dan filter by Creditor
+
+SKENARIO 2: "Verify berapa total PU yang belum di-post"
+Action:
+1. Pilih Company
+2. Pilih Status = Unposted
+3. Pilih periode yang relevan
+4. Klik Search
+5. Count jumlah baris dan sum total (IDR)
+6. Follow-up untuk complete posting
+
+SZENARIO 3: "Cari PU tertentu untuk bank reconciliation"
+Action:
+1. Pilih Company
+2. Pilih Bank yang sesuai (use description)
+3. Pilih periode sesuai bank statement
+4. Klik Search
+5. Match setiap line dengan bank statement
+6. Mark yang sudah match
+7. Investigate yang tidak match
+
+SKENARIO 4: "Analisis pengeluaran PU per departement"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted (untuk final numbers)
+3. Pilih periode (misal: 1 tahun)
+4. Klik Search
+5. Export ke Excel
+6. Pivot table by description atau creditor
+7. Analyze spending trend
+
+TROUBLESHOOTING UMUM:
+MASALAH: "Laporan menampilkan banyak sekali data (loading lambat)"
+SOLUSI:
+- Narrow down range tanggal (misal: 1 minggu bukannya 1 bulan)
+- Filter Status untuk Unposted atau Posted saja
+- Jalankan periode smaller batch
+- Export dalam batch untuk analysis
+
+MASALAH: "Tidak bisa find PU tertentu yang pasti ada"
+SOLUSI:
+- Check apakah status filter benar (ada 3 opsi: Posted, Unposted, All)
+- Check apakah range tanggal benar
+- Verify nomor dokumen yang dicari (mungkin format berbeda)
+- Coba dengan filter yang lebih luas dulu
+
+MASALAH: "Data menampilkan tapi Total (IDR) terlihat aneh"
+SOLUSI:
+- Check Currency column (mungkin USD, maka konversi berbeda)
+- Verify kurs yang digunakan (bisa outdated)
+- Check jika ada format issue di Excel
+- Contact IT jika ada bug
+
+MASALAH: "Creditor (penerima) kosong di beberapa baris"
+SOLUSI:
+- Normal jika ada system transfer atau adjustment
+- Check description untuk understand tujuan
+- Investigate jika creditor kosong tapi amount besar
+- Mungkin ada PU yang incomplete
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+1. DENGAN KARYAWAN/EMPLOYEE:
+   - Share laporan PU mereka untuk verification
+   - Request untuk match dengan UMK yang mereka ajukan
+   - Discuss untuk outstanding PU atau discrepancies
+   - Request untuk realization (RU) jika belum submit
+
+2. DENGAN HR/PAYROLL:
+   - Share high-spending employees untuk awareness
+   - Coordinate jika sisa PU perlu dipotongan gaji
+   - Report untuk expense policy compliance
+   - Training untuk PU process
+
+3. DENGAN BANK/TREASURY:
+   - Provide laporan untuk bank reconciliation
+   - Verify transaksi dengan bank statement
+   - Coordinate untuk payment timing
+   - Report untuk cash position
+
+4. DENGAN MANAGEMENT:
+   - Report total spending via PU per month/period
+   - Alert untuk unusual atau high spending
+   - Trend analysis untuk budget planning
+   - Recommendation untuk cost control
+
+5. DENGAN INTERNAL AUDIT:
+   - Provide audit trail untuk setiap PU
+   - Explain discrepancies dan outstanding items
+   - Supporting documents untuk review
+   - Compliance certification
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+Laporan Inquiry PUM berhubungan dengan:
+1. Laporan Pengajuan PUM (UMK) - Untuk match dengan UMK yang diajukan
+2. Laporan Realisasi PUM (RU) - Untuk verify realization setelah PU
+3. Laporan Detail PUM - Untuk lebih detail per transaksi
+4. Cash Disbursement Report - Untuk detail pengeluaran dari kas/bank
+5. Bank Reconciliation - Untuk matching PU dengan bank statement
+6. Expense Report - Untuk detail pengeluaran yang related
+7. General Ledger - Untuk verify posting di GL
+8. Financial Statement - Cash impact dari PU
+
+COMPARISON: INQUIRY PUM vs REALISASI PUM:
+INQUIRY PUM (LAPORAN INI):
+Menampilkan DETAIL setiap PU (pencairan)
+Focus pada: Siapa menerima, berapa, dari bank mana, kapan
+Gunakan untuk: Tracing, verification, cash out analysis
+Data granular: satu baris = satu transaksi PU
+Column: Doc No, Date, Description, Amount, Creditor, Bank, etc
+
+REALISASI PUM:
+Menampilkan 3-way reconciliation (UMK → PU → RU)
+Focus pada: Apakah sudah dipertanggungjawabkan atau belum
+Gunakan untuk: Tracking PU yang outstanding, matching dengan RU
+Data reconciled: satu baris = UMK + PU + RU matching
+Column: UMK No/Date/Amount, PU No/Date/Amount, RU No/Date/Amount/Status
+
+GUNAKAN INQUIRY PUM JIKA BUTUH:
+- Detail spesifik setiap PU
+- Tracing & verification
+- Cash flow analysis
+- Bank reconciliation
+- Creditor/employee tracking
+
+GUNAKAN REALISASI PUM JIKA BUTUH:
+- Status pertanggungjawaban
+- Matching UMK → PU → RU
+- Outstanding items
+- Monthly closing monitoring
+
+BEST PRACTICES:
+
+1. REGULAR MONITORING
+   - Check laporan ini regularly (daily/weekly)
+   - Monitor posted vs unposted status
+   - Follow-up untuk completion
+   - Alert jika ada anomali
+
+2. DETAIL VERIFICATION
+   - Verify setiap PU dengan bukti/dokumen fisik
+   - Check jumlah, tanggal, creditor
+   - Cross-check dengan UMK
+   - Document any discrepancies
+
+3. TIMELY POSTING
+   - Ensure semua PU di-post dalam SLA
+   - Target: 1-2 hari atau max 1 minggu
+   - Aging report untuk overdue items
+   - Escalate jika ada delay
+
+4. DATA ACCURACY
+   - Verify description adalah accurate
+   - Bank code sudah benar
+   - Creditor name consistent
+   - Currency correct
+
+5. AUDIT TRAIL
+   - Keep this report for documentation
+   - Archive per month
+   - File untuk backup
+   - Support untuk audit
+
+6. EXCEPTION HANDLING
+   - Monitor untuk unusual patterns
+   - Investigate high amount PU
+   - Alert untuk system errors
+   - Document exceptions
+
+7. YEAR-END CLOSING
+   - Verify semua PU sudah posted
+   - Reconcile dengan GL
+   - Identify over- atau under-recorded
+   - Prepare final adjustment
+
+KEYS TO REMEMBER:
+1. One row = One PU transaction (detail level)
+2. Status = Posted/Unposted untuk tracking di GL
+3. Total (IDR) = Unified view dalam Rupiah (may be converted from USD)
+4. Creditor = Penerima uang (usually employee name)
+5. Always match dengan UMK sebelumnya
+6. Follow-up UNPOSTED untuk timely completion
+7. Export ke Excel untuk analisis lebih detail
+8. Monthly reconciliation dengan GL balance
+9. Use untuk bank statement matching support
+10. Keep for audit trail & documentation

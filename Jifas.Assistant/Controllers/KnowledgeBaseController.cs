@@ -340,6 +340,23 @@ namespace Jifas.Assistant.Controllers
                     }
                 }
 
+                // Re-fetch chunks from database to ensure they're tracked and update embeddings
+                var chunkIds = chunks.Select(c => c.Id).ToList();
+                var trackedChunks = await _db.KnowledgeBaseChunks
+                    .Where(c => chunkIds.Contains(c.Id))
+                    .ToListAsync();
+
+                // Update embeddings for each tracked chunk
+                foreach (var trackedChunk in trackedChunks)
+                {
+                    var sourceChunk = chunks.FirstOrDefault(c => c.Id == trackedChunk.Id);
+                    if (sourceChunk?.Embedding != null)
+                    {
+                        trackedChunk.Embedding = sourceChunk.Embedding;
+                        trackedChunk.EmbeddingDimensions = sourceChunk.EmbeddingDimensions;
+                    }
+                }
+
                 await _db.SaveChangesAsync();
                 System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Generated embeddings for {successCount}/{chunks.Count} chunks");
             }
@@ -376,6 +393,87 @@ namespace Jifas.Assistant.Controllers
                 return StatusCode(500, new { error = $"Error getting stats: {ex.Message}" });
             }
         }
+
+        /// <summary>
+        /// Generate embeddings for chunks with NULL embeddings
+        /// </summary>
+        [HttpPost("generate-embeddings")]
+        public async Task<IActionResult> GenerateEmbeddings()
+        {
+            try
+            {
+                // Get all chunks with NULL embeddings
+                var nullEmbeddingChunks = await _db.KnowledgeBaseChunks
+                    .Where(c => c.Embedding == null || c.Embedding == "")
+                    .ToListAsync();
+
+                if (nullEmbeddingChunks.Count == 0)
+                {
+                    return Ok(new
+                    {
+                        message = "No chunks with NULL embeddings found",
+                        processedCount = 0,
+                        successCount = 0
+                    });
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[KB Repair] Processing {nullEmbeddingChunks.Count} chunks with NULL embeddings...");
+
+                int successCount = 0;
+                var failedChunks = new List<int>();
+
+                foreach (var chunk in nullEmbeddingChunks)
+                {
+                    try
+                    {
+                        var embedding = await _embeddingService.GenerateEmbeddingAsync(chunk.Content);
+
+                        if (embedding != null && embedding.Count > 0)
+                        {
+                            chunk.Embedding = JsonConvert.SerializeObject(embedding);
+                            chunk.EmbeddingDimensions = embedding.Count;
+                            chunk.UpdatedAt = DateTime.Now;
+                            successCount++;
+                            System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: {embedding.Count}-dim embedding generated");
+                        }
+                        else
+                        {
+                            failedChunks.Add(chunk.Id);
+                            System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: Failed to generate embedding (null response)");
+                        }
+
+                        // Small delay to avoid rate limits
+                        await Task.Delay(100);
+                    }
+                    catch (Exception ex)
+                    {
+                        failedChunks.Add(chunk.Id);
+                        System.Diagnostics.Debug.WriteLine($"[KB Repair] Error generating embedding for chunk {chunk.Id}: {ex.Message}");
+                    }
+                }
+
+                // Save all changes
+                if (successCount > 0)
+                {
+                    await _db.SaveChangesAsync();
+                    System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Successfully generated {successCount}/{nullEmbeddingChunks.Count} embeddings");
+                }
+
+                return Ok(new
+                {
+                    message = "Embedding generation completed",
+                    totalChunksProcessed = nullEmbeddingChunks.Count,
+                    successCount = successCount,
+                    failedCount = failedChunks.Count,
+                    failedChunkIds = failedChunks,
+                    successRate = nullEmbeddingChunks.Count > 0 ? Math.Round((double)successCount / nullEmbeddingChunks.Count * 100, 2) + "%" : "0%"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Error generating embeddings: {ex.Message}", details = ex.InnerException?.Message });
+            }
+        }
     }
 
     /// <summary>
@@ -383,9 +481,9 @@ namespace Jifas.Assistant.Controllers
     /// </summary>
     public class KBDocumentRequest
     {
-        public string Title { get; set; }
-        public string Content { get; set; }
-        public string Category { get; set; }
-        public string Tags { get; set; }
+        public string? Title { get; set; }
+        public string? Content { get; set; }
+        public string? Category { get; set; }
+        public string? Tags { get; set; }
     }
 }

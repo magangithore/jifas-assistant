@@ -1,0 +1,579 @@
+LAPORAN BUDGET VERSUS COMMITTED (LAPORAN REKAPITULASI BUDGET VERSUS KOMITMEN)
+
+TUJUAN:
+Memberikan informasi RINGKASAN perbandingan antara Budget Allocation dengan komitmen/penggunaan aktual untuk semua account di satu department.
+Laporan ini menampilkan setiap account (COA) dengan 3 kolom utama: Budget (rencana), Committed (realisasi), Variance (selisih).
+Membantu management untuk monitoring budget position, mengidentifikasi over-budget account, dan melakukan budget control.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan summary budget versus committed dalam bentuk tabel yang menampilkan semua account di satu department 
+dalam satu periode tertentu. Setiap baris = satu account dengan perbandingan budget allocation vs actual commitment.
+Berguna untuk quick overview budget status & variance analysis untuk budget control & decision making.
+
+ALUR PROSES (FLOW):
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Budget vs Committed"
+   - Sistem menampilkan form filter dengan 5 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+      - Selection ini akan trigger cascade untuk Division
+
+   b) Pilih Divisi (Division)
+      - Klik dropdown "Division"
+      - Sistem akan menampilkan daftar divisi untuk perusahaan yang dipilih
+      - Ketik untuk mencari divisi tertentu (minimal 2 karakter)
+      - Pilih satu divisi sesuai kebutuhan
+      - Contoh: "HO - Holding"
+      - Catatan: Division dropdown hanya aktif setelah Company dipilih
+      - Selection ini akan trigger cascade untuk Department
+
+   c) Pilih Department (Department)
+      - Klik dropdown "Department"
+      - Sistem akan menampilkan daftar department untuk divisi yang dipilih
+      - Ketik untuk mencari department tertentu (minimal 2 karakter)
+      - Pilih satu department sesuai kebutuhan
+      - Contoh: "FA - Finance Accounting"
+      - Catatan: Department dropdown hanya aktif setelah Division dipilih
+      - Semua account di department ini akan di-display
+
+   d) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: (akan di-set sesuai first load)
+      - Laporan akan menampilkan commitment dari tanggal ini
+
+   e) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: (akan di-set sesuai first load)
+      - Laporan akan menampilkan commitment sampai tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua account untuk department dengan budget vs committed
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Judul Laporan: LAPORAN BUDGET VERSUS COMMITTED
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Tabel Ringkasan Budget vs Committed (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Budget Code    : Kode COA (Chart of Account) untuk account (contoh: 60205.0300.0000)
+      - Description    : Deskripsi lengkap account (contoh: EXPENSES - GA - Professional Services - Audit and Tax Consultancy)
+
+      KOLOM PERBANDINGAN:
+      - Budget         : Jumlah budget alokasi untuk account (budget plan)
+      - Committed      : Jumlah komitmen/penggunaan aktual (commitment actual)
+      - Variance       : Selisih = Budget - Committed (positif = under-budget, negatif = over-budget)
+
+   c) Contoh Data di Laporan:
+
+      Row 1 (Asset Account - Under-Budget):
+      Budget Code: 10103.0101.0600
+      Description: ASSETS - Current Assets - Receivable - Trade Receivable - Property - Office
+      Budget: 1.666.666.666.664 | Committed: 10.803.372.727 | Variance: 1.655.863.293.937
+      (Budget sangat besar, committed kecil = banyak sisa budget)
+
+      Row 2 (Asset Account - Over-Budget):
+      Budget Code: 10198.0105.0100
+      Description: ASSETS - Current Assets - Others Assets - Advance - PUM - Pembelian Tanah dan Aktiva Lain
+      Budget: 0 | Committed: 155.019.556 | Variance: -155.019.556
+      (Budget 0 tapi ada commitment = over-budget, excess -155.019.556)
+
+      Row 3 (Expense Account - No Activity):
+      Budget Code: 60205.0100.0000
+      Description: EXPENSES - GA - Professional Services - Legal or Lawyer
+      Budget: 0 | Committed: 0 | Variance: 0
+      (Tidak ada budget dan tidak ada commitment = inactive account)
+
+      Row 4 (Expense Account - Over-Budget):
+      Budget Code: 60205.0300.0000
+      Description: EXPENSES - GA - Professional Services - Audit and Tax Consultancy
+      Budget: 0 | Committed: 16.880.000 | Variance: -16.880.000
+      (Budget 0 tapi ada commitment = over-budget, excess -16.880.000)
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak account, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+1. BUDGET VS COMMITTED REPORT
+   - Adalah laporan SUMMARY (ringkasan) untuk semua account di satu department
+   - Menampilkan budget allocation vs actual commitment dalam satu periode
+   - Setiap baris = satu account, bukan detail transaksi seperti Budget Card
+   - Fokus pada overview & variance untuk budget control
+   - Format: Satu baris per account dengan 3 nilai: Budget, Committed, Variance
+
+2. BUDGET (ANGGARAN / RENCANA)
+   - Adalah jumlah uang yang dialokasikan untuk setiap account di awal periode
+   - Budget adalah TARGET/RENCANA yang ditetapkan oleh management
+   - Bisa 0 (account tidak di-budget) atau nilai tertentu (account punya budget)
+   - Ditetapkan sebelum periode dimulai
+   - Contoh: Budget untuk Professional Services = 100 juta
+
+3. COMMITTED (KOMITMEN / REALISASI)
+   - Adalah jumlah uang yang sudah di-commit/digunakan dalam periode
+   - Committed terjadi ketika ada transaksi (invoice, PUM, CB) untuk account
+   - Semakin banyak committed, semakin besar penggunaan budget
+   - Bertambah seiring banyaknya transaksi selama periode
+   - Contoh: Committed untuk Professional Services = 80 juta (dari berbagai invoice)
+
+4. VARIANCE (SELISIH / DEVIASI)
+   - Adalah perbedaan antara budget alokasi dengan committed aktual
+   - Rumus: Variance = Budget - Committed
+   - Variance POSITIF = Budget Surplus (budget lebih besar dari commitment, belum dihabiskan)
+   - Variance NEGATIF = Budget Deficit/Over-Budget (commitment > budget, sudah over)
+   - Berguna untuk identify accounts yang masalah atau concern
+
+5. OVER-BUDGET (MELAMPAUI BUDGET)
+   - Terjadi ketika Committed > Budget (Variance negatif)
+   - Berarti sudah menggunakan lebih banyak dari yang dialokasikan
+   - Butuh budget top-up atau reallocation untuk proceed
+   - Critical condition untuk budget control
+   - Contoh: Budget 50 juta, tapi committed 80 juta → Over 30 juta
+
+6. UNDER-BUDGET (BELUM MENGGUNAKAN SEMUA BUDGET)
+   - Terjadi ketika Committed < Budget (Variance positif)
+   - Berarti masih banyak budget sisa yang bisa digunakan
+   - Comfortable position - masih ada runway
+   - Bisa digunakan untuk approval transaksi baru
+   - Contoh: Budget 100 juta, committed 60 juta → Sisa 40 juta
+
+7. COA (CHART OF ACCOUNT)
+   - Adalah daftar lengkap semua account di perusahaan
+   - Setiap account punya kode unik (contoh: 60205.0300.0000)
+   - Setiap account punya deskripsi lengkap (contoh: EXPENSES - GA - Professional Services)
+   - Laporan ini menampilkan semua COA yang ada di selected department
+   - Budget vs Committed di-track per account/COA
+
+8. DEPARTMENT (DEPARTEMEN)
+   - Adalah unit organisasi yang responsible untuk budget accounts
+   - Laporan ini menampilkan semua account yang owned oleh satu department
+   - Contoh: Finance Accounting department owns semua financial service accounts
+   - Department manager adalah budget owner & responsible untuk budget control
+
+9. PERIOD / PERIODE (FROM DATE - TO DATE)
+   - Adalah rentang waktu untuk laporan
+   - Committed dihitung dari transaksi yang terjadi dalam periode ini
+   - Budget bisa sepanjang tahun, tapi laporan bisa untuk subset periode
+   - Contoh: Laporan untuk 01/01/2026 s/d 13/02/2026 = 44 hari
+
+10. ALLOCATION (ALOKASI)
+    - Adalah proses penetapan budget ke setiap account
+    - Budget allocation ditetapkan di awal periode (awal tahun/bulan)
+    - Allocation bisa per department, per cost center, per account
+    - Allocation ditetapkan oleh management/budget committee
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+1. QUICK BUDGET MONITORING
+   - Lihat overall budget position untuk department
+   - Quick view tanpa harus drill-down ke detail
+   - Summary untuk leadership review
+   - Morning/end-of-day budget check
+
+2. OVER-BUDGET IDENTIFICATION
+   - Identify account yang sudah over-budget (variance negatif)
+   - Priority untuk allocation adjustment
+   - Early warning system untuk budget control
+   - Risk mitigation untuk overspending
+
+3. BUDGET VARIANCE ANALYSIS
+   - Analyze perbedaan budget vs actual spending
+   - Investigate accounts dengan large variance
+   - Understand root cause (under-budget atau over-budget)
+   - Planning untuk budget adjustment
+
+4. DEPARTMENT BUDGET CONTROL
+   - Support department manager untuk budget oversight
+   - Communication tool untuk budget status
+   - Accountability untuk budget discipline
+   - Budget control enforcement
+
+5. BUDGET REALLOCATION DECISION
+   - Identify account dengan surplus (dapat direallocationkan)
+   - Identify account dengan deficit (butuh top-up)
+   - Planning untuk budget adjustment
+   - Delta calculation untuk reallocation strategy
+
+6. COMMITMENT TRACKING
+   - Monitor committed vs budget untuk setiap account
+   - See how much of budget already committed
+   - Forecast remaining budget
+   - Planning untuk new commitments
+
+7. MONTH-END / PERIOD CLOSING
+   - Support untuk closing process
+   - Verify semua commitment tercatat
+   - Budget reconciliation dengan GL
+   - Final budget position untuk period
+
+8. MANAGEMENT REPORTING
+   - Budget report untuk CFO/management
+   - Budget dashboard for executive review
+   - Budget compliance reporting
+   - Strategic budget planning
+
+9. BUDGET OPTIMIZATION
+   - Analyze spending pattern per account
+   - Identify inefficiency atau waste
+   - Planning untuk efficiency improvement
+   - Better utilization untuk future period
+
+CARA MEMBACA VARIANCE:
+1. VARIANCE POSITIF (SURPLUS / UNDER-BUDGET)
+   Berarti: Budget > Committed (masih ada sisa budget)
+   Status: Comfortable, bisa approve transaksi baru
+   Action: Monitor untuk efficient utilization
+   Contoh: Budget 100M, Committed 60M → Variance +40M (masih ada 40M)
+
+2. VARIANCE NEGATIF (DEFICIT / OVER-BUDGET)
+   Berarti: Budget < Committed (sudah exceed budget)
+   Status: Alert/Critical, tidak boleh add more commitment
+   Action: Budget top-up needed atau cost reduction
+   Contoh: Budget 50M, Committed 80M → Variance -30M (excess 30M)
+
+3. VARIANCE ZERO (EXACT MATCH)
+   Berarti: Budget = Committed (perfectly matched)
+   Status: Fully utilized, no room for more
+   Action: Monitor tight, tidak ada buffer
+   Contoh: Budget 100M, Committed 100M → Variance 0
+
+4. VARIANCE TIDAK APPLICABLE (BUDGET = 0)
+   Berarti: Account tidak punya allocated budget
+   Status: Depends on Committed (jika ada commitment = over-budget)
+   Action: Budget allocation needed jika ada commitment
+   Contoh: Budget 0, Committed 50M → Variance -50M (full amount over-budget)
+
+FITUR CASCADE (DEPENDENT DROPDOWN):
+Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
+
+Urutan cascade:
+1. Company (mandiri) → aktifkan Division
+2. Division (cascading dari Company) → aktifkan Department
+3. Department (cascading dari Division) → aktif untuk filtering account
+4. From Date & To Date (independent date pickers)
+
+Contoh flow:
+- Pilih Company "KI" → Division dropdown aktif, tampil divisi yang ada di KI
+- Pilih Division "HO" → Department dropdown aktif, tampil department yang ada di HO
+- Pilih Department "FA" → Display semua account milik FA dengan budget vs committed
+- Atur From/To date untuk periode
+- Klik Search
+
+CATATAN PENTING:
+
+1. Semua filter (Company, Division, Department, From Date, To Date) harus diisi
+2. Laporan menampilkan SUMMARY per account (tidak detail transaksi)
+3. Satu baris = satu account (COA), bukan satu transaksi
+4. Variance warna merah = over-budget, warna normal = under-budget
+5. Periode yang luas (From - To) akan include semua transaksi dalam range tersebut
+6. Budget adalah snapshot (alokasi awal period), bisa ada adjustment
+7. Committed adalah cumulative dari transaksi sampai end-of-period
+8. Kolom hanya 3: Budget, Committed, Variance
+9. Untuk detail setiap account, gunakan Budget Card report
+10. Dropdown cascade memastikan data consistency
+11. Laporan dapat diexport untuk analisis lebih detail
+12. Laporan ini read-only, tidak bisa mengedit data langsung
+13. Format tanggal: DD/MM/YYYY
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter sudah terisi (Company, Division, Department, From, To)
+2. Pastikan cascade sudah complete (jangan skip salah satu dropdown)
+3. Verify bahwa Department pilihan punya account yang punya transaction
+4. Coba ubah date range lebih luas untuk check ada data atau tidak
+5. Possibility: Department tidak punya budget atau tidak ada commitment di periode
+6. Try department lain untuk verify laporan working
+7. Klik tombol "Search" kembali untuk refresh
+8. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+1. DAILY BUDGET CHECK
+   - Check laporan ini setiap pagi untuk budget status
+   - Focus pada account dengan variance negatif
+   - Alert jika ada over-budget
+   - Quick decision untuk approval
+
+2. IDENTIFY OVER-BUDGET ACCOUNT
+   - Sort/filter untuk variance negatif
+   - Identify mana accounts yang paling over
+   - Prioritize untuk budget adjustment
+   - Escalate jika needed
+
+3. BUDGET REALLOCATION PLANNING
+   - Identify account dengan surplus (variance besar positif)
+   - Identify account dengan deficit (variance negatif)
+   - Calculate delta untuk reallocation
+   - Planning untuk budget top-up atau internal reallocation
+
+4. PERIOD-END VARIANCE ANALYSIS
+   - Run laporan di akhir periode
+   - Analyze semua variance untuk period closed
+   - Variance explanation untuk management
+   - Support untuk period closing
+
+5. EXPORT FOR DETAILED ANALYSIS
+   - Export ke Excel untuk deeper analysis
+   - Add pivot, chart, atau trend analysis
+   - Compare dengan previous period
+   - Trend analysis untuk budget utilization
+
+6. DEPARTMENT BUDGET REVIEW MEETING
+   - Use laporan ini untuk department meeting
+   - Discuss over-budget accounts dengan team
+   - Plan untuk next period allocation
+   - Accountability & budget discipline
+
+7. FORECAST FOR NEXT PERIOD
+   - Use actual spending vs budget data
+   - Forecast next period budget needs
+   - Better budgeting untuk future periods
+   - Efficiency & optimization
+
+8. COMPLIANCE MONITORING
+   - Monitor budget policy compliance
+   - Ensure no over-budget without approval
+   - Document untuk audit trail
+   - Compliance reporting untuk management
+
+SKENARIO UMUM INQUIRY:
+SZENARIO 1: "Cek budget position untuk Finance Accounting department today"
+Action:
+1. Pilih Company = KI
+2. Pilih Division = HO
+3. Pilih Department = Finance Accounting (FA)
+4. Pilih From = hari pertama bulan / tahun
+5. Pilih To = hari ini
+6. Klik Search
+7. Lihat semua account dengan budget vs committed
+
+SZENARIO 2: "Find account yang sudah over-budget untuk escalation"
+Action:
+1. Run laporan untuk department
+2. Look untuk Variance kolom yang negatif
+3. Identify account dengan variance paling negatif (paling over)
+4. Note DOC CODE dari over-budget account
+5. Report ke manager untuk budget adjustment
+
+SZENARIO 3: "Analyze budget variance untuk bulan lalu untuk closing"
+Action:
+1. Pilih period = tanggal 1-31 bulan lalu
+2. Run laporan untuk semua department
+3. Analyze variance untuk masing-masing account
+4. Investigate large variance (understand root cause)
+5. Complete variance explanation untuk closing
+
+SZENARIO 4: "Plan budget reallocation antara account"
+Action:
+1. Run laporan untuk department
+2. Identify account dengan surplus (variance besar positif)
+3. Identify account dengan deficit (variance negatif)
+4. Calculate delta untuk reallocation
+5. Create reallocation request dengan detail
+
+TROUBLESHOOTING UMUM:
+MASALAH: "Account dengan variance negatif sangat besar (over-budget)"
+SOLUSI:
+- Verify budget allocation awal period (confirm allocated budget amount)
+- Check semua transaksi yang memukul account (invoice, PUM, payment)
+- Calculate total commitment untuk verify nilai variance
+- Contact department untuk root cause (error entry atau planning issue)
+- Plan untuk budget top-up atau cost reduction
+
+MASALAH: "Laporan menunjukkan account tapi tidak ada transaksi terlihat"
+SOLUSI:
+- Possible: Account ada di master COA tapi tidak ada commitment
+- Variance akan 0 atau positive (Budget - 0 = Budget)
+- Verify account allocation di awal period
+- Check apakah ada transaksi di period lain
+- Possible: Account inactive atau tidak ada spending di periode ini
+
+MASALAH: "Perbedaan antara Committed di laporan vs actual transaksi"
+SOLUSI:
+- Check apakah date range mencakup semua transaksi
+- Verify transaksi sudah tercatat/posted di sistem
+- Check apakah ada invoice/AP yang belum di-post
+- Possible: Timing difference antara commitment vs posting
+- Reconcile dengan Budget Card untuk detail verification
+
+MASALAH: "Variance calculation tidak match dengan manual calculation"
+SOLUSI:
+- Verify formula: Variance = Budget - Committed (bukan sebaliknya)
+- Calculate manual: Budget amount - Committed amount = Variance
+- Check sign convention: Negatif = over-budget, Positif = surplus
+- Verify data di kolom Budget & Committed sudah benar
+- Contact IT jika calculation system tidak correct
+
+MASALAH: "Laporan lambat / tidak mau load untuk department tertentu"
+SOLUSI:
+- Possible: Department punya banyak account atau transaksi
+- Try ubah period lebih sempit
+- Try department lain untuk test performance
+- Clear browser cache & try again
+- Contact IT untuk performance issue
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+1. DENGAN DEPARTMENT MANAGER:
+   - Share budget status per account
+   - Discuss over-budget accounts untuk solution
+   - Plan budget adjustment & reallocation
+   - Budget discipline & approval process
+
+2. DENGAN PROCUREMENT:
+   - Provide budget position untuk PO approval
+   - Identify available budget per account
+   - Prevent over-budget di procurement
+   - Coordinate budget impact dari new PO
+
+3. DENGAN ACCOUNTING:
+   - Reconcile budget vs GL posting
+   - Verify commitment amount vs GL balance
+   - Support untuk GL reconciliation
+   - Month-end closing coordination
+
+4. DENGAN CFO/MANAGEMENT:
+   - Monthly budget status report
+   - Highlight over-budget atau concern account
+   - Budget proposal untuk top-up
+   - Strategic budget planning & adjustment
+
+5. DENGAN IT/DATA:
+   - Report data inconsistency
+   - Budget calculation verification
+   - System issue troubleshooting
+   - Reporting requirement discussion
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+Laporan Budget vs Committed berhubungan dengan:
+1. Laporan Budget Card - Untuk drill-down detail per account
+2. Laporan Budget Control/Recap - Untuk summary budget position
+3. Laporan AP (Accounts Payable) - Untuk detail invoice commitment
+4. Laporan PUM - Untuk detail uang muka allocation
+5. Laporan COA List - Untuk master account definition
+6. Laporan Department Budget - Untuk department level summary
+7. General Ledger - Untuk actual GL posting vs commitment
+8. Financial Statement - Budget included dalam variance report
+
+WORKFLOW NORMAL UNTUK BUDGET MONITORING:
+STEP 1: BUDGET ALLOCATION
+- Budget ditetapkan untuk setiap account di department
+- Allocation based on operational plan & forecast
+- Budget dialokasikan ke account sebelum period dimulai
+- Status: Budget Allocated
+
+STEP 2: TRANSAKSI & COMMITMENT
+- Invoice/PUM/CB diterima dan direcord
+- Transaksi di-assign ke COA account
+- Commitment terjadi, balance berubah
+- Budget position updated realtime
+- Status: Commitment Recorded
+
+STEP 3: MONITORING & TRACKING
+- Daily/weekly monitor budget vs committed
+- Identify over-budget atau concern account
+- Variance analysis untuk understanding
+- Status Alert jika ada issue
+- Status: Active Monitoring
+
+STEP 4: BUDGET ADJUSTMENT (IF NEEDED)
+- Identify account butuh top-up atau reallocation
+- Prepare reallocation request
+- Submit untuk approval
+- Post adjustment ke system
+- Status: Adjusted
+
+STEP 5: MONTH-END CLOSING
+- Run final budget vs committed report
+- Verify semua commitment tercatat
+- Reconcile dengan GL
+- Close untuk period
+- Status: Period Closed
+
+BEST PRACTICES:
+1. REGULAR MONITORING
+   - Check budget report weekly
+   - Identify issue early
+   - Proactive management
+   - Prevent over-budget surprise
+
+2. BUDGET DISCIPLINE
+   - Don't approve over-budget commitment
+   - Enforce budget policy
+   - Accountability per department
+   - Cost consciousness culture
+
+3. TIMELY REPORTING
+   - Report budget status regularly
+   - Communication kepada management
+   - Variance explanation
+   - Transparency
+
+4. VARIANCE INVESTIGATION
+   - Investigate large variance
+   - Understanding root cause
+   - Corrective action planning
+   - Lesson learned
+
+5. BUDGET ADJUSTMENT
+   - Clear process untuk reallocation
+   - Documentation & approval
+   - Timely adjustment
+   - Record untuk audit
+
+6. DEPARTMENT ENGAGEMENT
+   - Regular meeting dengan department
+   - Budget awareness training
+   - Collaborative planning
+   - Shared accountability
+
+7. SYSTEM MAINTENANCE
+   - Verify budget master data
+   - Account number consistency
+   - Master data accuracy
+   - System reconciliation
+
+KEYS TO REMEMBER:
+1. Budget vs Committed = Summary per account (bukan detail transaksi)
+2. Variance = Budget - Committed (positif = surplus, negatif = over)
+3. Over-budget = negative variance (commitment > budget)
+4. One row = One account/COA (multiple account tidak bisa di-roll-up)
+5. Period = Date range (From/To), bukan single date
+6. Cascade mandatory: Company → Division → Department
+7. Budget adalah rencana, Committed adalah realisasi actual
+8. Large negative variance = Priority untuk investigation
+9. Department owner responsible untuk budget control
+10. Keep for audit trail & budget compliance documentation

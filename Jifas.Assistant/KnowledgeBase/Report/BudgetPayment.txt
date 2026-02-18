@@ -1,0 +1,242 @@
+LAPORAN PENGELUARAN BUDGET HARIAN
+
+TUJUAN:
+Memberikan informasi detail tentang pengeluaran (payment) yang telah dikeluarkan dari sistem,
+dengan breakdown berdasarkan perusahaan, bank, dan periode tanggal tertentu.
+Laporan ini membantu bagian finance untuk monitoring, verifikasi, dan kontrol pengeluaran budget sehari-hari.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan pengeluaran budget dalam bentuk tabel yang dapat difilter
+dan dirinci sesuai kebutuhan pengguna, memudahkan tracking setiap pembayaran yang dilakukan.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Budget Payment Daily"
+   - Sistem menampilkan form filter dengan beberapa field input
+   - Field filter ditampilkan dalam satu baris untuk kemudahan penggunaan
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Pengguna hanya bisa melihat perusahaan yang aktif di sistem
+
+   b) Pilih Bank (Bank)
+      - Klik dropdown "Bank"
+      - Daftar bank akan muncul berdasarkan perusahaan yang sudah dipilih
+      - Ketik untuk mencari bank tertentu (minimal 3 karakter)
+      - Pilih salah satu bank
+      - Contoh: "CAPIT - Bank Capital"
+      - Catatan: Field ini hanya aktif setelah memilih perusahaan
+      - Contoh bank: BCA, Mandiri, BRI, Bank Capital, dll.
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini (saat pertama kali membuka laporan)
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini (saat pertama kali membuka laporan)
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data pembayaran dari database
+   - Saat proses berjalan, akan muncul loading indicator (status "Loading...")
+   - Waktu loading tergantung banyaknya data yang diproses
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: LAPORAN KESELURUHAN PENGELUARAN BUDGET HARIAN
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Nomor Account/Cek: (identitas rekening pembayaran)
+      - Nama Bank: (sesuai pilihan filter)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+
+   b) Detail Tabel Pembayaran (Terdiri dari kolom):
+      - No.               : Nomor urut pembayaran
+      - Tanggal Cek/Giro  : Tanggal dokumen/instrumen pembayaran dikeluarkan atau diproses
+      - No. Cek/Giro      : Nomor identitas cek atau giro (referensi dokumen pembayaran)
+      - No. Bukti Voucher : Nomor referensi di sistem (nomor transaksi pembayaran di JIFAS)
+      - Nama Supplier     : Nama vendor/supplier yang menerima pembayaran
+      - Uraian            : Deskripsi/keterangan dari pembayaran (tujuan pembayaran)
+      - Jumlah (USD)      : Nilai pembayaran dalam mata uang US Dollar
+      - Jumlah (IDR)      : Nilai pembayaran dalam mata uang Rupiah Indonesia
+
+   c) Contoh Data di Laporan:
+      1. Tanggal: 07/01/2026 - Supplier: (kosong/tidak terisi) - Voucher: PVKI26010017
+         Uraian: Payment Pengajuan Invoice Playwright | Test Playwright 1/7
+         Jumlah USD: 0 | Jumlah IDR: 150.063
+
+      2. Tanggal: 08/01/2026 - No Cek/Giro: (kosong) - Voucher: PUKI26010012
+         Uraian: Bayar heru seratus buat jajan
+         Jumlah USD: 0 | Jumlah IDR: 100.000
+
+      3. Tanggal: 12/01/2026 - No. Cek: 45712 - Voucher: PUKI26010015
+         Uraian: PIN Emas masa kerja karyawan - Test 1/12
+         Jumlah USD: 0 | Jumlah IDR: 10.000.000
+
+      4. Tanggal: 06/02/2026 - Voucher: PUKI26020001
+         Uraian: Pembayaran Pum untuk perjalanan dinas ke bali
+         Jumlah USD: 0 | Jumlah IDR: 1.000.000
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak halaman, bisa berpindah halaman
+      - Atur skala tampilan sesuai kebutuhan (zoom in/out)
+      - Tombol refresh untuk reload/memperbarui data yang sama
+      - Dapat menampilkan dokumen dalam satu halaman penuh (single page mode)
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format
+      - Format yang tersedia: PDF, Excel, dan format lain sesuai kebutuhan
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+FITUR PERPINDAHAN BANK:
+Ketika pengguna mengubah bank (dengan perusahaan yang sama):
+- Klik dropdown "Bank" untuk memilih bank yang berbeda
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai bank terbaru
+- Semua data pembayaran akan disesuaikan dengan periode tanggal yang masih aktif
+- Data lama akan diganti dengan data pembayaran dari bank baru
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan data pembayaran sesuai periode baru
+- Data akan ditampilkan mulai dari pembayaran tertua hingga paling baru dalam range yang dipilih
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. MONITORING PENGELUARAN HARIAN
+   - Melihat pembayaran yang telah dikeluarkan setiap hari
+   - Memverifikasi bahwa semua pembayaran tercatat di sistem
+   - Mengontrol agar pembayaran sesuai dengan approval dan authorization yang ada
+   - Identifikasi pembayaran yang tidak sesuai atau mencurigakan
+
+2. REKONSILIASI BANK
+   - Mencocokkan data pembayaran di sistem dengan laporan bank
+   - Mengidentifikasi perbedaan antara yang tercatat di sistem vs yang dibayarkan bank
+   - Memastikan semua pembayaran benar-benar telah diproses bank
+   - Follow-up jika ada pembayaran yang belum dikonfirmasi bank
+
+3. VERIFIKASI VOUCHER & DOKUMEN
+   - Melihat nomor voucher dan komparasi dengan dokumen fisik
+   - Memverifikasi nomor cek/giro dengan dokumen yang diterima
+   - Memastikan kesesuaian antara sistem dan dokumen pendukung
+   - Identifikasi duplikasi pembayaran
+
+4. ANALISIS PENGELUARAN & CASH FLOW
+   - Menganalisis trend pengeluaran per supplier/vendor
+   - Melihat nilai pembayaran dalam dua mata uang (USD dan IDR)
+   - Memantau pengeluaran berdasarkan jenis pembayaran (invoice, PUM, realisasi, dll)
+   - Membantu forecasting pengeluaran cash di masa depan
+   - Mengidentifikasi supplier/vendor dengan pengeluaran terbesar
+
+5. KONTROL INTERNAL & COMPLIANCE
+   - Memastikan pembayaran telah sesuai dengan policy perusahaan
+   - Verifikasi otorisasi pembayaran (apakah telah di-approve oleh yang berwenang)
+   - Dokumentasi untuk audit internal dan eksternal
+   - Tracking untuk keperluan perpajakan dan reporting regulasi
+
+6. DOKUMENTASI & AUDIT
+   - Menyediakan bukti tertulis (laporan tercetak/export) untuk keperluan audit
+   - Referensi untuk follow-up jika ada ketidakcocokan atau pertanyaan
+   - Dokumentasi untuk arsip/file permanent
+   - Evidence untuk compliance dengan regulasi keuangan
+
+7. REPORTING MANAJEMEN
+   - Menyiapkan ringkasan pengeluaran budget untuk manajemen
+   - Memberikan dashboard visual tentang status pengeluaran
+   - Membuat laporan perbandingan pengeluaran vs budget yang dialokasikan
+   - Menyediakan data untuk cost analysis dan efficiency improvement
+
+JENIS-JENIS PEMBAYARAN YANG DITAMPILKAN:
+
+Laporan ini menampilkan berbagai jenis pembayaran, antara lain:
+
+1. PEMBAYARAN INVOICE
+   - Pembayaran untuk invoice pembelian barang/jasa
+   - Contoh: "Payment Pengajuan Invoice Playwright"
+   - Biasanya melibatkan supplier/vendor
+
+2. PEMBAYARAN PUM (Perjalanan Dinas & Uang Muka)
+   - Pembayaran untuk perjalanan dinas karyawan
+   - Pembayaran uang muka untuk proyek/kegiatan
+   - Contoh: "Pembayaran Pum untuk perjalanan dinas ke bali"
+
+3. TUNJANGAN & BENEFIT KARYAWAN
+   - Pembayaran tunjangan kerja, bonus, insentif
+   - Pembayaran asuransi dan benefit karyawan
+   - Contoh: "PIN (Payment Identification Number) Emas masa kerja karyawan"
+
+4. BIAYA OPERASIONAL
+   - Biaya kantor, listrik, air, dll
+   - Biaya maintenance dan perbaikan
+   - Contoh: "Bayar heru seratus buat jajan"
+
+INTERPRETASI KOLOM TANGGAL CEK/GIRO:===
+- Kolom "Tanggal Cek/Giro" menunjukkan tanggal dokumen diterbitkan/ditulis
+- Tidak selalu sama dengan tanggal pembayaran actual di bank
+- Untuk reconciliation, bandingkan dengan tanggal di laporan bank
+- Beberapa pembayaran mungkin menggunakan cek/giro yang diklik di masa depan
+
+CATATAN PENTING:
+
+1. Semua field filter (Perusahaan, Bank, Tanggal Awal, Tanggal Akhir) harus diisi sebelum search
+2. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+3. Laporan hanya menampilkan pembayaran yang telah tercatat dan diverifikasi di sistem
+4. Nilai dalam USD akan menampilkan 0 jika tidak ada pembayaran dalam mata uang tersebut
+5. Pembayaran mungkin belum sempurna di bank walau sudah tercatat di sistem
+6. Untuk perubahan filter atau periode, klik refresh/search kembali
+7. Laporan dapat diexport dalam berbagai format (PDF, Excel) untuk analisis lanjutan
+8. Data yang ditampilkan hanya untuk perusahaan dan bank yang dipilih, bukan all data
+9. Jika tidak ada data, laporan akan menampilkan tabel kosong tanpa error
+10. Laporan ini read-only, tidak bisa mengedit data langsung dari laporan (harus ke modul pembayaran)
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter (Company, Bank, From Date, To Date) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah bank yang dipilih benar-benar punya pembayaran di periode tersebut
+4. Coba ubah range tanggal ke yang lebih luas
+5. Klik tombol "Search" kembali untuk refresh
+6. Jika masih tidak ada, mungkin benar-benar tidak ada pembayaran di periode/bank tersebut
+7. Hubungi IT jika laporan tidak mau load sama sekali (ada error)
+
+TIPS PENGGUNAAN:
+1. CEPAT CEK PEMBAYARAN HARI INI
+   - Jangan ubah tanggal, langsung klik Search (default sudah tanggal hari ini)
+   - Lihat pembayaran apa saja yang telah diproses hari ini
+
+2. BANDINGKAN DENGAN LAPORAN BANK
+   - Ambil laporan dari bank
+   - Filter laporan sistem dengan tanggal dan bank yang sama
+   - Bandingkan nomor cek/giro dan jumlahnya
+
+3. ANALISIS PER SUPPLIER
+   - Cek pembayaran untuk supplier tertentu dalam range waktu tertentu
+   - Lihat pola pembayaran dan jumlah total per supplier
+
+4. EXPORT UNTUK BAHAN RAPAT/MEETING
+   - Klik export ke format Excel
+   - Edit/tambah kolom analisis di Excel sesuai kebutuhan
+   - Presentasikan ke manajemen

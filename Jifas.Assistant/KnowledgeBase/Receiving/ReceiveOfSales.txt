@@ -1,0 +1,453 @@
+
+MODUL RECEIVE OF SALES (RV) - DOKUMENTASI KNOWLEDGE BASE
+
+Dokumentasi ini dirancang untuk staff Finance dan Accounting yang menggunakan modul 
+Receive of Sales (RV) dalam sistem JIFAS. Fokus diberikan pada alur bisnis dan workflow 
+bukan pada aspek teknis.
+
+A. APA ITU SALES RECEIVE (RV) DAN KAPAN DIGUNAKAN?
+
+Sales Receive (RV) adalah dokumen yang digunakan untuk mencatat penerimaan uang dari 
+pelanggan/debitur atas tagihan yang mereka miliki. Dokumen ini mencatat:
+
+1. Dana yang diterima dari bank / penerimaan tunai
+2. Pengalokasian dana ke pos-pos akuntansi yang sesuai
+3. Pencocokan dengan tagihan yang ada (Accounts Receivable / AR)
+
+KAPAN DIGUNAKAN:
+- Pelanggan membayar invoice mereka
+- Uang masuk ke rekening bank perusahaan
+- Butuh dicatat kemana uang itu dialokasikan
+
+RV vs IK (Invoice Keputusan):
+- IK = dokumen penerimaan barang dari supplier (incoming invoice)
+- RV = dokumen penerimaan uang dari pelanggan (cash receipt)
+
+B. TAMPILAN UTAMA - DAFTAR SALES RECEIVE
+
+MENU SEARCH / FILTER:
+- Search by Date: Untuk mencari RV berdasarkan rentang tanggal tertentu
+  * From Date: Tanggal mulai pencarian
+  * To Date: Tanggal akhir pencarian
+  * Button Preview: Tekan untuk menampilkan data sesuai range tanggal yang dipilih
+
+KOLOM-KOLOM DI GRID DAFTAR:
+1. Document Date - Tanggal dokumen RV dibuat
+2. RV No - Nomor reference/sequence dokumen RV
+3. Description - Deskripsi / keterangan penerimaan
+4. Bank Name - Nama bank tempat uang diterima
+5. Currency - Mata uang (IDR, USD, dll)
+6. Amount - Total uang yang diterima
+7. Customer Code - Kode pelanggan / debitur
+8. Status - Status dokumen RV saat ini
+9. Action - Tombol untuk edit/view dokumen
+
+TOMBOL TOOLBAR:
+- Create New Receive: Buat dokumen RV baru
+- Export to Excel: Download data ke file Excel
+
+C. MEMBUAT SALES RECEIVE BARU
+
+LANGKAH 1: KLIK "CREATE NEW RECEIVE"
+Akan membuka form kosong untuk input data penerimaan baru dengan field-field kosong
+
+LANGKAH 2: ISI INFORMASI DASAR
+Sebelum mengisi detail, isi informasi dasar:
+
+a) TANGGAL DOKUMEN (Document Date)
+   - Tanggal kapan uang diterima oleh perusahaan
+   - Format: sesuai pengaturan sistem
+   - Wajib diisi
+
+b) PILIH BANK (Bank)
+   - Rekening bank mana yang menerima uang
+   - Sistem otomatis isi mata uang standar bank itu
+   - Jika transaksi dalam mata uang asing, rate bisa diubah
+   - Wajib diisi
+
+c) VIRTUAL ACCOUNT (OPTIONAL)
+   - Jika uang masuk via Virtual Account (VA):
+     * Check box "Virtual Account"
+     * Masukkan nomor VA
+     * Klik "Get Data!" - sistem akan otomatis isi data pelanggan
+   - Jika tidak pakai VA, biarkan unchecked
+
+d) PILIH PELANGGAN / DEBITUR (Debtor/Customer)
+   - Siapa yang mengirim uang ini?
+   - Klik tombol "Find Customer" untuk cari dari daftar
+   - Sistem akan isi nama lengkap otomatis
+   - Wajib diisi
+
+LANGKAH 3: ISI INFORMASI PENERIMAAN UANG
+
+a) TOTAL BANK RECEIVE
+   - Berapa total uang yang diterima dari bank
+   - Contoh: Rp. 100.000.000
+   - Wajib diisi
+
+b) BANK CHARGE (OPTIONAL)
+   - Biaya admin bank (jika ada)
+   - Contoh: Rp. 50.000
+   - Biasanya dikosongkan jika tidak ada biaya
+
+c) CURRENCY RATE (JIKA MATA UANG ASING)
+   - Rate konversi jika uang dalam mata uang asing
+   - Sistem otomatis mengambil rate standar bank
+   - Bisa diubah jika diperlukan adjustment
+   - Field ini readonly untuk transaksi lokal
+
+d) MENGGUNAKAN CUSTOMER DEPOSIT (OPTIONAL)
+   - Check jika ada saldo deposit pelanggan yang digunakan
+   - Masukkan jumlahnya
+   - Sistem otomatis update total penerimaan
+
+e) TUJUAN PENERIMAAN UANG (Purpose)
+   - Pilih tujuan: Sale / Deposit / lainnya
+   - Jika dipilih "Deposit", maka checkbox deposit otomatis disabled
+   - Wajib diisi
+
+f) BANK RECEIPT NUMBER (OPTIONAL)
+   - Nomor bukti penerimaan dari bank (jika ada)
+   - Nomor BG/Cek jika pembayaran via BG/Cek
+   - Contoh: BG001234
+
+g) DESKRIPSI PENERIMAAN (Description)
+   - Detail keterangan penerimaan
+   - Maksimal 200 karakter
+   - Contoh: "Pembayaran Invoice INV-001/2024"
+   - Wajib diisi
+
+h) NOMOR KAVLING (OPTIONAL)
+   - Jika pelanggan adalah pembeli bangun, masukkan nomor kavling/lot
+   - Klik "Cek BAST" untuk verifikasi
+
+i) KATEGORI BISNIS (Business Category)
+   - Jenis/kategori transaksi ini
+   - Contoh: Penjualan Normal, Penjualan Khusus
+   - Wajib diisi (untuk dokumen tertentu)
+
+LANGKAH 4: ALOKASI KE INVOICE / DETAIL PENERIMAAN
+
+Sistem punya 2 mode alokasi:
+
+MODE 1 - JIKA UANG UNTUK BAYAR INVOICE YANG ADA (RV untuk IK/Invoice)
+- Checkbox "All AR by [Nama Pelanggan]" untuk lihat semua tagihan pelanggan
+- Pilih invoice mana yang dibayar dari uang yang diterima
+- Masukkan jumlah alokasi untuk masing-masing invoice
+- Total alokasi HARUS SAMA dengan total uang yang diterima
+
+MODE 2 - JIKA UANG UNTUK TUJUAN LAIN (RV Non-IK)
+- Buat detail penerimaan baru di grid
+- Untuk setiap baris detail, isi:
+  * Division (Divisi)
+  * Department (Departemen)
+  * Receive Type (Jenis penerimaan)
+  * Base Amount (Jumlah dasar)
+  * Tax Code (Jenis pajak)
+  * PPH Type (Jenis PPH)
+- Sistem otomatis hitung PPN dan PPH berdasarkan rate
+- Update total base amount, PPN, PPH di header
+
+LANGKAH 5: ALOKASI SELISIH (JIKA ADA)
+
+Jika total uang ≠ total alokasi, akan ada "Unknown Allocation":
+- Pilih ke pos mana selisih itu dialokasikan
+- Contoh: ke "Suspense Account" atau "General Income"
+- Field "Set Unknown To" hanya aktif jika ada selisih
+
+LANGKAH 6: SIMPAN DOKUMEN
+
+Setelah semua data diisi:
+1. Klik tombol "Save" - dokumen tersimpan
+2. Sistem akan validasi:
+   - Semua field wajib sudah diisi? ✓
+   - Total alokasi sama dengan total terima? ✓
+   - Tidak ada error validasi? ✓
+3. Setelah Save berhasil, dokumen masuk ke status pertama: "NEED FINANCE CHECKING"
+
+D. STATUS-STATUS SALES RECEIVE DAN ALUR APPROVAL
+
+Sales Receive memiliki workflow approval yang sama seperti IK:
+
+URUTAN STATUS:
+1. NEED FINANCE CHECKING (Warna: HIJAU)
+   - Dokumen baru, menunggu cek dari Finance
+   - Finance akan verifikasi data, jumlah, alokasi
+   - Tombol yang tersedia: "Checking" (untuk approve), "Update" (untuk edit)
+
+2. NEED TAX APPROVAL (Setelah Finance Checking)
+   - Finance sudah approve, menunggu cek Tax/Pajak
+   - Tax akan verifikasi perhitungan pajak dan alokasi pajak
+   - Tombol yang tersedia: "Update" (untuk edit jika diperlukan)
+
+3. NEED ACCOUNTING CHECKING / POSTING (Setelah Tax Approval)
+   - Menunggu proses akuntansi final
+   - Accounting akan verifikasi ketepatan akun
+   - Tombol yang tersedia: "Update" (untuk edit)
+
+4. READY TO PAY / PAID (Status Final)
+   - Dokumen sudah selesai semua approval
+   - Sudah siap untuk pembayaran/posting ke GL
+   - Tidak bisa diedit lagi
+   - Tombol tidak tersedia
+
+5. REMOVED / VOID (Warna: MERAH)
+   - Dokumen dibatalkan
+   - Tidak bisa diedit
+   - Harus buat dokumen baru jika ada kesalahan
+
+WARNA INDIKATOR STATUS:
+- HIJAU = Menunggu approval/action dari bagian tertentu (NEED...)
+- HITAM = Status normal/processing (dalam workflow)
+- MERAH = Status akhir (REMOVED/VOID/REJECTED)
+
+E. VALIDASI DAN KONTROL PENTING
+
+VALIDASI OTOMATIS:
+
+1. Validasi Field Wajib
+   - Semua field dengan tanda * harus diisi
+   - Jika ada kosong, tombol Save/Update tidak akan berfungsi
+
+2. Validasi Total Alokasi
+   ERROR: "Total Alokasi harus sama dengan Total Bank Receive"
+   - Artinya: Jumlah uang yang dialokasikan tidak cocok dengan uang yang diterima
+   - SOLUSI: Periksa ulang alokasi di grid detail
+             Pastikan semua invoice sudah dialokasikan
+             Jika ada sisa, masukkan ke "Unknown Allocation"
+
+3. Validasi Pelanggan & Kavling (Untuk Receive dari BAST)
+   ERROR: "Customer tidak match dengan BAST"
+   - Artinya: Pelanggan yang dipilih tidak sesuai dengan BAST
+   - SOLUSI: Pilih pelanggan yang benar sesuai nomor kavling
+             Jika nomor kavling berbeda, muncul dengan warna merah
+
+4. Validasi Dokumen Referensi
+   - Jika "Revision Of" dicheck, harus ada nomor dokumen lama
+   - Sistem akan cek ketersediaan dokumen
+
+5. Validasi Virtual Account
+   - Jika pakai Virtual Account, nomor VA harus valid
+   - Klik "Get Data!" untuk verifikasi
+
+F. FITUR KHUSUS
+
+1. REVISION OF (REVISI DOKUMEN)
+   - Jika dokumen lama akan direvisi (tidak dihapus tapi dibuat dokumen baru)
+   - Check "Revision Of"
+   - Cari dokumen lama dengan tombol "Find Data"
+   - Sistem akan link dokumen revisi dengan dokumen asli
+   - Gunakan ini daripada VOID jika hanya ada kesalahan minor
+
+2. DEPOSIT TO OTHER ACCOUNT
+   - Jika ada dana yang perlu didepositkan ke rekening lain
+   - Check checkbox "Deposit to Other Account"
+   - Klik "Select Other Account" untuk pilih tujuan deposit
+   - Masukkan jumlah yang di-deposit
+
+3. EXPORT KE EXCEL
+   - Di toolbar, ada tombol Excel
+   - Gunakan untuk download daftar RV untuk laporan
+
+4. FILTER & PENCARIAN
+   - Bisa filter per kolom dengan mengklik header kolom
+   - Search berdasarkan tanggal dengan date range
+
+G. PERBEDAAN MODE RV: IK vs NON-IK
+
+RV UNTUK IK (Invoice-based Receive):
+- Untuk membayar invoice yang sudah ada di sistem
+- Setiap allocation dikait langsung ke invoice tertentu
+- Amount invoice harus ada di database
+- Biasanya untuk penjualan normal (perusahaan minta pembayaran invoice spesifik)
+- Grid menampilkan daftar invoice yang bisa dibayar
+- dapat check "All AR by Customer" untuk lihat semua tagihan pelanggan
+
+RV UNTUK NON-IK (Non-Invoice Receive):
+- Untuk penerimaan uang yang tidak terkait invoice tertentu
+- Buat detail alokasi menggunakan kategori akun (Division/Department/Receive Type)
+- Lebih fleksibel, tidak perlu invoice di database dulu
+- Bisanya untuk kontribusi, bayaran custom, deposit umum
+- Perlu set tax code dan PPH type untuk setiap detail
+- Grid detail bisa ditambah/dihapus row sesuai kebutuhan
+
+BAGAIMANA SISTEM TAHU PILIH MANA?
+- Jika pelanggan ada di BAST dan sudah bayar (flag_ik = true) → RV untuk IK
+- Jika tidak ada keterkaitan BAST atau custom penerimaan → RV Non-IK
+
+H. TIPS & TRIK MENGGUNAKAN SALES RECEIVE
+
+TIP 1: GUNAKAN VIRTUAL ACCOUNT JIKA TERSEDIA
+- Lebih cepat dan otomatis terisi data pelanggan
+- Mengurangi kesalahan input manual
+- Hanya ketik nomor VA, klik "Get Data", semua terisi otomatis
+
+TIP 2: COBA "CEK BAST" UNTUK KAVLING-BASED SALES
+- Jika tahu nomor kavling, langsung cek BAST
+- Sistem auto-isi customer dan data lainnya
+- Lebih akurat daripada cari manual
+
+TIP 3: PERIKSA INVOICE MANA YANG SUDAH DIBAYAR
+- Jika banyak invoice pending, gunakan filter "All AR by Customer"
+- Sortir by date untuk lihat invoice tertua dulu
+- Bayar invoice tertua terlebih dahulu (FIFO prinsip)
+
+TIP 4: HITUNG ULANG SEBELUM SAVE
+- Lihat total "Total Receive" (Bank + Deposit)
+- Lihat total "Total Allocation" (Invoice allocation atau detail PPN/PPH)
+- Jika ada "Unknown Allocation", pastikan sudah dialokasikan
+- Kalau semua match, baru Save
+
+TIP 5: GUNAKAN DESKRIPSI YANG JELAS
+- Masukkan info yang cukup di field "Description"
+- Contoh: "Pembayaran INV-001/2024 atas Penjualan PT ABC"
+- Berguna untuk audit trail dan referensi nanti
+
+TIP 6: JANGAN HAPUS DOKUMEN - GUNAKAN VOID
+- Jika ada kesalahan setelah save, jangan coba hapus manual
+- Gunakan fungsi VOID di dokumen
+- Tulis alasan pembatalan
+- Buat dokumen baru yang benar
+
+TIP 7: PERHATIAN SAAT CEK KAVLING
+- Jika pelanggan ambil multiple kavling, pastikan pilih yang benar
+- Sistem akan highlight warna MERAH untuk kavling yang tidak match
+- Ini untuk cegah kesalahan alokasi ke kavling salah
+
+TIP 8: UNTUK FOREIGN CURRENCY
+- Rate akan auto-isi dari standar bank
+- Jika ada perbedaan rate actual vs sistem, bisa edit manual
+- Pastikan sudah koordinasi dengan Finance sebelum edit rate
+
+I. JIKA TERJADI ERROR/MASALAH
+
+ERROR 1: "Field [Nama Field] wajib diisi"
+- MASALAH: Ada field yang masih kosong
+- SOLUSI: Cari field dengan tanda bintang (*), isi semua field tersebut
+
+ERROR 2: "Total Bank Receive tidak match dengan Total Allocation"
+- MASALAH: Uang yang terima tidak sama dengan alokasi yang dibuat
+- SOLUSI: 
+  □ Periksa apakah semua invoice sudah dialokasikan
+  □ Cek total amount di setiap row invoice/detail
+  □ Jika ada sisa/kurang, gunakan "Unknown Allocation" untuk sebenarnya
+  □ Balancing: Total terima = Total alokasi + Unknown (jika ada)
+
+ERROR 3: "Virtual Account tidak ditemukan / tidak valid"
+- MASALAH: Nomor VA tidak ada di database atau tidak aktif
+- SOLUSI:
+  □ Cek ulang nomor VA, ketik dengan benar
+  □ Konfirmasi ke bagian Treasury/Bank
+  □ Jika tidak pakai VA, uncheck checkbox VA
+
+ERROR 4: "Customer tidak ditemukan"
+- MASALAH: Pelanggan tidak terdaftar di sistem atau kode salah
+- SOLUSI:
+  □ Klik "Find Customer" dan cari dari daftar
+  □ Jika belum ada di daftar, hubungi bagian Master Data
+  □ Jangan buat entry pelanggan baru di RV form
+
+ERROR 5: "Bank Charge / Adjustment Issues"
+- MASALAH: Ada selisih kecil (bank charge, rounding)
+- SOLUSI:
+  □ Jika ada biaya admin, masukkan di "Bank Charge"
+  □ Jika ada rounding difference, gunakan "Unknown Allocation"
+  □ Koordinasi dengan Finance untuk approval selisih
+
+ERROR 6: "Tidak bisa Edit dokumen - Status sudah Final"
+- MASALAH: Dokumen sudah di-approve dan statusnya REMOVED/VOID
+- SOLUSI:
+  □ Jika ada kesalahan, buat dokumen RV baru
+  □ Check "Revision Of" dan link ke dokumen lama
+  □ Jangan coba paksa edit dokumen yang sudah final
+
+ERROR 7: "Invoice/Detail Grid tidak muncul"
+- MASALAH: Setelah pilih pelanggan, grid detail masih kosong
+- SOLUSI:
+  □ Pastikan sudah klik "Cek BAST" atau "Get Data" dari VA
+  □ Untuk RV Non-IK, harus manual tambah row dengan tombol "Request"
+  □ Tunggu API response jika sedang loading (lihat spinner)
+
+ERROR 8: "Tax calculation tidak tepat"
+- MASALAH: PPN/PPH tidak sesuai perhitungan manual
+- SOLUSI:
+  □ Periksa Tax Code yang dipilih, pastikan sesuai
+  □ Lihat persentase tax di Master Data
+  □ Kalau ada discount/special rate, koordinasi dengan Accounting
+
+J. IZIN & PEMBATASAN BERDASARKAN PERUSAHAAN
+
+Untuk perusahaan TERTENTU (misal: PT BP):
+- TIDAK BISA membuat RV document
+- Tombol "Create New Receive" akan disabled (grayed out)
+- Alasan: Batasan policy/aturan perusahaan
+- Jika perlu membuat RV, koordinasi dengan head office / pusat
+
+Untuk perusahaan NORMAL:
+- Bisa membuat RV sesuai dengan access level dan role
+
+K. ALUR KESELURUHAN SALES RECEIVE
+
+[1] PELANGGAN MEMBAYAR INVOICE
+        ↓
+[2] UANG MASUK KE REKENING BANK
+        ↓
+[3] STAFF FINANCE BUAT DOKUMEN RV DI SISTEM
+    - Input bank, amount, pelanggan
+    - Alokasikan ke invoice yang dibayarkan
+        ↓
+[4] SUBMIT RV (Status: NEED FINANCE CHECKING - HIJAU)
+        ↓
+[5] FINANCE TEAM REVIEW
+    - Cek data, jumlah, kelengkapan dokumen
+    - Klik "Checking" untuk approve
+        ↓
+[6] MOVE KE TAX APPROVAL (Status: NEED TAX APPROVAL)
+    - Tax team verifikasi pajak
+        ↓
+[7] MOVE KE ACCOUNTING POSTING (Status: NEED ACCOUNTING CHECKING)
+    - Accounting finalisasi dan post ke General Ledger
+        ↓
+[8] SELESAI (Status: READY TO PAY / PAID - HITAM)
+    - RV siap untuk laporan
+    - Data sudah tercatat di akuntansi
+
+JIKA TERJADI KESALAHAN:
+[3] Saat Create → EDIT sebelum submit
+    [4] Sudah Submit → VOID dokumen lama + BUAT dokumen baru
+
+L. KESIMPULAN & CATATAN PENTING
+Sales Receive adalah dokumen penting untuk mencatat penerimaan uang dari pelanggan
+Ada approval workflow - tidak bisa langsung terbit, harus approval Finance → Tax
+Dua mode: RV untuk Invoice (IK-based) dan RV Non-Invoice (custom allocation)
+SELALU validasi: Total terima = Total alokasi (atau + unknown allocation)
+Gunakan Virtual Account jika tersedia untuk input yang lebih akurat
+Jika ada kesalahan, VOID dokumen lama + buat dokumen baru (jangan edit manual)
+Simpan deskripsi yang jelas untuk audit trail
+Perhatikan warna status: Hijau (ada action), Hitam (normal), Merah (batal)
+Jangan coba edit dokumen yang sudah final/REMOVED
+Koordinasi dengan Finance untuk masalah khusus atau exception
+
+PERTANYAAN UMUM (FAQ)
+
+Q: Kapan harus buat RV vs invoice biasa?
+A: RV adalah untuk penerimaan uang (cash receipt), Invoice adalah untuk pengeluaran barang.
+   Untuk uang masuk dari pelanggan, selalu gunakan RV.
+
+Q: Kalau pelanggan bayar sebagian, harus bagaimana?
+A: Buat RV dengan jumlah yang dibayarkan. Alokasikan ke invoice sesuai pembayaran sebagian.
+   Sisa tagihan tetap outstanding untuk RV berikutnya.
+
+Q: Ada selisih 1000 rupiah karena rounding, bagaimana?
+A: Masukkan di "Unknown Allocation" pilih akun yang sesuai (biasanya miscellaneous income).
+
+Q: Kalau virtual account invalid, bisa skip?
+A: Ya, uncheck Virtual Account dan input data pelanggan secara manual.
+
+Q: Dokumen sudah Save, tapi ada kesalahan. Bisa diedit?
+A: Tergantung status. Kalau masih "NEED FINANCE CHECKING", bisa klik Edit.
+   Kalau sudah REMOVED/VOID, harus buat dokumen baru.
+
+Q: Bagaimana dengan foreign currency RV?
+A: Bank akan auto-isi currency & rate. Jika perlu adjust rate, bisa edit field rate.
+   Koordinasi dengan Treasury untuk rate approval.

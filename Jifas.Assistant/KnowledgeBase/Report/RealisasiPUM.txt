@@ -1,0 +1,494 @@
+LAPORAN REALISASI PUM (PERTANGGUNGJAWABAN UANG MUKA)
+
+TUJUAN:
+Memberikan informasi tentang proses realisasi (pertanggungjawaban) dari Uang Muka (PUM/PUM) yang telah diberikan kepada karyawan.
+Laporan ini menunjukkan hubungan antara pengajuan uang muka, pencairan uang muka, dan pengajuan realisasi (pertanggungjawaban).
+Membantu divisi finance untuk tracking apakah uang muka sudah dipertanggungjawabkan atau masih pending.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan inquiry/tracking realisasi PUM dengan tiga tahap proses dalam satu tampilan:
+1. UMK (Uang Muka Kerja) - Pengajuan awal untuk meminta uang muka
+2. PU - Pencairan (pembayaran) uang muka dari kas/bank
+3. RU (Realisasi Uang Muka) - Pengajuan pertanggungjawaban dengan bukti pengeluaran
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Realisasi PUM"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Status (Status)
+      - Klik dropdown "Status"
+      - Sistem akan menampilkan 3 opsi:
+        * "All Status" - Untuk melihat semua status (Posted dan Unposted)
+        * "Posted" - Untuk melihat hanya yang sudah di-POST (realisasi sudah dicatat)
+        * "Unposted" - Untuk melihat hanya yang BELUM di-POST (realisasi masih pending)
+      - Default: "All Status"
+      - Catatan: Status menunjukkan apakah realisasi sudah diproses di sistem
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan uang muka yang diajukan dari tanggal ini
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan uang muka hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua pengajuan PUM yang sesuai filter
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: INQUIRY REALISASI PUM
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Detail Tabel Realisasi PUM (Terdiri dari 3 KELOMPOK KOLOM):
+
+      KELOMPOK 1: UMK (UANG MUKA KERJA - PENGAJUAN AWAL)
+      - No.            : Nomor referensi/ID pengajuan uang muka
+      - Date           : Tanggal pengajuan uang muka diajukan
+      - Amount         : Jumlah uang muka yang diminta/dialokasikan
+
+      KELOMPOK 2: PU (PENCAIRAN/PEMBAYARAN UANG MUKA)
+      - No.            : Nomor referensi pencairan uang dari kas/bank
+      - Date           : Tanggal uang muka dicairkan/dibayarkan kepada karyawan
+      - Amount         : Jumlah uang yang dicairkan
+
+      KELOMPOK 3: RU (REALISASI/PERTANGGUNGJAWABAN UANG MUKA)
+      - No.            : Nomor referensi realisasi (dokumen pertanggungjawaban)
+      - Date           : Tanggal pengajuan pertanggungjawaban dengan bukti
+      - Amount         : Jumlah pengeluaran yang dipertanggungjawabkan
+      - Status         : Status posting di sistem (Posted/Unposted)
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      UMK No: UMK12530002 | Date: 29/12/2025 | Amount: 1.000.000
+      PU No: PUKI26010001 | Date: 05/01/2026 | Amount: 4.000.000
+      RU No: RUKI26010005 | Date: 05/01/2026 | Amount: 1.095.000
+      Status: Posted
+
+      Baris 2:
+      UMK No: UMKI25120014 | Date: 30/12/2025 | Amount: 3.000.000
+       PU No: PUKI26010004 | Date: 06/01/2026 | Amount: 3.000.000
+      RU No: RUKI26010008 | Date: 06/01/2026 | Amount: 324.000
+      Status: Posted
+
+      Baris 3:
+      UMK No: UMKI26010001 | Date: 08/01/2026 | Amount: 339.459.996
+      PU No: PUKI26010007 | Date: 08/01/2026 | Amount: 339.459.996
+      RU No: RUKI26010012 | Date: 08/01/2026 | Amount: 339.459.996
+      Status: Posted
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak data, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. UMK (UANG MUKA KERJA)
+   - Adalah pengajuan awal dari karyawan untuk meminta uang muka
+   - Biasanya untuk perjalanan dinas, proyek khusus, atau kebutuhan kerja lainnya
+   - Karyawan mengajukan berapa jumlah yang dibutuhkan
+   - Perlu di-APPROVE oleh atasan sebelum bisa dicairkan
+   - Contoh: Karyawan mengajukan UMK untuk perjalanan dinas senilai Rp 5.000.000
+
+2. PU (PENCAIRAN UANG MUKA)
+   - Adalah proses pencairan/pembayaran UMK yang sudah disetujui
+   - Uang muka dibayarkan dari kas/bank kepada karyawan yang bersangkutan
+   - Ditulis dokumen Bukti Setoran/Bukti Pengeluaran
+   - Tanggal PU bisa sama atau berbeda dengan tanggal UMK (tergantung proses approval)
+   - Contoh: Uang muka Rp 5.000.000 dicairkan pada tanggal 05 Januari
+
+3. RU (REALISASI UANG MUKA / PERTANGGUNGJAWABAN)
+   - Adalah proses pertanggungjawaban penggunaan uang muka
+   - Karyawan HARUS menyertakan bukti pengeluaran (invoice, kwitansi, bukti perjalanan, dll)
+   - Jumlah RU bisa SAMA atau BERBEDA dengan PU (tergantung pengeluaran sebenarnya)
+   - Jika RU < PU: Ada sisa uang muka (harus dikembalikan atau dijustifikasi)
+   - Jika RU > PU: Berarti ada pengeluaran tambahan (perlu pembayaran tambahan)
+   - Jika RU = PU: Semua uang muka terpakai dengan sempurna
+
+4. STATUS (POSTED vs UNPOSTED)
+   - POSTED: Artinya realisasi (RU) sudah diproses/di-post di sistem akunting
+              → Dokumen sudah lengkap dan valid
+              → Sudah dapat diaudit dan dilaporkan
+              → Proses realisasi sudah SELESAI
+   
+   - UNPOSTED: Artinya realisasi (RU) belum diproses/dipost di sistem akunting
+               → Dokumen mungkin belum lengkap atau masih di-review
+               → Belum bisa dilaporkan secara resmi
+               → Proses realisasi masih PENDING
+
+5. JUMLAH UANG MUKA (AMOUNT)
+   - UMK Amount: Jumlah yang DIKLAIM oleh karyawan
+   - PU Amount: Jumlah yang DICAIRKAN dari kas/bank
+   - RU Amount: Jumlah yang DIPERTANGGUNGJAWABKAN dengan bukti
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. MONITORING UANG MUKA YANG OUTSTANDING
+   - Melihat uang muka mana yang sudah dipertanggungjawabkan
+   - Melihat uang muka mana yang masih PENDING pertanggungjawaban
+   - Tracking untuk memastikan semua uang muka segera direalisasikan
+   - Alert untuk uang muka yang sudah lama belum dikembalikan
+
+2. VERIFIKASI REALISASI LENGKAP
+   - Memastikan setiap PU (pencairan) memiliki RU (realisasi) yang matching
+   - Identifikasi uang muka yang belum ada realisasinya
+   - Verifikasi bahwa jumlah RU sudah sesuai dengan PU
+   - Quality control atas proses realisasi
+
+3. ANALISIS SISA UANG MUKA
+   - Menghitung selisih antara PU (yang dicairkan) dan RU (yang dipertanggungjawabkan)
+   - Sisa UMK = PU Amount - RU Amount
+   - Sisa positif: Ada uang yang belum dipertanggungjawabkan (harus dikembalikan)
+   - Sisa negatif: Ada pengeluaran lebih (karyawan perlu bayar lagi atau dapat kompensasi)
+   - Planning untuk cash settlement
+
+4. CASH MANAGEMENT & CASH FLOW
+   - Tracking cash outflow untuk uang muka yang beredar
+   - Forecasting kapan cash akan kembali (dari pengembalian UMK)
+   - Monitoring untuk memastikan cash flow lancar
+   - Budget planning untuk pengeluaran uang muka
+
+5. ACCRUAL & EXPENSE RECOGNITION
+   - Matching expense dengan realisasi (RU)
+   - Memastikan semua expense sudah diakui dengan benar
+   - Recording unposted realisasi untuk accrual purposes
+   - Period close: Verifikasi semua realisasi sudah di-post
+
+6. FRAUD DETECTION & CONTROL
+   - Melihat karyawan yang sering outstanding UMK (tidak dikembalikan)
+   - Deteksi RU yang jauh berbeda dengan PU (misuse atau error)
+   - Monitoring untuk unusual patterns
+   - Enforcement untuk compliance dengan policy
+
+7. DEPARTEMENT/COST CENTER ANALYSIS
+   - Analisis pengeluaran per departement/cost center via uang muka
+   - Melihat siapa yang sering mengajukan UMK
+   - Analisis tren pengeluaran
+   - Budget control per departement
+
+8. AUDIT & COMPLIANCE
+   - Menyediakan audit trail lengkap untuk setiap uang muka
+   - Supporting document untuk financial reporting
+   - Compliance dengan policy uang muka
+   - Documentation untuk internal/external audit
+
+9. REPORTING MANAGEMENT
+   - Report outstanding UMK ke manager
+   - Report budget utilization via uang muka
+   - Alert untuk pengeluaran tidak normal
+   - Summary untuk presentation
+
+INTERPRETASI STATUS:==
+
+POSTED STATUS:
+✓ Realisasi sudah di-post di sistem
+✓ Dokumen pendukung sudah lengkap dan diverifikasi
+✓ Dapat diaudit dan dilaporkan
+✓ Proses realisasi COMPLETE
+✓ Biasanya ini adalah status final
+
+UNPOSTED STATUS:
+⚠ Realisasi belum di-post di sistem
+⚠ Dokumen pendukung mungkin belum lengkap
+⚠ Dalam proses review atau approval
+⚠ Belum bisa dilaporkan secara resmi
+⚠ Action: Follow-up untuk completion
+
+CATATAN PENTING:
+
+
+1. Semua field filter harus diisi sebelum search (Company, Status, From, To)
+2. Laporan menampilkan hubungan UMK → PU → RU dalam satu baris
+3. Status merujuk pada status REALISASI (RU), bukan UMK atau PU
+4. Satu UMK bisa memiliki satu PU dan satu RU (normal flow)
+5. Bisa juga ada skenario: 1 UMK → Multiple PU atau Multiple RU (cases tertentu)
+6. Jumlah RU bisa berbeda dari PU (selisih harus dijelaskan)
+7. Untuk perubahan filter, klik search kembali
+8. Laporan dapat diexport untuk analisis dan reporting lanjutan
+9. Laporan ini read-only, tidak bisa mengedit data langsung
+10. Jika ingin detail per transaksi, gunakan laporan detail pemeriksaan PUM
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter terisi (Company, Status, From, To)
+2. Cek apakah periode sudah benar
+3. Cek apakah ada pengajuan UMK dalam periode tersebut
+4. Coba ubah Status ke "All Status" untuk melihat semua
+5. Coba ubah range tanggal lebih luas
+6. Klik tombol "Search" kembali untuk refresh
+7. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+
+1. DAILY/WEEKLY MONITORING OUTSTANDING ITEMS
+   - Filter Status = "Unposted" untuk melihat yang belum selesai
+   - Lihat daftar UMK yang belum ada RU
+   - Follow-up dengan karyawan untuk completion
+   - Target: Semua realisasi harus di-post dalam waktu tertentu (misal: 1 minggu)
+
+2. MONTHLY CLOSING CHECKLIST
+   - Buka laporan ini untuk bulan yang closing
+   - Pastikan semua UMK bulan itu sudah di-close/realisasi
+   - Identifikasi unposted items yang harus di-post
+   - Prepare accrual journal entries untuk yang belum posted
+
+3. SALDO AUDIT TRAIL
+   - Untuk setiap nomor PU yang ada di bank statement
+   - Cari di laporan ini untuk lihat ada RU atau belum
+   - Verifikasi bahwa matching
+   - Catat discrepancies
+
+4. ANALYSIS COMPARISON
+   - Bandingkan PU Amount dengan RU Amount
+   - Hitung sisa (surplus/defisit)
+   - Identifikasi pattern (sulit karyawan atau ada masalah proses)
+   - Buat action plan
+
+5. KARYAWAN/DEPARTEMENT RANKING
+   - Sort data by PU Amount descending
+   - Lihat siapa yang paling banyak pakai UMK
+   - Analyze spending pattern
+   - Benchmark untuk budget planning
+
+6. CASH PROJECTION
+   - Identify yang masih UNPOSTED (belum final)
+   - Calculate potential cash impact
+   - Plan untuk settlement timing
+   - Forecast cash flow
+
+7. EXPORT KE EXCEL
+   - Export laporan ke Excel
+   - Buat kolom tambahan untuk: Sisa (PU-RU), Days Outstanding, Status Note
+   - Pivot table untuk analysis by cost center, karyawan, etc
+   - Share dengan manager untuk follow-up
+
+8. TREND ANALYSIS
+   - Ambil laporan untuk beberapa bulan
+   - Lihat trend pengeluaran UMK per bulan
+   - Analisis apakah ada perubahan signifikan
+   - Gunakan untuk budget forecasting
+
+SKENARIO UMUM:
+SKENARIO 1: MATCH SEMPURNA (PU Amount = RU Amount)
+Situasi: UMK 5.000.000 → PU 5.000.000 → RU 5.000.000
+Status: Posted
+Meaning: Semua uang muka terpakai dengan sempurna
+Action: Proses selesai, tidak ada sisa atau kurang
+
+SKENARIO 2: SISA UANG MUKA (PU Amount > RU Amount)
+Situasi: UMK 5.000.000 → PU 5.000.000 → RU 4.500.000
+Sisa: 500.000
+Meaning: Ada sisa uang yang tidak dipertanggungjawabkan
+Action: Karyawan harus kembalikan sisa atau bubuhi penjelasan
+Status typical: Unposted sampai sisa dijelaskan
+
+SKENARIO 3: PENGELUARAN LEBIH (RU Amount > PU Amount)
+Situasi: UMK 5.000.000 → PU 5.000.000 → RU 5.500.000
+Kurang: 500.000
+Meaning: Ada pengeluaran tambahan di luar uang muka
+Action: Karyawan ajukan tambahan atau kompensasi
+Status typical: Unposted sampai tambahan dijelaskan/disetujui
+
+SKENARIO 4: BELUM ADA REALISASI (PU ada, RU kosong)
+Situasi: UMK ada → PU ada → RU belum ada
+Status: Unposted (karena tidak ada RU)
+Meaning: Uang sudah dicairkan tapi karyawan belum pertanggungjawab
+Action: URGENT - Follow-up karyawan untuk segera buat RU
+Days outstanding: Hitung jumlah hari/minggu untuk pressure
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN STAFFs/KARYAWAN:
+   - Share unposted items list
+   - Request untuk complete realisasi
+   - Provide template/form untuk RU
+   - Set deadline untuk submission
+
+2. DENGAN MANAGER/SUPERVISOR:
+   - Report UMK outstanding per departement
+   - Alert untuk unusual items
+   - Request untuk approve realisasi
+   - Discussion tentang policy enforcement
+
+3. DENGAN INTERNAL AUDIT:
+   - Provide audit trail untuk setiap transaksi
+   - Explain discrepancies dan outstanding items
+   - Supporting documents untuk review
+   - Compliance certification
+
+4. DENGAN CASH/TREASURER:
+   - Coordination untuk cash settlement
+   - Planning untuk pengembalian sisa UMK
+   - Reconciliation dengan cash position
+   - Payment untuk tambahan
+   - Bank transaction matching
+
+5. DENGAN HR/PAYROLL:
+   - Jika ada sisa UMK, koordinasi untuk pengurangan gaji
+   - Atau penambahan gaji jika ada kekurangan
+   - Document untuk payroll processing
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Realisasi PUM berhubungan dengan:
+1. Laporan Pengajuan PUM - Detail pengajuan yang belum dicairkan
+2. Laporan Pencairan PUM - Detail pencairan yang sudah dilakukan
+3. Laporan Detail PUM - Detail lengkap setiap transaksi PUM
+4. Cash Disbursement Report - Laporan pengeluaran uang dari kas/bank
+5. Expense Report - Laporan pengeluaran per employee/departement
+6. General Ledger - Posting journal entries dari realisasi PUM
+7. Financial Statement - PUM mungkin ditampilkan sebagai prepaid atau asset
+
+TIMELINE NORMAL PROSES UMK → PU → RU:
+
+HARI 0-3: PENGAJUAN (UMK)
+- Karyawan ajukan UMK dengan alasan jelas
+- Manager/approver review dan approve
+- Finance terima dan proses
+
+HARI 4-7: PENCAIRAN (PU)
+- Finance mencairkan uang muka
+- Uang diberikan kepada karyawan
+- Recording di sistem
+
+HARI 8-14: PENGGUNAAN UANG MUKA
+- Karyawan menggunakan uang untuk kebutuhan
+- Collect bukti-bukti (invoice, kwitansi, boarding pass, dll)
+- Prepare laporan perjalanan atau dokumen pertanggungjawaban
+
+HARI 15-21: PENGAJUAN REALISASI (RU)
+- Karyawan submit realisasi dengan bukti lengkap
+- Manager review dan sign-off
+- Finance verify dokumen
+
+HARI 22-28: POSTING & APPROVAL
+- Finance process realisasi di sistem
+- Akuntansi post ke GL
+- Status: Posted
+- Record payment untuk sisa atau tambahan
+
+TARGET TIMELINE: Max 1 bulan dari UMK → Posted RU
+
+CHECKLIST SEBELUM RU DIPOST:=
+
+DOKUMEN LENGKAP:
+Bukti perjalanan (boarding pass, ticket, hotel receipt)
+Kwitansi/invoice untuk setiap pengeluaran
+Laporan perjalanan dinas (jika perjalanan)
+Penjelasan untuk setiap transaksi
+Approval dari manager
+Tanda tangan karyawan di dokumen RU
+
+JUMLAH SESUAI:
+Jumlah RU sesuai dengan bukti yang dikumpulkan
+Perhitungan sisa atau kekurangan sudah benar
+Tidak ada item yang duplikasi
+
+STATUS APPROVAL:
+Sudah di-approve oleh manager
+Sudah di-approve oleh finance/accounting
+Siap untuk posting di sistem
+
+TIPS FOR ACCOUNTING STAFF:
+
+1. BATCH PROCESSING
+   - Kumpulkan realisasi yang complete
+   - Batch dalam batch posting untuk efisiensi
+   - Posting with consistent schedule (misal: weekly)
+
+2. VALIDATION CHECKLIST
+   - Gunakan checklist untuk validate setiap RU
+   - Cross-check jumlah dengan dokumen
+   - Verify approval signatures
+   - Jangan post yang incomplete
+
+3. ACCRUAL TREATMENT
+   - Untuk RU yang masih unposted tapi sudah approved
+   - Record accrual expense untuk matching principle
+   - Reversal ketika sudah posted
+   - Gunakan untuk period closing
+
+4. FOLLOW-UP SYSTEM
+   - Maintain list outstanding RU per karyawan
+   - Schedule reminder untuk outstanding > 7 days
+   - Escalate ke manager untuk outstanding > 14 days
+   - Dashboard untuk visibility
+
+5. QUALITY CONTROL
+   - Spot check sample posting
+   - Verify GL account yang di-charge
+   - Monitor untuk unusual patterns
+   - Regular reconciliation dengan PU
+
+BEST PRACTICES:
+1. CLEAR POLICY
+   - Define timeline untuk realisasi (max X hari)
+   - Define dokumen yang dibutuhkan
+   - Define approval authority
+   - Share dengan semua karyawan
+
+2. TIMELY PROCESSING
+   - Process realisasi dalam 1-2 minggu
+   - Tidak boleh pending terlalu lama
+   - Monthly close: semua harus settled
+   - KPI: % Posted in period
+
+3. DOCUMENTATION
+   - Keep all supporting docs
+   - Organize per UMK nomor
+   - File dalam sistem atau hardcopy
+   - Retention sesuai policy
+
+4. COMMUNICATION
+   - Regular update ke karyawan tentang status
+   - Alert untuk yang overdue
+   - Appreciation untuk yang on-time
+   - Open door untuk questions
+
+5. SYSTEM CONTROLS
+   - Define cost center untuk charging
+   - Auto-assignment berdasarkan departement
+   - Matching rules untuk validation
+   - Audit trail untuk semua changes

@@ -1,0 +1,577 @@
+LAPORAN BUDGET CARD (KARTU ANGGARAN)
+
+TUJUAN:
+Memberikan informasi DETAIL tentang pergerakan budget, komitmen (committed), dan saldo budget untuk setiap account/kode anggaran (COA).
+Laporan ini menampilkan satu kartu per account yang berisi seluruh transaksi/komitmen yang berdampak pada budget sisa tersebut.
+Membantu divisi/department untuk tracking budget consumption, committed funds, dan remaining budget balance per account/COA.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan budget card individual untuk satu kode anggaran (COA) pada satu tanggal tertentu.
+Menampilkan detail setiap transaksi (invoice, PUM, CB) yang memukul budget account tersebut.
+Kalkulasi running balance untuk tracking budget position secara real-time.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Budget Card"
+   - Sistem menampilkan form filter dengan 5 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+      - Selection ini akan trigger cascade untuk Division
+
+   b) Pilih Divisi (Division)
+      - Klik dropdown "Division"
+      - Sistem akan menampilkan daftar divisi untuk perusahaan yang dipilih
+      - Ketik untuk mencari divisi tertentu (minimal 2 karakter)
+      - Pilih satu divisi sesuai kebutuhan
+      - Contoh: "HO - Holding"
+      - Default: "HO" (Holding)
+      - Catatan: Division dropdown hanya aktif setelah Company dipilih
+      - Selection ini akan trigger cascade untuk Department
+
+   c) Pilih Department (Department)
+      - Klik dropdown "Department"
+      - Sistem akan menampilkan daftar department untuk divisi yang dipilih
+      - Ketik untuk mencari department tertentu (minimal 2 karakter)
+      - Pilih satu department sesuai kebutuhan
+      - Contoh: "FA - Finance Accounting"
+      - Default: "FA" (Finance Accounting)
+      - Catatan: Department dropdown hanya aktif setelah Division dipilih
+      - Selection ini akan trigger cascade untuk COA Code
+
+   d) Pilih Kode Anggaran (COA Code)
+      - Klik dropdown "COA Code"
+      - Sistem akan menampilkan daftar kode anggaran (Chart of Account)
+      - Ketik untuk mencari kode anggaran tertentu (minimal 2 karakter)
+      - Pilih satu kode anggaran yang ingin lihat budget cardnya
+      - Contoh: "60205.0300.0000 - EXPENSES - GA - Professional Services - Audit and Tax Consultancy"
+      - Default: "10198.0105.0100"
+      - Catatan: COA Code dropdown hanya aktif setelah Department dipilih
+
+   e) Tentukan Tanggal (Date)
+      - Klik field "Date" untuk membuka kalender
+      - Pilih tanggal yang ingin lihat budget position-nya
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan budget transaksi sampai dengan tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan budget card untuk COA dan tanggal yang dipilih
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: KARTU ANGGARAN (Budget Card)
+      - Tanggal Laporan: Tanggal yang dipilih (format: DD-Mon-YYYY, contoh: 13-Feb-2026)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 1")
+
+   b) Informasi Budget Code:
+      - Kode Budget: Kode COA lengkap dengan deskripsi (contoh: 60205.0300.0000 - EXPENSES - GA - Professional Services - Audit and Tax Consultancy)
+      - Divisi: Divisi yang dipilih (contoh: HO - Holding)
+      - Department: Department yang dipilih (contoh: FA - Finance Accounting)
+
+   c) Detail Tabel Budget Card (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI TRANSAKSI:
+      - Doc Date    : Tanggal dokumen/transaksi (invoice, PUM, CB, dll)
+      - Doc No      : Nomor dokumen (contoh: IVKI26010016 atau UMKI26010018 atau PVKI26010001)
+      - Description : Deskripsi transaksi/alasan
+      - Creditor    : Nama vendor/supplier/pihak terkait
+
+      KOLOM IDENTIFIKASI PEMBAYARAN:
+      - Payment No   : Nomor pembayaran/voucher (jika sudah dibayar)
+      - Date         : Tanggal pembayaran (jika sudah dibayar)
+
+      KOLOM BUDGET POSITION:
+      - Budget       : Budget allocation untuk transaksi ini (jumlah yang di-budget)
+      - Committed    : Komitmen/penggunaan budget (jumlah yang sudah committed/digunakan)
+      - Balance      : Saldo budget tersisa (Budget - Committed)
+
+   d) Contoh Data di Laporan Budget Card:
+
+      Row 1 (Header Budget):
+      Doc Date: 01/01/2026 | Doc No: - | Description: + Budget
+      Budget: 0 | Committed: 0 | Balance: 0
+      (Ini adalah opening balance dari budget account)
+
+      Row 2 (Invoice Pembelian):
+      Doc Date: 28/01/2026 | Doc No: IVKI26010016 | Description: pembelian alat tulis kantor
+      Creditor: AAM PRIMA ARTHA, PT | Payment No: PVKI26010066 | Date: 28/01/2026
+      Budget: 0 | Committed: 11.200.000 | Balance: -11.200.000
+      (Invoice diakui, budget commitment terjadi)
+
+      Row 3 (PUM/Uang Muka):
+      Doc Date: 28/01/2026 | Doc No: UMKI26010018 | Description: doa bersama direktsi
+      Creditor: Heru Suseno | Payment No: PUKI26010028 | Date: 28/01/2026
+      Budget: 0 | Committed: 3.000.000 | Balance: -14.200.000
+      (PUM allocated untuk account ini)
+
+      Row 4 (Invoice lainnya):
+      Doc Date: 29/01/2026 | Doc No: IVKI26010017 | Description: testing invoice non idr playwright update
+      Creditor: ABADI MITRA SOLUSINDO, CV | Payment No: PVKI26010067 | Date: 29/01/2026
+      Budget: 0 | Committed: 1.680.000 | Balance: -15.880.000
+      (Invoice lain menambah commitment)
+
+      Row 5 (Budget Tambahan):
+      Doc Date: 01/02/2026 | Description: + Budget | Budget: 0 | Committed: 0 | Balance: -15.880.000
+      (Budget top-up atau adjustment untuk account)
+
+      Row 6 (PUM Update):
+      Doc Date: 06/02/2026 | Doc No: UMKI26020001 | Description: Pengajuan Pum untuk perjalanan dinas ke bali
+      Creditor: Heru Suseno | Payment No: PUKI26020001 | Date: 06/02/2026
+      Budget: 0 | Committed: 1.000.000 | Balance: -16.880.000
+      (PUM tambahan untuk account)
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk budget card dengan banyak transaksi, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download budget card dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+1. BUDGET CARD / KARTU ANGGARAN
+   - Adalah detail tracking untuk satu kode anggaran (COA) tertentu
+   - Menampilkan setiap transaksi yang memukul/menggunakan anggaran account tersebut
+   - Mirip seperti "kartu tabungan" untuk satu account: opening balance, transaksi, closing balance
+   - Berguna untuk monitoring budget consumption per account secara detail
+   - Contoh: Budget untuk "Professional Services" - lihat semua transaksi yang menggunakan budget ini
+
+2. COA (CHART OF ACCOUNT / KODE ANGGARAN)
+   - Adalah kode unik untuk setiap account/kategori anggaran di perusahaan
+   - Format: Angka bertingkat (contoh: 60205.0300.0000)
+   - Setiap COA punya nama/deskripsi (contoh: EXPENSES - GA - Professional Services)
+   - Setiap COA punya allocated budget untuk periode tertentu
+   - COA adalah level detail tertinggi dalam budget tracking
+   - Contoh: COA untuk "Professional Services", COA untuk "Office Supplies", dll
+
+3. BUDGET (ANGGARAN)
+   - Adalah jumlah uang yang dialokasikan untuk setiap account/COA untuk periode tertentu
+   - Budget ditetapkan awal periode (awal bulan, awal tahun)
+   - Untuk tracking, biasanya ditampilkan kolom "Budget" di transaksi (ketika ada budget adjustment)
+   - Balance = Budget - Committed
+
+4. COMMITTED / KOMITMEN
+   - Adalah jumlah anggaran yang sudah digunakan/dikonsumsikan
+   - Terjadi ketika ada transaksi (invoice, PUM, CB) yang memukul account tersebut
+   - Semakin banyak committed, semakin sedikit budget tersisa
+   - Contoh: Jika budget 100 juta dan committed 50 juta, balance = 50 juta
+
+5. BALANCE (SALDO BUDGET)
+   - Adalah budget tersisa yang masih bisa digunakan
+   - Rumus: Balance = Budget - Committed
+   - Bisa negative jika committed > budget (over-budget)
+   - Berguna untuk know berapa budget yang masih tersedia
+
+6. DOC NO (NOMOR DOKUMEN)
+   - Adalah nomor referensi transaksi yang memukul budget
+   - Bisa invoice (IV...), PUM/Uang Muka (UM...), CB/Pembayaran (PV...), dll
+   - Digunakan untuk trace ke dokumen asli/transaksi detail
+
+7. PAYMENT NO (NOMOR PEMBAYARAN)
+   - Adalah nomor pembayaran/voucher cash yang dikeluarkan
+   - Contoh: PVKI26010066 (Payment Voucher)
+   - Menunjukkan bahwa invoice/PUM sudah dibayar
+   - Kosong jika transaksi belum dibayar (masih AR/AP)
+
+8. DOC DATE vs DATE
+   - DOC DATE: Tanggal invoice/dokumen diterbitkan (kapan commitment terjadi)
+   - DATE: Tanggal pembayaran/payment (kapan cash dikeluarkan)
+   - Bisa berbeda: Invoice tgl 10, dibayar tgl 25 (AP term 15 hari)
+
+9. CREDITOR
+   - Adalah vendor/supplier/pihak yang menerima pembayaran
+   - Contoh: AAM PRIMA ARTHA, PT (supplier)
+   - Contoh: Heru Suseno (individual untuk PUM/dinas)
+
+10. DIVISION (DIVISI)
+    - Adalah tingkat organisasi pertama di perusahaan
+    - Contoh: HO (Holding), Manufacturing, Distribution, dll
+    - Setiap company bisa punya multiple divisions
+    - Cascade: Company → Division → Department → COA
+
+11. DEPARTMENT (DEPARTEMEN)
+    - Adalah tingkat organisasi di bawah Division
+    - Contoh: Finance Accounting, HR, Operations, dll
+    - Setiap Division bisa punya multiple departments
+    - Cascade: Company → Division → Department → COA
+
+12. COMPANY (PERUSAHAAN)
+    - Adalah entitas hukum/anak perusahaan di group
+    - Contoh: PT. Kawasan Industri Jababeka (KI), PT Subsidiary X, dll
+    - Setiap company punya budget tersendiri
+    - Filter pertama untuk breakdown di dalam group
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+1. MONITORING BUDGET CONSUMPTION
+   - Lihat berapa banyak budget sudah terpakai untuk account spesifik
+   - Monitor balance untuk pastikan tidak over-budget
+   - Check utilization rate (committed / budget %)
+   - Early warning jika approaching budget limit
+
+2. DETAIL TRANSACTION TRACING
+   - Find detail setiap transaksi yang impact account tertentu
+   - Lihat invoice mana, PUM mana, payment mana yang memukul account
+   - Trace dari budget card → invoice → payment untuk full audit trail
+   - Support untuk audit & verification
+
+3. BUDGET VARIANCE ANALYSIS
+   - Compare actual committed vs planned budget
+   - Identify over-budget atau under-budget situations
+   - Investigate cause untuk variance
+   - Planning untuk budget adjustment jika diperlukan
+
+4. MONTH-END & PERIOD CLOSING
+   - Verify semua commitments periode sudah tercatat
+   - Check balance untuk final budget position
+   - Support untuk accrual & provision jika diperlukan
+   - GL reconciliation untuk budget account
+
+5. DEPARTMENT BUDGET MANAGEMENT
+   - Support department manager untuk track own budget
+   - Identify which items consuming most budget
+   - Planning untuk resource allocation & prioritization
+   - Budget control & cost awareness per department
+
+6. PAYMENT VERIFICATION
+   - Verify bahwa transaksi yang committed sudah dibayar
+   - Identify AP/invoice yang belum pembayaran
+   - Follow-up untuk pending payment
+   - Cash outflow planning
+
+7. BUDGET REALLOCATION & ADJUSTMENT
+   - Identify account yang over-budget atau under-allocated
+   - Decision untuk budget top-up atau reallocation
+   - Track budget adjustment dan impact pada balance
+   - Budget optimization & efficiency
+
+8. FORECASTING & PLANNING
+   - Project budget balance di end of period
+   - Identify if current burn rate akan exceed budget
+   - Planning untuk next period budget allocation
+   - Trend analysis untuk budget utilization
+
+9. ACCOUNTABILITY & REPORTING
+   - Support untuk budget responsibility center reporting
+   - Manager accountability untuk budget discipline
+   - Communication kepada management tentang budget status
+   - Compliance dengan budget policy
+
+FITUR CASCADE (DEPENDENT DROPDOWN):
+Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
+
+Urutan cascade:
+1. Company (mandiri) → aktifkan Division
+2. Division (cascading dari Company) → aktifkan Department
+3. Department (cascading dari Division) → aktifkan COA Code
+4. COA Code (cascading dari Department) → final selection
+5. Date (independent date picker)
+
+Contoh flow:
+- Pilih Company "KI" → Division dropdown aktif, tampil divisi yang ada di KI
+- Pilih Division "HO" → Department dropdown aktif, tampil department yang ada di HO
+- Pilih Department "FA" → COA Code dropdown aktif, tampil COA yang ada di FA
+- Pilih COA Code "60205.0300.0000" → siap untuk search
+- Pilih Date "13/02/2026"
+- Klik Search
+
+CATATAN PENTING:
+
+1. Semua filter (Company, Division, Department, COA Code, Date) harus diisi sebelum search
+2. Laporan menampilkan DETAIL setiap transaksi untuk satu account (tidak summary)
+3. Balance = Budget - Committed (bisa negatif jika over-budget)
+4. Periode tanggal tidak bisa "terbalik" (hanya satu tanggal, bukan range)
+5. Date adalah "as of date" - menunjukkan budget position sampai tanggal tersebut
+6. COA Code adalah mandatory untuk identify account spesifik
+7. Dropdown cascade memastikan data consistency & relevant filtering
+8. Transaksi bisa dari berbagai dokumen: Invoice (IV), PUM (UM), Payment (PV)
+9. DOC DATE vs DATE menunjukkan commitment date vs payment date
+10. Balance track running total dari opening balance
+11. Untuk perubahan filter, klik search kembali
+12. Laporan dapat diexport untuk analisis lebih lanjut
+13. Laporan ini read-only, tidak bisa mengedit data langsung
+14. Format tanggal: DD/MM/YYYY
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+1. Pastikan semua filter sudah terisi (Company, Division, Department, COA Code, Date)
+2. Pastikan cascade sudah complete (jangan lewat salah satu)
+3. Verify bahwa COA Code pilihan memang punya transaksi di periode yang dipilih
+4. Coba ganti COA Code ke account lain untuk test
+5. Coba date range berbeda untuk check ada transaksi atau tidak
+6. Mungkin account tersebut tidak punya transaksi di period tersebut (balance 0/tidak ada data)
+7. Klik tombol "Search" kembali untuk refresh
+8. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+1. TRACK BUDGET CONSUMPTION
+   - Buka budget card untuk account yang spending-heavy
+   - Monitor balance mingguan atau bi-weekly
+   - Alert jika approaching budget limit
+   - Discuss dengan manager tentang budget concerns
+
+2. FIND SPECIFIC TRANSACTION
+   - Cari dengan COA Code tertentu & date yang luas
+   - Use Ctrl+F di browser untuk search nomor dokumen
+   - Find dari nomor invoice untuk trace payment
+   - Find dari nomor PUM untuk trace realization
+
+3. MONTH-END VERIFICATION
+   - Buka budget card untuk key accounts per department
+   - Verify semua transaksi periode sudah tercatat
+   - Check saldo balance untuk GL reconciliation
+   - Complete audit untuk closing
+
+4. BUDGET VARIANCE INVESTIGATION
+   - Compare expected committed vs actual committed
+   - Identify top item yang consume budget terbanyak
+   - Trace ke department/cost center untuk accountability
+   - Report variance kepada management
+
+5. EXPORT FOR DEPARTMENT REPORTING
+   - Export budget card ke Excel
+   - Share dengan department manager
+   - Format untuk presentation atau analysis
+   - Support untuk budget control meeting
+
+6. FORECAST BUDGET REMAINING
+   - Lihat current balance & daily burn rate
+   - Project balance at end of period
+   - Identify if budget sudah tight atau still ok
+   - Plan untuk next period allocation
+
+7. PAYMENT STATUS TRACKING
+   - Cek untuk invoice yang bercommitment tapi belum payment
+   - Identify overdue AP
+   - Follow-up untuk cash management
+   - Optimize payment schedule
+
+8. BUDGET CONTROL DISCIPLINE
+   - Share dengan department untuk awareness
+   - Discuss commit plan sebelum approval
+   - Monitor untuk prevent over-budget
+   - Implement budget discipline
+
+SKENARIO UMUM INQUIRY:
+SZENARIO 1: "Lihat budget card untuk Professional Services account"
+Action:
+1. Pilih Company = KI
+2. Pilih Division = HO
+3. Pilih Department = FA
+4. Pilih COA Code = 60205.0300.0000 (Professional Services)
+5. Pilih Date = hari ini atau tanggal terakhir bulan
+6. Klik Search
+7. Lihat semua transaksi yang consume account ini
+
+SZENARIO 2: "Check budget remaining untuk decide approval"
+Action:
+1. Department minta approval untuk invoice baru
+2. Cek budget card untuk account yang akan di-hit
+3. Lihat balance untuk confirm ada budget tersisa
+4. Verify tidak akan trigger over-budget
+5. Approve atau request untuk budget adjustment
+
+SZENARIO 3: "Month-end closing - verify semua transaksi tercatat"
+Action:
+1. Pilih semua main account per department
+2. Buka budget card untuk masing-masing account
+3. Verify tanggal transaksi sesuai periode
+4. Confirm saldo balance untuk reconciliation
+5. Sign-off untuk closing
+
+SZENARIO 4: "Find dan trace specific payment"
+Action:
+1. Punya payment reference (PVKI26010001)
+2. Need find budget card yang kena impact
+3. Search dengan berbagai COA code
+4. Find commitment terjadi (lihat doc no invoice)
+5. Trace dari payment → commitment → budget account
+
+TROUBLESHOOTING UMUM:
+MASALAH: "Balance negatif - sudah over-budget"
+SOLUSI:
+- Verify jumlah budget allocation di awal period
+- Check apakah ada budget adjustment yang missed
+- Calculate berapa excess (negativenya berapa)
+- Report ke management untuk budget top-up
+- Control incoming commitment untuk tidak menambah deficit
+- Identify & reallocate dari other budget jika ada surplus
+
+MASALAH: "Transaksi invoice tidak muncul di budget card"
+SOLUSI:
+- Check apakah invoice sudah tercatat di sistem
+- Check apakah invoice sudah di-assign ke COA account ini
+- Check apakah invoice tanggal sudah dalam periode laporan
+- Verify COA code sudah dipilih dengan benar
+- Possibility: Invoice belum di-post atau belum allocated
+
+MASALAH: "Perbedaan antara budget card balance vs GL account balance"
+SOLUSI:
+- Budget card menunjukkan committed, GL menunjukkan actual payment
+- Balance invoice ≠ balance payment (timing difference)
+- Reconcile antara AP (committed) vs CB (paid)
+- Check apakah ada accrual atau adjustment yang belum tercatat
+- GL adjustment mungkin diperlukan
+
+MASALAH: "COA dropdown tidak menampilkan account yang dicari"
+SOLUSI:
+- Verify sudah select Department dulu (prerequisite)
+- Coba ubah Department untuk access different COA list
+- Coba search dengan partial code (minimal 2 karakter)
+- Possibility: COA tidak ada di selected department
+- Check master COA untuk verify account exist
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+1. DENGAN DEPARTMENT MANAGER:
+   - Share budget card untuk awareness & accountability
+   - Discuss budget status & constraint
+   - Plan untuk resource allocation & prioritization
+   - Approval request berdasarkan budget position
+
+2. DENGAN PROCUREMENT:
+   - Provide budget status sebelum PO approval
+   - Identify available budget untuk procurement
+   - Coordinate dengan budget consumption
+   - Plan untuk budget impact dari new PO
+
+3. DENGAN PAYMENT/ACCOUNTING:
+   - Verify transaksi untuk payment processing
+   - Track payment status dari commitment
+   - Reconcile AP commitment vs payment actual
+   - Support untuk verification & approval
+
+4. DENGAN CFO/MANAGEMENT:
+   - Monthly budget status report
+   - Highlight over-budget atau concern account
+   - Forecast untuk financial planning
+   - Budget adjustment request & approval
+
+5. DENGAN AUDIT:
+   - Support untuk budget audit & compliance
+   - Provide detail transaction untuk sampling
+   - Verify budget control effectiveness
+   - Document untuk audit trail
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+Laporan Budget Card berhubungan dengan:
+1. Laporan Budget Control/Recap - Untuk summary budget position
+2. Laporan AP (Accounts Payable) - Untuk detail invoice commitment
+3. Laporan PUM - Untuk detail uang muka allocation
+4. Laporan Budget Payment - Untuk payment status dari committed
+5. Laporan COA List - Untuk master account definition
+6. Laporan Department Budget - Untuk summary per department
+7. General Ledger - Untuk actual GL posting
+8. Financial Statement - Budget included dalam variance report
+
+WORKFLOW NORMAL UNTUK BUDGET USAGE:
+STEP 1: BUDGET ALLOCATION
+- Budget ditetapkan untuk setiap account/COA
+- Budget untuk setiap department/cost center
+- Total budget per company/period
+- Status: Budget Allocated
+
+STEP 2: TRANSAKSI COMMITMENT
+- Invoice/PUM/CB diterima
+- Diassign ke COA account
+- Commitment tercatat di system
+- Balance = Budget - Committed
+- Status: Committed (berkurang)
+
+STEP 3: PAYMENT EXECUTION
+- Invoice dibayar via CB/payment
+- Payment number direcord
+- Still impact committed
+- Status: Paid
+
+STEP 4: MONTH-END CLOSING
+- Verify semua transaksi tercatat
+- Reconcile budget card dengan GL
+- Accrual untuk pending commitment
+- Close for period
+- Status: Period Closed
+
+STEP 5: BUDGET ADJUSTMENT
+- Jika ada over-budget atau top-up
+- Adjustment entry dipost
+- Balance updated
+- New saldo reflected
+- Status: Adjusted
+
+BEST PRACTICES:
+1. REGULAR MONITORING
+   - Check budget card weekly untuk main account
+   - Monitor balance trend
+   - Early alert untuk over-budget
+   - Proactive management
+
+2. COMMITMENT DISCIPLINE
+   - Commit planning sebelum approval
+   - Check balance sebelum process
+   - Avoid over-budget situation
+   - Responsible budget management
+
+3. TIMELY RECORDING
+   - Record transaksi same day atau next day
+   - Ensure accurate balance
+   - Support untuk real-time tracking
+   - Decision making support
+
+4. CLEAR ACCOUNTABILITY
+   - Department budget owner identified
+   - Review & approval process clear
+   - Exception reporting
+   - Accountability framework
+
+5. BUDGET ADJUSTMENT
+   - Top-up request dengan supporting justification
+   - Approval process defined
+   - Timely adjustment posting
+   - Document untuk audit
+
+6. RECONCILIATION
+   - Regular reconcile budget vs GL
+   - Identify dan resolve variance
+   - Accuracy assurance
+   - Financial control
+
+7. REPORTING & COMMUNICATION
+   - Regular budget status report
+   - Management communication
+   - Variance explanation
+   - Transparency
+
+KEYS TO REMEMBER:
+1. Budget Card = Detail per account (satu COA satu Card)
+2. Balance = Budget - Committed (running total)
+3. Cascade mandatory: Company → Division → Department → COA
+4. Date = "as of date" untuk budget position
+5. Transaksi dari berbagai source: Invoice, PUM, Payment
+6. DOC DATE ≠ DATE (commitment date ≠ payment date)
+7. Negative balance = Over-budget condition
+8. Creditor identify siapa yang terima pembayaran
+9. Payment No confirm transaksi sudah dibayar
+10. Keep for audit trail & compliance documentation

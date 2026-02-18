@@ -1,0 +1,141 @@
+LAPORAN PENERIMAAN BUDGET HARIAN
+
+TUJUAN:
+Memberikan informasi detail tentang penerimaan (receive) yang telah dicatat dalam sistem, 
+dengan breakdown berdasarkan perusahaan, bank, dan periode tanggal tertentu. 
+Laporan ini membantu bagian finance untuk monitoring dan verifikasi penerimaan budget sehari-hari.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan penerimaan budget dalam bentuk tabel yang dapat difilter 
+dan dirinci sesuai kebutuhan pengguna.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Budget Receive Daily"
+   - Sistem menampilkan form filter dengan beberapa field input
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+
+   b) Pilih Bank (Bank)
+      - Klik dropdown "Bank"
+      - Daftar bank akan muncul berdasarkan perusahaan yang sudah dipilih
+      - Pilih salah satu bank
+      - Contoh: "CAPIT - Bank Capital"
+      - Catatan: Field ini hanya aktif setelah memilih perusahaan
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Status "Loading..." akan ditampilkan selama data sedang diambil
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: LAPORAN KESELURUHAN PENERIMAAN BUDGET HARIAN
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih
+      - Nomor Account/Cek: (identitas rekening)
+      - Nama Bank: (sesuai pilihan filter)
+      - Tanggal Cetak: (tanggal saat laporan dibuat)
+      - Waktu Cetak: (jam laporan dibuat)
+
+   b) Detail Tabel Penerimaan (Terdiri dari kolom):
+      - No.              : Nomor urut data
+      - Tanggal Cek/Giro : Tanggal dokumen/instrumen pembayaran diterima
+      - No. Cek/Giro     : Nomor identitas cek atau giro (referensi dokumen)
+      - No. Bukti Voucher: Nomor referensi di sistem (nomor transaksi di JIFAS)
+      - Nama Supplier    : Nama pihak yang melakukan penerimaan/pengirim dana
+      - Uraian           : Deskripsi/keterangan dari penerimaan
+      - Jumlah (USD)     : Nilai penerimaan dalam mata uang US Dollar
+      - Jumlah (IDR)     : Nilai penerimaan dalam mata uang Rupiah Indonesia
+
+   c) Contoh Data di Laporan:
+      1. Tanggal: 13/01/2026 - Supplier: Jababeka Integrated Finance Accounting System 
+         Jumlah USD: 0 | Jumlah IDR: 545.010.000
+
+      2. Tanggal: 19/01/2026 - Supplier: Phitagoras Global Duta - Test 1/12 
+         Jumlah USD: 0 | Jumlah IDR: 11.100.000
+
+      3. Tanggal: 19/01/2026 - Supplier: Tagihan tanpa billing - Test 1/19 
+         Jumlah USD: 0 | Jumlah IDR: 22.999.999.999,99
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Komprol Halaman:
+      - Untuk laporan dengan banyak halaman, bisa berpindah halaman
+      - Atur skala tampilan sesuai kebutuhan (zoom in/out)
+      - Klik tombol refresh untuk reload/memperbarui data yang sama
+      - Bisa export laporan ke berbagai format (PDF, Excel, dll)
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam format lain
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+
+FITUR PERPINDAHAN BANK:
+Ketika pengguna mengubah bank (dengan perusahaan yang sama):
+- Klik dropdown "Bank" yang berbeda
+- Klik "Search" kembali
+- Data di laporan akan diperbarui sesuai bank terbaru
+- Semua data penerimaan akan disesuaikan dengan periode tanggal yang masih aktif
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik "Search" kembali
+- Sistem akan menampilkan data penerimaan sesuai periode baru
+- Data akan ditampilkan mulai dari penerimaan tertua hingga paling baru
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. MONITORING HARIAN
+   - Melihat penerimaan cash/dana yang masuk setiap hari
+   - Memverifikasi bahwa semua penerimaan tercatat di sistem
+
+2. REKONSILIASI BANK
+   - Mencocokkan data penerimaan di sistem dengan laporan bank
+   - Mengidentifikasi perbedaan antara yang tercatat vs yang diterima bank
+   - Memastikan laporan dari supplier sesuai dengan data sistem
+
+3. ANALISIS CASH FLOW
+   - Menganalisis trend penerimaan per supplier
+   - Melihat nilai penerimaan dalam dua mata uang (USD dan IDR)
+   - Membantu forecasting penerimaan cash di masa depan
+
+4. DOKUMENTASI & AUDIT
+   - Menyediakan bukti tertulis (laporan tercetak/export) untuk audit
+   - Referensi untuk follow-up jika ada perbedaan atau keterlambatan penerimaan
+   - Dokumentasi untuk keperluan pajak dan internal control
+
+5. REPORTING MANAJEMEN
+   - Menyiapkan laporan penerimaan untuk manajemen atau divisi lain
+   - Memberikan dashboard visual tentang status penerimaan budget
+
+CATATAN PENTING:
+
+1. Semua field filter (Perusahaan, Bank, Tanggal Awal, Tanggal Akhir) harus diisi
+2. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+3. Laporan hanya menampilkan penerimaan yang telah tercatat dan diverifikasi
+4. Nilai dalam USD akan menampilkan 0 jika tidak ada transaksi dalam mata uang tersebut
+5. Untuk perubahan data, klik refresh/search kembali
+6. Laporan dapat diexport dalam berbagai format untuk keperluan analisis lebih lanjut

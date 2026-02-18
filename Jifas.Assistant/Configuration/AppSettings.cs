@@ -187,81 +187,81 @@ namespace Jifas.Assistant.Configuration
         /// Get Gemini Settings
         /// Usage: var apiKey = settings.Gemini.ApiKey;
         /// </summary>
-        public GeminiSettings Gemini => _configuration.GetSection("Gemini").Get<GeminiSettings>();
+        public GeminiSettings Gemini => _configuration.GetSection("Gemini").Get<GeminiSettings>() ?? new GeminiSettings();
 
         /// <summary>
         /// Get OpenAI Settings (Optional)
         /// </summary>
-        public OpenAISettings OpenAI => _configuration.GetSection("OpenAI").Get<OpenAISettings>();
+        public OpenAISettings OpenAI => _configuration.GetSection("OpenAI").Get<OpenAISettings>() ?? new OpenAISettings();
 
         /// <summary>
         /// Get Azure OpenAI Settings (Optional)
         /// </summary>
-        public AzureOpenAISettings AzureOpenAI => _configuration.GetSection("Azure:OpenAI").Get<AzureOpenAISettings>();
+        public AzureOpenAISettings AzureOpenAI => _configuration.GetSection("Azure:OpenAI").Get<AzureOpenAISettings>() ?? new AzureOpenAISettings();
 
         /// <summary>
         /// Get Support Settings
         /// </summary>
-        public SupportSettings Support => _configuration.GetSection("Support").Get<SupportSettings>();
+        public SupportSettings Support => _configuration.GetSection("Support").Get<SupportSettings>() ?? new SupportSettings();
 
         /// <summary>
         /// Get Suggestion Settings
         /// </summary>
-        public SuggestionSettings Suggestion => _configuration.GetSection("Suggestion").Get<SuggestionSettings>();
+        public SuggestionSettings Suggestion => _configuration.GetSection("Suggestion").Get<SuggestionSettings>() ?? new SuggestionSettings();
 
         /// <summary>
         /// Get Knowledge Base Settings
         /// </summary>
-        public KnowledgeBaseSettings KnowledgeBase => _configuration.GetSection("KnowledgeBase").Get<KnowledgeBaseSettings>();
+        public KnowledgeBaseSettings KnowledgeBase => _configuration.GetSection("KnowledgeBase").Get<KnowledgeBaseSettings>() ?? new KnowledgeBaseSettings();
 
         /// <summary>
         /// Get Chat Settings
         /// </summary>
-        public ChatSettings Chat => _configuration.GetSection("Chat").Get<ChatSettings>();
+        public ChatSettings Chat => _configuration.GetSection("Chat").Get<ChatSettings>() ?? new ChatSettings();
 
         /// <summary>
         /// Get Caching Settings
         /// </summary>
-        public CachingSettings Caching => _configuration.GetSection("Caching").Get<CachingSettings>();
+        public CachingSettings Caching => _configuration.GetSection("Caching").Get<CachingSettings>() ?? new CachingSettings();
 
         /// <summary>
         /// Get API Settings
         /// </summary>
-        public ApiSettings API => _configuration.GetSection("API").Get<ApiSettings>();
+        public ApiSettings API => _configuration.GetSection("API").Get<ApiSettings>() ?? new ApiSettings();
 
         /// <summary>
         /// Get Qdrant Settings
         /// </summary>
-        public QdrantSettings Qdrant => _configuration.GetSection("Qdrant").Get<QdrantSettings>();
+        public QdrantSettings Qdrant => _configuration.GetSection("Qdrant").Get<QdrantSettings>() ?? new QdrantSettings();
 
         /// <summary>
         /// Get Search Settings
         /// </summary>
-        public SearchSettings Search => _configuration.GetSection("Search").Get<SearchSettings>();
+        public SearchSettings Search => _configuration.GetSection("Search").Get<SearchSettings>() ?? new SearchSettings();
 
         /// <summary>
         /// Get Metrics Settings
         /// </summary>
-        public MetricsSettings Metrics => _configuration.GetSection("Metrics").Get<MetricsSettings>();
+        public MetricsSettings Metrics => _configuration.GetSection("Metrics").Get<MetricsSettings>() ?? new MetricsSettings();
 
         /// <summary>
         /// Get Health Check Settings
         /// </summary>
-        public HealthCheckSettings HealthCheck => _configuration.GetSection("HealthCheck").Get<HealthCheckSettings>();
+        public HealthCheckSettings HealthCheck => _configuration.GetSection("HealthCheck").Get<HealthCheckSettings>() ?? new HealthCheckSettings();
 
         /// <summary>
         /// Get Performance Settings
         /// </summary>
-        public PerformanceSettings Performance => _configuration.GetSection("Performance").Get<PerformanceSettings>();
+        public PerformanceSettings Performance => _configuration.GetSection("Performance").Get<PerformanceSettings>() ?? new PerformanceSettings();
 
         /// <summary>
         /// Get Optimization Settings
         /// </summary>
-        public OptimizationSettings Optimization => _configuration.GetSection("Optimization").Get<OptimizationSettings>();
+        public OptimizationSettings Optimization => _configuration.GetSection("Optimization").Get<OptimizationSettings>() ?? new OptimizationSettings();
 
         /// <summary>
         /// Get Connection String
         /// </summary>
-        public string DefaultConnection => _configuration.GetConnectionString("DefaultConnection");
+        public string DefaultConnection => _configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
     }
 }

@@ -1,0 +1,583 @@
+LAPORAN INQUIRY AR (ACCOUNTS RECEIVABLE INQUIRY)
+
+TUJUAN:
+Memberikan informasi DETAIL tentang setiap transaksi penjualan/piutang kepada customer/debtor yang belum lunas.
+Laporan ini menampilkan daftar lengkap semua invoice penjualan dengan detail lengkap termasuk 
+deskripsi, jumlah, pajak (PPN, PPH), bank penerima, dan data customer/debtor.
+Membantu divisi finance untuk tracking, verifikasi, dan penagihan/collection piutang dari customer-customer.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan inquiry detail AR dalam bentuk tabel yang menampilkan setiap invoice penjualan 
+secara individual dengan informasi lengkap per transaksi termasuk perhitungan pajak dan nilai final yang diterima.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Inquiry AR"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Status (Status)
+      - Klik dropdown "Status"
+      - Sistem akan menampilkan 3 opsi:
+        * "All Status" - Untuk melihat semua status (Posted dan Unposted)
+        * "Posted" - Untuk melihat hanya yang sudah di-POST (invoice sudah diakui AR)
+        * "Unposted" - Untuk melihat hanya yang BELUM di-POST (invoice masih pending)
+      - Default: "All Status" (lihat di screenshot)
+      - Catatan: Status menunjukkan apakah invoice penjualan sudah diakui sebagai piutang
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan invoice penjualan dari tanggal ini
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan invoice hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua invoice penjualan yang sesuai filter
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: INQUIRY AR
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 2")
+
+   b) Detail Tabel Invoice/Faktur AR (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Company     : Kode perusahaan (contoh: KI)
+      - Doc. No.    : Nomor dokumen penjualan/AR (contoh: RVKI26010001)
+      - Date        : Tanggal invoice/faktur penjualan diterbitkan
+      - Description : Deskripsi/narasi dari invoice (tujuan penjualan/jasa)
+      - Currency    : Mata uang invoice (IDR, USD, EUR, dll)
+
+      KOLOM NILAI:
+      - Amount      : Jumlah nominal/harga invoice sebelum pajak
+      - Total (IDR) : Total nilai invoice dalam Rupiah (Amount + PPN ± PPH)
+      - PPN         : Pajak Pertambahan Nilai (nilai PPN yang dikenakan)
+      - PPH         : Pajak Penghasilan (nilai PPH yang dipotong atau disetorkan)
+
+      KOLOM IDENTIFIKASI TRANSAKSI:
+      - Bank        : Bank penerima pembayaran dari customer
+      - Debtor      : Nama customer/debtor yang membeli/menerima jasa
+      - Amount      : Nilai yang diterima (dalam currency mula-mula)
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      Company: KI | Doc: RVKI26010001 | Date: 02/01/2026
+      Description: Pengajuan IK menggunakan Playwright | Test Playwright 1/2
+      Currency: IDR | Amount: 5.550.000 | Total (IDR): 5.550.000
+      Bank: BCA | Debtor: PHITAGORAS GLOBAL DUTA, PT
+      PPN: 0 | PPH: 0
+
+      Baris 2:
+      Company: KI | Doc: RVKI26010002 | Date: 02/01/2026
+      Currency: IDR | Amount: 11.100.000 | Total (IDR): 11.100.000
+      Bank: BCA | Debtor: PHITAGORAS GLOBAL DUTA, PT
+      PPN: 0 | PPH: 0
+
+      Baris 3:
+      Company: KI | Doc: RVKI26010021 | Date: 07/01/2026
+      Currency: USD | Amount: 1.511 | Total (IDR): 1.511
+      Bank: STCHD | Debtor: PHITAGORAS GLOBAL DUTA, PT
+      PPN: 0 | PPH: 0
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak invoice, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu (contoh: Page 1 of 2)
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. AR (ACCOUNTS RECEIVABLE / PIUTANG USAHA)
+   - Adalah piutang perusahaan dari customer/debtor atas penjualan barang/jasa
+   - Timbul dari penerbitkan invoice/faktur penjualan kepada customer
+   - Harus dibayar oleh customer dalam jangka waktu tertentu (sesuai term pembayaran)
+   - Laporan ini adalah daftar semua piutang yang masih outstanding (belum lunas)
+   - Contoh: PT ABC jual barang kepada PT XYZ, maka AR timbul sampai pembayaran diterima
+
+2. DOC. NO. (NOMOR DOKUMEN)
+   - Adalah nomor referensi unik untuk setiap AR entry di sistem
+   - Format: RV + Kode Perusahaan + Tahun + Bulan + Urut (contoh: RVKI26010001)
+   - RV = Receivable Voucher/AR Entry
+   - K = Kode Perusahaan (KI untuk Kawasan Industri)
+   - I = Input
+   - 26 = Tahun 2026
+   - 01 = Bulan Januari
+   - 0001 = Urut entry
+   - Digunakan untuk trace/reference
+
+3. DESCRIPTION (DESKRIPSI PENJUALAN)
+   - Adalah penjelasan singkat tentang apa yang dijual/layani
+   - Contoh: "Pengajuan IK menggunakan Playwright | Test Playwright 1/2"
+   - Contoh: "Property Office - Test 1/7"
+   - Contoh: "Phitagoras Global Duta"
+   - Berguna untuk identify jenis transaksi penjualan
+
+4. AMOUNT (JUMLAH INVOICE SEBELUM PAJAK)
+   - Adalah total nilai yang tertera di invoice penjualan kepada customer
+   - Format: Angka dengan pemisah ribuan
+   - Ini adalah nilai SEBELUM pajak PPN atau PPH
+   - Contoh: 5.550.000 adalah nilai invoice sebelum pajak
+   - Digunakan untuk perhitungan pajak dan revenue
+
+5. TOTAL (IDR)
+   - Adalah total nilai akhir yang harus diterima dari customer
+   - Rumus: Total = Amount + PPN - PPH (jika ada)
+   - Atau: Total = Amount + PPN (jika tidak ada PPH)
+   - Contoh: Amount 5.550.000 + PPN 0 - PPH 0 = 5.550.000
+   - Ini adalah jumlah yang sesungguhnya harus diterima dari customer
+
+6. PPN (PAJAK PERTAMBAHAN NILAI)
+   - Adalah pajak penjualan/konsumsi yang dikenakan atas transaksi penjualan
+   - Rate standar di Indonesia: 10% (sejak 2022, sebelumnya 9%)
+   - Rumus: PPN = Amount × 10%
+   - Contoh: Amount 500.000 → PPN = 50.000
+   - PPN adalah pajak yang wajib disetorkan ke negara
+   - Bisa 0 jika penjualan exempt dari PPN (barang/jasa tertentu)
+
+7. PPH (PAJAK PENGHASILAN)
+   - Jawaban berbeda dari AR perspective:
+     
+     a) PPH DARI PERSPEKTIF CUSTOMER (YANG BAYAR):
+        - Customer melakukan pemotongan PPH atas pembayaran ke supplier
+        - Contoh: Customer potong PPH 2%, maka supplier terima 98%
+        - Di laporan AR: PPH adalah nilai yang dipotong customer
+        - Hasil akhir = Amount - PPH (lebih rendah dari invoice)
+        
+     b) PPH DARI PERSPEKTIF PERUSAHAAN (YANG DAPAT):
+        - Perusahaan akan terima pembayaran lebih rendah karena PPH dipotong customer
+        - Tapi PPH adalah kredit pajak yang bisa diklaim
+        - Di laporan: Total (IDR) = Amount - PPH (nilai yang diterima)
+   
+   - PPH merupakan pajak terutang perusahaan, tapi dipotong oleh customer saat bayar
+   - Bisa 0 jika tidak ada pemotongan atau invoice exempt
+
+8. CURRENCY (MATA UANG)
+   - Adalah mata uang dalam nomor transaksi
+   - Contoh: IDR (Rupiah Indonesia), USD (Dolar Amerika), EUR (Euro)
+   - Jika currency bukan IDR, ada konversi ke IDR
+   - Currency reksam untuk international transactions
+   - Berguna untuk forex exposure monitoring
+
+9. BANK (BANK PENERIMA PEMBAYARAN)
+   - Adalah bank tujuan customer akan transfer pembayaran
+   - Contoh: BCA, CAPIT, STCHD, KASEU, MDR$
+   - Identifikasi bank mana yang akan menerima pembayaran
+   - Digunakan untuk working capital management
+   - Penting untuk reconciliation dengan bank statement
+
+10. DEBTOR / CUSTOMER
+    - Adalah nama customer/debtor yang membeli barang atau menerima jasa
+    - Contoh: PHITAGORAS GLOBAL DUTA, PT
+    - Nama yang tercatat di master Customer di sistem
+    - Penting untuk tracking dan collection
+
+11. STATUS (POSTED vs UNPOSTED)
+    - POSTED: Invoice sudah di-post di sistem AR (piutang sudah diakui)
+             → Sudah tercatat di GL (General Ledger)
+             → Included dalam AR aging report
+             → Ready untuk collection/penagihan
+    
+    - UNPOSTED: Invoice belum di-post di sistem AR
+               → Masih dalam review atau approval
+               → Belum tercatat di GL
+               → Belum included dalam AR outstanding
+               → Status: PENDING
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. TRACKING & VERIFICATION PIUTANG
+   - Melihat setiap invoice penjualan yang dikeluarkan kepada customer
+   - Memverifikasi bahwa setiap invoice tercatat sebagai piutang
+   - Tracking untuk memastikan tidak ada invoice yang hilang
+   - Matching dengan dokumen/bukti penjualan
+
+2. INQUIRY & PENCARIAN DETAIL
+   - Mencari invoice tertentu berdasarkan customer, tanggal, atau amount
+   - Trace specific transaksi untuk investigasi
+   - Find invoice untuk follow-up atau verification
+   - Search by nomor dokumen atau customer
+
+3. AR AGING & OUTSTANDING TRACKING
+   - Melihat invoice berdasarkan umur piutangnya
+   - Identify piutang yang sudah overdue (jatuh tempo)
+   - Planning collection berdasarkan due date
+   - Prioritas follow-up untuk customer yang sudah terlambat
+
+4. COLLECTION & CASH FLOW PLANNING
+   - Identify invoice mana yang sudah due untuk penagihan
+   - Calculate total piutang yang akan jatuh tempo
+   - Plan cash inflow untuk memenuhi cash needs
+   - Prioritize penagihan based on due date atau customer
+
+5. PAYMENT VERIFICATION
+   - Verify bahwa setiap pembayaran sudah match dengan AR yang tercatat
+   - Identify invoice yang sudah dibayar vs masih outstanding
+   - Tracing untuk payment discrepancies atau overpayment
+   - Budget control untuk cash inflow forecasting
+
+6. CUSTOMER MANAGEMENT
+   - Melihat semua invoice per customer
+   - Analyze revenue dengan each customer
+   - Evaluate customer payment behavior dan compliance
+   - Support untuk customer relationship management
+
+7. REVENUE & SALES ANALYSIS
+   - Monitor penjualan per customer atau per kategori jasa
+   - Compare actual vs budget untuk penjualan
+   - Identify high-value customers atau problematic accounts
+   - Revenue control dan sales performance tracking
+
+8. RECONCILIATION WITH CUSTOMER STATEMENTS
+   - Match invoice di sistem dengan statement dari customer
+   - Identify discrepancies atau disputed amounts
+   - Clarify dengan customer untuk outstanding items
+   - Ensure accuracy sebelum collection
+
+9. MONTH-END CLOSING & REVENUE RECOGNITION
+   - Support untuk revenue recognition saat closing
+   - Verify semua invoice bulan sudah tercatat (Posted)
+   - Identify UNPOSTED yang harus di-post sebelum closing
+   - GL reconciliation untuk account receivable
+
+FITUR PERPINDAHAN STATUS:
+Ketika pengguna mengubah status (dengan company yang sama):
+- Klik dropdown "Status" untuk filter Posted, Unposted, atau All Status
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai status filter yang baru
+- Akan tampil hanya invoice dengan status yang dipilih
+
+Contoh:
+- Filter Status = "Posted" → Hanya invoice yang sudah di-post yang tampil
+- Filter Status = "Unposted" → Hanya invoice yang belum di-post yang tampil
+- Filter Status = "All Status" → Semua invoice (posted + unposted) tampil
+
+FITUR PERPINDAHAN PERIODE TANGGAL:=
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan invoice sesuai periode baru
+- Invoice akan ditampilkan mulai dari tanggal awal hingga tanggal akhir
+- Data periode lama akan diganti dengan data periode baru
+
+CATATAN PENTING:
+
+1. Semua field filter (Company, Status, From Date, To Date) harus diisi sebelum search
+2. Laporan menampilkan DETAIL setiap invoice AR (tidak summary)
+3. Satu baris = satu invoice penjualan kepada satu customer
+4. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+5. Total (IDR) adalah nilai final yang harus diterima (Amount + PPN - PPH)
+6. Status filter bisa "All Status", "Posted", atau "Unposted"
+7. Debtor adalah nama customer/pembeli yang akan membayar
+8. PPN bisa 0 jika penjualan exempt dari PPN
+9. PPH bisa 0 jika tidak ada pemotongan dari customer
+10. Untuk perubahan filter, klik search kembali
+11. Laporan dapat diexport untuk analisis collection
+12. Laporan ini read-only, tidak bisa mengedit data langsung
+13. Format tanggal: DD/MM/YYYY
+14. Jika ada invoice yang belum tercatat, harus input terlebih dahulu
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+
+1. Pastikan semua filter (Company, Status, From, To) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah perusahaan yang dipilih benar-benar punya piutang di periode tersebut
+4. Coba ubah status ke "All Status" untuk rule out status filter
+5. Coba ubah range tanggal lebih luas
+6. Mungkin periode tersebut memang tidak ada invoice penjualan
+7. Klik tombol "Search" kembali untuk refresh
+8. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+1. DAILY/WEEKLY AR MONITORING
+   - Setiap hari/minggu buka laporan ini
+   - Cek invoice mana yang sudah POST dan mana yang UNPOSTED
+   - Follow-up UNPOSTED untuk completion
+   - Verify data dengan invoice asli
+
+2. FIND SPECIFIC INVOICE
+   - Use Search filter dengan date range yang sempit untuk quick find
+   - Cari by customer name untuk see semua invoice dari customer tersebut
+   - Use nomor dokumen untuk matching dengan customer communication
+   - Ctrl+F di browser untuk search dalam halaman
+
+3. AR AGING ANALYSIS
+   - Lihat invoice berdasarkan tanggal penjualan
+   - Hitung berapa hari sudah outstanding (hari ini - Date)
+   - Categorize: Current (< 30 hari), 30-60 hari, 60-90 hari, > 90 hari
+   - Focus untuk collect yang sudah overdue
+
+4. COLLECTION PLANNING & FOLLOW-UP
+   - Identify invoice mana yang sudah due untuk tagihan/collection
+   - Prepare customer list untuk collection follow-up
+   - Calculate total yang akan jatuh tempo periode depan
+   - Schedule collection calls/emails per customer
+
+5. EXPORT TO EXCEL FOR ANALYSIS
+   - Export laporan ke Excel
+   - Buat column helper untuk: Umur (days outstanding), Payment status
+   - Pivot table untuk analysis by customer, amount range, revenue type
+   - Sort by customer atau amount untuk different perspective
+
+6. RECONCILIATION WITH CUSTOMER
+   - Dari customer statement/PO, identify invoice yang belum diakui
+   - Use laporan ini untuk find apakah invoice sudah tercatat
+   - Identify missing invoices (invoice penjualan belum di-input)
+   - Follow-up untuk input invoice yang belum tercatat
+
+7. CASH FLOW FORECASTING
+   - Identify invoice mana yang akan jatuh tempo untuk collection
+   - Calculate expected cash inflow per periode berdasarkan due date
+   - Plan working capital requirement
+   - Forecast untuk cash management
+
+8. MONTH-END CLOSING SUPPORT
+   - Buka laporan untuk bulan yang closing
+   - Verify semua invoice penjualan bulan sudah tercatat (Posted)
+   - Identify UNPOSTED yang harus di-post sebelum closing
+   - GL reconciliation untuk account receivable
+
+SKENARIO UMUM INQUIRY:
+
+SKENARIO 1: "Cari invoice tertentu untuk customer"
+Action:
+1. Pilih Company
+2. Pilih Status = All Status atau Posted
+3. Pilih periode yang relevan
+4. Klik Search
+5. Use Ctrl+F di browser untuk search nama customer
+6. Atau export ke Excel dan filter by Debtor
+
+SZENARIO 2: "Lihat total piutang per customer untuk collection"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted (untuk approved amount)
+3. Pilih periode (misal: last 3-6 months)
+4. Klik Search
+5. Export ke Excel
+6. Pivot table atau SUMIF by Debtor untuk total piutang
+7. Sort by total descending untuk top customers
+
+SKENARIO 3: "Verify invoice sebelum collection follow-up"
+Action:
+1. Terima follow-up request dari customer tentang invoice
+2. Cari di laporan ini menggunakan nomor dokumen atau customer name
+3. Verify bahwa Amount dan Total (IDR) sudah match
+4. Check status apakah sudah Posted
+5. Confirm payment terms untuk follow-up schedule
+
+SKENARIO 4: "Track piutang overdue untuk urgent collection"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted
+3. Pilih periode lama (misal: 2-3 bulan sebelumnya)
+4. Klik Search
+5. Identify invoice yang sudah lama outstanding
+6. Group by customer untuk collection priority
+7. Schedule urgent follow-up atau escalation
+
+TROUBLESHOOTING UMUM:
+
+MASALAH: "Total (IDR) tidak sesuai dengan hitung manual (Amount + PPN)"
+SOLUSI:
+- Check apakah ada currency conversion (jika Amount dalam USD, perlu konversi)
+- Check apakah PPN benar-benar 10% dari Amount
+- Check apakah ada PPH atau discount yang dikurangi
+- Verify formula calculation consistency
+- Contact accounting jika ada error
+
+MASALAH: "Invoice penjualan dari customer tidak tampil di laporan"
+SOLUSI:
+- Check apakah invoice sudah di-input di sistem
+- Check apakah invoice sudah di-post (jika filter Posted saja)
+- Check apakah company dan date range benar
+- Search dengan "All Status" untuk confirm ada atau tidak
+- Mungkin invoice belum di-create atau masih UNPOSTED
+
+MASALAH: "Perbedaan antara Total (IDR) dengan Amount di invoice asli"
+SOLUSI:
+- Check currency exchange rate yang digunakan (jika USD/EUR)
+- Check invoice fisik dari customer untuk memastikan amounts
+- Verify PPN dan PPH calculation
+- Clarify dengan customer jika ada discrepancy
+- Buat debit memo atau credit memo jika ada selisih
+
+MASALAH: "Tidak bisa find specific invoice meskipun sudah search"
+SOLUSI:
+- Try search dengan date range yang lebih luas
+- Try search dengan "All Status" untuk rule out status filter
+- Check apakah nama customer atau nomor dokumen benar
+- Mungkin invoice belum di-input atau masih UNPOSTED
+- Contact accounting untuk verify status invoice
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN CUSTOMER:
+   - Share laporan AR untuk reconciliation
+   - Verify invoice yang tercatat di sistem
+   - Clarify untuk discrepancies atau disputed amounts
+   - Confirm payment schedule berdasarkan due date
+
+2. DENGAN SALES:
+   - Provide AR detail untuk follow-up order status
+   - Verify bahwa penjualan sudah tercatat sebagai piutang
+   - Flag jika ada sales yang belum di-invoice
+   - Support untuk customer account management
+
+3. DENGAN WAREHOUSE/DELIVERY:
+   - Reconcile dengan delivery documents
+   - Verify bahwa barang sudah dikirim sesuai faktur
+   - Identify 3-way mismatch (PO vs Delivery vs Invoice)
+   - Follow-up untuk discrepancies
+
+4. DENGAN TAX/COMPLIANCE:
+   - Verify PPN calculation untuk tax compliance
+   - Support untuk tax audit dan reporting
+   - Ensure semua penjualan sudah tercatat untuk tax purposes
+   - Calculate revenue recognition per period
+
+5. DENGAN MANAGEMENT/CFO:
+   - Report total AR outstanding
+   - Highlight overdue items atau high-risk customer
+   - Analyze revenue trend dan customer concentration
+   - Budget vs actual untuk sales revenue
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Inquiry AR berhubungan dengan:
+1. Laporan Aging AR - Untuk analyze outstanding AR berdasarkan umur
+2. Laporan SO (Sales Order) - Untuk matching dengan sales order
+3. Laporan DO/Delivery - Untuk matching dengan pengiriman barang
+4. Laporan AR Subledger - Untuk detail per GL account
+5. Laporan Collection - Untuk verify collection dari AR
+6. General Ledger - Untuk verify posting ke GL account
+7. Customer Statement Reconciliation - Untuk match dengan statement customer
+8. Financial Statement - AR ditampilkan di Balance Sheet sebagai Current Asset
+
+WORKFLOW NORMAL UNTUK AR:
+
+STEP 1: PENJUALAN/ORDER
+- Customer membuat order/PO
+- Sales accepts order
+- Status: Order Confirmed
+
+STEP 2: PENGIRIMAN BARANG
+- Barang disiapkan dan dikirim ke customer
+- DO (Delivery Order) diterbitkan
+- Status: Goods Delivered
+
+STEP 3: PENERBITKAN INVOICE
+- Invoice penjualan diterbitkan kepada customer
+- Invoice di-input ke sistem sebagai AR entry (Unposted)
+- Status: Unposted (pending post)
+
+STEP 4: VERIFIKASI & POSTING
+- AR entry diverifikasi (SO vs DO vs Invoice)
+- Jika OK, di-approve untuk posting
+- Status: Ready to Post
+
+STEP 5: POSTING DI SISTEM
+- AR entry di-post ke GL
+- Status: Posted
+- AR sudah diakui sebagai piutang yang sah
+
+STEP 6: COLLECTION
+- Invoice sudah jatuh tempo (sesuai term pembayaran)
+- Collection follow-up dilakukan pada customer
+- Pembayaran diterima dari customer
+- Check/transfer dimasukkan ke bank
+- AR di-clear/settled
+
+STEP 7: RECONCILIATION
+- Customer statement diterima
+- di-reconcile dengan AR records
+- Document untuk file
+
+BEST PRACTICES:
+
+1. TIMELY POSTING
+   - Post AR invoice as soon as invoice issued dan verified
+   - Target: Same day atau max 1-2 business days
+   - Ensure accurate recording untuk revenue recognition
+
+2. MATCHING & VERIFICATION
+   - Always match: SO vs DO vs Invoice sebelum posting
+   - Resolve discrepancies sebelum posting
+   - Flag non-matching items untuk attention
+
+3. CUSTOMER COMMUNICATION
+   - Send invoice segera setelah issued
+   - Provide clear payment instruction & terms
+   - Maintain customer statement untuk reconciliation
+
+4. COLLECTION MONITORING
+   - Regular monitor AR aging
+   - Follow-up on overdue invoices timely
+   - Maintain good customer relationship
+
+5. AR RECONCILIATION
+   - Regular reconcile dengan customer statement
+   - Resolve outstanding items timely
+   - Maintain documentation untuk audit trail
+
+6. DOCUMENTATION
+   - Keep all supporting documents (SO, DO, Invoice)
+   - File organized per customer atau nomor dokumen
+   - Retention sesuai policy
+
+7. APPROVAL PROCESS
+   - Clear approval authority established
+   - All invoices verified before posting
+   - Documentation untuk audit trail
+
+KEYS TO REMEMBER:
+
+1. One row = One sales invoice kepada ONE customer (detail level)
+2. Status = Posted/Unposted untuk tracking di GL
+3. Total (IDR) = Final amount yang harus diterima (Amount + PPN - PPH)
+4. Debtor = Nama customer/pembeli yang akan membayar
+5. Always match dengan SO dan DO sebelum posting
+6. PPN adalah pajak yang harus disetorkan (pajak penjualan)
+7. PPH adalah potongan pajak dari customer saat pembayaran
+8. Priority collection berdasarkan due date
+9. Month-end: Verify semua invoice sudah posted
+10. Keep for audit trail & compliance documentation

@@ -1,0 +1,561 @@
+LAPORAN INQUIRY AP (ACCOUNTS PAYABLE INQUIRY)
+
+TUJUAN:
+Memberikan informasi DETAIL tentang setiap tagihan/invoice dari vendor/supplier yang diterima dan tercatat sebagai hutang (AP).
+Laporan ini menampilkan daftar lengkap semua faktur/invoice pembelian dengan detail lengkap termasuk 
+deskripsi, jumlah, pajak (PPH, PPN), bank tujuan pembayaran, dan data vendor/supplier.
+Membantu divisi finance untuk tracking, verifikasi, dan pembayaran hutang kepada vendor-vendor.
+
+DESKRIPSI FUNGSIONALITAS:
+Fitur ini menampilkan laporan inquiry detail AP dalam bentuk tabel yang menampilkan setiap faktur/invoice 
+pembelian secara individual dengan informasi lengkap per transaksi termasuk perhitungan pajak dan nilai final.
+
+ALUR PROSES (FLOW):
+
+1. AKSES LAPORAN
+   - Pengguna membuka halaman "Report Inquiry AP"
+   - Sistem menampilkan form filter dengan 4 field input
+   - Form filter terletak di bagian atas laporan dalam satu baris
+
+2. PENGISIAN FILTER (MANDATORY - Wajib Diisi)
+
+   a) Pilih Perusahaan (Company)
+      - Klik dropdown "Company"
+      - Sistem akan menampilkan daftar perusahaan yang tersedia
+      - Ketik untuk mencari perusahaan tertentu (minimal 2 karakter)
+      - Pilih satu perusahaan sesuai kebutuhan
+      - Contoh: "KI - PT. Kawasan Industri Jababeka"
+      - Catatan: Hanya perusahaan aktif yang ditampilkan
+
+   b) Pilih Status (Status)
+      - Klik dropdown "Status"
+      - Sistem akan menampilkan 3 opsi:
+        * "All Status" - Untuk melihat semua status (Posted dan Unposted)
+        * "Posted" - Untuk melihat hanya yang sudah di-POST (invoice sudah diakui AP)
+        * "Unposted" - Untuk melihat hanya yang BELUM di-POST (invoice masih pending)
+      - Default: "Posted" (lihat di screenshot)
+      - Catatan: Status menunjukkan apakah invoice sudah diakui sebagai hutang
+
+   c) Tentukan Tanggal Mulai (From)
+      - Klik field "From" untuk membuka kalender
+      - Pilih tanggal awal periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 01/01/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan invoice dari tanggal ini
+
+   d) Tentukan Tanggal Selesai (To)
+      - Klik field "To" untuk membuka kalender
+      - Pilih tanggal akhir periode yang ingin dilihat
+      - Format tanggal: DD/MM/YYYY
+      - Contoh: 13/02/2026
+      - Default: Tanggal hari ini
+      - Laporan akan menampilkan invoice hingga tanggal ini
+
+3. KLIK TOMBOL SEARCH
+   - Setelah semua filter terisi, klik tombol "Search"
+   - Sistem akan memproses permintaan dan mengambil data dari database
+   - Akan muncul loading indicator saat sistem mengolah data
+   - Laporan akan menampilkan semua invoice yang sesuai filter
+
+4. TAMPILAN HASIL LAPORAN
+   Setelah data berhasil dimuat, sistem menampilkan laporan dengan informasi:
+
+   a) Header Laporan:
+      - Nama Perusahaan: PT. KAWASAN INDUSTRI JABABEKA
+      - Judul Laporan: INQUIRY AP
+      - Periode: Dari tanggal awal hingga tanggal akhir yang dipilih (format: DD/MM/YYYY s/d DD/MM/YYYY)
+      - Tanggal Cetak: Tanggal saat laporan dibuat (format: Hari, Tanggal Bulan Tahun)
+      - Waktu Cetak: Waktu pembuatan laporan (format: HH.MM.SS WIB)
+      - Halaman: Page indicator (contoh: "Page 1 of 2")
+
+   b) Detail Tabel Invoice/Faktur AP (Terdiri dari kolom):
+
+      KOLOM IDENTIFIKASI:
+      - Comp           : Kode perusahaan (contoh: KI)
+      - Doc. No.       : Nomor dokumen invoice (contoh: PVKI26010010)
+      - Date           : Tanggal invoice/faktur diterbitkan
+      - Description    : Deskripsi/narasi dari invoice (tujuan pembelian)
+      - Currency       : Mata uang invoice (IDR, USD, dll)
+
+      KOLOM NILAI:
+      - Amount         : Jumlah nominal/harga invoice sebelum pajak
+      - DPP            : Dasar Pengenaan Pajak (base untuk perhitungan PPN)
+      - Total (IDR)    : Total nilai invoice dalam Rupiah (Amount + PPN ± PPH)
+      - PPN            : Pajak Pertambahan Nilai (nilai PPN yang dikenakan)
+      - PPH            : Pajak Penghasilan (nilai PPH yang dipotong)
+
+      KOLOM IDENTIFIKASI TRANSAKSI:
+      - No. Faktur     : Nomor faktur dari vendor/supplier
+      - Bank           : Bank tujuan pembayaran kepada vendor
+      - Creditor/Vendor: Nama vendor/supplier yang mengirim invoice
+      - REF            : Nomor referensi tambahan
+      - No. BP         : Nomor Bukti/Bukti Penerimaan
+
+   c) Contoh Data di Laporan:
+
+      Baris 1:
+      Comp: KI | Doc: PVKI26010010 | Date: 05/01/2026
+      Currency: USD | Amount: 1.585.056 | DPP: 0 | PPN: 0 | PPH: 0
+      Total (IDR): 1.585.056
+      No. Faktur: (kosong) | Bank: BCA | Creditor: PHITAGORAS GLOBAL DUTA, PT
+      REF: (empty) | No. BP: (empty)
+
+      Baris 2:
+      Comp: KI | Doc: PVKI26010010 | Date: 05/01/2026
+      Currency: USD | Amount: 1.585.056 | DPP: 500.000 | PPN: 10.000 | PPH: 55.000
+      Total (IDR): 1.585.056
+      No. Faktur: IVKI25120015 | Bank: BCA | Creditor: PHITAGORAS GLOBAL DUTA, PT
+
+      Baris 3:
+      Comp: KI | Doc: PVKI26010017 | Date: 07/01/2026
+      Description: Payment Pengajuan Invoice Playwright | Test Playwright 1/7
+      Currency: IDR | Amount: 150.063 | DPP: 0 | PPN: 0 | PPH: 0
+      Total (IDR): 150.063
+      Bank: CAPIT | Creditor: PHITAGORAS GLOBAL DUTA, PT
+
+5. FITUR TAMBAHAN LAPORAN
+
+   a) Navigasi & Kontrol Halaman:
+      - Untuk laporan dengan banyak invoice, bisa berpindah halaman
+      - Tombol panah untuk ke halaman sebelumnya/berikutnya
+      - Input box untuk lompat ke halaman tertentu (contoh: Page 1 of 2)
+      - Atur skala tampilan sesuai kebutuhan
+      - Tombol refresh untuk reload/memperbarui data
+
+   b) Print/Export:
+      - Tombol print untuk mencetak langsung ke printer
+      - Tombol export untuk download laporan dalam berbagai format (PDF, Excel, dll)
+      - Sistem akan mengkonversi laporan ke format yang dipilih pengguna
+      - Proses export akan menunjukkan progress indicator
+
+PEMAHAMAN ISTILAH PENTING:
+
+1. AP (ACCOUNTS PAYABLE / HUTANG USAHA)
+   - Adalah hutang perusahaan kepada vendor/supplier atas pembelian barang/jasa
+   - Timbul dari penerimaan invoice/faktur dari vendor
+   - Harus dibayar dalam jangka waktu tertentu (sesuai term pembayaran)
+   - Laporan ini adalah daftar semua hutang yang masih outstanding
+   - Contoh: PT ABC beli barang dari PT XYZ, maka AP timbul sampai pembayaran dilakukan
+
+2. DOC. NO. (NOMOR DOKUMEN)
+   - Adalah nomor referensi unik untuk setiap AP entry di sistem
+   - Format: PVK + Tahun + Bulan + Urut (contoh: PVKI26010010)
+   - PV = Purchase Voucher/AP Entry
+   - K = Kreditor/AP
+   - I = Input
+   - 26 = Tahun 2026
+   - 01 = Bulan Januari
+   - 0010 = Urut entry
+   - Digunakan untuk trace/reference
+
+3. AMOUNT (JUMLAH INVOICE SEBELUM PAJAK)
+   - Adalah total nilai yang tertera di invoice dari vendor
+   - Format: Angka dengan pemisah ribuan
+   - Ini adalah nilai SEBELUM pajak PPN atau PPH
+   - Contoh: 150.063 adalah nilai invoice sebelum pajak
+   - Digunakan untuk perhitungan pajak
+
+4. DPP (DASAR PENGENAAN PAJAK)
+   - Adalah basis untuk menghitung PPN (Pajak Pertambahan Nilai)
+   - Biasanya sama dengan Amount untuk invoice dalam negeri
+   - DPP = Amount (kecuali ada kondisi khusus)
+   - Digunakan untuk perhitungan PPN
+   - Contoh: DPP = 500.000, maka PPN = 500.000 × 10% = 50.000
+
+5. PPN (PAJAK PERTAMBAHAN NILAI)
+   - Adalah pajak penjualan/konsumsi yang dikenakan atas transaksi pembelian
+   - Rate standar di Indonesia: 10% (sejak 2022, sebelumnya 9%)
+   - Rumus: PPN = DPP × 10%
+   - Contoh: DPP 500.000 → PPN = 50.000
+   - PPN adalah pajak yang dapat dikreditkan (dapat diklaim kembali)
+   - Bisa 0 jika invoice exempt dari PPN (barang/jasa tertentu)
+
+6. PPH (PAJAK PENGHASILAN - PEMOTONGAN)
+   - Adalah pajak yang dipotong dari pembayaran kepada vendor
+   - Ada berbagai jenis PPH: PPH 21, PPH 23, PPH 4(2), dll
+   - Contoh PPH 23: Dipotong 2% untuk jasa dan sewa, 15% untuk honorarium, dll
+   - PPH merupakan pajak terutang vendor, tapi dipotong oleh pembayar
+   - Rumus berbeda-beda tergantung jenis pelayanan
+   - Contoh: Invoice 1.000.000 dengan PPH 23 sebesar 2% → PPH = 20.000
+            → Pembayaran = 1.000.000 - 20.000 = 980.000
+
+7. TOTAL (IDR)
+   - Adalah total nilai akhir yang harus dibayarkan
+   - Rumus: Total = Amount + PPN - PPH (dalam kasus potongan)
+   - Atau: Total = Amount + PPN (jika tidak ada PPH)
+   - Contoh: Amount 1.000.000 + PPN 100.000 - PPH 20.000 = 1.080.000
+   - Ini adalah jumlah yang sesungguhnya dibayarkan kepada vendor
+
+8. NO. FAKTUR (NOMOR FAKTUR DARI VENDOR)
+   - Adalah nomor yang diterbitkan oleh vendor/supplier di invoicenya
+   - Format tergantung vendor (tidak ada standar baku)
+   - Contoh: IVKI25120015, INV-2025-001, dll
+   - Penting untuk matching dengan dokumen asli dari vendor
+   - Bisa kosong jika invoice belum ada atau masih pending
+
+9. CREDITOR / VENDOR
+   - Adalah nama vendor/supplier yang mengirim invoice
+   - Contoh: PHITAGORAS GLOBAL DUTA, PT
+   - Nama yang tercatat di master Vendor di sistem
+   - Penting untuk tracking dan payment
+
+10. STATUS (POSTED vs UNPOSTED)
+    - POSTED: Invoice sudah di-post di sistem AP (hutang sudah diakui)
+             → Sudah tercatat di GL (General Ledger)
+             → Included dalam AP aging report
+             → Ready untuk pembayaran
+    
+    - UNPOSTED: Invoice belum di-post di sistem AP
+               → Masih dalam review atau approval
+               → Belum tercatat di GL
+               → Belum included dalam AP outstanding
+               → Status: PENDING
+
+KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
+
+1. TRACKING & VERIFICATION HUTANG
+   - Melihat setiap invoice/faktur yang diterima dari vendor
+   - Memverifikasi bahwa setiap invoice tercatat sebagai hutang
+   - Tracking untuk memastikan tidak ada invoice yang hilang
+   - Matching dengan dokumen fisik dari vendor
+
+2. INQUIRY & PENCARIAN DETAIL
+   - Mencari invoice tertentu berdasarkan vendor, tanggal, atau amount
+   - Trace specific transaksi untuk investigasi
+   - Find invoice untuk follow-up atau verification
+   - Search by nomor faktur atau referensi
+
+3. AP AGING & OUTSTANDING TRACKING
+   - Melihat invoice berdasarkan umur kreditnya
+   - Identify hutang yang sudah overdue (jatuh tempo)
+   - Planning pembayaran berdasarkan due date
+   - Pressure untuk pembayaran tepat waktu
+
+4. TAX CALCULATION & RECONCILIATION
+   - Verify perhitungan PPN dan PPH di setiap invoice
+   - Reconcile dengan perhitungan tax authority
+   - Support untuk tax compliance dan reporting
+   - Calculus untuk tax liability
+
+5. PAYMENT VERIFICATION
+   - Verify bahwa setiap pembayaran sudah match dengan AP yang tercatat
+   - Identify invoice yang sudah dibayar vs belum
+   - Tracing untuk payment discrepancies
+   - Budget control untuk cash outflow
+
+6. VENDOR MANAGEMENT
+   - Melihat semua invoice per vendor
+   - Analyze spending dengan each vendor
+   - Evaluate vendor performance dan compliance
+   - Support untuk vendor relationship management
+
+7. BUDGET & COST CONTROL
+   - Monitor pengeluaran per kategori/cost center
+   - Compare actual vs budget untuk pembelian
+   - Identify over-budget atau anomali
+   - Cost control dan compliance
+
+8. RECONCILIATION WITH VENDOR STATEMENTS
+   - Match invoice di sistem dengan statement dari vendor
+   - Identify discrepancies atau missing invoices
+   - Clarify dengan vendor untuk outstanding items
+   - Ensure accuracy sebelum payment
+
+9. MONTH-END CLOSING & ACCRUAL
+   - Support untuk accrual process saat closing
+   - Verify semua invoice bulan sudah tercatat
+   - Calculate accrual untuk GRN belum invoiced
+   - GL reconciliation untuk account payable
+
+FITUR PERPINDAHAN STATUS:
+Ketika pengguna mengubah status (dengan company yang sama):
+- Klik dropdown "Status" untuk filter Posted, Unposted, atau All Status
+- Klik tombol "Search" kembali
+- Data di laporan akan diperbarui sesuai status filter yang baru
+- Akan tampil hanya invoice dengan status yang dipilih
+
+Contoh:
+- Filter Status = "Posted" → Hanya invoice yang sudah di-post yang tampil
+- Filter Status = "Unposted" → Hanya invoice yang belum di-post yang tampil
+- Filter Status = "All Status" → Semua invoice (posted + unposted) tampil
+
+FITUR PERPINDAHAN PERIODE TANGGAL:
+Ketika pengguna mengubah range periode tanggal:
+- Ubah tanggal di field "From" dan/atau "To"
+- Klik tombol "Search" kembali
+- Sistem akan menampilkan invoice sesuai periode baru
+- Invoice akan ditampilkan mulai dari tanggal awal hingga tanggal akhir
+- Data periode lama akan diganti dengan data periode baru
+
+CATATAN PENTING:
+1. Semua field filter (Company, Status, From Date, To Date) harus diisi sebelum search
+2. Laporan menampilkan DETAIL setiap invoice AP (tidak summary)
+3. Satu baris = satu invoice dari vendor
+4. Periode tanggal tidak boleh kosong atau terbalik (tanggal awal > tanggal akhir)
+5. Total (IDR) adalah nilai final yang harus dibayarkan (Amount + PPN - PPH)
+6. Status filter bisa "All Status", "Posted", atau "Unposted"
+7. Creditor adalah nama vendor/supplier penerima pembayaran
+8. PPN dan PPH bisa 0 jika invoice exempt atau tidak ada pemotongan
+9. Untuk perubahan filter, klik search kembali
+10. Laporan dapat diexport untuk analisis lanjutan
+11. Laporan ini read-only, tidak bisa mengedit data langsung
+12. Format tanggal: DD/MM/YYYY
+13. DPP adalah basis untuk perhitungan pajak
+14. Jika ada invoice yang belum tercatat, harus input terlebih dahulu
+
+LANGKAH-LANGKAH JIKA DATA TIDAK MUNCUL:
+1. Pastikan semua filter (Company, Status, From, To) sudah terisi
+2. Cek apakah tanggal "From" lebih kecil dari tanggal "To"
+3. Cek apakah perusahaan yang dipilih benar-benar punya AP di periode tersebut
+4. Coba ubah status ke "All Status" untuk rule out status filter
+5. Coba ubah range tanggal lebih luas
+6. Mungkin periode tersebut memang tidak ada invoice AP
+7. Klik tombol "Search" kembali untuk refresh
+8. Hubungi IT jika laporan tidak mau load sama sekali
+
+TIPS PENGGUNAAN:
+1. DAILY/WEEKLY AP REVIEW
+   - Setiap hari/minggu buka laporan ini
+   - Cek invoice mana yang sudah POST dan mana yang UNPOSTED
+   - Follow-up UNPOSTED untuk completion
+   - Verify data dengan invoice fisik dari vendor
+
+2. FIND SPECIFIC INVOICE
+   - Use Search filter dengan date range yang sempit untuk quick find
+   - Cari by vendor name untuk see semua invoice dari vendor tersebut
+   - Use nomor faktur untuk matching dengan vendor statement
+   - Ctrl+F di browser untuk search dalam halaman
+
+3. AP AGING ANALYSIS
+   - Lihat invoice berdasarkan tanggal
+   - Hitung berapa hari sudah outstanding (hari ini - Date)
+   - Categorize: Current (< 30 hari), 30-60 hari, 60-90 hari, > 90 hari
+   - Focus untuk bayar yang sudah overdue
+
+4. TAX COMPLIANCE VERIFICATION
+   - Check apakah perhitungan PPN sudah benar (DPP × 10%)
+   - Check apakah PPH sudah sesuai dengan tax rules
+   - Verify total yang harus dibayar sudah akurat
+   - Support untuk tax audit
+
+5. EXPORT TO EXCEL FOR ANALYSIS
+   - Export laporan ke Excel
+   - Buat column helper untuk: Umur (days outstanding), Payment status, Tax calc verification
+   - Pivot table untuk analysis by vendor, amount range, tax type
+   - Sort by vendor atau amount untuk different perspective
+
+6. RECONCILIATION WITH VENDOR
+   - Dari vendor statement, identify invoice yang belum diakui
+   - Use laporan ini untuk find apakah invoice sudah tercatat
+   - Identify missing invoices (invoice dari vendor belum di-input)
+   - Follow-up untuk input invoice yang belum tercatat
+
+7. PAYMENT PLANNING
+   - Identify invoice mana yang sudah due untuk dibayar
+   - Calculate total payment requirement per vendor
+   - Plan cash outflow untuk memenuhi payment
+   - Prioritize berdasarkan due date atau payment terms
+
+8. MONTH-END CLOSING SUPPORT
+   - Buka laporan untuk bulan yang closing
+   - Verify semua invoice bulan sudah tercatat (Posted)
+   - Identify UNPOSTED yang harus di-post sebelum closing
+   - Calculate accrual untuk GRN yang belum invoiced jika diperlukan
+
+SKENARIO UMUM INQUIRY:
+
+SKENARIO 1: "Cari invoice tertentu dari vendor"
+Action:
+1. Pilih Company
+2. Pilih Status = All Status atau Posted
+3. Pilih periode yang relevan
+4. Klik Search
+5. Use Ctrl+F di browser untuk search nama vendor
+6. Atau export ke Excel dan filter by Creditor
+
+SZENARIO 2: "Lihat total AP per vendor untuk negotiation"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted (untuk approved amount)
+3. Pilih periode (misal: last 6 months)
+4. Klik Search
+5. Export ke Excel
+6. Pivot table atau SUMIF by Creditor untuk total
+7. Sort by total descending untuk top vendors
+
+SKENARIO 3: "Verify invoice sebelum pembayaran"
+Action:
+1. Terima invoice fisik dari vendor
+2. Cari di laporan ini menggunakan nomor faktur
+3. Verify bahwa Amount, PPN, PPH sudah match
+4. Check Total yang harus dibayarkan
+5. Approve pembayaran atau raise discrepancy
+
+SKENARIO 4: "Follow-up invoice yang overdue belum dibayar"
+Action:
+1. Pilih Company
+2. Pilih Status = Posted
+3. Pilih periode lama (misal: 3 bulan sebelumnya)
+4. Klik Search
+5. Identify invoice yang sudah lama belum dibayar
+6. Schedule pembayaran or clarify dengan vendor
+
+TROUBLESHOOTING UMUM:
+
+MASALAH: "Total (IDR) tidak sesuai dengan hitung manual (Amount + PPN - PPH)"
+SOLUSI:
+- Check apakah ada currency conversion (jika Amount dalam USD, perlu konversi)
+- Check apakah PPN benar-benar 10% dari DPP
+- Check apakah PPH sudah dikurangi
+- Verify formula calculation consistency
+- Contact accounting jika ada error
+
+MASALAH: "Invoice dari vendor tidak tampil di laporan"
+SOLUSI:
+- Check apakah invoice sudah di-input di sistem
+- Check apakah invoice sudah di-post (jika filter Posted saja)
+- Check apakah company dan date range benar
+- Search dengan "All Status" untuk confirm ada atau tidak
+- Mungkin invoice belum di-receive atau di-approve
+
+MASALAH: "Perbedaan antara Total (IDR) dengan invoice vendor"
+SOLUSI:
+- Check currency exchange rate yang digunakan (jika USD)
+- Check invoice fisik dari vendor untuk memastikan amounts
+- Verify PPN dan PPH calculation
+- Clarify dengan vendor jika ada discrepancy
+- Buat debit memo atau credit memo jika ada selisih
+
+MASALAH: "Tidak bisa find specific invoice meskipun sudah search"
+SOLUSI:
+- Try search dengan date range yang lebih luas
+- Try search dengan "All Status" untuk rule out status filter
+- Check apakah nama vendor atau nomor faktur benar
+- Mungkin invoice belum di-input atau masih pending
+- Contact accounting untuk verify status invoice
+
+KOLABORASI DENGAN DEPARTEMEN LAIN:
+
+1. DENGAN VENDOR/SUPPLIER:
+   - Share laporan AP untuk reconciliation
+   - Verify invoice yang tercatat di sistem
+   - Clarify untuk discrepancies atau missing invoices
+   - Confirm payment schedule berdasarkan due date
+
+2. DENGAN PROCUREMENT:
+   - Provide AP detail untuk purchase order matching
+   - Verify bahwa invoice sesuai dengan PO
+   - Flag jika ada over-billing atau tidak sesuai PO
+   - Support untuk vendor compliance
+
+3. DENGAN WAREHOUSE/RECEIVING:
+   - Reconcile dengan GRN (Goods Received Note)
+   - Verify bahwa invoice sesuai dengan barang diterima
+   - Identify 3-way mismatch (PO vs GRN vs Invoice)
+   - Follow-up untuk discrepancies
+
+4. DENGAN TAX/COMPLIANCE:
+   - Verify PPN dan PPH calculation untuk tax compliance
+   - Support untuk tax audit dan reporting
+   - Ensure semua invoice sudah tercatat untuk tax purposes
+   - Calculate tax liability per period
+
+5. DENGAN MANAGEMENT/CFO:
+   - Report total AP outstanding
+   - Highlight overdue items
+   - Analyze spending trend
+   - Budget vs actual untuk procurement
+
+HUBUNGAN DENGAN LAPORAN LAINNYA:
+
+Laporan Inquiry AP berhubungan dengan:
+1. Laporan Aging AP - Untuk analyze outstanding AP berdasarkan umur
+2. Laporan PO (Purchase Order) - Untuk matching dengan purchase order
+3. Laporan GRN (Goods Received) - Untuk matching dengan penerimaan barang
+4. Laporan AP Subledger - Untuk detail per GL account
+5. Laporan AP Payment - Untuk verify pembayaran AP
+6. General Ledger - Untuk verify posting ke GL account
+7. Vendor Statement Reconciliation - Untuk match dengan statement vendor
+8. Financial Statement - AP ditampilkan di Balance Sheet sebagai Current Liability
+
+WORKFLOW NORMAL UNTUK AP:
+
+STEP 1: PENERIMAAN BARANG
+- Barang diterima dari vendor
+- GRN (Goods Received Note) diterbitkan
+- Status: GRN Recorded
+
+STEP 2: PENERIMAAN INVOICE
+- Invoice diterima dari vendor
+- Invoice di-input ke sistem sebagai AP entry (Unposted)
+- Status: Unposted (pending post)
+
+STEP 3: VERIFIKASI & APPROVAL
+- AP entry diverifikasi (3-way match: PO vs GRN vs Invoice)
+- Jika OK, di-approve untuk posting
+- Status: Ready to Post
+
+STEP 4: POSTING DI SISTEM
+- AP entry di-post ke GL
+- Status: Posted
+- AP sudah diakui sebagai hutang yang sah
+
+STEP 5: PAYMENT
+- Invoice sudah jatuh tempo (sesuai term pembayaran)
+- Pembayaran dilakukan kepada vendor
+- Check/transfer diterbitkan
+- AP di-clear/settled
+
+STEP 6: RECONCILIATION
+- Supplier statement diterima
+- di-reconcile dengan AP records
+- Document untuk file
+
+BEST PRACTICES:
+1. TIMELY POSTING
+   - Post AP invoice as soon as received and verified
+   - Target: Same day atau max 1-2 business days
+   - Ensure accurate recording untuk accrual purposes
+
+2. 3-WAY MATCHING
+   - Always match: PO vs GRN vs Invoice
+   - Resolve discrepancies sebelum posting
+   - Flag non-matching items untuk attention
+
+3. TAX COMPLIANCE
+   - Verify PPN dan PPH calculation
+   - Ensure compliance dengan tax law
+   - Keep documentation untuk tax audit
+
+4. VENDOR RECONCILIATION
+   - Regular reconcile dengan vendor statement
+   - Resolve outstanding items timely
+   - Maintain good vendor relationship
+
+5. AP AGING
+   - Monitor AP aging regularly
+   - Pay on time sesuai term pembayaran
+   - Maintain vendor relationships
+
+6. DOCUMENTATION
+   - Keep all supporting documents
+   - File organized per invoice number
+   - Retention sesuai policy
+
+7. APPROVAL PROCESS
+   - Clear approval authority established
+   - All invoices approved before posting
+   - Documentation untuk audit trail
+
+KEYS TO REMEMBER:
+1. One row = One invoice from ONE vendor (detail level)
+2. Status = Posted/Unposted untuk tracking di GL
+3. Total (IDR) = Final amount dibayarkan (Amount + PPN - PPH)
+4. Creditor = Nama vendor/supplier penerima pembayaran
+5. Always match dengan PO dan GRN sebelum posting
+6. PPN adalah pajak yang dapat dikreditkan
+7. PPH adalah pajak pemotongan (vendor punya kewajiban lapor)
+8. Priority pembayaran berdasarkan due date
+9. Month-end: Verify semua AP sudah tercatat
+10. Keep for audit trail & compliance documentation
