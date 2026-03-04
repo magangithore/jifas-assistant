@@ -46,8 +46,9 @@ class Program
 
             var chatRequest = new
             {
+                message = "Apa itu JIFAS? Jelaskan dalam 1-2 kalimat.",
                 userId = "test-user-" + Guid.NewGuid().ToString().Substring(0, 8),
-                userInput = "Apa itu JIFAS? Jelaskan dalam 1-2 kalimat."
+                sessionId = Guid.NewGuid().ToString()
             };
 
             var jsonContent = JsonConvert.SerializeObject(chatRequest);
