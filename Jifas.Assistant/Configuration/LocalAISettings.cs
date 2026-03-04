@@ -11,11 +11,12 @@ namespace Jifas.Assistant.Configuration
         /// </summary>
         public string BaseUrl { get; set; } = "http://10.0.12.54:11434";
 
-        /// <summary>
-        /// Model name to use
-        /// Default: qwen3:8b
-        /// </summary>
-        public string Model { get; set; } = "qwen3:8b";
+    /// <summary>
+    /// Model name to use
+    /// Default: gemma3:4b (faster, lighter, more efficient)
+    /// Models available: qwen3:8b, llama3:latest, mistral:latest, etc.
+    /// </summary>
+    public string Model { get; set; } = "gemma3:4b";
 
         /// <summary>
         /// Temperature for response generation (0-2)
