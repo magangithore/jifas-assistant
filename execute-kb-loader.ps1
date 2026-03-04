@@ -194,6 +194,31 @@ Write-Host ""
 $startTime = Get-Date
 
 try {
+    Write-Host "Starting API server..." -ForegroundColor Cyan
+    Write-Host "This may take a few seconds..." -ForegroundColor Gray
+    
+    # Start API in background process
+    $apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run --configuration Release" -WorkingDirectory ".\Jifas.Assistant" -PassThru -NoNewWindow
+    
+    # Wait for API to start
+    Start-Sleep -Seconds 5
+    
+    # Check if API is running
+    try {
+        $apiCheck = Invoke-WebRequest -Uri "http://localhost:5000/api/health" -TimeoutSec 5 -ErrorAction SilentlyContinue
+        if ($apiCheck.StatusCode -eq 200) {
+            Write-Host "? API started successfully" -ForegroundColor Green
+        }
+    }
+    catch {
+        Write-Host "? API may be slow to start, will retry..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 3
+    }
+    
+    Write-Host ""
+    Write-Host "Now running KB Loader..." -ForegroundColor Cyan
+    Write-Host ""
+    
     Push-Location KBLoader
     
     Write-Host "Executing: dotnet run --configuration Release -- --yes" -ForegroundColor Cyan
@@ -204,13 +229,18 @@ try {
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
         Write-Host "? KB Loader execution failed" -ForegroundColor Red
-        exit 1
     }
     
     Pop-Location
+    
+    # Stop API process
+    if ($apiProcess) {
+        Stop-Process -Id $apiProcess.Id -Force -ErrorAction SilentlyContinue
+        Write-Host ""
+        Write-Host "API server stopped" -ForegroundColor Gray
+    }
 } catch {
     Write-Host "? Execution error: $_" -ForegroundColor Red
-    exit 1
 }
 
 $endTime = Get-Date

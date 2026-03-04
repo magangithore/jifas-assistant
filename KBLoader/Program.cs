@@ -5,18 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using jifas_assistant.DAL.Models;
-using Jifas.Assistant.Services;
+using Newtonsoft.Json;
 
 namespace Jifas.Assistant.KBLoader
 {
     /// <summary>
-    /// Console application untuk load Knowledge Base langsung ke SQL Server
-    /// Jalankan: dotnet run --project KBLoader/KBLoader.csproj
+    /// Console application untuk load Knowledge Base via API endpoint
+    /// Requires: Jifas.Assistant API running on http://localhost:5000
+    /// Jalankan: dotnet run --project KBLoader/KBLoader.csproj -- --yes
     /// </summary>
     class Program
     {
@@ -24,43 +23,32 @@ namespace Jifas.Assistant.KBLoader
         {
             // Check for auto-confirm flag
             bool autoConfirm = args.Contains("--yes") || args.Contains("-y");
+            string apiBaseUrl = "http://localhost:5000"; // Configurable if needed
             
             Console.WriteLine("??????????????????????????????????????????????????????");
-            Console.WriteLine("?   JIFAS Knowledge Base Loader - Direct DB Insert   ?");
+            Console.WriteLine("?   JIFAS Knowledge Base Loader - Via API Endpoint   ?");
             Console.WriteLine("??????????????????????????????????????????????????????");
             Console.WriteLine();
 
             try
             {
-                // Setup DI
+                // Setup services
                 var services = new ServiceCollection();
                 
-                // Try to find appsettings.json in KBLoader directory or parent directory
+                // Find appsettings.json
                 var basePath = Directory.GetCurrentDirectory();
                 if (!File.Exists(Path.Combine(basePath, "appsettings.json")))
                 {
                     basePath = Path.Combine(Directory.GetCurrentDirectory(), "KBLoader");
-                    if (!File.Exists(Path.Combine(basePath, "appsettings.json")))
-                    {
-                        basePath = Directory.GetCurrentDirectory();
-                    }
                 }
                 
                 var configBuilder = new ConfigurationBuilder()
                     .SetBasePath(basePath);
                 
-                // Only add if file exists
                 var appSettingsPath = Path.Combine(basePath, "appsettings.json");
                 if (File.Exists(appSettingsPath))
                 {
                     configBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                }
-                
-                
-                var devSettingsPath = Path.Combine(basePath, $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json");
-                if (File.Exists(devSettingsPath))
-                {
-                    configBuilder.AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true, reloadOnChange: true);
                 }
                 
                 var configuration = configBuilder.Build();
@@ -69,27 +57,40 @@ namespace Jifas.Assistant.KBLoader
                 services.AddLogging(builder => 
                 {
                     builder.AddConsole();
-                    builder.AddDebug();
                     builder.SetMinimumLevel(LogLevel.Information);
                 });
-
-                services.AddDbContext<JIFAS_AssistantContext>(options =>
-                {
-                    var connectionString = configuration["ConnectionStrings:DefaultConnection"];
-                    options.UseSqlServer(connectionString);
-                });
-
-                services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
                 services.AddHttpClient();
 
                 var serviceProvider = services.BuildServiceProvider();
-                
-                // Get services
-                var context = serviceProvider.GetRequiredService<JIFAS_AssistantContext>();
                 var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-                var embeddingService = serviceProvider.GetRequiredService<IEmbeddingService>();
+                var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 
                 logger.LogInformation("Starting Knowledge Base loading process...");
+                logger.LogInformation("");
+                
+                // Check API is running
+                logger.LogInformation($"Checking API at {apiBaseUrl}...");
+                using (var client = httpClientFactory.CreateClient())
+                {
+                    try
+                    {
+                        var response = await client.GetAsync($"{apiBaseUrl}/api/health");
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            logger.LogError($"API returned status {response.StatusCode}. Make sure API is running: dotnet run (from Jifas.Assistant/)");
+                            return;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError($"Cannot connect to API at {apiBaseUrl}. Make sure it's running!");
+                        logger.LogError($"Error: {ex.Message}");
+                        logger.LogInformation("Start API with: dotnet run (from Jifas.Assistant/)");
+                        return;
+                    }
+                }
+                
+                logger.LogInformation("? API is responding");
                 logger.LogInformation("");
 
                 // Determine KB folder path
@@ -100,56 +101,40 @@ namespace Jifas.Assistant.KBLoader
                     "KnowledgeBase"
                 );
 
-                // Normalize path
                 kbFolderPath = Path.GetFullPath(kbFolderPath);
                 
                 logger.LogInformation($"KB Folder Path: {kbFolderPath}");
                 logger.LogInformation("");
 
-                // Check folder exists
                 if (!Directory.Exists(kbFolderPath))
                 {
                     logger.LogError($"Knowledge Base folder not found: {kbFolderPath}");
                     return;
                 }
 
-                // Get all files
                 var allFiles = Directory.GetFiles(kbFolderPath, "*.txt", SearchOption.AllDirectories);
                 logger.LogInformation($"Found {allFiles.Length} KB files");
                 logger.LogInformation("");
 
-                // Confirm clear
+                // Confirm
                 logger.LogWarning("??  Existing Knowledge Base will be cleared before loading new data");
                 
-                string response;
+                string response_str;
                 if (autoConfirm)
                 {
                     logger.LogInformation("Auto-confirming (--yes flag detected)");
-                    response = "Y";
+                    response_str = "Y";
                 }
                 else
                 {
                     Console.Write("Continue? (Y/N): ");
-                    response = Console.ReadLine();
+                    response_str = Console.ReadLine();
                 }
                 
-                if (response?.ToUpper() != "Y")
+                if (response_str?.ToUpper() != "Y")
                 {
                     logger.LogInformation("Operation cancelled by user");
                     return;
-                }
-
-                logger.LogInformation("");
-                logger.LogInformation("Clearing existing Knowledge Base documents...");
-                
-                // Clear existing
-                var existingDocs = await context.KnowledgeBaseDocuments.ToListAsync();
-                if (existingDocs.Any())
-                {
-                    logger.LogInformation($"Deleting {existingDocs.Count} existing documents...");
-                    context.KnowledgeBaseDocuments.RemoveRange(existingDocs);
-                    await context.SaveChangesAsync();
-                    logger.LogInformation("? Existing documents cleared");
                 }
 
                 logger.LogInformation("");
@@ -160,98 +145,66 @@ namespace Jifas.Assistant.KBLoader
 
                 int fileCount = 0;
                 int totalChunksInserted = 0;
-                int totalEmbeddingsGenerated = 0;
-                int totalEmbeddingErrors = 0;
+                int totalFilesSuccess = 0;
 
-                foreach (var filePath in allFiles)
+                using (var client = httpClientFactory.CreateClient())
                 {
-                    fileCount++;
-                    try
+                    client.DefaultRequestHeaders.Add("Content-Type", "application/json");
+                    
+                    foreach (var filePath in allFiles)
                     {
-                        var content = File.ReadAllText(filePath, Encoding.UTF8);
-                        var category = ExtractCategoryFromPath(filePath, kbFolderPath);
-                        var fileName = Path.GetFileNameWithoutExtension(filePath);
-
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        logger.LogInformation($"[{fileCount:D2}/{allFiles.Length:D2}] {category,-15} | {fileName}");
-                        Console.ResetColor();
-
-                        // Chunk document
-                        var chunks = ChunkDocument(filePath, content, category, logger);
-                        logger.LogInformation($"              ? Split into {chunks.Count} chunks");
-
-                        // Insert chunks
-                        int chunksInsertedForFile = 0;
-                        int embeddingsGeneratedForFile = 0;
-                        int embeddingErrorsForFile = 0;
-
-                        foreach (var chunk in chunks)
+                        fileCount++;
+                        try
                         {
-                            try
+                            var content = File.ReadAllText(filePath, Encoding.UTF8);
+                            var category = ExtractCategoryFromPath(filePath, kbFolderPath);
+                            var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            logger.LogInformation($"[{fileCount:D2}/{allFiles.Length:D2}] {category,-15} | {fileName}");
+                            Console.ResetColor();
+
+                            // Create document request
+                            var docRequest = new
                             {
-                                string embeddingBase64 = null;
+                                title = fileName,
+                                content = content,
+                                category = category,
+                                tags = ExtractTags(category, content)
+                            };
 
-                                // Generate embedding
-                                try
-                                {
-                                    var embedding = await embeddingService.GenerateEmbeddingAsync(chunk.Content);
-                                    if (embedding != null)
-                                    {
-                                        embeddingBase64 = Convert.ToBase64String(embedding);
-                                        embeddingsGeneratedForFile++;
-                                        totalEmbeddingsGenerated++;
-                                    }
-                                }
-                                catch (Exception embEx)
-                                {
-                                    logger.LogWarning($"              ??  Embedding failed: {embEx.Message}");
-                                    embeddingErrorsForFile++;
-                                    totalEmbeddingErrors++;
-                                }
+                            var json = JsonConvert.SerializeObject(docRequest);
+                            var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
-                                // Insert to DB
-                                var dbChunk = new KnowledgeBaseDocuments
-                                {
-                                    Title = chunk.Title,
-                                    Content = chunk.Content,
-                                    Category = chunk.Category,
-                                    Tags = chunk.Tags,
-                                    FilePath = chunk.FilePath,
-                                    Embedding = embeddingBase64,
-                                    EmbeddingDimensions = chunk.EmbeddingDimensions,
-                                    IsActive = chunk.IsActive,
-                                    CreatedAt = chunk.CreatedAt,
-                                    UpdatedAt = chunk.UpdatedAt,
-                                    ViewCount = chunk.ViewCount,
-                                    RelevanceScore = chunk.RelevanceScore,
-                                    CreatedBy = chunk.CreatedBy
-                                };
+                            // Call API
+                            var apiResponse = await client.PostAsync($"{apiBaseUrl}/api/kb/documents", httpContent);
 
-                                context.KnowledgeBaseDocuments.Add(dbChunk);
-                                chunksInsertedForFile++;
+                            if (apiResponse.IsSuccessStatusCode)
+                            {
+                                var responseBody = await apiResponse.Content.ReadAsStringAsync();
+                                dynamic result = JsonConvert.DeserializeObject(responseBody);
+                                
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                logger.LogInformation($"              ? Inserted (Document ID: {result.documentId})");
+                                Console.ResetColor();
+                                
+                                totalFilesSuccess++;
+                                totalChunksInserted++;
                             }
-                            catch (Exception chunkEx)
+                            else
                             {
-                                logger.LogWarning($"              ??  Chunk error: {chunkEx.Message}");
+                                var errorBody = await apiResponse.Content.ReadAsStringAsync();
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                logger.LogWarning($"              ? API Error {apiResponse.StatusCode}: {errorBody}");
+                                Console.ResetColor();
                             }
                         }
-
-                        // Save all chunks for this file
-                        if (chunksInsertedForFile > 0)
+                        catch (Exception fileEx)
                         {
-                            await context.SaveChangesAsync();
-                            totalChunksInserted += chunksInsertedForFile;
-
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            logger.LogInformation($"              ? Inserted {chunksInsertedForFile} chunks (embeddings: {embeddingsGeneratedForFile})");
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            logger.LogError($"              ? Error: {fileEx.Message}");
                             Console.ResetColor();
                         }
-                    }
-                    catch (Exception fileEx)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        logger.LogError($"              ? Error: {fileEx.Message}");
-                        Console.ResetColor();
                     }
                 }
 
@@ -263,15 +216,8 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
                 logger.LogInformation($"Summary:");
-                logger.LogInformation($"  Files processed:          {fileCount}");
-                logger.LogInformation($"  Total chunks inserted:    {totalChunksInserted}");
-                logger.LogInformation($"  Embeddings generated:     {totalEmbeddingsGenerated}");
-                logger.LogInformation($"  Embedding errors:         {totalEmbeddingErrors}");
-                logger.LogInformation("");
-
-                // Verify data
-                var count = await context.KnowledgeBaseDocuments.CountAsync();
-                logger.LogInformation($"Verification: {count} documents in database");
+                logger.LogInformation($"  Files processed:     {fileCount}");
+                logger.LogInformation($"  Files inserted:      {totalFilesSuccess}");
                 logger.LogInformation("");
 
                 Console.ForegroundColor = ConsoleColor.Cyan;
@@ -302,116 +248,6 @@ namespace Jifas.Assistant.KBLoader
             }
         }
 
-        static List<KnowledgeBaseChunk> ChunkDocument(
-            string filePath,
-            string content,
-            string category,
-            ILogger<Program> logger)
-        {
-            var chunks = new List<KnowledgeBaseChunk>();
-            var fileName = Path.GetFileNameWithoutExtension(filePath);
-            var title = ExtractTitle(content, fileName);
-
-            var paragraphs = SplitIntoParagraphs(content);
-            int chunkSequence = 1;
-
-            foreach (var paragraph in paragraphs)
-            {
-                if (string.IsNullOrWhiteSpace(paragraph))
-                    continue;
-
-                var cleanContent = CleanContent(paragraph);
-                if (cleanContent.Length < 50)
-                    continue;
-
-                chunks.Add(new KnowledgeBaseChunk
-                {
-                    Title = $"{title} - Part {chunkSequence}",
-                    Content = cleanContent,
-                    Category = category,
-                    Tags = ExtractTags(category, paragraph),
-                    FilePath = filePath,
-                    EmbeddingDimensions = 1024,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                    ViewCount = 0,
-                    RelevanceScore = 0.0,
-                    CreatedBy = "KBLoader",
-                    UpdatedBy = "KBLoader"
-                });
-
-                chunkSequence++;
-            }
-
-            return chunks;
-        }
-
-        static string ExtractTitle(string content, string fileName)
-        {
-            try
-            {
-                var lines = content.Split('\n');
-                foreach (var line in lines)
-                {
-                    var trimmed = line.Trim();
-                    if (trimmed.StartsWith("=") || trimmed.StartsWith("#"))
-                    {
-                        return Regex.Replace(trimmed, @"^[=#]+\s*|\s*[=#]+$", "").Trim();
-                    }
-                    if (trimmed.Length > 20 && !trimmed.StartsWith("-"))
-                    {
-                        return trimmed;
-                    }
-                }
-                return fileName;
-            }
-            catch
-            {
-                return fileName;
-            }
-        }
-
-        static List<string> SplitIntoParagraphs(string content)
-        {
-            var paragraphs = new List<string>();
-            try
-            {
-                content = Regex.Replace(content, @"\r\n", "\n");
-                content = Regex.Replace(content, @"\n\s*\n\s*\n", "\n\n");
-
-                var lines = content.Split(new[] { "\n\n" }, StringSplitOptions.None);
-                foreach (var line in lines)
-                {
-                    var trimmed = line.Trim();
-                    if (!Regex.IsMatch(trimmed, @"^[=\-*]{5,}$") && !string.IsNullOrWhiteSpace(trimmed))
-                    {
-                        paragraphs.Add(trimmed);
-                    }
-                }
-                return paragraphs;
-            }
-            catch
-            {
-                return content.Split(new[] { ". " }, StringSplitOptions.None)
-                    .Select(s => s.Trim())
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
-                    .ToList();
-            }
-        }
-
-        static string CleanContent(string content)
-        {
-            if (string.IsNullOrWhiteSpace(content))
-                return content;
-
-            content = content.Trim();
-            content = Regex.Replace(content, @"\s+", " ");
-            content = Regex.Replace(content, @"\n\s*\n", "\n");
-            content = Regex.Replace(content, @"\n", " ");
-            return content;
-        }
-
         static string ExtractTags(string category, string content)
         {
             var tags = new List<string> { category };
@@ -436,22 +272,3 @@ namespace Jifas.Assistant.KBLoader
 
             return string.Join(";", tags);
         }
-    }
-
-    public class KnowledgeBaseChunk
-    {
-        public string Title { get; set; }
-        public string Content { get; set; }
-        public string Category { get; set; }
-        public string Tags { get; set; }
-        public string FilePath { get; set; }
-        public int EmbeddingDimensions { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-        public int ViewCount { get; set; }
-        public double RelevanceScore { get; set; }
-        public string CreatedBy { get; set; }
-        public string UpdatedBy { get; set; }
-    }
-}
