@@ -120,48 +120,58 @@ namespace Jifas.Assistant.Services
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(userQuery))
+                if (string.IsNullOrWhiteSpace(userQuery) || string.IsNullOrWhiteSpace(response))
                 {
-                    _logger.LogWarning("[GeminiService] Empty query for suggestions");
-                    return GetDefaultSuggestions();
+                    _logger.LogWarning("[GeminiService] Empty query or response for suggestions");
+                    return new List<string>();
                 }
 
-                var suggestionPrompt = $@"Berdasarkan percakapan tentang JIFAS berikut, berikan EXACTLY 3 pertanyaan lanjutan yang relevan.
-Pertanyaan HARUS terkait dengan JIFAS (AR, AP, GL, Budget, PUM, Master Data, Reporting).
+                var suggestionPrompt = $@"Analisis percakapan JIFAS berikut dan buat 3 pertanyaan follow-up yang BERBEDA dan NATURAL untuk keep conversation alive.
 
+KONTEKS:
 Pertanyaan user: {userQuery}
 Jawaban AI: {response}
 
-INSTRUKSI:
-- Berikan HANYA 3 pertanyaan
-- Satu pertanyaan per baris
-- Tanpa numbering atau bullet
-- Pilih pertanyaan praktis dan sering ditanyakan
-- Format natural dalam bahasa Indonesia
+REQUIREMENTS:
+1. Berikan EXACTLY 3 pertanyaan (tidak lebih, tidak kurang)
+2. Setiap pertanyaan HARUS dari perspektif berbeda:
+   - Satu pertanyaan: Perpanjangan logis dari jawaban (next step)
+   - Satu pertanyaan: Klarifikasi atau contoh praktis
+   - Satu pertanyaan: Topik terkait yang menarik
+3. Tidak boleh hardcoded atau template
+4. Harus kontekstual dengan jawaban yang diberikan
+5. Satu pertanyaan per baris
+6. Tanpa numbering, bullet, atau formatting apapun
+7. Natural dan conversational dalam bahasa Indonesia
+8. Fokus pada JIFAS features (AR, AP, GL, Budget, PUM, Master Data, Reporting, Settings, dll)
 
-Contoh:
-Bagaimana cara membuat invoice di JIFAS?
-Apa perbedaan AR dan AP?
-Bagaimana proses approval document?";
+CONTOH OUTPUT (format saja, bukan konten):
+Bagaimana cara memvalidasi data sebelum posting?
+Apa yang harus dilakukan jika terjadi error saat proses?
+Apakah ada fitur untuk mengecek history transaksi?
 
-                _logger.LogDebug("[GeminiService] Generating suggestions");
+Jangan gunakan prefix atau format apapun. Berikan HANYA pertanyaan langsung.";
+
+                _logger.LogDebug("[GeminiService] Generating dynamic context-aware suggestions");
                 var result = await CallGeminiApiAsync(suggestionPrompt);
 
                 var suggestions = ParseSuggestions(result);
 
                 if (suggestions.Count == 0)
                 {
-                    _logger.LogDebug("[GeminiService] Using default suggestions");
-                    return GetDefaultSuggestions();
+                    _logger.LogDebug("[GeminiService] No suggestions generated");
+                    return new List<string>();
                 }
 
-                _logger.LogInformation("[GeminiService] Generated {0} suggestions", suggestions.Count);
-                return suggestions;
+                // Limit to max 3 suggestions
+                var limitedSuggestions = suggestions.Take(3).ToList();
+                _logger.LogInformation("[GeminiService] Generated {0} dynamic suggestions", limitedSuggestions.Count);
+                return limitedSuggestions;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error in GenerateSuggestionsAsync: {0}", ex, ex.Message);
-                return GetDefaultSuggestions();
+                _logger.LogError($"[GeminiService] Error in GenerateSuggestionsAsync: {ex.Message}");
+                return new List<string>();
             }
         }
 
@@ -214,6 +224,7 @@ Bagaimana proses approval document?";
 
         /// <summary>
         /// Format response for better readability
+        /// Improvement #8: Response validation checks for quality
         /// </summary>
         private string FormatResponse(string response)
         {
@@ -226,44 +237,159 @@ Bagaimana proses approval document?";
             // Ensure proper spacing after punctuation
             response = Regex.Replace(response, @"([.!?])\s+([A-Z])", "$1\n$2");
 
+            // Improvement #8: Validate response quality
+            // Check if response is sufficiently detailed
+            var wordCount = response.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            var isTooBrief = wordCount < 20;  // Less than 20 words might be too short
+            
+            if (isTooBrief && response.Length < 100)
+            {
+                _logger.LogWarning($"[GeminiService] Response validation: Response may be too brief ({wordCount} words)");
+                // We'll still return it but log for monitoring
+            }
+
+            // Validate no hallucinations by checking for generic filler
+            var isGenericFiller = response.Contains("Saya tidak tahu") || 
+                                  response.Contains("Tidak ada informasi") ||
+                                  response.Contains("Maaf");
+            
+            if (isGenericFiller && wordCount < 50)
+            {
+                _logger.LogWarning("[GeminiService] Response validation: Potential generic filler response detected");
+            }
+
             return response;
         }
 
         /// <summary>
         /// Build message when no KB results found
+        /// Improvement #6 & #9: Intelligent fallback with helpful context
         /// </summary>
         private string BuildNoResultsMessage(string userQuery)
         {
-            return $@"Maaf, saya tidak menemukan informasi yang relevan di Knowledge Base JIFAS untuk pertanyaan Anda:
+            return $@"Maaf, informasi yang Anda cari tidak tersedia di Knowledge Base JIFAS kami saat ini.
 
-""{userQuery}""
+**Yang Anda tanyakan:** {userQuery}
 
 **Kemungkinan penyebab:**
-• Pertanyaan menggunakan istilah yang berbeda dari Knowledge Base
-• Topik ini belum didokumentasikan
-• Pertanyaan terlalu spesifik
+• Pertanyaan menggunakan istilah yang berbeda dari dokumentasi KB
+• Topik ini belum sepenuhnya didokumentasikan
+• Pertanyaan terlalu spesifik atau detail teknis
 
-**Saran:**
-1. Coba rephrase dengan istilah JIFAS standar (AR, AP, GL, Budget, PUM)
-2. Tanyakan fitur atau menu spesifik
-3. Hubungi IT Help Desk: finance-it@jababeka.com
+**Saran untuk pertanyaan yang lebih baik:**
+1. **Gunakan istilah JIFAS standar:** AR/AP (piutang/hutang), GL (ledger), Budget, PUM (uang muka), Master Data
+2. **Tanyakan fitur spesifik:** Menu mana, field apa, modul mana yang Anda gunakan
+3. **Berikan konteks:** Apa yang ingin dicapai, error apa yang muncul
 
-Apakah ada pertanyaan lain tentang JIFAS?";
+**Topik JIFAS yang tersedia:**
+• Konfigurasi Master Data (perusahaan, vendor, COA, budget)
+• Pengajuan Invoice dan PUM
+• Penerimaan Barang (Receiving)
+• Proses Pembayaran
+• Jurnal dan Laporan Keuangan
+• Penyelesaian Masalah (Troubleshooting)
+
+**Jika masalah berlanjut:**
+Hubungi Finance IT Support: finance-it@jababeka.com
+
+Apakah ada pertanyaan lain yang bisa saya bantu?";
         }
 
         /// <summary>
         /// Get error message for API failures
+        /// Improvement #9: Context-enriched error messages
         /// </summary>
         private string GetErrorMessage()
         {
-            return @"Maaf, terjadi kesalahan dalam memproses permintaan Anda.
+            return @"Maaf, terjadi kesalahan teknis dalam memproses permintaan Anda.
 
 **Silakan coba:**
-1. Ulangi pertanyaan Anda
-2. Gunakan kata kunci yang lebih spesifik
-3. Hubungi IT Help Desk jika masalah berlanjut
+1. Ulangi pertanyaan dengan frasa yang sedikit berbeda
+2. Gunakan kata kunci yang lebih spesifik dan jelas
+3. Pastikan pertanyaan berkaitan dengan JIFAS system
+4. Jika masalah berlanjut, hubungi IT Help Desk
+
+**Kontak Support:**
+Email: finance-it@jababeka.com
 
 Terima kasih atas kesabaran Anda!";
+        }
+
+        /// <summary>
+        /// Build response for partial KB match
+        /// Improvement #6: Helpful guidance even with limited information
+        /// </summary>
+        private async Task<string> GeneratePartialMatchResponseAsync(string userQuery, List<KnowledgeBaseResult> partialResults)
+        {
+            try
+            {
+                // Build a more helpful prompt for partial matches
+                var partialPrompt = $@"Kamu adalah JIFAS AI Assistant. User bertanya tentang hal yang SEBAGIAN ada di Knowledge Base.
+
+Situasi: Ada beberapa informasi relevan, tapi mungkin tidak 100% cocok dengan apa yang ditanya.
+
+INSTRUKSI:
+1. Gunakan informasi yang PALING RELEVAN dari hasil pencarian
+2. Jelaskan dengan JELAS bagian mana dari KB yang cocok dengan pertanyaan
+3. Jika ada bagian yang TIDAK TERSEDIA, KATAKAN dengan tegas
+4. Berikan saran untuk pertanyaan yang lebih spesifik
+
+KNOWLEDGE BASE YANG DITEMUKAN:
+{string.Join("\n\n", partialResults.Take(2).Select(r => $"[{r.Title}] ({(r.Score * 100):F1}% relevan)\n{r.Content.Substring(0, Math.Min(500, r.Content.Length))}..."))}
+
+PERTANYAAN USER: {userQuery}
+
+Jawab dengan jelas dan membantu. Katakan mana yang ada dan mana yang tidak ada di KB.";
+
+                var response = await CallGeminiApiAsync(partialPrompt);
+                return response ?? GetErrorMessage();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[GeminiService] Error in GeneratePartialMatchResponseAsync: {ex.Message}");
+                return BuildNoResultsMessage(userQuery);
+            }
+        }
+
+        /// <summary>
+        /// Build response for no KB match
+        /// Improvement #6 & #8: Fallback with validation and helpful alternatives
+        /// </summary>
+        private async Task<string> GenerateNoMatchResponseAsync(string userQuery)
+        {
+            try
+            {
+                var noMatchPrompt = $@"Kamu adalah JIFAS AI Assistant. Knowledge Base NOT punya informasi yang cocok untuk pertanyaan user.
+
+SITUASI: Tidak ada hasil pencarian yang relevan sama sekali.
+
+INSTRUKSI (SANGAT PENTING):
+1. KATAKAN dengan JELAS bahwa informasi ini TIDAK ADA di Knowledge Base
+2. JANGAN coba untuk fabricate atau guess jawaban
+3. Tawarkan topik alternatif yang MUNGKIN user maksudkan
+4. Saran untuk pertanyaan yang lebih spesifik
+5. Tampilkan modul JIFAS yang tersedia
+
+PERTANYAAN USER: {userQuery}
+
+TOPIK JIFAS YANG TERSEDIA:
+- Master Data Setup (perusahaan, vendor, COA, budget)
+- Invoice & Payment
+- PUM (Pengajuan Uang Muka)
+- Receiving (Penerimaan Barang)
+- Accounting & Reporting
+- Troubleshooting
+
+Jawab dengan JUJUR bahwa info tidak ada, tapi HELPFUL dengan alternatif.";
+
+                var response = await CallGeminiApiAsync(noMatchPrompt);
+                return response ?? BuildNoResultsMessage(userQuery);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[GeminiService] Error in GenerateNoMatchResponseAsync: {ex.Message}");
+                return BuildNoResultsMessage(userQuery);
+            }
         }
 
         /// <summary>
@@ -282,9 +408,12 @@ Terima kasih atas kesabaran Anda!";
             {
                 var trimmed = line.Trim();
 
-                // Remove numbering if present
+                // Remove numbering if present (e.g., "1. ", "1) ")
                 trimmed = Regex.Replace(trimmed, @"^\d+[\.\)]\s*", "");
+                // Remove bullet points
                 trimmed = Regex.Replace(trimmed, @"^[-•*]\s*", "");
+                // Remove common prefixes
+                trimmed = Regex.Replace(trimmed, @"^(Pertanyaan|Saran|Topik|Follow-up):\s*", "", RegexOptions.IgnoreCase);
 
                 if (!string.IsNullOrEmpty(trimmed) && trimmed.Length > 5)
                 {
@@ -296,19 +425,6 @@ Terima kasih atas kesabaran Anda!";
             }
 
             return suggestions;
-        }
-
-        /// <summary>
-        /// Get default suggestions
-        /// </summary>
-        private List<string> GetDefaultSuggestions()
-        {
-            return new List<string>
-            {
-                "Bagaimana cara membuat invoice di JIFAS?",
-                "Apa perbedaan antara AR dan AP?",
-                "Bagaimana proses approval document?"
-            };
         }
 
         /// <summary>

@@ -1,20 +1,25 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Jifas.Assistant.Services;
 
 namespace Jifas.Assistant
 {
     /// <summary>
-    /// Middleware untuk logging semua HTTP requests dan responses
+    /// Enhanced middleware untuk logging HTTP requests, responses, dan exception handling
+    /// Includes correlation ID tracking untuk audit trail
     /// </summary>
     public class RequestLoggingMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<RequestLoggingMiddleware> _logger;
+        private const string CorrelationIdHeader = "X-Correlation-ID";
 
         public RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggingMiddleware> logger)
         {
@@ -22,76 +27,219 @@ namespace Jifas.Assistant
             _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, ILoggerService loggerService)
         {
             var stopwatch = Stopwatch.StartNew();
+            
+            // Skip logging middleware untuk Swagger/OpenAPI endpoints dan root
+            if (context.Request.Path.StartsWithSegments("/swagger") || 
+                context.Request.Path.StartsWithSegments("/swagger-ui") ||
+                context.Request.Path.StartsWithSegments("/swagger.json") ||
+                context.Request.Path == "/" ||
+                context.Request.Path == "/index.html")
+            {
+                await _next(context);
+                return;
+            }
+            
+            // Generate atau ambil correlation ID
+            var correlationId = ExtractOrCreateCorrelationId(context);
+            context.Items["CorrelationId"] = correlationId;
+            context.Response.Headers[CorrelationIdHeader] = correlationId;
 
             try
             {
-                // Log incoming request
-                await LogRequest(context);
+                // Log incoming request dengan correlation ID
+                await LogRequest(context, correlationId, loggerService);
 
-                // Copy body for reading later
+                // Copy body untuk reading later (untuk response logging)
                 var originalBody = context.Response.Body;
                 using (var memoryStream = new MemoryStream())
                 {
                     context.Response.Body = memoryStream;
 
-                    // Call next middleware
-                    await _next(context);
+                    try
+                    {
+                        // Call next middleware
+                        await _next(context);
 
-                    // Log response
-                    stopwatch.Stop();
-                    await LogResponse(context, stopwatch.ElapsedMilliseconds);
+                        // Log response sukses
+                        stopwatch.Stop();
+                        await LogResponse(context, correlationId, stopwatch.ElapsedMilliseconds, loggerService);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log exception dengan context
+                        stopwatch.Stop();
+                        LogRequestException(context, ex, correlationId, stopwatch.ElapsedMilliseconds, loggerService);
+                        
+                        // Set error response
+                        context.Response.ContentType = "application/json";
+                        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                        
+                        var errorResponse = new
+                        {
+                            success = false,
+                            message = "Maaf, terjadi kesalahan teknis dalam memproses permintaan Anda.",
+                            correlationId = correlationId,
+                            timestamp = DateTime.UtcNow
+                        };
 
-                    // Copy response back to original stream
-                    await memoryStream.CopyToAsync(originalBody);
+                        var json = JsonSerializer.Serialize(errorResponse);
+                        await context.Response.WriteAsync(json);
+                        return;
+                    }
+                    finally
+                    {
+                        // Copy response back ke original stream
+                        try
+                        {
+                            memoryStream.Position = 0;  // Reset position ke awal sebelum copy
+                            await memoryStream.CopyToAsync(originalBody);
+                        }
+                        catch
+                        {
+                            // Silently fail jika response sudah ditulis
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "An unhandled exception occurred during request processing. Duration: {ElapsedMs}ms",
-                    stopwatch.ElapsedMilliseconds);
+                loggerService?.LogErrorWithCorrelation(correlationId, 
+                    $"Unhandled exception in request pipeline (Duration: {stopwatch.ElapsedMilliseconds}ms)", ex);
                 throw;
             }
         }
 
-        private async Task LogRequest(HttpContext context)
+        private string ExtractOrCreateCorrelationId(HttpContext context)
         {
-            var request = context.Request;
-            var body = "";
-
-            // Only log body for POST/PUT requests
-            if (request.ContentLength > 0 && (request.Method == "POST" || request.Method == "PUT"))
+            const string correlationIdKey = "X-Correlation-ID";
+            
+            // Try to extract dari header
+            if (context.Request.Headers.TryGetValue(correlationIdKey, out var correlationIdValue))
             {
-                request.EnableBuffering();
-                var reader = new StreamReader(request.Body, Encoding.UTF8);
-                body = await reader.ReadToEndAsync();
-                request.Body.Position = 0;
+                var correlationId = correlationIdValue.FirstOrDefault();
+                if (!string.IsNullOrEmpty(correlationId))
+                {
+                    return correlationId;
+                }
             }
 
-            _logger.LogInformation(
-                "HTTP Request: {Method} {Path} | QueryString: {QueryString} | Body: {Body}",
-                request.Method,
-                request.Path,
-                request.QueryString,
-                string.IsNullOrEmpty(body) ? "(empty)" : body);
+            // Generate baru jika tidak ada
+            return Guid.NewGuid().ToString();
         }
 
-        private async Task LogResponse(HttpContext context, long elapsedMs)
+        private async Task LogRequest(HttpContext context, string correlationId, ILoggerService loggerService)
         {
-            var response = context.Response;
-            response.Body.Seek(0, SeekOrigin.Begin);
-            var body = await new StreamReader(response.Body).ReadToEndAsync();
-            response.Body.Seek(0, SeekOrigin.Begin);
+            try
+            {
+                var request = context.Request;
+                var body = "";
 
-            _logger.LogInformation(
-                "HTTP Response: {StatusCode} | Path: {Path} | Duration: {ElapsedMs}ms | Body: {Body}",
-                response.StatusCode,
-                context.Request.Path,
-                elapsedMs,
-                string.IsNullOrEmpty(body) ? "(empty)" : body);
+                // Hanya log body untuk POST/PUT requests dan bukan content length > 1MB
+                if (request.ContentLength > 0 && request.ContentLength < 1024 * 1024 && 
+                    (request.Method == "POST" || request.Method == "PUT"))
+                {
+                    request.EnableBuffering();
+                    using (var reader = new StreamReader(request.Body, Encoding.UTF8))
+                    {
+                        body = await reader.ReadToEndAsync();
+                    }
+                    request.Body.Position = 0;
+                }
+
+                var message = $"HTTP {request.Method} {request.Path.Value}";
+                if (!string.IsNullOrEmpty(request.QueryString.Value))
+                {
+                    message += $"?{request.QueryString.Value}";
+                }
+                if (!string.IsNullOrEmpty(body))
+                {
+                    message += $" | Body: {(body.Length > 200 ? body[..200] + "..." : body)}";
+                }
+
+                loggerService?.LogInformationWithCorrelation(correlationId, $"[REQUEST] {message}");
+                
+                // Log audit untuk POST/PUT (data modification)
+                if (request.Method == "POST" || request.Method == "PUT")
+                {
+                    var userId = context.User?.Identity?.Name ?? "Unknown";
+                    loggerService?.LogAudit(userId, request.Method, request.Path.Value, correlationId);
+                }
+            }
+            catch (Exception ex)
+            {
+                loggerService?.LogErrorWithCorrelation(correlationId, "[REQUEST LOGGING] Error logging request", ex);
+            }
+        }
+
+        private async Task LogResponse(HttpContext context, string correlationId, long elapsedMs, ILoggerService loggerService)
+        {
+            try
+            {
+                var response = context.Response;
+                var isSuccessful = response.StatusCode >= 200 && response.StatusCode < 300;
+                
+                // Jangan log response body jika > 1MB
+                var body = "";
+                if (response.Body.CanSeek && response.Body.Length < 1024 * 1024)
+                {
+                    try
+                    {
+                        response.Body.Seek(0, SeekOrigin.Begin);
+                        using (var reader = new StreamReader(response.Body))
+                        {
+                            body = await reader.ReadToEndAsync();
+                        }
+                        response.Body.Seek(0, SeekOrigin.Begin);
+                    }
+                    catch
+                    {
+                        body = "(unavailable)";
+                    }
+                }
+
+                var message = $"HTTP {response.StatusCode} {context.Request.Path.Value} | Duration: {elapsedMs}ms";
+                if (!string.IsNullOrEmpty(body))
+                {
+                    message += $" | Body: {(body.Length > 200 ? body[..200] + "..." : body)}";
+                }
+
+                if (isSuccessful)
+                {
+                    loggerService?.LogInformationWithCorrelation(correlationId, $"[RESPONSE] {message}");
+                }
+                else
+                {
+                    loggerService?.LogWarningWithCorrelation(correlationId, $"[RESPONSE] {message}");
+                }
+
+                // Log performance metrics
+                loggerService?.LogPerformance($"HTTP {context.Request.Method}", elapsedMs, correlationId);
+            }
+            catch (Exception ex)
+            {
+                loggerService?.LogErrorWithCorrelation(correlationId, "[RESPONSE LOGGING] Error logging response", ex);
+            }
+        }
+
+        private void LogRequestException(HttpContext context, Exception ex, string correlationId, long elapsedMs, ILoggerService loggerService)
+        {
+            try
+            {
+                var message = $"Exception in HTTP {context.Request.Method} {context.Request.Path.Value} | Duration: {elapsedMs}ms";
+                loggerService?.LogErrorWithCorrelation(correlationId, message, ex);
+                
+                // Log audit trail untuk error
+                var userId = context.User?.Identity?.Name ?? "Unknown";
+                loggerService?.LogAudit(userId, $"ERROR_{context.Request.Method}", $"{ex.GetType().Name}: {ex.Message}", correlationId);
+            }
+            catch (Exception logEx)
+            {
+                _logger.LogError(logEx, "Error logging request exception");
+            }
         }
     }
 }

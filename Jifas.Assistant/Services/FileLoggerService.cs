@@ -152,5 +152,95 @@ namespace Jifas.Assistant.Services
                 Directory.CreateDirectory(logDir);
             }
         }
+
+        // ========== CORRELATION ID LOGGING ==========
+
+        public void LogInformationWithCorrelation(string correlationId, string message, params object[] args)
+        {
+            var contextMessage = string.IsNullOrEmpty(correlationId) 
+                ? message 
+                : $"[{correlationId}] {message}";
+            WriteLog("INFO", contextMessage, args);
+        }
+
+        public void LogWarningWithCorrelation(string correlationId, string message, params object[] args)
+        {
+            var contextMessage = string.IsNullOrEmpty(correlationId)
+                ? message
+                : $"[{correlationId}] {message}";
+            WriteLog("WARN", contextMessage, args);
+        }
+
+        public void LogErrorWithCorrelation(string correlationId, string message, Exception ex = null, params object[] args)
+        {
+            var contextMessage = string.IsNullOrEmpty(correlationId)
+                ? message
+                : $"[{correlationId}] {message}";
+            var fullMessage = new StringBuilder(contextMessage);
+
+            if (ex != null)
+            {
+                fullMessage.AppendLine();
+                fullMessage.Append($"Exception: {ex.GetType().Name}: {ex.Message}");
+                fullMessage.AppendLine();
+                fullMessage.Append($"StackTrace: {ex.StackTrace}");
+
+                if (ex.InnerException != null)
+                {
+                    fullMessage.AppendLine();
+                    fullMessage.Append($"InnerException: {ex.InnerException.Message}");
+                }
+            }
+
+            WriteLog("ERROR", fullMessage.ToString(), args);
+        }
+
+        // ========== AUDIT TRAIL LOGGING ==========
+
+        public void LogAudit(string userId, string action, string details, string correlationId = null)
+        {
+            var auditEntry = new StringBuilder();
+            auditEntry.Append("[AUDIT]");
+            
+            if (!string.IsNullOrEmpty(correlationId))
+            {
+                auditEntry.Append($" [{correlationId}]");
+            }
+            
+            auditEntry.Append($" User: {(string.IsNullOrEmpty(userId) ? "Unknown" : userId)}");
+            auditEntry.Append($" | Action: {action}");
+            auditEntry.Append($" | Details: {details}");
+            
+            WriteLog("AUDIT", auditEntry.ToString());
+        }
+
+        // ========== PERFORMANCE MONITORING ==========
+
+        public void LogPerformance(string operation, long milliseconds, string correlationId = null)
+        {
+            var perfEntry = new StringBuilder();
+            perfEntry.Append("[PERF]");
+            
+            if (!string.IsNullOrEmpty(correlationId))
+            {
+                perfEntry.Append($" [{correlationId}]");
+            }
+            
+            perfEntry.Append($" Operation: {operation}");
+            perfEntry.Append($" | Duration: {milliseconds}ms");
+            
+            // Warn if operation took longer than expected (configurable thresholds)
+            var threshold = operation.ToLower() switch
+            {
+                "kbsearch" => 2000,  // KB search should be < 2 sec
+                "llmresponse" => 10000,  // LLM response should be < 10 sec
+                "validation" => 100,  // Validation should be < 100ms
+                "cache" => 10,  // Cache should be < 10ms
+                _ => 5000  // Default threshold: 5 sec
+            };
+
+            var level = milliseconds > threshold ? "WARN" : "PERF";
+            WriteLog(level, perfEntry.ToString());
+        }
     }
 }

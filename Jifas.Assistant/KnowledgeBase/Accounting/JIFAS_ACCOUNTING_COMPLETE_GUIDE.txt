@@ -1,0 +1,1552 @@
+========================================================================================
+              PANDUAN LENGKAP MODUL AKUNTANSI - SISTEM JIFAS
+        Untuk Tim Accounting, Finance, IT, Support, dan Troubleshooting
+========================================================================================
+
+DAFTAR ISI:
+1. RINGKASAN MODUL
+2. PENCATATAN JURNAL HARIAN
+3. MEMBUAT JURNAL PENYESUAIAN
+4. MEMBUAT JURNAL KAS (CAJE/PAJE)
+5. PENYESUAIAN JURNAL
+6. PEMBATALAN JURNAL
+7. LAPORAN NERACA
+8. LAPORAN NERACA PERCOBAAN
+9. DATA MASTER & REFERENSI
+10. ALUR PROSES AKUNTANSI
+11. VALIDASI & PENGECEKAN
+12. TROUBLESHOOTING & ERROR HANDLING
+13. TIPS & TRIK PENGGUNAAN
+14. QUICK REFERENCE
+15. CATATAN TEKNIS (UNTUK IT/DEVELOPER)
+16. API ENDPOINTS REFERENCE
+17. REVISI & CONTACT
+
+========================================================================================
+                            1. RINGKASAN MODUL
+========================================================================================
+
+DESKRIPSI:
+Modul Akuntansi adalah pusat pencatatan semua transaksi keuangan perusahaan. Dari 
+pencatatan jurnal sehari-hari, penyesuaian, hingga pembuatan laporan keuangan.
+
+UNTUK SIAPA:
+? Tim Accounting: Untuk entry jurnal harian, penyesuaian, laporan
+? Tim Finance: Untuk analisis dan pelaporan keuangan
+? Tim IT/Support: Untuk troubleshooting teknis dan maintenance
+? Auditor: Untuk verifikasi dan audit trail tracking
+
+FITUR UTAMA:
+?? Pencatatan jurnal (Journal Transaction)
+?? Jurnal penyesuaian (Journal Memorial)
+?? Jurnal kas (CAJE/PAJE)
+?? Penyesuaian jurnal (Adjust)
+?? Pembatalan jurnal (Reverse)
+?? Laporan Neraca (Balance Sheet)
+?? Laporan Neraca Percobaan (Trial Balance)
+
+DIMANA LOKASINYA?
+Menu Accounting ? [Sub-menu sesuai kebutuhan]
+
+========================================================================================
+                    2. PENCATATAN JURNAL HARIAN (JOURNAL TRANSACTION)
+========================================================================================
+
+APA ITU?
+Halaman utama untuk melihat dan mengelola semua catatan jurnal harian. Tempat entry 
+pertama sebelum posting ke ledger.
+
+FITUR YANG TERSEDIA:
+- Mencari jurnal yang sudah dicatat
+- Melihat detail transaksi per baris
+- Membuat jurnal baru (penyesuaian, kas masuk/keluar)
+- Mengubah atau menyesuaikan jurnal
+- Membatalkan jurnal yang salah
+- Export data ke Excel
+
+CARA MENGGUNAKAN:
+
+STEP 1: MENCARI JURNAL
+   
+   OPSI A - Cari berdasarkan NOMOR DOKUMEN:
+   • Pilih radio button "Document Number"
+   • Ketik nomor jurnal (contoh: JM-2024-001)
+   • Klik tombol "Preview"
+   
+   OPSI B - Cari berdasarkan TANGGAL:
+   • Pilih radio button "Date Range"
+   • Isi tanggal mulai dan tanggal akhir
+   • Contoh: Dari 01/01/2024 sampai 31/01/2024
+   • Klik tombol "Preview"
+
+STEP 2: FILTER BERDASARKAN STATUS
+
+Klik salah satu status untuk filter:
+
+?? POSTED (Sudah Diposting)
+   Status: Final, tidak bisa diubah
+   Kapan: Setelah approval dari supervisor
+
+?? UNCHECKED (Belum Dicek)
+   Status: Baru dibuat, menunggu review
+   Kapan: Baru entry, belum ada approval
+
+?? CHECKED (Sudah Dicek)
+   Status: Sudah di-review dan OK, siap posting
+   Kapan: Sudah ada approval
+
+?? VOID (Dibatalkan)
+   Status: Ditolak atau dibatalkan
+   Kapan: Ada kesalahan
+
+?? NEED REVERSE
+   Status: Perlu dibatalkan dengan entry sebaliknya
+   Kapan: Koreksi jurnal yang sudah posted
+
+?? NEED COMPLETE VOID
+   Status: Perlu pembatalan penuh
+   Kapan: Jurnal tidak valid
+
+? REMOVED
+   Status: Sudah dihapus
+   Kapan: Jurnal tidak terpakai
+
+STEP 3: LIHAT DATA DALAM TABEL
+
+Kolom-kolom yang ditampilkan:
+
+Nomor Jurnal = Nomor unik setiap jurnal
+Dibuat Oleh = Nama pembuat (untuk tracking)
+Tanggal Update = Kapan terakhir diubah
+Tanggal Jurnal = Tanggal transaksi
+Jumlah = Nominal transaksi (Rp)
+Bank = Nama bank (jika ada)
+Deskripsi = Penjelasan transaksi
+Ref Doc = Dokumen referensi
+Ref Num = Nomor referensi
+Status = Status jurnal saat ini
+
+STEP 4: MELIHAT DETAIL
+
+• Klik tanda "+" di sebelah kiri untuk buka detail
+• Akan muncul tabel berisi akun debit dan kredit
+• Lihat: Divisi, Departemen, Akun, nominal
+
+TOMBOL-TOMBOL YANG TERSEDIA:
+
+?? Create Journal Memorial
+   Gunakan untuk: Adjustment, koreksi, penyesuaian period-end
+
+?? Create Caje/Paje
+   Gunakan untuk: Pencatatan transaksi kas
+
+??? Show All Details
+   Gunakan untuk: Lihat semua detail sekaligus
+
+??? Hide All Details
+   Gunakan untuk: Rapikan tampilan tabel
+
+?? Export to Excel
+   Gunakan untuk: Analisis data, backup, presentasi
+
+TROUBLESHOOTING:
+
+? MASALAH: Tidak melihat jurnal yang dicari
+? SOLUSI:
+  1. Pastikan tanggal pencarian sesuai dengan jurnal
+  2. Coba hapus filter status
+  3. Pastikan klik "Preview" setelah isi tanggal/nomor
+  4. Format tanggal: DD/MM/YYYY
+  5. Jika masih tidak ketemu, tanya supervisor apakah jurnal sudah dibuat
+
+? MASALAH: Tidak bisa mengubah/edit jurnal
+? SOLUSI:
+  1. Jurnal POSTED tidak bisa diubah (sudah final)
+  2. Gunakan tombol "Action" ? "REVERSE" untuk membatalkan
+  3. Atau gunakan "Create Journal Memorial" untuk adjustment
+  4. Hubungi supervisor jika perlu approval
+  5. JANGAN hapus jurnal posted - gunakan REVERSE atau ADJUST
+
+? MASALAH: Jurnal tidak tersimpan
+? SOLUSI:
+  1. Pastikan internet stabil
+  2. Jangan tutup browser sebelum "Saved Successfully" muncul
+  3. Refresh halaman untuk verifikasi
+  4. Jika error, hubungi IT support dengan screenshot
+
+? MASALAH: "Total Debit and Credit must be equal!"
+? SOLUSI:
+  1. INI NORMAL - dalam akuntansi debit HARUS = kredit
+  2. Periksa setiap baris
+  3. Debit total harus sama kredit total
+  4. Gunakan kalkulator
+  5. Contoh benar: Debit Rp 1.000.000 = Kredit Rp 1.000.000
+
+========================================================================================
+                    3. MEMBUAT JURNAL PENYESUAIAN (JOURNAL MEMORIAL)
+========================================================================================
+
+APA ITU & KAPAN DIGUNAKAN?
+Jurnal memorial adalah jurnal untuk transaksi yang tidak melalui proses normal, 
+digunakan untuk:
+- Penyesuaian akhir periode (accrual, depreciation)
+- Koreksi kesalahan pencatatan
+- Jurnal reserve (pembukuan cadangan)
+- Penyesuaian inventory, piutang tak tertagih, dll
+
+CARA MEMBUAT:
+
+LANGKAH 1: Klik tombol "Create Journal Memorial"
+? Form besar akan muncul
+
+LANGKAH 2: ISI DATA HEADER (Bagian Atas)
+
+?? Tanggal (Date) - WAJIB
+   Klik field tanggal, pilih tanggal transaksi
+   Contoh: 31/01/2024 untuk adjustment akhir bulan
+   Sistem membatasi hanya tanggal dalam periode aktif
+
+?? Jumlah (Amount) - OTOMATIS
+   Tidak perlu diisi, otomatis dihitung dari total debit
+   Akan berubah saat menambah/ubah baris
+
+?? Ref Num - OPSIONAL
+   Nomor bukti atau referensi
+   Contoh: Nomor PO, nomor surat perintah
+
+?? Ref Doc - OPSIONAL
+   Nomor dokumen sumber/bukti
+   Contoh: INV-2024-001
+
+?? Deskripsi - WAJIB
+   Penjelasan jurnal dengan jelas
+   Contoh: "Penyesuaian depreciation mesin Januari 2024"
+   Contoh: "Koreksi jurnal gaji double entry Oktober"
+   Harus detail agar mudah ditrack auditor
+
+?? Vendor - HANYA JIKA DIPERLUKAN
+   Hanya tampil jika akun memerlukan vendor
+   Contoh: Hutang Vendor
+   Cari dan pilih dari dropdown
+
+?? Tenant/Customer - HANYA JIKA DIPERLUKAN
+   Hanya tampil jika akun memerlukan tenant/customer
+   Contoh: Piutang Tenant
+   Cari dan pilih dari dropdown
+
+LANGKAH 3: ISI DETAIL BARIS (TABEL BAWAH)
+
+Klik tombol "Request" untuk menambah baris
+
+Untuk setiap baris, isi:
+
+?? Divisi (Div) - WAJIB
+   Pilih kode divisi dari dropdown
+   Contoh: DIV001, DIV002
+
+?? Departemen (Dept) - WAJIB
+   Pilih kode departemen (sesuai divisi)
+   Contoh: ACC, ADM, OPE
+
+?? COA (Chart of Account) - WAJIB
+   Pilih akun yang akan di-debit/kredit
+   Cari dengan kode atau nama
+   Contoh: 5101 Gaji, 1110 Bank, 2111 Hutang
+   PENTING: Sistem otomatis cek jika akun butuh Vendor/Customer
+
+?? Deskripsi COA - OTOMATIS
+   Muncul otomatis sesuai COA
+   Tidak perlu diisi
+
+?? Keterangan - WAJIB
+   Penjelasan untuk baris ini
+   Contoh: "Depreciation mesin produksi"
+   Auto-fill dari header, boleh diubah
+
+?? Object Code - OPSIONAL
+   Klasifikasi detail (Project, Cost Center, Region)
+   Cari dari dropdown
+
+?? Object Deskripsi - OTOMATIS
+   Muncul otomatis sesuai Object Code
+
+?? Debit - Numeric
+   Jumlah sisi debit
+   Contoh: 500000 (untuk Rp 500.000)
+   Hanya isi DEBIT atau KREDIT, tidak keduanya
+   Untuk: ASSET, EXPENSE
+
+?? Kredit - Numeric
+   Jumlah sisi kredit
+   Hanya isi DEBIT atau KREDIT, tidak keduanya
+   Untuk: LIABILITY, INCOME, EQUITY
+
+? Tombol Delete
+   Klik untuk hapus baris dari tabel
+
+LANGKAH 4: PERIKSA KESEIMBANGAN
+
+Lihat bagian kanan:
+- Total Debit = harus sama Total Kredit
+- MERAH = tidak balance
+- HIJAU = sudah balance
+
+CONTOH BENAR:
+Jurnal: Penyesuaian Depreciation Mesin
+?? Baris 1: Exp Depreciation (Debit: 500.000)
+?? Kredit dari Accumulated Depreciation: 500.000
+   Total Debit: 500.000 = Total Kredit: 500.000 ?
+
+CONTOH SALAH:
+?? Baris 1: Exp Depreciation (Debit: 500.000)
+?? Baris 2: Acc Depreciation (Debit: 300.000)
+?? Total Debit: 800.000 ? Total Kredit: 0 ?
+
+LANGKAH 5: SIMPAN JURNAL
+
+Klik tombol "Save"
+? Sistem tanya: "Are you sure to save Journal Memorial?"
+? Klik OK untuk lanjut
+? Jika ada error, pesan akan muncul
+? Jika berhasil, halaman refresh dan jurnal muncul di daftar
+
+VALIDASI SISTEM AKAN CEK:
+? Tanggal diisi
+? Deskripsi diisi (tidak kosong)
+? Minimal 1 baris detail
+? Total Debit = Total Kredit
+? Jumlah > 0
+? Vendor diisi (jika ada)
+? Customer diisi (jika ada)
+
+JIKA ERROR:
+- Pesan merah akan menjelaskan apa yang kurang
+- Contoh: "Vendor must be filled!" atau "Total Debit and Credit must be equal!"
+- Perbaiki sesuai error
+- Coba save lagi
+
+TOMBOL BAWAH:
+? Cancel = Batal (data tidak disimpan)
+? Save = Simpan ke sistem
+
+========================================================================================
+                    4. MEMBUAT JURNAL KAS (CAJE/PAJE)
+========================================================================================
+
+APA ITU & PERBEDAANNYA?
+Jurnal Kas adalah ringkasan transaksi kas masuk/keluar dalam satu periode.
+
+JOURNAL MEMORIAL vs CAJE/PAJE:
+- Journal Memorial: Jurnal penyesuaian, bisa akun apapun
+- CAJE/PAJE: Khusus transaksi kas, lebih spesifik
+
+DIGUNAKAN UNTUK:
+- Kas keluar pembayaran (gaji, supplier, etc)
+- Kas masuk penerimaan (penjualan, piutang, etc)
+- Ringkasan transaksi kas harian
+
+CARA MEMBUAT:
+
+LANGKAH 1: Klik tombol "Create Caje/Paje"
+? Window besar akan muncul
+
+LANGKAH 2: ISI DATA HEADER
+
+?? Tipe Jurnal - WAJIB
+   Pilih dari dropdown (CAJE atau PAJE)
+   CAJE = Kas Keluar
+   PAJE = Kas Masuk
+   Contoh: "Pembayaran Gaji", "Penerimaan Pelanggan"
+
+?? Tanggal - WAJIB
+   Pilih tanggal transaksi kas
+   Contoh: 15/01/2024
+   Rentang: Tidak boleh di luar tahun berjalan (Jan-Des)
+
+?? Jumlah - OTOMATIS
+   Tidak perlu diisi
+   Dihitung otomatis dari total debit
+
+?? Ref Num - OPSIONAL
+   Nomor bukti atau referensi
+   Contoh: Nomor surat perintah
+   Boleh dikosongkan
+
+?? Ref Doc - OPSIONAL
+   Dokumen sumber
+   Contoh: INV-2024-001
+   Boleh dikosongkan
+
+?? Deskripsi - WAJIB
+   Penjelasan jurnal kas
+   Contoh: "Pembayaran gaji karyawan Januari 2024"
+   Contoh: "Penerimaan dari pelanggan PT ABC"
+   Jelaskan lengkap transaksi
+
+LANGKAH 3: ISI DETAIL BARIS
+
+Klik "Request" untuk tambah baris
+
+Isi setiap baris dengan:
+?? Divisi - WAJIB
+?? Departemen - WAJIB
+?? COA - WAJIB (Akun debit/kredit)
+?? Keterangan - WAJIB
+?? Object Code - OPSIONAL
+?? Debit - Nominalnya
+?? Kredit - Nominalnya
+
+PENTING: Total Debit HARUS = Total Kredit
+
+LANGKAH 4: PERIKSA DAN SIMPAN
+
+Pastikan:
+? Tanggal diisi
+? Deskripsi jelas
+? Minimal 1 baris
+? Total Debit = Total Kredit
+? Jumlah > 0
+
+Klik "Save"
+? Konfirmasi: "Are you sure to CREATE Journal Caje/Paje?"
+? Klik OK
+
+JIKA SUKSES: Halaman refresh, jurnal muncul di daftar
+
+TROUBLESHOOTING CAJE/PAJE:
+
+? MASALAH: Tidak bisa save jurnal
+? SOLUSI:
+  1. Pastikan field wajib diisi (tanggal, deskripsi, type)
+  2. Minimal 1 baris detail
+  3. Total Debit = Total Kredit
+  4. Jangan ada baris kosong
+  5. Cek error message, perbaiki sesuai
+
+? MASALAH: Total Debit tidak sama Kredit
+? SOLUSI:
+  1. Ini error normal - WAJIB debit = kredit
+  2. Periksa setiap baris nominal
+  3. Gunakan kalkulator
+  4. Contoh benar: Debit Rp 2.000.000 = Kredit Rp 2.000.000
+
+========================================================================================
+                    5. PENYESUAIAN JURNAL (ADJUST JOURNAL)
+========================================================================================
+
+APA ITU & KAPAN DIGUNAKAN?
+Fitur untuk mengubah/menyesuaikan jurnal yang sudah ada tanpa menghapus yang lama.
+
+DIGUNAKAN UNTUK:
+- Koreksi kesalahan tanpa menghapus jurnal asli
+- Mengubah kolom tertentu (tanggal, jumlah, akun)
+- Membuat audit trail lengkap (track siapa ubah apa kapan)
+
+KAPAN:
+- Ada kesalahan dalam jurnal sebelumnya
+- Ingin ubah akun tanpa delete
+- Ada koreksi dari audit/supervisor
+
+CARA MENGGUNAKAN:
+
+LANGKAH 1: Cari jurnal yang akan disesuaikan
+? Di halaman utama, cari jurnal
+? Klik tombol "Action"
+
+LANGKAH 2: Pilih "ADJUST"
+? Form penyesuaian muncul
+? Ada 2 bagian: Jurnal lama (atas) + Adjustment form (bawah)
+
+BAGIAN ATAS (Jurnal Lama - READ-ONLY):
+Menampilkan data jurnal (tidak bisa diubah):
+- Nomor jurnal
+- Tanggal jurnal
+- Jumlah
+- Deskripsi
+- Ref No
+- Detail baris
+
+BAGIAN BAWAH (Form Adjustment):
+
+?? Tanggal Adjustment - WAJIB
+   Tanggal koreksi dibuat
+   Contoh: 16/01/2024 (jika jurnal lama 15/01/2024)
+
+?? Jumlah - OTOMATIS
+   Dihitung dari detail adjustment
+
+?? Deskripsi - WAJIB
+   Penjelasan mengapa ada adjustment
+   Contoh: "Koreksi akun dari 5101 ke 5102"
+   Contoh: "Adjustment jumlah dari 100rb jadi 150rb"
+
+?? Ref Doc - DISPLAY
+   Menampilkan dokumen referensi asli
+   Tidak bisa diubah
+
+Detail Adjustment Grid:
+- Isi data adjustment setiap baris
+- Minimal 1 baris
+- Total Debit = Total Kredit
+
+LANGKAH 3: SIMPAN ADJUSTMENT
+
+Klik tombol "Save"
+? Sistem membuat jurnal adjustment BARU
+? Jurnal lama TIDAK dihapus
+? Audit trail tercatat: siapa adjust, kapan, apa yang diubah
+
+CONTOH ADJUSTMENT:
+Jurnal Lama: Pembayaran Gaji
+?? Beban Gaji (Debit): 100.000.000
+?? Bank (Kredit): 100.000.000
+
+Adjustment: Koreksi (ternyata 110juta, bukan 100juta)
+?? Beban Gaji (Debit): 10.000.000 (tambahan)
+?? Bank (Kredit): 10.000.000 (tambahan)
+
+HASIL:
+?? Jurnal Asli: 100.000.000 tetap ada (audit trail)
+?? Jurnal Adjustment: 10.000.000 (koreksi)
+   Total jadi: 110.000.000
+
+========================================================================================
+                    6. PEMBATALAN JURNAL (REVERSE JOURNAL)
+========================================================================================
+
+APA ITU & PERBEDAANNYA?
+Fitur untuk membatalkan jurnal dengan membuat entry sebaliknya 
+(debit jadi kredit, kredit jadi debit).
+
+DELETE vs REVERSE:
+DELETE: Menghapus jurnal (tidak ada audit trail) ? JANGAN LAKUKAN
+REVERSE: Entry sebaliknya, jurnal lama tetap ada, ada audit trail ? CARA BENAR
+
+KAPAN DIGUNAKAN:
+- Jurnal sudah posted tapi ternyata kesalahan
+- Ingin batal transaksi dengan catatan baik
+- Ada permintaan batal dari supervisor
+
+CARA MEMBUAT:
+
+LANGKAH 1: Cari jurnal yang akan dibatalkan
+? Di halaman utama, cari jurnal
+? Klik tombol "Action"
+
+LANGKAH 2: Pilih "REVERSE"
+? Form reversal muncul
+
+BAGIAN ATAS (Jurnal Asli):
+Menampilkan jurnal yang akan dibatalkan:
+- Nomor jurnal
+- Tanggal
+- Jumlah
+- Deskripsi
+- Detail baris
+
+BAGIAN BAWAH (Jurnal Reversal):
+
+?? Tanggal Reversal - WAJIB
+   Tanggal pembatalan dibuat
+   Contoh: 16/01/2024 (jika jurnal asli 15/01/2024)
+   Biasanya hari berikutnya atau sama
+
+?? Deskripsi - OPSIONAL
+   Penjelasan pembatalan
+   Contoh: "Reversal of invoice INV-2024-001"
+   Auto-fill: "Reversal of [Deskripsi asli]"
+   Boleh diubah
+
+Detail Reversal Grid:
+- Otomatis entry sebaliknya terbuat
+- Debit ? Kredit, Kredit ? Debit
+- Nominal sama, hanya arah berlawanan
+
+CONTOH REVERSAL:
+Jurnal Asli (15/01/2024):
+?? Bank Debit: 1.000.000
+?? Penjualan Kredit: 1.000.000
+
+Jurnal Reversal (16/01/2024):
+?? Bank Kredit: 1.000.000 (berlawanan)
+?? Penjualan Debit: 1.000.000 (berlawanan)
+
+HASIL:
+?? Jurnal Asli tetap ada (audit trail)
+?? Jurnal Reversal ada sebagai entry berlawanan
+?? Net effect: 1juta masuk - 1juta keluar = 0 (seolah tidak ada)
+
+LANGKAH 3: SIMPAN REVERSAL
+
+Klik "Save"
+? Sistem membuat jurnal reversal BARU
+? Jurnal asli tetap ada status "NEED REVERSE"
+? Audit trail tercatat lengkap
+
+TROUBLESHOOTING REVERSAL:
+
+? MASALAH: Tidak bisa reverse jurnal posted
+? SOLUSI:
+  1. Normal - jurnal posted adalah final
+  2. Reverse adalah cara yang benar membatalkannya
+  3. Hubungi supervisor untuk approval
+  4. JANGAN coba delete manual (cara salah)
+
+========================================================================================
+                    7. LAPORAN NERACA (BALANCE SHEET)
+========================================================================================
+
+APA ITU & FUNGSINYA?
+Laporan Neraca menunjukkan posisi keuangan perusahaan pada tanggal tertentu.
+
+RUMUS: ASET = LIABILITY + EQUITY (HARUS SEIMBANG)
+
+TERDIRI DARI:
+- ASET (Harta): Apa yang dimiliki perusahaan
+- LIABILITY (Hutang): Apa yang dihutang perusahaan
+- EQUITY (Modal): Modal sendiri + Laba
+
+DIMANA?
+Menu Accounting ? Balance Sheet
+
+STRUKTUR NERACA:
+
+ASET (AKTIVA):
+?? Aset Lancar (bisa dicairkan < 1 tahun)
+?  ?? Kas dan Bank: Uang tunai dan bank
+?  ?? Piutang: Uang diterima dari pelanggan
+?  ?? Inventory: Barang disimpan
+?  ?? Aset Lancar Lainnya
+?
+?? Aset Tidak Lancar (aset jangka panjang)
+   ?? Aset Tetap: Tanah, Gedung, Kendaraan, Mesin
+   ?? Akumulasi Depreciation: Pengurangan nilai
+   ?? Aset Tidak Berwujud: Goodwill, Patent
+   ?? Aset Jangka Panjang Lainnya
+
+LIABILITY (PASSIVA/HUTANG):
+?? Hutang Jangka Pendek (< 1 tahun)
+?  ?? Hutang Usaha: Hutang ke supplier
+?  ?? Hutang Gaji: Gaji belum bayar
+?  ?? Hutang Bunga: Bunga belum bayar
+?  ?? Hutang Jangka Pendek Lainnya
+?
+?? Hutang Jangka Panjang (> 1 tahun)
+   ?? Hutang Obligasi
+   ?? Hutang Hipotik
+   ?? Hutang Jangka Panjang Lainnya
+
+EKUITAS (MODAL):
+?? Modal Awal: Modal disetor pemilik
+?? Laba Ditahan: Laba tahun sebelumnya
+?? Laba Tahun Berjalan: Laba/rugi tahun ini
+?? Dividen: Pengambilan laba pemilik
+
+CARA MENGGUNAKAN:
+
+LANGKAH 1: Pilih Parameter
+
+?? Perusahaan
+   Pilih perusahaan yang ingin dilihat
+   Hanya perusahaan yang user akses
+
+?? Periode
+   Isi tanggal awal periode
+   Isi tanggal akhir periode
+   Contoh: 01/01/2024 sampai 31/01/2024
+   Harus: tanggal awal ? tanggal akhir
+
+LANGKAH 2: Klik "Preview" atau "Generate"
+? Sistem membuat laporan neraca
+? Ditampilkan dalam tabel atau visual
+
+LANGKAH 3: LIHAT HASIL
+
+Kolom yang ditampilkan:
+- Kode Akun: Kode perkiraan
+- Nama Akun: Nama lengkap
+- Saldo: Saldo akhir periode (Rp)
+- Perubahan: Perubahan dari periode sebelumnya
+- % Dari Total: Persentase dari total
+
+LANGKAH 4: ANALISIS NERACA
+
+Lihat angka-angka:
+? Total ASET harus = Total (LIABILITY + EQUITY)
+? Jika tidak seimbang = ada error dalam jurnal
+? Bandingkan periode sebelumnya: ada perubahan abnormal?
+
+CONTOH NERACA SEIMBANG:
+
+ASET
+?? Kas: 500.000.000
+?? Piutang: 300.000.000
+?? Tanah: 1.500.000.000
+?? TOTAL ASET: 2.300.000.000
+
+LIABILITY
+?? Hutang Usaha: 500.000.000
+?? TOTAL LIABILITY: 500.000.000
+
+EQUITY
+?? Modal: 1.500.000.000
+?? Laba Ditahan: 200.000.000
+?? Laba Tahun Ini: 100.000.000
+?? TOTAL EQUITY: 1.800.000.000
+
+TOTAL LIABILITY + EQUITY: 500juta + 1.800juta = 2.300juta
+? SEIMBANG (ASET = LIABILITY + EQUITY)
+
+FITUR TAMBAHAN:
+
+?? Export: Unduh ke Excel
+??? Print: Cetak laporan
+?? Comparison: Bandingkan periode lain
+?? Drill Down: Klik akun lihat transaksi detail
+
+TROUBLESHOOTING NERACA:
+
+? MASALAH: Neraca tidak seimbang
+? SOLUSI:
+  1. INI ERROR SERIUS - ada kesalahan jurnal
+  2. Hubungi Accounting Supervisor atau Internal Audit
+  3. Periksa setiap jurnal dalam periode
+  4. Cari jurnal yang tidak balance (debit ? kredit)
+  5. Buat jurnal adjustment untuk perbaikan
+  6. Jangan tutup periode sampai seimbang
+
+? MASALAH: Ada akun nominal besar/aneh
+? SOLUSI:
+  1. Periksa jurnal yang menggunakan akun
+  2. Bandingkan periode sebelumnya (normal berapa?)
+  3. Tanya supervisor atau OB apakah benar
+  4. Jika salah, buat adjustment untuk koreksi
+
+========================================================================================
+                    8. LAPORAN NERACA PERCOBAAN (TRIAL BALANCE)
+========================================================================================
+
+APA ITU & FUNGSINYA?
+Laporan daftar semua akun dengan saldo debit dan kreditnya.
+Digunakan untuk verifikasi: total debit = total kredit?
+
+DIGUNAKAN UNTUK:
+- Memverifikasi total debit = total kredit (cek kesalahan jurnal)
+- Langkah pertama sebelum buat laporan keuangan
+- Jika tidak balance = ada error
+
+BEDANYA DENGAN BALANCE SHEET:
+Trial Balance: Daftar akun dengan saldo debit & kredit (raw data)
+Balance Sheet: Laporan posisi yang sudah dikelompokkan (aset, liability, equity)
+
+DIMANA?
+Menu Accounting ? Trial Balance
+
+CARA MENGGUNAKAN:
+
+LANGKAH 1: Pilih Parameter
+
+?? Perusahaan
+   Pilih perusahaan
+
+?? Periode
+   Tanggal awal periode
+   Tanggal akhir periode
+   Contoh: 01/01/2024 sampai 31/01/2024
+
+LANGKAH 2: Klik "Preview" atau "Generate"
+? Sistem membuat trial balance
+? Daftar semua akun ditampilkan
+
+LANGKAH 3: LIHAT HASIL
+
+Kolom-kolom:
+
+No. = Nomor urut akun (1, 2, 3, dst)
+
+Kode Akun = Kode perkiraan (contoh: 1110, 5101, 2101)
+
+Nama Akun = Nama lengkap perkiraan
+
+Saldo Debit = Jumlah saldo debit akun
+   Hanya akun debit yang muncul di kolom ini
+
+Saldo Kredit = Jumlah saldo kredit akun
+   Hanya akun kredit yang muncul di kolom ini
+
+Saldo Bersih = Debit - Kredit
+   Positif = Debit, Negatif = Kredit
+
+LANGKAH 4: VERIFIKASI KESEIMBANGAN
+
+LIHAT BARIS TOTAL:
+Total Debit = ?
+Total Kredit = ?
+
+? JIKA DEBIT = KREDIT ? TRIAL BALANCE SEIMBANG (NORMAL)
+? JIKA DEBIT ? KREDIT ? ADA ERROR (HARUS DIPERBAIKI)
+
+CONTOH SEIMBANG:
+
+No. | Kode | Nama Akun         | Debit          | Kredit
+----|------|-------------------|----------------|---------------
+1   | 1110 | Bank              | 500.000.000    |
+2   | 1120 | Piutang           | 300.000.000    |
+3   | 2101 | Hutang Usaha      |                | 200.000.000
+4   | 3101 | Modal             |                | 500.000.000
+5   | 5101 | Beban Gaji        | 100.000.000    |
+6   | 4101 | Penjualan         |                | 200.000.000
+----|------|---TOTAL-----------|  900.000.000   | 900.000.000 ?
+
+CONTOH TIDAK SEIMBANG:
+
+No. | Kode | Nama Akun         | Debit          | Kredit
+----|------|-------------------|----------------|---------------
+1   | 1110 | Bank              | 500.000.000    |
+2   | 1120 | Piutang           | 300.000.000    |
+3   | 2101 | Hutang Usaha      |                | 200.000.000
+4   | 3101 | Modal             |                | 500.000.000
+5   | 5101 | Beban Gaji        | 100.000.000    |
+6   | 4101 | Penjualan         |                | 200.000.000
+----|------|---TOTAL-----------|  900.000.000   | 850.000.000 ?
+                                                  (Selisih: 50juta)
+
+LANGKAH 5: JIKA ADA SELISIH
+
+Jika Total Debit ? Total Kredit:
+1. Ada jurnal yang tidak balance
+2. Cek setiap jurnal dalam periode
+3. Cari jurnal yang debit ? kredit
+4. Perbaiki dengan jurnal adjustment
+5. Generate ulang trial balance
+6. Ulangi sampai balance
+
+FITUR TAMBAHAN:
+
+?? Filter: Filter akun berdasarkan tipe
+?? Export: Unduh ke Excel
+??? Print: Cetak laporan
+?? Recalculate: Hitung ulang dari transaksi
+?? Comparison: Bandingkan periode lain
+??? Show Zero Balance: Tampilkan/sembunyikan akun saldo 0
+
+TROUBLESHOOTING TRIAL BALANCE:
+
+? MASALAH: Trial Balance tidak seimbang
+? SOLUSI:
+  1. INI ERROR PENTING - debit harus = kredit
+  2. Lihat besar selisihnya (contoh: 50 juta)
+  3. Cari jurnal yang debit ? kredit
+  4. Periksa setiap baris
+  5. Perbaiki jurnal yang error
+  6. Generate ulang untuk verifikasi
+  7. Jangan lanjut laporan sampai seimbang
+
+? MASALAH: Selisih sangat kecil (100 ribu)
+? SOLUSI:
+  1. Biasanya pembulatan atau kesalahan input
+  2. Cari jurnal terakhir yang dibuat
+  3. Periksa nominalnya, jangan duplikasi
+  4. Search nilai 100.000
+  5. Perbaiki jurnal
+
+? MASALAH: Banyak akun saldo 0
+? SOLUSI:
+  1. NORMAL - akun tanpa transaksi saldo 0
+  2. Bisa di-hide dengan "Show Zero Balance"
+  3. Tidak perlu dikhawatirkan
+
+========================================================================================
+                    9. DATA MASTER & REFERENSI
+========================================================================================
+
+APA ITU "MASTER DATA"?
+Data referensi/dasar untuk pencatatan transaksi. Seperti "kamus" sistem akuntansi.
+
+DAFTAR PERKIRAAN (CHART OF ACCOUNT / COA):
+
+Daftar semua akun di perusahaan. Setiap akun:
+
+Kode Akun
+   Nomor unik, format: angka (1110, 5101, 2101)
+   Struktur: digit pertama = tipe akun
+   • 1xxx = Aset, 2xxx = Liability, 3xxx = Equity
+   • 4xxx = Income, 5xxx = Expense
+
+Nama Akun
+   Nama lengkap akun
+   Contoh: "Bank", "Piutang Usaha", "Gaji dan Upah"
+
+Tipe Akun
+   Header atau Detail
+   Header: Kategori (contoh: "Aset Lancar")
+   Detail: Untuk pencatatan (contoh: "Bank BCA")
+
+Tipe Parties
+   VND (Vendor): Akun butuh isi Vendor
+   TCS (Tenant/Customer): Akun butuh isi Tenant
+   NONE: Akun tidak perlu vendor/tenant
+
+Status
+   Aktif: Bisa digunakan
+   Non-aktif: Tidak bisa digunakan
+
+DIVISI (DIVISION):
+
+Pembagian organisasi/cabang. Setiap divisi:
+
+Kode Divisi
+   Kode unik (DIV001, DIV002)
+
+Nama Divisi
+   Nama lengkap ("Divisi Penjualan", "Divisi Operasional")
+
+Status
+   Aktif atau tidak aktif
+
+DEPARTEMEN (DEPARTMENT):
+
+Bagian dalam divisi. Setiap departemen:
+
+Kode Departemen
+   Kode unik (ACC, ADM, OPE, MKT)
+
+Nama Departemen
+   Contoh: "Accounting", "Administration", "Operations"
+
+Divisi Parent
+   Divisi mana yang "punya" departemen ini
+
+Status
+   Aktif atau tidak aktif
+
+VENDOR (SUPPLIER):
+
+Penyedia/supplier perusahaan. Untuk akun hutang vendor.
+
+Kode Vendor
+   Nomor unik (VND001, VND002)
+
+Nama Vendor
+   Nama perusahaan ("PT ABC Supplies", "Distributor XYZ")
+
+Alamat, Kontak, Bank
+   Data lengkap vendor
+
+TENANT / CUSTOMER (PENYEWA / PELANGGAN):
+
+Penyewa atau pelanggan. Untuk akun piutang.
+
+Kode Tenant
+   Nomor unik (TEN001, TEN002)
+
+Nama Tenant
+   Nama lengkap ("PT Jaya Bersama", "Toko Maju Jaya")
+
+NPWP
+   Nomor Pajak Pebisnis/Pengusaha
+
+OBJECT CODE (KODE OBJEK):
+
+Klasifikasi transaksi lebih detail. Contoh:
+   Region/Lokasi (JKT, DPS, BDG)
+   Project/Proyek (PROJ001, PROJ002)
+   Cost Center (CC-ADM, CC-OPE)
+   Unit/Cabang
+
+========================================================================================
+                    10. ALUR PROSES AKUNTANSI YANG BENAR
+========================================================================================
+
+TAHAP LENGKAP:
+
+TAHAP 1: ENTRY / PENCATATAN
+?? Transaksi terjadi
+?? Accounting Staff membuat jurnal
+?? Status: UNCHECKED
+?? Jurnal disimpan ke sistem
+
+TAHAP 2: REVIEW & APPROVAL
+?? Accounting Manager/Supervisor review jurnal
+?? Periksa kebenaran akun, nominal, deskripsi
+?? Jika OK ? Status: CHECKED
+?? Jika masalah ? Status: NEED ADJUST
+?? Hubungi staff pembuat untuk revisi
+
+TAHAP 3: POSTING
+?? Accounting Manager posting jurnal CHECKED
+?? Status ? POSTED
+?? Jurnal menjadi FINAL, tidak bisa diubah
+?? Data masuk ke buku besar (ledger)
+
+TAHAP 4: PELAPORAN
+?? Generate Trial Balance untuk verifikasi
+?? Generate Balance Sheet untuk laporan posisi
+?? Generate P&L untuk laporan laba-rugi
+?? Review oleh Finance Manager
+
+TAHAP 5: TUTUP PERIODE
+?? Pastikan semua jurnal POSTED
+?? Trial Balance HARUS balance
+?? Archive data periode
+?? Buka periode baru
+
+JIKA ADA KESALAHAN SETELAH POSTING:
+
+? JANGAN: Delete atau ubah jurnal POSTED
+
+? LAKUKAN:
+  1. Buat jurnal ADJUSTMENT untuk koreksi kecil
+  2. Atau buat jurnal REVERSAL jika ingin batal penuh
+  3. Dokumentasikan alasan di deskripsi
+  4. Audit trail akan catat semua perubahan
+
+CONTOH SKENARIO:
+Jurnal Gaji POSTED dengan nominal 100juta
+Ternyata benar 110juta (kurang 10juta)
+
+SOLUSI BENAR:
+1. Buat jurnal ADJUSTMENT: Debit Gaji 10juta, Kredit Bank 10juta
+2. Jangan ubah jurnal posted
+3. Audit trail catat: Jurnal asli + Adjustment
+
+========================================================================================
+                    11. VALIDASI & PENGECEKAN SEBELUM SIMPAN
+========================================================================================
+
+VALIDASI OTOMATIS SISTEM:
+
+Sebelum jurnal bisa disimpan, sistem akan cek:
+
+1. ? TANGGAL HARUS DIISI
+   Error: "Date must be filled!"
+   Solusi: Pastikan tanggal dipilih
+
+2. ? DESKRIPSI HARUS DIISI (TIDAK KOSONG)
+   Error: "Description must be filled!"
+   Solusi: Ketik penjelasan jurnal jelas
+
+3. ? MINIMAL 1 BARIS DETAIL
+   Error: "Detail must have at least 1 row!"
+   Solusi: Tambah minimal 1 baris
+
+4. ? TOTAL DEBIT = TOTAL KREDIT (HARUS BALANCE)
+   Error: "Total Debit and Credit must be equal!"
+   Solusi: Periksa nominalnya, harus seimbang
+   INGAT: Ini BUKAN error, ini WAJIB dalam akuntansi
+
+5. ? JUMLAH > 0 (HARUS ADA NOMINAL)
+   Error: "Total amount must be greater than zero!"
+   Solusi: Pastikan ada nominal diisi
+
+6. ? JIKA ADA FIELD VENDOR, VENDOR HARUS DIISI
+   Error: "Vendor must be filled!"
+   Solusi: Pilih vendor dari dropdown
+
+7. ? JIKA ADA FIELD TENANT/CUSTOMER, HARUS DIISI
+   Error: "Tenant/Customer must be filled!"
+   Solusi: Pilih tenant dari dropdown
+
+CHECKLIST SEBELUM SIMPAN:
+
+? Tanggal dipilih
+? Deskripsi jelas
+? Minimal 1 baris detail
+? Semua field wajib diisi
+? Total Debit = Total Kredit (HIJAU)
+? Vendor diisi (jika ada)
+? Tenant/Customer diisi (jika ada)
+? Tidak ada nomor aneh/sangat besar
+
+Jika semua OK ? BARU KLIK SAVE
+
+========================================================================================
+                    12. TROUBLESHOOTING & ERROR HANDLING
+========================================================================================
+
+ERROR 1: "Total Debit and Credit must be equal!"
+
+? MASALAH:
+   Error paling sering. Artinya: Debit ? Kredit
+
+? CARA MEMPERBAIKI:
+   1. Periksa total debit (semua baris di-debit)
+   2. Periksa total kredit (semua baris di-kredit)
+   3. Hitung lagi dengan kalkulator
+   4. Buat SAMA
+   5. Contoh BENAR:
+      Baris 1: Debit Bank 1.000.000, Kredit Penjualan 1.000.000 ?
+      Atau: Debit Gaji 500.000 + Debit Gaji 500.000 = 1.000.000
+           Kredit Bank 1.000.000 ?
+
+TIPS: Gunakan Excel: =SUM(debit) dan =SUM(kredit)
+
+---
+
+ERROR 2: "[Field Name] must be filled!"
+
+? MASALAH:
+   Field wajib kosong
+
+? CARA MEMPERBAIKI:
+   1. Lihat nama field di error
+   2. Cari field di form
+   3. Isi dengan data sesuai
+   4. Field wajib: Date, Description, Detail rows
+   5. Jangan ada yang dikosongkan
+
+---
+
+ERROR 3: "Failed, Please fill in the Vendor Code."
+
+? MASALAH:
+   Akun memerlukan vendor, tapi vendor tidak diisi
+
+? CARA MEMPERBAIKI:
+   1. Lihat field "Vendor" di atas form
+   2. Klik dropdown, pilih vendor
+   3. Jika tidak ada vendor sesuai, hubungi supervisor
+   4. Baru simpan lagi
+
+---
+
+ERROR 4: "Date must be within active period!"
+
+? MASALAH:
+   Tanggal di luar periode aktif
+
+? CARA MEMPERBAIKI:
+   1. Tanya Accounting Manager periode aktif berapa
+   2. Contoh: Januari 2024 = 01/01/2024 sampai 31/01/2024
+   3. Pilih tanggal dalam rentang
+   4. Jangan tanggal bulan lain
+
+---
+
+ERROR 5: "This journal already exists!"
+
+? MASALAH:
+   Nomor jurnal sudah ada (duplikasi)
+
+? CARA MEMPERBAIKI:
+   1. Sistem auto-generate nomor jurnal
+   2. Jangan manual ubah nomor
+   3. Biarkan sistem assign nomor
+   4. Jika masih error, hubungi IT Support
+
+---
+
+ERROR SAAT EXPORT/PRINT:
+
+? MASALAH: File tidak bisa diunduh
+? SOLUSI:
+   1. Cek koneksi internet
+   2. Coba browser lain (Chrome, Firefox)
+   3. Clear cache browser
+   4. Jika masih error, hubungi IT Support
+
+---
+
+ERROR SAAT SEARCH/FILTER:
+
+? MASALAH: Jurnal tidak ditemukan
+? SOLUSI:
+   1. Tanggal search sesuai dengan jurnal
+   2. Format tanggal: DD/MM/YYYY
+   3. Jika cari nomor, lengkap tanpa spasi
+   4. Klik "Preview" setelah isi filter
+   5. Clear filter dan coba lagi
+
+---
+
+ERROR SAAT EDIT/UPDATE:
+
+? MASALAH: Tidak bisa edit jurnal posted
+? SOLUSI:
+   1. NORMAL - jurnal posted tidak bisa diubah
+   2. Gunakan ADJUST atau REVERSE untuk koreksi
+   3. JANGAN delete (cara salah akuntansi)
+   4. Hubungi supervisor untuk approval
+
+========================================================================================
+                    13. TIPS & TRIK PENGGUNAAN
+========================================================================================
+
+TIPS 1: PENCARIAN EFISIEN
+- Tahu nomor jurnal ? "Document Number" search
+- Tidak tahu ? "Date Range" search
+- Kombinasi dengan status filter untuk spesifik
+- Contoh: Cari tanggal 01-31 Januari + Status "UNCHECKED" = jurnal belum dicek
+
+TIPS 2: DESKRIPSI BAIK
+- Deskripsi jelas membantu tracking dan audit
+- BAIK: "Pembayaran gaji karyawan Januari 2024"
+- BURUK: "Gaji"
+- Sertakan: APA, KAPAN, SIAPA
+
+TIPS 3: REFERENSI DOKUMEN
+- Selalu isi Ref Doc atau Ref Num
+- Memudahkan tracking jika ada pertanyaan
+- Audit mudah trace ke bukti asli
+
+TIPS 4: JOURNAL MEMORIAL BENAR
+- Jangan 1 memorial untuk banyak hal
+- 1 memorial = 1 transaksi/adjustment
+- Mudah track, jika error cukup adjust 1
+
+TIPS 5: BACKUP & EXPORT
+- Export data berkala ke Excel (backup)
+- Gunakan untuk analisis dan presentasi
+- Excel lebih mudah dibaca
+
+TIPS 6: KERJASAMA TEAM
+- Buat jurnal, beri tahu supervisor
+- Ada pertanyaan audit, siapkan dokumentasi
+- Ada error, lapor segera ke manager
+
+TIPS 7: DOUBLE-CHECK SEBELUM POSTING
+- Sebelum posting, verifikasi ulang
+- Cek nominal, akun, tanggal
+- Ada keraguan, tanya supervisor dulu
+- Lebih baik aman daripada adjust nanti
+
+TIPS 8: PERIODE-END CLOSING
+- Semua jurnal selesai sebelum closing
+- Trial Balance harus balance
+- Jangan ada journal pending atau error
+- Archive data periode sebelum buka baru
+
+TIPS 9: KOMUNIKASI AUDIT
+- Permintaan audit, bantu dokumentasi
+- Siapkan daftar jurnal per bulan
+- Siapkan backup file Excel
+- Jelaskan setiap jurnal diminta
+
+TIPS 10: LEARNING & IMPROVEMENT
+- Pelajari jumlah jurnal per bulan
+- Identifikasi jurnal yang sering error
+- Training berkala untuk team
+- Update knowledge base fitur baru
+
+========================================================================================
+                    14. QUICK REFERENCE
+========================================================================================
+
+MENU UTAMA:
+?? Journal Transaction: Accounting ? Journal Transaction
+?? Balance Sheet: Accounting ? Balance Sheet
+?? Trial Balance: Accounting ? Trial Balance
+?? Other Reports: Accounting ? Reports
+
+TOMBOL CEPAT:
+?? Preview = Cari jurnal
+?? Create Journal Memorial = Buat penyesuaian
+?? Create Caje/Paje = Buat kas masuk/keluar
+?? Show/Hide Details = Buka/tutup detail
+?? Export Excel = Unduh ke Excel
+
+FIELD WAJIB:
+? Date (Tanggal)
+? Description (Deskripsi)
+? Detail rows (Minimal 1)
+? Total Debit = Total Kredit
+? Vendor (jika field muncul)
+? Tenant/Customer (jika muncul)
+
+CHECKLIST SAVE:
+? Tanggal diisi
+? Deskripsi clear
+? Minimal 1 baris
+? Balance (debit = kredit)
+? Vendor diisi (jika ada)
+? Tenant diisi (jika ada)
+? Tidak ada error
+
+PERLU BANTUAN?
+?? Email IT Support: itsupport@company.com
+?? Email Accounting Manager: accounting@company.com
+?? Telepon Extension: [SESUAIKAN]
+?? Chat/Slack: #accounting-help
+
+========================================================================================
+                    15. CATATAN TEKNIS (UNTUK IT/DEVELOPER)
+========================================================================================
+
+TEKNOLOGI YANG DIGUNAKAN:
+- Framework: .NET Framework 4.8 (ASP.NET MVC)
+- Frontend: HTML5, CSS3, JavaScript
+- UI Framework: Kendo UI (untuk grid, form, dialog)
+- API: RESTful API endpoint
+- Database: [Sesuaikan dengan setup]
+- Authentication: Bearer Token (JWT)
+
+LOKASI FILE PENTING:
+
+View Files:
+?? Jifas.Web\Views\Accounting\
+   ?? JournalTransaction\
+   ?  ?? Index.cshtml (Main view)
+   ?? EditorTemplate\
+   ?  ?? _EditJournal.cshtml
+   ?  ?? _AdjustJournal.cshtml
+   ?  ?? _ReverseJournal.cshtml
+   ?  ?? _CajePajeJournal.cshtml
+   ?? BalanceSheet\
+   ?  ?? Index.cshtml
+   ?? TrialBalance\
+      ?? Index.cshtml
+
+STRUKTUR KENDO GRID:
+
+Grid Configuration:
+- Pagination: Server-side (pageSize: 10)
+- Filtering: Row-based filtering
+- Sorting: Multi-column support
+- Resizable: Column resizing enabled
+- Reorderable: Column reordering enabled
+- Groupable: Data grouping support
+- Column Menu: Filter, sort, hide options
+
+Data Source Configuration:
+- Transport: AJAX requests
+- Read method: GET request
+- Parameterization: querystring
+- Schema: Model dengan fields
+- Error handling: Fallback messages
+
+VALIDASI CLIENT-SIDE:
+
+JavaScript Validation:
+- Input required check
+- Numeric validation
+- Date range validation
+- Debit-Credit balance check
+- Custom validators
+
+Framework: Kendo Validator
+- Real-time validation feedback
+- Error message display
+- Invalid field highlighting
+
+IMPLEMENTASI AUDIT TRAIL:
+
+Field Tracking:
+- Created By: User yang membuat
+- Created Date: Tanggal/waktu dibuat
+- Modified By: User yang mengubah
+- Modified Date: Tanggal/waktu ubah
+- Version: Versi record
+
+Storage:
+- Disimpan di database
+- Used untuk compliance dan audit
+- Queryable untuk history
+
+SECURITY IMPLEMENTATION:
+
+Authorization:
+- Bearer Token validation
+- Role-based access control (RBAC)
+- Permission checking per action
+- Token refresh mechanism
+
+Data Protection:
+- HTTPS encryption in transit
+- Sensitive data logging prevention
+- SQL injection prevention
+- XSS protection
+
+========================================================================================
+                    16. API ENDPOINTS REFERENCE
+========================================================================================
+
+BASE URL: [@ConfigWeb.API_URL]/Accounting/JournalTransaction
+
+JOURNAL TRANSACTION ENDPOINTS:
+
+1. GetJournalList (GET)
+   Purpose: Ambil daftar jurnal
+   Parameters: 
+     - companyCode: Kode perusahaan
+     - dateFrom: Tanggal awal (yyyyMMdd)
+     - dateTo: Tanggal akhir (yyyyMMdd)
+     - docNo: Nomor dokumen
+   Returns: Array of journal objects
+   Authorization: Bearer Token required
+
+2. GetJournalListDetail (GET)
+   Purpose: Ambil detail baris jurnal
+   Parameters:
+     - docNo: Nomor dokumen
+   Returns: Array of detail objects
+   Authorization: Bearer Token required
+
+3. ActionMemorial (POST)
+   Purpose: Buat/Update jurnal memorial
+   Request Body:
+   {
+     "dataHeader": {
+       "action": "S",
+       "companyCode": "string",
+       "docDate": "yyyyMMdd",
+       "docTarget": "string",
+       "refNum": "string",
+       "refDescription": "string",
+       "vendorCode": "string",
+       "tenantCode": "string",
+       "amount": numeric
+     },
+     "dataDetail": [
+       {
+         "companyCode": "string",
+         "divCode": "string",
+         "deptCode": "string",
+         "coaCode": "string",
+         "debit": numeric,
+         "credit": numeric,
+         "description": "string",
+         "objectCode": "string"
+       }
+     ]
+   }
+   Returns: Success message
+   Authorization: Bearer Token required
+
+4. ActionJournalCajePaje (POST)
+   Purpose: Buat jurnal CAJE/PAJE
+   Request Body: Similar structure to ActionMemorial
+   Returns: Success message
+   Authorization: Bearer Token required
+
+5. CheckCoaParties (GET)
+   Purpose: Cek tipe parties untuk COA
+   Parameters:
+     - coaCode: Kode COA
+   Returns: "VND", "TCS", atau "NONE"
+   Authorization: Bearer Token required
+
+6. GetCoaJm (GET)
+   Purpose: Ambil daftar COA untuk journal memorial
+   Returns: Array of COA objects
+   Authorization: Bearer Token required
+
+7. GetObjectJm (GET)
+   Purpose: Ambil daftar object untuk COA
+   Parameters:
+     - companyCode: Kode perusahaan
+     - coaCode: Kode COA
+   Returns: Array of object objects
+   Authorization: Bearer Token required
+
+8. GetFromTo (GET)
+   Purpose: Ambil daftar object From/To
+   Returns: Array dengan obj_cd dan obj_dsc
+   Authorization: Bearer Token required
+
+9. GetJournalStatus (GET)
+   Purpose: Ambil status summary jurnal
+   Parameters:
+     - companyCode: Kode perusahaan
+     - startDate: Tanggal awal (yyyyMMdd)
+     - endDate: Tanggal akhir (yyyyMMdd)
+   Returns: Array dengan action_status dan juml
+   Authorization: Bearer Token required
+
+10. JournalStatus (GET)
+    Purpose: Dashboard API untuk status summary
+    Base URL: [@ConfigWeb.API_URL]/Dashboard/JournalStatus
+    Parameters: companyCode, startDate, endDate
+    Returns: Status summary array
+    Authorization: Bearer Token required
+
+MASTER DATA ENDPOINTS:
+
+1. GetFAVendor (GET)
+   URL: [@ConfigWeb.API_URL]/Master/Vendor/GetFAVendor
+   Returns: Daftar vendor untuk Fixed Asset
+   Authorization: Bearer Token required
+
+2. GetFADebtor (GET)
+   URL: [@ConfigWeb.API_URL]/Master/Vendor/GetFADebtor
+   Returns: Daftar debtor/tenant
+   Authorization: Bearer Token required
+
+3. GetFaDivision (GET)
+   URL: [@ConfigWeb.API_URL]/Master/Division/GetFaDivision
+   Parameters: compCode
+   Returns: Daftar divisi
+   Authorization: Bearer Token required
+
+4. GetFaDepartment (GET)
+   URL: [@ConfigWeb.API_URL]/Master/Department/GetFaDepartment
+   Parameters: compCode, divCode
+   Returns: Daftar departemen
+   Authorization: Bearer Token required
+
+5. GetActivePeriod (GET)
+   URL: [@ConfigWeb.API_URL]/Receive/RV/GetActivePeriod
+   Parameters: compCode
+   Returns: Array dengan start_date dan end_date
+   Authorization: Bearer Token required
+
+6. ListGlType (GET)
+   URL: [@ConfigWeb.API_URL]/Accounting/JournalTransaction/ListGlType
+   Returns: Daftar GL type untuk CAJE/PAJE
+   Authorization: Bearer Token required
+
+ERROR HANDLING PATTERN:
+
+Success Response (200):
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": { /* response data */ }
+}
+
+Error Response (400/500):
+{
+  "success": false,
+  "message": "Error description",
+  "errors": [ /* specific errors */ ]
+}
+
+COMMON HTTP STATUS CODES:
+- 200: OK (Success)
+- 400: Bad Request (Validation error)
+- 401: Unauthorized (Token invalid/expired)
+- 403: Forbidden (Permission denied)
+- 404: Not Found (Resource not found)
+- 500: Internal Server Error
+
+========================================================================================
+                    17. REVISI & CONTACT
+========================================================================================
+
+Dokumen ini dibuat untuk:
+? Tim Accounting - User guide dan proses kerja
+? Tim Finance - Laporan dan analisis
+? Tim IT/Support - Troubleshooting teknis dan API reference
+? Auditor - Audit trail dan compliance
+? Training - User training dan knowledge base
+
+Update Terakhir: [TANGGAL PEMBUATAN]
+
+Jika ada pertanyaan atau perlu update:
+- Hubungi Tim Accounting: accounting@company.com
+- Hubungi IT Support: itsupport@company.com
+- Hubungi Functional Consultant: consultant@company.com
+- Hubungi Developer: development@company.com
+
+DISCLAIMER:
+- Panduan ini dibuat berdasarkan sistem saat ini
+- Fitur dan proses dapat berubah dengan update sistem
+- Selalu confirm dengan manager/supervisor untuk decision kritis
+- Jangan ragu bertanya jika ada yang kurang jelas
+- Report bugs atau improvement ke IT Support dengan detail
+
+VERSION HISTORY:
+v1.0 - Initial release (user guide + technical reference)
+
+========================================================================================
+                        END OF COMPLETE GUIDE
+========================================================================================

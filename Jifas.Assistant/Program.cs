@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Jifas.Assistant;
 using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
@@ -35,6 +36,7 @@ builder.Services.Configure<KnowledgeBaseSettings>(builder.Configuration.GetSecti
 builder.Services.Configure<ChatSettings>(builder.Configuration.GetSection("Chat"));
 builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
 builder.Services.Configure<SuggestionSettings>(builder.Configuration.GetSection("Suggestion"));
+builder.Services.Configure<LocalAISettings>(builder.Configuration.GetSection("LocalAI"));
 
 // 3. Add AppSettings Helper
 builder.Services.AddSingleton(sp => new AppSettings(builder.Configuration));
@@ -52,9 +54,7 @@ builder.Services.AddDbContext<JIFAS_AssistantContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
-// 3.7. Add Knowledge Base Search Service (RAG)
-builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
-// NOTE: IKnowledgeBaseSearchService already registered above, no duplicate needed
+// 3.7. Add Controllers
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
     {
@@ -63,7 +63,15 @@ builder.Services.AddControllers()
     });
 
 // 5. Add Swagger/OpenAPI Documentation
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() 
+    { 
+        Title = "JIFAS AI Assistant API",
+        Version = "v1.0",
+        Description = "Intelligent AI-powered chatbot with Knowledge Base and Gemini Integration"
+    });
+});
 
 // 6. Add CORS
 builder.Services.AddCors(options =>
@@ -86,13 +94,18 @@ builder.Services.AddHttpClient();
 // ========== Core Services ==========
 builder.Services.AddScoped<ILoggerService, FileLoggerService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
-builder.Services.AddScoped<IInputValidator, InputValidator>();  // ? INPUT VALIDATION (CRITICAL)
-builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();  // ? KB SEARCH (MUST BE BEFORE PROMPT ENGINE)
-builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();  // ? INTELLIGENT PROMPT ENGINE
-builder.Services.AddScoped<IGeminiService, GeminiService>();  // ? ENHANCED GEMINI WITH PROMPT ENGINE
+builder.Services.AddScoped<IInputValidator, InputValidator>();
+builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
+builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();
+
+// AI Service - USE LOCAL AI INSTEAD OF GEMINI
+// Swap comments to switch between LocalAI and Gemini
+builder.Services.AddScoped<IGeminiService, LocalAIService>();  // ? Local AI (Ollama) - ACTIVE
+// builder.Services.AddScoped<IGeminiService, GeminiService>();  // ? Gemini API - DISABLED
+
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
-builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();  // ? CHAT HISTORY PERSISTENCE
+builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
@@ -100,6 +113,7 @@ builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
+builder.Services.AddScoped<IKnowledgeBaseContextService, KnowledgeBaseContextService>();
 
 // ========== Optional Services ==========
 builder.Services.AddSingleton<ICommonQueryCacheService, CommonQueryCacheService>();
@@ -159,51 +173,71 @@ using (var scope = app.Services.CreateScope())
 // CONFIGURE HTTP REQUEST PIPELINE
 // ========================================
 
+// 0. REQUEST LOGGING & CORRELATION MIDDLEWARE (ONLY in Production)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<RequestLoggingMiddleware>();
+}
+
 // Development-specific middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "JIFAS AI Assistant API v1.0");
-        c.RoutePrefix = "api-docs";
-    });
 }
 else
 {
     app.UseExceptionHandler("/error");
     app.UseHsts();
-}
-
-// 1. HTTPS Redirect (skip in Docker or development)
-if (!app.Environment.IsEnvironment("Docker"))
-{
+    // Only redirect to HTTPS in production
     app.UseHttpsRedirection();
 }
 
-// 2. CORS
+// 2. CORS (MUST be before StaticFiles)
 app.UseCors("AllowAll");
 
-// 3. Static Files
+// 3. Static Files (BEFORE Swagger so bundled files can be served)
 app.UseStaticFiles();
 
-// 4. Routing
+// 4. Routing (MUST be before Swagger UI in modern ASP.NET Core)
 app.UseRouting();
 
 // 5. Authorization
 app.UseAuthorization();
 
-// 6. Map Endpoints
+// 6. Map Endpoints (MUST be before Swagger for discovery)
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// 7. Root endpoint
+// 7. Swagger MIDDLEWARE (AFTER endpoint mapping for proper discovery)
+// Enable Swagger ONLY in Development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "JIFAS AI Assistant API v1.0");
+        c.RoutePrefix = "swagger";  // Serve at /swagger/
+        c.DocumentTitle = "JIFAS AI Assistant API Documentation";
+    });
+}
+
+// 8. Static Files removed - moved earlier in pipeline (before Swagger)
+
+// 9. Root endpoint
 app.MapGet("/", () => new 
 { 
     message = "JIFAS AI Assistant API v1.0",
     status = "running",
-    documentation = "/api-docs"
+    documentation = "/swagger"
+});
+
+// 10. API info endpoint
+app.MapGet("/api", () => new 
+{ 
+    message = "JIFAS AI Assistant API v1.0",
+    status = "running",
+    version = "1.0",
+    documentation = "/swagger"
 });
 
 // ========================================

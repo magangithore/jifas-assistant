@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Jifas.Assistant.Models;
@@ -29,6 +30,7 @@ namespace Jifas.Assistant.Services
         private readonly ILoggerService _logger;
         private readonly ICacheService _cacheService;
         private readonly IJifasContextService _jifasContextService;
+        private readonly IKnowledgeBaseContextService _kbContextService;
         private readonly IConfiguration _configuration;
         private readonly IInputValidator _inputValidator;
         private readonly IChatHistoryService _chatHistoryService;
@@ -44,6 +46,7 @@ namespace Jifas.Assistant.Services
             ILoggerService logger,
             ICacheService cacheService,
             IJifasContextService jifasContextService,
+            IKnowledgeBaseContextService kbContextService,
             IConfiguration configuration,
             IInputValidator inputValidator,
             IChatHistoryService chatHistoryService)
@@ -55,6 +58,7 @@ namespace Jifas.Assistant.Services
             _logger = logger;
             _cacheService = cacheService;
             _jifasContextService = jifasContextService;
+            _kbContextService = kbContextService ?? throw new ArgumentNullException(nameof(kbContextService));
             _configuration = configuration;
             _inputValidator = inputValidator ?? throw new ArgumentNullException(nameof(inputValidator));
             _chatHistoryService = chatHistoryService ?? throw new ArgumentNullException(nameof(chatHistoryService));
@@ -65,12 +69,16 @@ namespace Jifas.Assistant.Services
             // ?? START TOTAL TIMER
             var totalStopwatch = Stopwatch.StartNew();
 
+            // ?? GET OR CREATE CORRELATION ID
+            var correlationId = request?.CorrelationId ?? Guid.NewGuid().ToString();
+
             var response = new ChatResponse
             {
                 Sender = "JIFAS AI Assistant",
                 Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 Success = true,
-                SessionId = request?.SessionId ?? Guid.NewGuid().ToString()
+                SessionId = request?.SessionId ?? Guid.NewGuid().ToString(),
+                CorrelationId = correlationId
             };
 
             // ?? INITIALIZE PERFORMANCE METRICS
@@ -93,7 +101,10 @@ namespace Jifas.Assistant.Services
                 response.Source = "Input Validation";
                 response.IsFromKnowledgeBase = false;
                 response.Success = false;
-                _logger.LogWarning($"[ChatService] Input validation failed: {validationResult.ErrorMessage}");
+                response.CorrelationId = correlationId;
+                
+                _logger.LogWarningWithCorrelation(correlationId, $"[ChatService] Input validation failed: {validationResult.ErrorMessage}");
+                _logger.LogPerformance("InputValidation", metrics.InputValidationMs, correlationId);
                 
                 totalStopwatch.Stop();
                 metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
@@ -313,8 +324,15 @@ namespace Jifas.Assistant.Services
                 totalStopwatch.Stop();
                 metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                 response.PerformanceMetrics = metrics;
+                response.CorrelationId = correlationId;
                 
-                _logger.LogInformation($"[KB_RESPONSE] {metrics.GetSummary()}");
+                // ?? LOG PERFORMANCE METRICS
+                _logger.LogPerformance("ChatProcessing", metrics.TotalMs, correlationId);
+                _logger.LogInformationWithCorrelation(correlationId, $"[KB_RESPONSE] {metrics.GetSummary()}");
+                
+                // ?? LOG AUDIT TRAIL
+                _logger.LogAudit(request?.UserId ?? "Unknown", "ProcessMessage", 
+                    $"Source: {response.Source}, Confidence: {response.ConfidenceScore:F2}", correlationId);
                 
                 // Save chat history asynchronously
                 _ = SaveChatHistoryAsync(response, userMessage, request);
@@ -323,11 +341,13 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[ChatService] Error processing message: {ex.Message}");
+                _logger.LogErrorWithCorrelation(correlationId, $"[ChatService] Error processing message", ex);
                 
                 response.Message = "Mohon maaf, terjadi kesalahan dalam memproses pertanyaan Anda. Silakan coba lagi.";
                 response.Source = "Error";
                 response.Success = false;
+                response.CorrelationId = correlationId;
+                response.Errors.Add($"Exception: {ex.GetType().Name}: {ex.Message}");
                 
                 try
                 {
@@ -341,6 +361,12 @@ namespace Jifas.Assistant.Services
                 totalStopwatch.Stop();
                 metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                 response.PerformanceMetrics = metrics;
+                response.CorrelationId = correlationId;
+                
+                // ?? LOG AUDIT TRAIL FOR ERROR
+                _logger.LogAudit(request?.UserId ?? "Unknown", "ProcessMessage_ERROR", 
+                    $"{ex.GetType().Name}: {ex.Message}", correlationId);
+                _logger.LogPerformance("ChatProcessing_Error", metrics.TotalMs, correlationId);
                 
                 // Save chat history asynchronously
                 _ = SaveChatHistoryAsync(response, userMessage ?? "", request);
@@ -463,8 +489,46 @@ namespace Jifas.Assistant.Services
                            $"Diversity: {documentDiversity}, ResultCount: {results.Count}, Final: {confidence:F2}");
 
             return confidence;
-            
-            return confidence;
+        }
+
+        /// <summary>
+        /// Generate partial match response using Gemini
+        /// When KB has some results but confidence is borderline
+        /// </summary>
+        private async Task<string> GeneratePartialMatchResponseAsync(string userQuery, List<KnowledgeBaseResult> partialResults)
+        {
+            try
+            {
+                var resultsSummary = string.Join("\n", partialResults.Take(3).Select((r, i) => 
+                    $"{i + 1}. {r.Title} (Relevance: {r.Score:P0})"));
+
+                var prompt = $@"User mengajukan pertanyaan kepada JIFAS AI Assistant dengan hasil pencarian partial match di Knowledge Base.
+
+Pertanyaan user: ""{userQuery}""
+
+Hasil yang ditemukan:
+{resultsSummary}
+
+Buatlah respons yang:
+1. Sopan dan profesional
+2. Tunjukkan bahwa ada beberapa informasi terkait yang mungkin membantu
+3. Sampaikan hasil yang ditemukan secara natural
+4. Jika hasil tidak 100% sesuai, jelaskan perbedaannya
+5. Sarankan user untuk ulangi pertanyaan atau hubungi IT Help Desk jika masih belum jelas
+6. Gunakan bahasa Indonesia natural dan friendly
+7. Singkat dan to the point
+
+Buatlah respons langsung tanpa penjelasan tambahan.";
+
+                var response = await _geminiService.CallGeminiApiAsync(prompt);
+                _logger.LogInformation("[ChatService] Generated partial match response");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[ChatService] Error generating partial match response: {ex.Message}");
+                return "Saya menemukan beberapa informasi yang mungkin relevan, namun tidak 100% sesuai dengan pertanyaan Anda. Silakan coba reformulasi pertanyaan atau hubungi IT Help Desk untuk bantuan lebih lanjut.";
+            }
         }
 
         /// <summary>
@@ -502,29 +566,28 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
 
         /// <summary>
         /// Display AI introduction to JIFAS system on first user message
-        /// Generates natural welcome message from Gemini with system context
+        /// Generates natural welcome message from Gemini with DYNAMIC system context
         /// </summary>
         private async Task ShowJIFASIntroductionAsync(ChatResponse response)
         {
             try
             {
-                var prompt = @"Buatlah salam pembuka yang natural dan profesional untuk AI Assistant JIFAS (Jababeka Integrated Finance Accounting System). 
+                // Get dynamic context dari Knowledge Base files
+                var systemContext = await _kbContextService.GetSystemContextAsync();
 
-Informasi yang harus disampaikan:
+                var prompt = $@"Buatlah salam pembuka yang natural dan profesional untuk AI Assistant JIFAS (Jababeka Integrated Finance Accounting System). 
+
+KNOWLEDGE BASE YANG TERSEDIA:
+{systemContext}
+
+Petunjuk pembuatan:
 1. JIFAS adalah sistem terintegrasi untuk Finance & Accounting
-2. AI Assistant ini bisa membantu pertanyaan tentang:
-   - AR (Account Receivable): Invoice, penerimaan pembayaran, approval
-   - AP (Account Payable): Invoice, pembayaran, approval proses
-   - GL (General Ledger): Chart of Account, posting transaksi
-   - Budget: Setup, approval, monitoring
-   - PUM (Dana untuk Pengeluaran Mendadak): Pengajuan, approval, realisasi
-   - Master Data: Company, Department, Division, Employee, Vendor, dll
-   - Payment: Transfer, BG, Payment Process
-   - Over Budget: Approval workflows
-3. Assistant ini HANYA menjawab berdasarkan Knowledge Base JIFAS
-4. Berikan contoh 2-3 pertanyaan yang bisa diajukan
-5. Bahasa: Natural, friendly, tapi profesional
-6. Panjang: 2-3 paragraf saja, tidak terlalu panjang
+2. Sebutkan secara ringkas modul-modul utama yang ada di system
+3. Jelaskan bahwa AI Assistant ini membantu dengan pertanyaan seputar semua modul yang ada di Knowledge Base
+4. Assistant ini HANYA menjawab berdasarkan Knowledge Base JIFAS - jangan membuat informasi baru
+5. Berikan 2-3 contoh pertanyaan yang bisa diajukan (berdasarkan modul yang ada)
+6. Bahasa: Natural, friendly, tapi profesional
+7. Panjang: 2-3 paragraf saja, tidak terlalu panjang
 
 Buatlah respons langsung tanpa penjelasan tambahan.";
 
@@ -534,14 +597,12 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 response.Source = "JIFAS AI Assistant";
                 response.IsFromKnowledgeBase = false;
                 response.Success = true;
-                response.Suggestions = new List<string>
-                {
-                    "Bagaimana cara membuat Invoice di AR?",
-                    "Apa itu PUM dan bagaimana pengajuannya?",
-                    "Siapa saja yang bisa approve over budget?"
-                };
+                
+                // Generate dynamic suggestions berdasarkan available topics
+                var availableTopics = await _kbContextService.GetAvailableTopicsAsync();
+                response.Suggestions = GenerateDynamicSuggestions(availableTopics);
 
-                _logger.LogInformation("[ChatService] JIFAS introduction displayed to new user");
+                _logger.LogInformation("[ChatService] JIFAS introduction displayed with dynamic context");
             }
             catch (Exception ex)
             {
@@ -556,6 +617,82 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                     "Bagaimana cara membuat Invoice?",
                     "Siapa yang bisa approve invoice?"
                 };
+            }
+        }
+
+        /// <summary>
+        /// Generate dynamic suggestions based on available KB topics
+        /// </summary>
+        private List<string> GenerateDynamicSuggestions(List<string> availableTopics)
+        {
+            var suggestions = new List<string>();
+
+            // Create suggestions based on available topics
+            var topicMap = new Dictionary<string, List<string>>
+            {
+                { "Invoice", new List<string> { "Bagaimana cara membuat Invoice?", "Apa saja approval untuk Invoice?" } },
+                { "Receiving", new List<string> { "Bagaimana proses Receiving barang?", "Apa itu RV dan cara pembuatannya?" } },
+                { "Payment", new List<string> { "Bagaimana cara membuat Payment?", "Apa perbedaan Transfer dan BG?" } },
+                { "Pum", new List<string> { "Apa itu PUM dan bagaimana pengajuannya?", "Siapa yang bisa approve PUM?" } },
+                { "Budget", new List<string> { "Bagaimana cara setup Budget?", "Apa itu Over Budget?" } },
+                { "Report", new List<string> { "Laporan apa saja yang tersedia?", "Bagaimana cara membaca Budget Report?" } },
+                { "Master", new List<string> { "Apa perbedaan Company dan Division?", "Bagaimana setup Master Data?" } },
+                { "Cashbank", new List<string> { "Bagaimana proses Cash & Bank?", "Apa itu Bank Reconciliation?" } },
+                { "OverBudget", new List<string> { "Siapa yang bisa approve Over Budget?", "Bagaimana proses Over Budget?" } },
+                { "Accounting", new List<string> { "Bagaimana proses Posting di GL?", "Apa itu COA?" } }
+            };
+
+            // Add up to 3 suggestions based on available topics
+            foreach (var topic in availableTopics.Take(3))
+            {
+                if (topicMap.ContainsKey(topic))
+                {
+                    suggestions.AddRange(topicMap[topic].Take(1));
+                }
+            }
+
+            // If less than 3 suggestions, add generic ones
+            if (suggestions.Count < 3)
+            {
+                suggestions.Add("Bagaimana cara menggunakan JIFAS?");
+                if (suggestions.Count < 3)
+                    suggestions.Add("Siapa yang dapat melakukan approval?");
+            }
+
+            return suggestions.Take(3).ToList();
+        }
+
+        /// <summary>
+        /// Build conversation context awareness
+        /// Improvement #4: Simple context tracking using cache
+        /// For full context, would need to extend IChatHistoryService
+        /// </summary>
+        private string BuildConversationContext(ChatRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request?.SessionId))
+                    return null;
+
+                // For now, we track conversation in cache for context awareness
+                var contextKey = $"ConversationContext_{request.SessionId}";
+                var recentContext = _cacheService.Get<string>(contextKey);
+                
+                if (string.IsNullOrEmpty(recentContext))
+                    return null;
+
+                var contextBuilder = new StringBuilder();
+                contextBuilder.AppendLine("KONTEKS PERCAKAPAN SEBELUMNYA:");
+                contextBuilder.AppendLine(recentContext);
+                contextBuilder.AppendLine("\nGUNAKAN KONTEKS INI UNTUK MEMAHAMI PERTANYAAN FOLLOW-UP!");
+                
+                _logger.LogInformation("[ChatService] Built conversation context from cache");
+                return contextBuilder.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Failed to build conversation context: {ex.Message}");
+                return null;  // Continue without context if retrieval fails
             }
         }
 

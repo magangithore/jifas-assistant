@@ -53,23 +53,26 @@
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Compatibility\" />
-    <Folder Include="Data\" />
-    <Folder Include="Migrations\" />
-  </ItemGroup>
-
-  <!-- Exclude files that are in transition during migration -->
+  <!-- Exclude files that are not yet migrated/in transition -->
   <ItemGroup>
     <Compile Remove="Services\IQdrantSeedingService.cs" />
     <Compile Remove="Services\EmbeddingService.cs" />
     <Compile Remove="utilities\InputValidator.cs" />
-    <Compile Remove="Controller\ChatbotController.cs" />
-    <Compile Remove="Controller\KnowledgeBaseController.cs" />
+    <Compile Remove="Controllers\ChatbotController.cs" />
     <Compile Remove="Configuration\ConfigurationUsageExamples.cs" />
+  </ItemGroup>
+
+  <!-- Include Documentation & Configuration Files -->
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="..\docker-compose.yml" Link="docker-compose.yml" />
+    <None Include="..\Dockerfile" Link="Dockerfile" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\jifas_assistant.DAL\jifas_assistant.DAL.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

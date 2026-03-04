@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Jifas.Assistant.Services;
@@ -6,6 +7,7 @@ namespace Jifas.Assistant.Models
 {
     /// <summary>
     /// Response model for JIFAS AI Assistant
+    /// Includes error handling, audit trail, and performance metrics
     /// </summary>
     public class ChatResponse
     {
@@ -19,6 +21,18 @@ namespace Jifas.Assistant.Models
         /// </summary>
         [JsonProperty("message")]
         public string Message { get; set; }
+
+        /// <summary>
+        /// Error messages if response generation failed
+        /// Null/empty if successful
+        /// </summary>
+        public List<string> Errors { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Correlation ID from the request for audit trail
+        /// Used to track requests through the system
+        /// </summary>
+        public string CorrelationId { get; set; }
 
         /// <summary>
         /// Source of the response (Knowledge Base, AI Generated, Out of Scope, etc.)

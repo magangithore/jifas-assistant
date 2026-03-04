@@ -364,3 +364,14 @@ FodyWeavers.xsd
 
 #ENV files
 .env
+
+# Logs and runtime files
+[Ll]ogs/
+logs/
+*.log
+log/
+
+# Docker artifacts
+publish/
+publish-context/
+docker-compose.override.yml

@@ -1,23 +1,46 @@
-﻿services:
+﻿version: '3.8'
+
+services:
   jifas-api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: jifas-assistant-api
+    image: jifas-assistant:latest
     ports:
       - '8888:8888'
     environment:
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
-      Gemini__ApiKey: ${Gemini__ApiKey}
-      Gemini__Model: ${Gemini__Model}
-      Gemini__BaseUrl: ${Gemini__BaseUrl}
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      # Database Configuration
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Server=(localdb)\\MSSQLLocalDB;Database=JIFAS_Assistant;Integrated Security=true;Encrypt=false;TrustServerCertificate=true}
+      
+      # Gemini API Configuration
+      Gemini__ApiKey: ${Gemini__ApiKey:-}
+      Gemini__Model: ${Gemini__Model:-gemini-2.0-flash}
+      Gemini__BaseUrl: ${Gemini__BaseUrl:-https://generativelanguage.googleapis.com/v1beta/models}
+      
+      # ASP.NET Core
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8888
-      Logging__LogLevel__Default: ${Logging__LogLevel__Default}
-      Caching__EnableResponseCache: ${Caching__EnableResponseCache}
-      Caching__ResponseCacheDurationHours: ${Caching__ResponseCacheDurationHours}
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      
+      # Logging
+      Logging__LogLevel__Default: ${Logging__LogLevel__Default:-Information}
+      
+      # Caching
+      Caching__EnableResponseCache: ${Caching__EnableResponseCache:-true}
+      Caching__ResponseCacheDurationHours: ${Caching__ResponseCacheDurationHours:-24}
+      Caching__EnableKBCache: ${Caching__EnableKBCache:-true}
+    
     volumes:
       - ./logs:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
     restart: unless-stopped
     networks:
       - jifas-network
@@ -25,3 +48,7 @@
 networks:
   jifas-network:
     driver: bridge
+
+volumes:
+  logs:
+    driver: local

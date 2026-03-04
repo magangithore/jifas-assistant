@@ -23,30 +23,38 @@ namespace Jifas.Assistant.Services
 
         public ValidationResult<ChatRequest> ValidateChatRequest(ChatRequest request)
         {
+            var correlationId = request?.CorrelationId ?? Guid.NewGuid().ToString();
+            
             try
             {
                 if (request == null)
                 {
-                    _logger.LogWarning("[InputValidator] Chat request is null");
+                    _logger.LogWarningWithCorrelation(correlationId, "[InputValidator] Chat request is null");
                     return new ValidationResult<ChatRequest>(false, null, "Request cannot be null");
                 }
 
                 // Validate message (CRITICAL)
                 if (string.IsNullOrWhiteSpace(request.Message))
                 {
-                    _logger.LogWarning("[InputValidator] Empty chat message");
+                    _logger.LogWarningWithCorrelation(correlationId, "[InputValidator] Empty chat message");
                     return new ValidationResult<ChatRequest>(false, null, "Message cannot be empty");
                 }
 
                 var messageResult = ValidateMessage(request.Message);
                 if (!messageResult.IsValid)
                 {
-                    _logger.LogWarning($"[InputValidator] Invalid message: {messageResult.ErrorMessage}");
+                    _logger.LogWarningWithCorrelation(correlationId, $"[InputValidator] Invalid message: {messageResult.ErrorMessage}");
                     return new ValidationResult<ChatRequest>(false, null, messageResult.ErrorMessage);
                 }
 
                 // Update request with sanitized message
                 request.Message = messageResult.Value;
+                
+                // Ensure correlation ID is set
+                if (string.IsNullOrEmpty(request.CorrelationId))
+                {
+                    request.CorrelationId = correlationId;
+                }
 
                 // Validate session ID if provided
                 if (!string.IsNullOrWhiteSpace(request.SessionId))
@@ -54,7 +62,7 @@ namespace Jifas.Assistant.Services
                     var sessionResult = ValidateSessionId(request.SessionId);
                     if (!sessionResult.IsValid)
                     {
-                        _logger.LogWarning($"[InputValidator] Invalid session ID: {sessionResult.ErrorMessage}");
+                        _logger.LogWarningWithCorrelation(correlationId, $"[InputValidator] Invalid session ID: {sessionResult.ErrorMessage}");
                         return new ValidationResult<ChatRequest>(false, null, sessionResult.ErrorMessage);
                     }
                     request.SessionId = sessionResult.Value;
@@ -66,18 +74,19 @@ namespace Jifas.Assistant.Services
                     var userResult = ValidateUserId(request.UserId);
                     if (!userResult.IsValid)
                     {
-                        _logger.LogWarning($"[InputValidator] Invalid user ID: {userResult.ErrorMessage}");
+                        _logger.LogWarningWithCorrelation(correlationId, $"[InputValidator] Invalid user ID: {userResult.ErrorMessage}");
                         return new ValidationResult<ChatRequest>(false, null, userResult.ErrorMessage);
                     }
                     request.UserId = userResult.Value;
                 }
 
-                _logger.LogDebug("[InputValidator] Chat request validated successfully");
+                _logger.LogDebug($"[InputValidator] Chat request validated successfully");
+                _logger.LogPerformance("InputValidation", 0, correlationId);
                 return new ValidationResult<ChatRequest>(true, request);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[InputValidator] Error validating chat request: {ex.Message}");
+                _logger.LogErrorWithCorrelation(correlationId, "[InputValidator] Error validating chat request", ex);
                 return new ValidationResult<ChatRequest>(false, null, "Validation error: " + ex.Message);
             }
         }
