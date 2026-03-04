@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,8 +15,10 @@ using Jifas.Assistant.Services;
 namespace Jifas.Assistant.KBLoader
 {
     /// <summary>
-    /// FAST Knowledge Base Loader - Direct DB Insert
-    /// Bulk insert without waiting for embeddings (embeddings generated in background later)
+    /// FAST Knowledge Base Loader - Direct DB Insert with Chunking
+    /// Phase 1: Insert documents
+    /// Phase 2: Generate document embeddings
+    /// Phase 3: Chunk documents and generate chunk embeddings
     /// </summary>
     class Program
     {
@@ -24,7 +27,7 @@ namespace Jifas.Assistant.KBLoader
             bool autoConfirm = args.Contains("--yes") || args.Contains("-y");
             
             Console.WriteLine("??????????????????????????????????????????????????????");
-            Console.WriteLine("?   JIFAS KB Loader - FAST Bulk Insert              ?");
+            Console.WriteLine("?   JIFAS KB Loader - FAST Bulk Insert + Chunking   ?");
             Console.WriteLine("??????????????????????????????????????????????????????");
             Console.WriteLine();
 
@@ -91,7 +94,7 @@ namespace Jifas.Assistant.KBLoader
 
                 logger.LogInformation("");
                 logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation("FAST BULK INSERT MODE");
+                logger.LogInformation("PHASE 1: BULK INSERT DOCUMENTS");
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
 
@@ -160,10 +163,10 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation($"? {docsToInsert.Count} documents inserted in seconds!");
                 Console.ResetColor();
 
-                // FAST: Generate embeddings immediately
+                // PHASE 2: Generate embeddings for documents
                 logger.LogInformation("");
                 logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation("EMBEDDING GENERATION");
+                logger.LogInformation("PHASE 2: EMBEDDING GENERATION (DOCUMENTS)");
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
                 
@@ -201,16 +204,123 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation($"? Generated {embeddingCount} embeddings (Errors: {embeddingErrors})");
                 Console.ResetColor();
 
-                // Verify
-                var count = await context.KnowledgeBaseDocuments.CountAsync();
-                var embeddedCount = await context.KnowledgeBaseDocuments.CountAsync(d => d.Embedding != null);
+                // PHASE 3: Chunk documents
                 logger.LogInformation("");
                 logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation($"? COMPLETE: {count} documents in database");
-                logger.LogInformation($"? EMBEDDINGS: {embeddedCount}/{count} documents with embeddings");
+                logger.LogInformation("PHASE 3: CHUNKING DOCUMENTS");
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
-                logger.LogInformation("Ready for RAG queries!");
+
+                // Clear existing chunks
+                logger.LogInformation("Clearing existing chunks...");
+                var existingChunks = await context.KnowledgeBaseChunks.ToListAsync();
+                if (existingChunks.Any())
+                {
+                    context.KnowledgeBaseChunks.RemoveRange(existingChunks);
+                    await context.SaveChangesAsync();
+                }
+
+                var allDocuments = await context.KnowledgeBaseDocuments.ToListAsync();
+                var chunksToInsert = new List<KnowledgeBaseChunks>();
+                int totalChunks = 0;
+                int chunksWithEmbedding = 0;
+
+                logger.LogInformation($"Chunking {allDocuments.Count} documents...");
+                logger.LogInformation("");
+
+                int docIndex = 0;
+                foreach (var document in allDocuments)
+                {
+                    docIndex++;
+                    try
+                    {
+                        var chunks = SplitIntoChunks(document.Content, chunkSize: 500, overlapSize: 50);
+                        
+                        for (int i = 0; i < chunks.Count; i++)
+                        {
+                            var chunk = chunks[i];
+                            if (string.IsNullOrWhiteSpace(chunk)) continue;
+
+                            var chunkObj = new KnowledgeBaseChunks
+                            {
+                                DocumentId = document.Id,
+                                ChunkIndex = i,
+                                Content = chunk,
+                                StartCharPos = GetCharPosition(document.Content, chunk, i),
+                                EndCharPos = GetCharPosition(document.Content, chunk, i) + chunk.Length,
+                                CreatedAt = DateTime.Now,
+                                UpdatedAt = DateTime.Now,
+                                Embedding = null,
+                                EmbeddingDimensions = 0
+                            };
+
+                            // Generate embedding for chunk
+                            try
+                            {
+                                var chunkEmbedding = await embeddingService.GenerateEmbeddingAsync(chunk);
+                                if (chunkEmbedding != null && chunkEmbedding.Length > 0)
+                                {
+                                    chunkObj.Embedding = Convert.ToBase64String(chunkEmbedding);
+                                    chunkObj.EmbeddingDimensions = chunkEmbedding.Length;
+                                    chunksWithEmbedding++;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning($"  ??  Chunk embedding failed: {ex.Message}");
+                            }
+
+                            chunksToInsert.Add(chunkObj);
+                            totalChunks++;
+                        }
+
+                        if (docIndex % 5 == 0 || docIndex == allDocuments.Count)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            logger.LogInformation($"  [{docIndex}/{allDocuments.Count}] {document.Title} ? {chunks.Count} chunks");
+                            Console.ResetColor();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        logger.LogError($"              ? Error chunking {document.Title}: {ex.Message}");
+                        Console.ResetColor();
+                    }
+                }
+
+                // Bulk insert chunks
+                logger.LogInformation("");
+                logger.LogInformation($"Inserting {chunksToInsert.Count} chunks (BULK)...");
+                if (chunksToInsert.Any())
+                {
+                    context.KnowledgeBaseChunks.AddRange(chunksToInsert);
+                    await context.SaveChangesAsync();
+                }
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                logger.LogInformation($"? {chunksToInsert.Count} chunks inserted!");
+                Console.ResetColor();
+
+                // Final Verify
+                var finalDocCount = await context.KnowledgeBaseDocuments.CountAsync();
+                var finalEmbeddedCount = await context.KnowledgeBaseDocuments.CountAsync(d => d.Embedding != null);
+                var finalChunkCount = await context.KnowledgeBaseChunks.CountAsync();
+                var finalChunksEmbeddedCount = await context.KnowledgeBaseChunks.CountAsync(c => c.Embedding != null);
+                
+                logger.LogInformation("");
+                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("? KNOWLEDGE BASE LOADING COMPLETE!");
+                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("");
+                logger.LogInformation($"  Documents:         {finalDocCount}");
+                logger.LogInformation($"  Doc Embeddings:    {finalEmbeddedCount}/{finalDocCount}");
+                logger.LogInformation($"  Chunks:            {finalChunkCount}");
+                logger.LogInformation($"  Chunk Embeddings:  {finalChunksEmbeddedCount}/{finalChunkCount}");
+                logger.LogInformation("");
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                logger.LogInformation("  Ready for RAG queries!");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
@@ -259,6 +369,57 @@ namespace Jifas.Assistant.KBLoader
             catch { }
 
             return string.Join(";", tags);
+        }
+
+        static List<string> SplitIntoChunks(string content, int chunkSize = 500, int overlapSize = 50)
+        {
+            var chunks = new List<string>();
+            if (string.IsNullOrWhiteSpace(content)) return chunks;
+
+            content = Regex.Replace(content, @"\s+", " ");
+            var sentences = content.Split(new[] { ".", "!", "?" }, StringSplitOptions.RemoveEmptyEntries);
+
+            var currentChunk = new StringBuilder();
+            
+            foreach (var sentence in sentences)
+            {
+                var trimmed = sentence.Trim();
+                if (trimmed.Length == 0) continue;
+
+                if (currentChunk.Length + trimmed.Length + 1 > chunkSize && currentChunk.Length > 0)
+                {
+                    chunks.Add(currentChunk.ToString().Trim());
+                    
+                    // Calculate overlap
+                    var words = currentChunk.ToString().Split(' ');
+                    var overlapText = string.Join(" ", words.TakeLast(overlapSize / 10).ToArray());
+                    currentChunk = new StringBuilder(overlapText);
+                }
+
+                currentChunk.Append(trimmed).Append(". ");
+            }
+
+            if (currentChunk.Length > 0)
+            {
+                chunks.Add(currentChunk.ToString().Trim());
+            }
+
+            return chunks;
+        }
+
+        static int GetCharPosition(string fullContent, string chunkContent, int chunkIndex)
+        {
+            int position = 0;
+            int foundCount = 0;
+
+            while (foundCount < chunkIndex && position < fullContent.Length)
+            {
+                position = fullContent.IndexOf(chunkContent, position + 1);
+                if (position == -1) return 0;
+                foundCount++;
+            }
+
+            return position >= 0 ? position : 0;
         }
     }
 }
