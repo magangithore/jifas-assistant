@@ -1,0 +1,43 @@
+@echo off
+REM =====================================================
+REM JIFAS Knowledge Base Loader - Console App
+REM Direct insertion to SQL Server without API
+REM =====================================================
+
+echo.
+echo ??????????????????????????????????????????????????????
+echo ?   JIFAS Knowledge Base Loader - Start             ?
+echo ??????????????????????????????????????????????????????
+echo.
+
+REM Check if we're in the right directory
+if not exist "KBLoader\KBLoader.csproj" (
+    echo Error: Please run this script from the project root directory
+    echo Expected: KBLoader\KBLoader.csproj
+    pause
+    exit /b 1
+)
+
+echo Prerequisites Check:
+echo   - SQL Server running with JIFAS_Assistant database
+echo   - Ollama running at http://10.0.12.54:11434
+echo   - Both configured in appsettings.json
+echo.
+
+echo Starting KB Loader...
+echo.
+
+cd KBLoader
+dotnet run --project KBLoader.csproj --configuration Release
+
+if errorlevel 1 (
+    echo.
+    echo ? KB Loader failed!
+    pause
+    exit /b 1
+)
+
+echo.
+echo ? KB Loader completed successfully!
+echo.
+pause

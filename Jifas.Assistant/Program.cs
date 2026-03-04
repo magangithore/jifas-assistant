@@ -104,6 +104,11 @@ builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>(
 builder.Services.AddScoped<IGeminiService, LocalAIService>();  // ? Local AI (Ollama) - ACTIVE
 // builder.Services.AddScoped<IGeminiService, GeminiService>();  // ? Gemini API - DISABLED
 
+// Embedding Service - Ollama qwen3-embedding:4b
+builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
+
+// Knowledge Base Services
+builder.Services.AddScoped<IKnowledgeBaseLoaderService, KnowledgeBaseLoaderService>();
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();
 builder.Services.AddScoped<IChatService, ChatService>();
