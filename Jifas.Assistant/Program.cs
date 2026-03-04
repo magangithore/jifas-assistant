@@ -8,6 +8,7 @@ using Jifas.Assistant;
 using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
+using Jifas.Assistant.Middleware;
 using jifas_assistant.DAL.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -174,7 +175,10 @@ using (var scope = app.Services.CreateScope())
 // CONFIGURE HTTP REQUEST PIPELINE
 // ========================================
 
-// 0. REQUEST LOGGING & CORRELATION MIDDLEWARE (ONLY in Production)
+// 0. JWT AUTHENTICATION MIDDLEWARE (Load from appsettings.json - NO hardcoded secrets)
+app.UseJwtAuthentication();
+
+// 0.5 REQUEST LOGGING & CORRELATION MIDDLEWARE (ONLY in Production)
 if (!app.Environment.IsDevelopment())
 {
     app.UseMiddleware<RequestLoggingMiddleware>();
