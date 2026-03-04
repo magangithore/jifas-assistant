@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Interface for Gemini AI service - used ONLY for summarization and response generation
-    /// based on JIFAS Knowledge Base content
+    /// Interface for AI service - uses Local Ollama (previously named for Gemini, now using LocalAI/Ollama)
+    /// Used for summarization and response generation based on JIFAS Knowledge Base content
     /// </summary>
     public interface IGeminiService
     {
@@ -26,8 +26,8 @@ namespace Jifas.Assistant.Services
         Task<bool> IsInScopeAsync(string userQuery);
 
         /// <summary>
-        /// Call Gemini API directly with custom prompt
-        /// Used for generating natural responses
+        /// Call AI service directly with custom prompt
+        /// Uses Local Ollama (gemma3:4b model) for generating natural responses
         /// </summary>
         Task<string> CallGeminiApiAsync(string prompt);
     }

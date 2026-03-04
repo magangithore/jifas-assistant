@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -154,7 +155,7 @@ namespace Jifas.Assistant.Middleware
 
                     // Lifetime validation
                     ValidateLifetime = _configuration.GetValue<bool>("Jwt:ValidateLifetime"),
-                    ClockSkewUtc = TimeSpan.FromSeconds(_configuration.GetValue<int>("Jwt:ClockSkewSeconds")),
+                    ClockSkew = TimeSpan.FromSeconds(_configuration.GetValue<int>("Jwt:ClockSkewSeconds")),
 
                     // Signature validation - get key from token's signing key
                     ValidateIssuerSigningKey = false, // Since we don't have the key, skip this for now

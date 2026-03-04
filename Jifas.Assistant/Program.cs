@@ -32,12 +32,11 @@ builder.Services.AddDbContext<JifasAssistantDbContext>(options =>
 */
 
 // 2. Add Configuration Models (Strongly Typed Settings) - ONLY ESSENTIALS
-builder.Services.Configure<GeminiSettings>(builder.Configuration.GetSection("Gemini"));
+builder.Services.Configure<LocalAISettings>(builder.Configuration.GetSection("LocalAI"));
 builder.Services.Configure<KnowledgeBaseSettings>(builder.Configuration.GetSection("KnowledgeBase"));
 builder.Services.Configure<ChatSettings>(builder.Configuration.GetSection("Chat"));
 builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
 builder.Services.Configure<SuggestionSettings>(builder.Configuration.GetSection("Suggestion"));
-builder.Services.Configure<LocalAISettings>(builder.Configuration.GetSection("LocalAI"));
 
 // 3. Add AppSettings Helper
 builder.Services.AddSingleton(sp => new AppSettings(builder.Configuration));
@@ -70,7 +69,7 @@ builder.Services.AddSwaggerGen(c =>
     { 
         Title = "JIFAS AI Assistant API",
         Version = "v1.0",
-        Description = "Intelligent AI-powered chatbot with Knowledge Base and Gemini Integration"
+        Description = "Intelligent AI-powered chatbot with Knowledge Base and Local Ollama AI Integration"
     });
 });
 
@@ -106,7 +105,6 @@ builder.Services.AddScoped<IGeminiService, LocalAIService>();  // ? Local AI (Ol
 // builder.Services.AddScoped<IGeminiService, GeminiService>();  // ? Gemini API - DISABLED
 
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
-builder.Services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
 builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
