@@ -234,7 +234,7 @@ namespace Jifas.Assistant.KBLoader
                     docIndex++;
                     try
                     {
-                        var chunks = SplitIntoChunks(document.Content, chunkSize: 500, overlapSize: 50);
+                        var chunks = SplitIntoChunks(document.Content, chunkSize: 1000, overlapSize: 100);
                         
                         for (int i = 0; i < chunks.Count; i++)
                         {
