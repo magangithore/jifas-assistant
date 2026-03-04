@@ -2,52 +2,43 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using jifas_assistant.DAL.Models;
+using Jifas.Assistant.Services;
 
 namespace Jifas.Assistant.KBLoader
 {
     /// <summary>
-    /// Console application untuk load Knowledge Base via API endpoint
-    /// Requires: Jifas.Assistant API running on http://localhost:5000
-    /// Jalankan: dotnet run --project KBLoader/KBLoader.csproj -- --yes
+    /// FAST Knowledge Base Loader - Direct DB Insert
+    /// Bulk insert without waiting for embeddings (embeddings generated in background later)
     /// </summary>
     class Program
     {
         static async Task Main(string[] args)
         {
-            // Check for auto-confirm flag
             bool autoConfirm = args.Contains("--yes") || args.Contains("-y");
-            string apiBaseUrl = "http://localhost:5000"; // Configurable if needed
             
             Console.WriteLine("??????????????????????????????????????????????????????");
-            Console.WriteLine("?   JIFAS Knowledge Base Loader - Via API Endpoint   ?");
+            Console.WriteLine("?   JIFAS KB Loader - FAST Bulk Insert              ?");
             Console.WriteLine("??????????????????????????????????????????????????????");
             Console.WriteLine();
 
             try
             {
-                // Setup services
                 var services = new ServiceCollection();
-                
-                // Find appsettings.json
                 var basePath = Directory.GetCurrentDirectory();
                 if (!File.Exists(Path.Combine(basePath, "appsettings.json")))
                 {
                     basePath = Path.Combine(Directory.GetCurrentDirectory(), "KBLoader");
                 }
                 
-                var configBuilder = new ConfigurationBuilder()
-                    .SetBasePath(basePath);
-                
-                var appSettingsPath = Path.Combine(basePath, "appsettings.json");
-                if (File.Exists(appSettingsPath))
+                var configBuilder = new ConfigurationBuilder().SetBasePath(basePath);
+                if (File.Exists(Path.Combine(basePath, "appsettings.json")))
                 {
                     configBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
                 }
@@ -55,61 +46,29 @@ namespace Jifas.Assistant.KBLoader
                 var configuration = configBuilder.Build();
 
                 services.AddSingleton<IConfiguration>(configuration);
-                services.AddLogging(builder => 
+                services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+                services.AddDbContext<JIFAS_AssistantContext>(options =>
                 {
-                    builder.AddConsole();
-                    builder.SetMinimumLevel(LogLevel.Information);
+                    var connectionString = configuration["ConnectionStrings:DefaultConnection"];
+                    options.UseSqlServer(connectionString);
                 });
-                services.AddHttpClient();
 
                 var serviceProvider = services.BuildServiceProvider();
+                var context = serviceProvider.GetRequiredService<JIFAS_AssistantContext>();
                 var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-                var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
 
-                logger.LogInformation("Starting Knowledge Base loading process...");
-                logger.LogInformation("");
-                
-                // Check API is running
-                logger.LogInformation($"Checking API at {apiBaseUrl}...");
-                using (var client = httpClientFactory.CreateClient())
-                {
-                    try
-                    {
-                        var response = await client.GetAsync($"{apiBaseUrl}/api/health");
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            logger.LogError($"API returned status {response.StatusCode}. Make sure API is running: dotnet run (from Jifas.Assistant/)");
-                            return;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError($"Cannot connect to API at {apiBaseUrl}. Make sure it's running!");
-                        logger.LogError($"Error: {ex.Message}");
-                        logger.LogInformation("Start API with: dotnet run (from Jifas.Assistant/)");
-                        return;
-                    }
-                }
-                
-                logger.LogInformation("? API is responding");
+                logger.LogInformation("Starting Knowledge Base bulk loading...");
                 logger.LogInformation("");
 
-                // Determine KB folder path
-                var kbFolderPath = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "..",
-                    "Jifas.Assistant",
-                    "KnowledgeBase"
-                );
-
+                // Get KB folder
+                var kbFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Jifas.Assistant", "KnowledgeBase");
                 kbFolderPath = Path.GetFullPath(kbFolderPath);
                 
-                logger.LogInformation($"KB Folder Path: {kbFolderPath}");
-                logger.LogInformation("");
+                logger.LogInformation($"KB Folder: {kbFolderPath}");
 
                 if (!Directory.Exists(kbFolderPath))
                 {
-                    logger.LogError($"Knowledge Base folder not found: {kbFolderPath}");
+                    logger.LogError($"KB folder not found: {kbFolderPath}");
                     return;
                 }
 
@@ -118,124 +77,106 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation("");
 
                 // Confirm
-                logger.LogWarning("??  Existing Knowledge Base will be cleared before loading new data");
+                logger.LogWarning("??  Will clear existing KB documents");
                 
-                string response_str;
-                if (autoConfirm)
-                {
-                    logger.LogInformation("Auto-confirming (--yes flag detected)");
-                    response_str = "Y";
-                }
-                else
+                if (!autoConfirm)
                 {
                     Console.Write("Continue? (Y/N): ");
-                    response_str = Console.ReadLine();
-                }
-                
-                if (response_str?.ToUpper() != "Y")
-                {
-                    logger.LogInformation("Operation cancelled by user");
-                    return;
+                    var response = Console.ReadLine();
+                    if (response?.ToUpper() != "Y") return;
                 }
 
                 logger.LogInformation("");
                 logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation("Starting file processing...");
+                logger.LogInformation("FAST BULK INSERT MODE");
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
+
+                // FAST: Batch delete
+                logger.LogInformation("Clearing existing KB...");
+                var existingDocs = await context.KnowledgeBaseDocuments.ToListAsync();
+                if (existingDocs.Any())
+                {
+                    context.KnowledgeBaseDocuments.RemoveRange(existingDocs);
+                    await context.SaveChangesAsync();
+                }
+
+                // FAST: Batch insert all documents
+                var docsToInsert = new List<KnowledgeBaseDocuments>();
 
                 int fileCount = 0;
-                int totalChunksInserted = 0;
-                int totalFilesSuccess = 0;
-
-                using (var client = httpClientFactory.CreateClient())
+                foreach (var filePath in allFiles)
                 {
-                    client.DefaultRequestHeaders.Add("Content-Type", "application/json");
-                    
-                    foreach (var filePath in allFiles)
+                    fileCount++;
+                    try
                     {
-                        fileCount++;
-                        try
+                        var content = File.ReadAllText(filePath, Encoding.UTF8);
+                        var category = ExtractCategory(filePath, kbFolderPath);
+                        var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        logger.LogInformation($"[{fileCount:D2}/{allFiles.Length}] {category,-15} | {fileName}");
+                        Console.ResetColor();
+
+                        // Create document (no chunking, no embeddings here!)
+                        var doc = new KnowledgeBaseDocuments
                         {
-                            var content = File.ReadAllText(filePath, Encoding.UTF8);
-                            var category = ExtractCategoryFromPath(filePath, kbFolderPath);
-                            var fileName = Path.GetFileNameWithoutExtension(filePath);
+                            Title = fileName,
+                            Content = content,
+                            Category = category,
+                            Tags = ExtractTags(category, content),
+                            FilePath = filePath,
+                            Embedding = null,
+                            EmbeddingDimensions = 0,
+                            IsActive = true,
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now,
+                            ViewCount = 0,
+                            RelevanceScore = 0,
+                            CreatedBy = "KBLoader"
+                        };
 
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            logger.LogInformation($"[{fileCount:D2}/{allFiles.Length:D2}] {category,-15} | {fileName}");
-                            Console.ResetColor();
-
-                            // Create document request
-                            var docRequest = new
-                            {
-                                title = fileName,
-                                content = content,
-                                category = category,
-                                tags = ExtractTags(category, content)
-                            };
-
-                            var json = JsonConvert.SerializeObject(docRequest);
-                            var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-
-                            // Call API
-                            var apiResponse = await client.PostAsync($"{apiBaseUrl}/api/kb/documents", httpContent);
-
-                            if (apiResponse.IsSuccessStatusCode)
-                            {
-                                var responseBody = await apiResponse.Content.ReadAsStringAsync();
-                                dynamic result = JsonConvert.DeserializeObject(responseBody);
-                                
-                                Console.ForegroundColor = ConsoleColor.Green;
-                                logger.LogInformation($"              ? Inserted (Document ID: {result.documentId})");
-                                Console.ResetColor();
-                                
-                                totalFilesSuccess++;
-                                totalChunksInserted++;
-                            }
-                            else
-                            {
-                                var errorBody = await apiResponse.Content.ReadAsStringAsync();
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                logger.LogWarning($"              ? API Error {apiResponse.StatusCode}: {errorBody}");
-                                Console.ResetColor();
-                            }
-                        }
-                        catch (Exception fileEx)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            logger.LogError($"              ? Error: {fileEx.Message}");
-                            Console.ResetColor();
-                        }
+                        docsToInsert.Add(doc);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        logger.LogError($"              ? Error: {ex.Message}");
+                        Console.ResetColor();
                     }
                 }
 
+                // FAST: Single bulk insert
                 logger.LogInformation("");
-                logger.LogInformation("???????????????????????????????????????????????????");
-                Console.ForegroundColor = ConsoleColor.Green;
-                logger.LogInformation("? KNOWLEDGE BASE LOADING COMPLETE!");
-                Console.ResetColor();
-                logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation("");
-                logger.LogInformation($"Summary:");
-                logger.LogInformation($"  Files processed:     {fileCount}");
-                logger.LogInformation($"  Files inserted:      {totalFilesSuccess}");
-                logger.LogInformation("");
+                logger.LogInformation($"Inserting {docsToInsert.Count} documents (BULK)...");
+                
+                context.KnowledgeBaseDocuments.AddRange(docsToInsert);
+                await context.SaveChangesAsync();
 
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                logger.LogInformation("Ready for RAG queries!");
+                Console.ForegroundColor = ConsoleColor.Green;
+                logger.LogInformation($"? {docsToInsert.Count} documents inserted in seconds!");
                 Console.ResetColor();
+
+                // Verify
+                var count = await context.KnowledgeBaseDocuments.CountAsync();
+                logger.LogInformation("");
+                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation($"? COMPLETE: {count} documents in database");
+                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("");
+                logger.LogInformation("Note: Embeddings will be generated by API background job");
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"? Fatal Error: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                Console.WriteLine($"Stack: {ex.StackTrace}");
                 Console.ResetColor();
                 Environment.Exit(1);
             }
         }
 
-        static string ExtractCategoryFromPath(string filePath, string basePath)
+        static string ExtractCategory(string filePath, string basePath)
         {
             try
             {
@@ -275,3 +216,4 @@ namespace Jifas.Assistant.KBLoader
         }
     }
 }
+
