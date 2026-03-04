@@ -31,6 +31,7 @@ namespace Jifas.Assistant.Services
         private readonly ICacheService _cacheService;
         private readonly IJifasContextService _jifasContextService;
         private readonly IKnowledgeBaseContextService _kbContextService;
+        private readonly ILocalizationService _localizationService;  // ? NEW
         private readonly IConfiguration _configuration;
         private readonly IInputValidator _inputValidator;
         private readonly IChatHistoryService _chatHistoryService;
@@ -47,6 +48,7 @@ namespace Jifas.Assistant.Services
             ICacheService cacheService,
             IJifasContextService jifasContextService,
             IKnowledgeBaseContextService kbContextService,
+            ILocalizationService localizationService,  // ? NEW
             IConfiguration configuration,
             IInputValidator inputValidator,
             IChatHistoryService chatHistoryService)
@@ -59,6 +61,7 @@ namespace Jifas.Assistant.Services
             _cacheService = cacheService;
             _jifasContextService = jifasContextService;
             _kbContextService = kbContextService ?? throw new ArgumentNullException(nameof(kbContextService));
+            _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
             _configuration = configuration;
             _inputValidator = inputValidator ?? throw new ArgumentNullException(nameof(inputValidator));
             _chatHistoryService = chatHistoryService ?? throw new ArgumentNullException(nameof(chatHistoryService));

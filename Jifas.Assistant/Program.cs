@@ -95,6 +95,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<ILoggerService, FileLoggerService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<IInputValidator, InputValidator>();
+builder.Services.AddScoped<ILocalizationService, LocalizationService>();  // ? NEW: Multi-language support
 builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
 builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();
 

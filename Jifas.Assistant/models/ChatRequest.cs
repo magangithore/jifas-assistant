@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Jifas.Assistant.Models
@@ -41,6 +42,43 @@ namespace Jifas.Assistant.Models
         public string CorrelationId { get; set; }
 
         /// <summary>
+        /// User role (optional) - for role-based responses
+        /// Examples: "FINA:KI", "ACCT:KI", "USER:RO", etc.
+        /// Used to tailor responses based on user's department/role
+        /// </summary>
+        [StringLength(100, ErrorMessage = "User Role maksimal 100 karakter")]
+        public string UserRole { get; set; }
+
+        /// <summary>
+        /// Current module (optional) - context awareness
+        /// Examples: "Invoice", "Payment", "PUM", "Receiving", "Accounting"
+        /// Helps AI provide module-specific answers
+        /// </summary>
+        [StringLength(100, ErrorMessage = "Current Module maksimal 100 karakter")]
+        public string CurrentModule { get; set; }
+
+        /// <summary>
+        /// Company ID (optional) - for multi-company support
+        /// Used if JIFAS supports multiple companies
+        /// </summary>
+        [StringLength(100, ErrorMessage = "Company ID maksimal 100 karakter")]
+        public string CompanyId { get; set; }
+
+        /// <summary>
+        /// Language preference (optional) - for localization
+        /// Values: "id" (Indonesian), "en" (English)
+        /// Default: "id"
+        /// </summary>
+        [StringLength(5, ErrorMessage = "Language maksimal 5 karakter")]
+        public string Language { get; set; } = "id";
+
+        /// <summary>
+        /// Context information (optional) - for context-aware responses
+        /// Contains additional context like current page, selected document, etc.
+        /// </summary>
+        public RequestContext Context { get; set; }
+
+        /// <summary>
         /// Initialize request with auto-generated correlation ID if not provided
         /// </summary>
         public ChatRequest()
@@ -50,5 +88,30 @@ namespace Jifas.Assistant.Models
                 CorrelationId = Guid.NewGuid().ToString();
             }
         }
+    }
+
+    /// <summary>
+    /// Context information for request - optional additional context
+    /// </summary>
+    public class RequestContext
+    {
+        /// <summary>
+        /// Current page/route in JIFAS Web
+        /// Examples: "/Invoice/Finance/Index", "/Payment/Monitor"
+        /// </summary>
+        public string CurrentPage { get; set; }
+
+        /// <summary>
+        /// Selected document ID (optional)
+        /// Examples: "INV-2024-001", "PMT-2024-050"
+        /// User can ask specific questions about this document
+        /// </summary>
+        public string SelectedDocumentId { get; set; }
+
+        /// <summary>
+        /// Additional custom context data as JSON object
+        /// For future extensibility
+        /// </summary>
+        public Dictionary<string, object> CustomData { get; set; }
     }
 }
