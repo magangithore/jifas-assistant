@@ -196,10 +196,10 @@ $startTime = Get-Date
 try {
     Push-Location KBLoader
     
-    Write-Host "Executing: dotnet run --configuration Release" -ForegroundColor Cyan
+    Write-Host "Executing: dotnet run --configuration Release -- --yes" -ForegroundColor Cyan
     Write-Host ""
     
-    dotnet run --configuration Release
+    dotnet run --configuration Release -- --yes
     
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""

@@ -319,12 +319,12 @@ namespace Jifas.Assistant.Controllers
                     {
                         var embedding = await _embeddingService.GenerateEmbeddingAsync(chunk.Content);
                         
-                        if (embedding != null && embedding.Count > 0)
+                        if (embedding != null && embedding.Length > 0)
                         {
                             chunk.Embedding = JsonConvert.SerializeObject(embedding);
-                            chunk.EmbeddingDimensions = embedding.Count;
+                            chunk.EmbeddingDimensions = embedding.Length;
                             successCount++;
-                            System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: {embedding.Count}-dim embedding");
+                            System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: {embedding.Length}-dim embedding");
                         }
                         else
                         {
@@ -358,7 +358,7 @@ namespace Jifas.Assistant.Controllers
                 }
 
                 await _db.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Generated embeddings for {successCount}/{chunks.Count} chunks");
+                System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Generated embeddings for {successCount}/{chunks.Count()} chunks");
             }
             catch (Exception ex)
             {
@@ -428,13 +428,13 @@ namespace Jifas.Assistant.Controllers
                     {
                         var embedding = await _embeddingService.GenerateEmbeddingAsync(chunk.Content);
 
-                        if (embedding != null && embedding.Count > 0)
+                        if (embedding != null && embedding.Length > 0)
                         {
                             chunk.Embedding = JsonConvert.SerializeObject(embedding);
-                            chunk.EmbeddingDimensions = embedding.Count;
+                            chunk.EmbeddingDimensions = embedding.Length;
                             chunk.UpdatedAt = DateTime.Now;
                             successCount++;
-                            System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: {embedding.Count}-dim embedding generated");
+                            System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: {embedding.Length}-dim embedding generated");
                         }
                         else
                         {

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using jifas_assistant.DAL.Models;
+using Jifas.Assistant.Services;
 
 namespace Jifas.Assistant.KBLoader
 {
@@ -21,6 +22,9 @@ namespace Jifas.Assistant.KBLoader
     {
         static async Task Main(string[] args)
         {
+            // Check for auto-confirm flag
+            bool autoConfirm = args.Contains("--yes") || args.Contains("-y");
+            
             Console.WriteLine("??????????????????????????????????????????????????????");
             Console.WriteLine("?   JIFAS Knowledge Base Loader - Direct DB Insert   ?");
             Console.WriteLine("??????????????????????????????????????????????????????");
@@ -31,13 +35,37 @@ namespace Jifas.Assistant.KBLoader
                 // Setup DI
                 var services = new ServiceCollection();
                 
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json")
-                    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
-                    .Build();
+                // Try to find appsettings.json in KBLoader directory or parent directory
+                var basePath = Directory.GetCurrentDirectory();
+                if (!File.Exists(Path.Combine(basePath, "appsettings.json")))
+                {
+                    basePath = Path.Combine(Directory.GetCurrentDirectory(), "KBLoader");
+                    if (!File.Exists(Path.Combine(basePath, "appsettings.json")))
+                    {
+                        basePath = Directory.GetCurrentDirectory();
+                    }
+                }
+                
+                var configBuilder = new ConfigurationBuilder()
+                    .SetBasePath(basePath);
+                
+                // Only add if file exists
+                var appSettingsPath = Path.Combine(basePath, "appsettings.json");
+                if (File.Exists(appSettingsPath))
+                {
+                    configBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                }
+                
+                
+                var devSettingsPath = Path.Combine(basePath, $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json");
+                if (File.Exists(devSettingsPath))
+                {
+                    configBuilder.AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true, reloadOnChange: true);
+                }
+                
+                var configuration = configBuilder.Build();
 
-                services.AddSingleton(configuration);
+                services.AddSingleton<IConfiguration>(configuration);
                 services.AddLogging(builder => 
                 {
                     builder.AddConsole();
@@ -68,7 +96,6 @@ namespace Jifas.Assistant.KBLoader
                 var kbFolderPath = Path.Combine(
                     Directory.GetCurrentDirectory(),
                     "..",
-                    "..",
                     "Jifas.Assistant",
                     "KnowledgeBase"
                 );
@@ -93,8 +120,18 @@ namespace Jifas.Assistant.KBLoader
 
                 // Confirm clear
                 logger.LogWarning("??  Existing Knowledge Base will be cleared before loading new data");
-                Console.Write("Continue? (Y/N): ");
-                var response = Console.ReadLine();
+                
+                string response;
+                if (autoConfirm)
+                {
+                    logger.LogInformation("Auto-confirming (--yes flag detected)");
+                    response = "Y";
+                }
+                else
+                {
+                    Console.Write("Continue? (Y/N): ");
+                    response = Console.ReadLine();
+                }
                 
                 if (response?.ToUpper() != "Y")
                 {
