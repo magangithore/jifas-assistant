@@ -170,9 +170,22 @@ Jawab HANYA dengan 'Ya' atau 'Tidak' tanpa penjelasan.";
                     model = _model,
                     prompt = prompt,
                     stream = false,  // Get complete response at once
-                    temperature = 0.7,
-                    top_p = 0.9,
-                    top_k = 40
+                    
+                    // === OPTIMIZED PARAMETERS FOR QUALITY & SPEED ===
+                    temperature = 0.3,      // Lower = more focused, accurate, less creative
+                    top_p = 0.85,           // Slightly tighter nucleus sampling
+                    top_k = 30,             // Narrower token selection for precision
+                    repeat_penalty = 1.15,  // Reduce repetition
+                    num_predict = 1024,     // Limit response length for speed
+                    
+                    // System instruction for consistency
+                    system = @"Kamu adalah JIFAS AI Assistant yang ahli, akurat, dan helpful.
+ATURAN WAJIB:
+- Jawab HANYA berdasarkan Knowledge Base yang diberikan
+- JANGAN mengarang atau berasumsi informasi
+- Gunakan Bahasa Indonesia yang natural dan profesional
+- Berikan jawaban yang SPESIFIK dan ACTIONABLE
+- Jika tidak tahu, katakan dengan jujur"
                 };
 
                 var jsonContent = JsonConvert.SerializeObject(requestBody);

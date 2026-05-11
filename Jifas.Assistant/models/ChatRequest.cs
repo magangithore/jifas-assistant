@@ -25,7 +25,7 @@ namespace Jifas.Assistant.Models
         /// Can be any format (AD, LDAP, custom, etc)
         /// </summary>
         [StringLength(256, ErrorMessage = "User ID maksimal 256 karakter")]
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
 
         /// <summary>
         /// Session ID for conversation tracking
@@ -33,13 +33,13 @@ namespace Jifas.Assistant.Models
         /// Can be UUID, GUID, or any format (flexible for different implementations)
         /// </summary>
         [StringLength(256, ErrorMessage = "Session ID maksimal 256 karakter")]
-        public string SessionId { get; set; }
+        public string? SessionId { get; set; }
 
         /// <summary>
         /// Request correlation ID for audit trail (auto-generated)
         /// Used for tracking request through the system
         /// </summary>
-        public string CorrelationId { get; set; }
+        public string? CorrelationId { get; set; }
 
         /// <summary>
         /// User role (optional) - for role-based responses
@@ -47,7 +47,7 @@ namespace Jifas.Assistant.Models
         /// Used to tailor responses based on user's department/role
         /// </summary>
         [StringLength(100, ErrorMessage = "User Role maksimal 100 karakter")]
-        public string UserRole { get; set; }
+        public string? UserRole { get; set; }
 
         /// <summary>
         /// Current module (optional) - context awareness
@@ -55,14 +55,14 @@ namespace Jifas.Assistant.Models
         /// Helps AI provide module-specific answers
         /// </summary>
         [StringLength(100, ErrorMessage = "Current Module maksimal 100 karakter")]
-        public string CurrentModule { get; set; }
+        public string? CurrentModule { get; set; }
 
         /// <summary>
         /// Company ID (optional) - for multi-company support
         /// Used if JIFAS supports multiple companies
         /// </summary>
         [StringLength(100, ErrorMessage = "Company ID maksimal 100 karakter")]
-        public string CompanyId { get; set; }
+        public string? CompanyId { get; set; }
 
         /// <summary>
         /// Language preference (optional) - for localization
@@ -76,7 +76,7 @@ namespace Jifas.Assistant.Models
         /// Context information (optional) - for context-aware responses
         /// Contains additional context like current page, selected document, etc.
         /// </summary>
-        public RequestContext Context { get; set; }
+        public RequestContext? Context { get; set; }
 
         /// <summary>
         /// Initialize request with auto-generated correlation ID if not provided
@@ -99,14 +99,14 @@ namespace Jifas.Assistant.Models
         /// Current page/route in JIFAS Web
         /// Examples: "/Invoice/Finance/Index", "/Payment/Monitor"
         /// </summary>
-        public string CurrentPage { get; set; }
+        public string? CurrentPage { get; set; }
 
         /// <summary>
         /// Selected document ID (optional)
         /// Examples: "INV-2024-001", "PMT-2024-050"
         /// User can ask specific questions about this document
         /// </summary>
-        public string SelectedDocumentId { get; set; }
+        public string? SelectedDocumentId { get; set; }
 
         /// <summary>
         /// Additional custom context data as JSON object

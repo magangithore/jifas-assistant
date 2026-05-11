@@ -109,32 +109,29 @@ namespace Jifas.Assistant.Services
                 // Improvement #3: Build query-type-specific instructions with few-shot examples
                 var querySpecificInstructions = BuildQuerySpecificInstructionsWithExamples(queryType, userQuery, kbResults);
 
-                // Step 4: Combine system + main prompt with enhanced instructions
+                // Step 4: Combine system + main prompt - OPTIMIZED for precision & natural response
+                var confidenceLevel = contextAnalysis.OverallRelevance >= 80 ? "TINGGI" : 
+                                     contextAnalysis.OverallRelevance >= 60 ? "SEDANG" : "RENDAH";
+                
                 var finalPrompt = $@"{systemPrompt}
 
-=== KNOWLEDGE BASE CONTEXT ===
+=== KNOWLEDGE BASE ===
 {mainPrompt}
-=== END CONTEXT ===
+=== END KB ===
 
-PERTANYAAN USER: ""{userQuery}""
+PERTANYAAN: ""{userQuery}""
+CONFIDENCE KB: {confidenceLevel} ({contextAnalysis.OverallRelevance}%)
 
 {querySpecificInstructions}
 
-INSTRUKSI UMUM JAWABAN:
-1. Gunakan HANYA informasi dari Knowledge Base di atas
-2. Jika ada beberapa bagian yang relevan, gabungkan menjadi jawaban lengkap
-3. Format jawaban ramah namun profesional, gunakan Bahasa Indonesia
-4. Jika informasi tidak cukup atau ada yang kurang jelas, katakan dengan terus terang
-5. Jika ada referensi ke dokumen atau menu, sebutkan nama lengkapnya
-6. Hindari jawaban yang terlalu singkat - berikan detail yang cukup untuk memahami
+INSTRUKSI FINAL:
+- Confidence TINGGI: Jawab dengan lengkap dan percaya diri
+- Confidence SEDANG: Jawab dengan info yang ada, note jika ada yang kurang
+- Confidence RENDAH: Jujur bahwa info terbatas, berikan apa yang bisa
 
-QUALITY STANDARDS:
-- Jawaban harus spesifik dan tidak umum
-- Minimum 2-3 kalimat untuk konteks yang lengkap
-- Sertakan langkah-langkah/prosedur jika relevan
-- Hubungkan dengan menu/modul JIFAS yang sesuai
+FORMAT: Natural, seperti rekan kerja yang helpful. Langsung ke inti tanpa basa-basi.
 
-RESPONS:";
+JAWABAN:";
 
                 return finalPrompt;
             }
@@ -148,6 +145,7 @@ RESPONS:";
         /// <summary>
         /// Build enhanced JIFAS-specific system prompt
         /// Improvement #2: Contains JIFAS-specific context, workflows, and constraints
+        /// ENHANCED: More natural, precise, and balanced responses
         /// </summary>
         public string BuildEnhancedSystemPrompt(List<KnowledgeBaseResult> kbResults, string userQuery)
         {
@@ -155,56 +153,63 @@ RESPONS:";
             {
                 var categories = kbResults.GroupBy(r => r.Category).Select(g => g.Key).Distinct().ToList();
                 var highestScore = kbResults.Count > 0 ? kbResults.Max(r => r.Score) : 0;
+                var queryType = ClassifyQueryType(userQuery);
 
                 var systemPromptBuilder = new StringBuilder();
-                systemPromptBuilder.AppendLine("Kamu adalah JIFAS AI Assistant, asisten cerdas untuk Jababeka Integrated Finance Accounting System.");
-                systemPromptBuilder.AppendLine("Sistem JIFAS adalah solusi terintegrasi untuk mengelola keuangan dan aset perusahaan.");
+                
+                // === IDENTITY (Natural, not robotic) ===
+                systemPromptBuilder.AppendLine("Kamu adalah JIFAS AI Assistant - asisten yang helpful, akurat, dan to-the-point.");
+                systemPromptBuilder.AppendLine("Kamu ahli sistem JIFAS (Jababeka Integrated Finance Accounting System).");
                 systemPromptBuilder.AppendLine();
 
-                systemPromptBuilder.AppendLine("PERAN DAN TANGGUNG JAWAB MU:");
-                systemPromptBuilder.AppendLine("- Expert di semua modul JIFAS: Master Data, Invoice, PUM, Receiving, Payment, Accounting");
-                systemPromptBuilder.AppendLine("- Memberikan jawaban AKURAT berdasarkan Knowledge Base yang terbukti");
-                systemPromptBuilder.AppendLine("- Memahami alur bisnis dan proses kerja setiap modul");
-                systemPromptBuilder.AppendLine("- Membantu user dengan cara yang jelas dan terstruktur");
+                // === PERSONALITY (Natural conversation style) ===
+                systemPromptBuilder.AppendLine("GAYA KOMUNIKASI:");
+                systemPromptBuilder.AppendLine("- Bicara seperti rekan kerja yang helpful, bukan robot");
+                systemPromptBuilder.AppendLine("- Langsung ke inti jawaban, tidak bertele-tele");
+                systemPromptBuilder.AppendLine("- Gunakan bahasa yang mudah dipahami, hindari jargon berlebihan");
+                systemPromptBuilder.AppendLine("- Jika ada langkah-langkah, berikan dengan jelas dan berurutan");
                 systemPromptBuilder.AppendLine();
 
-                systemPromptBuilder.AppendLine("JIFAS CRITICAL KNOWLEDGE:");
-                systemPromptBuilder.AppendLine("- Budget Status: OK (sufficient), CM (cross-month), CA (cross-accumulation), CY (cross-year - not allowed)");
-                systemPromptBuilder.AppendLine("- Core Workflows: Invoice ? Head Approval ? Finance Approval ? Finance Checking ? Payment");
-                systemPromptBuilder.AppendLine("- Master Data setup adalah WAJIB sebelum menggunakan modul lainnya");
-                systemPromptBuilder.AppendLine("- Periode Akuntansi yang CLOSED tidak bisa di-input transaksi baru");
-                systemPromptBuilder.AppendLine("- Posting jurnal adalah action final - tidak bisa di-edit setelah posting");
+                // === PRECISION RULES (No over/under promising) ===
+                systemPromptBuilder.AppendLine("ATURAN PRESISI:");
+                systemPromptBuilder.AppendLine("- Jawab HANYA apa yang ditanya - tidak lebih, tidak kurang");
+                systemPromptBuilder.AppendLine("- Jika KB punya jawabannya: berikan dengan percaya diri dan lengkap");
+                systemPromptBuilder.AppendLine("- Jika KB TIDAK punya: katakan jujur 'Informasi ini tidak tersedia di KB JIFAS'");
+                systemPromptBuilder.AppendLine("- JANGAN mengarang atau berasumsi - lebih baik jujur tidak tahu");
+                systemPromptBuilder.AppendLine("- JANGAN melebih-lebihkan atau mengurangi informasi dari KB");
                 systemPromptBuilder.AppendLine();
 
+                // === CONTEXT AWARENESS ===
                 if (categories.Count > 0)
                 {
-                    systemPromptBuilder.AppendLine($"TOPIK TERKAIT DENGAN QUERY: {string.Join(", ", categories.Take(4))}");
-                    systemPromptBuilder.AppendLine();
+                    systemPromptBuilder.AppendLine($"KONTEKS TOPIK: {string.Join(", ", categories.Take(3))}");
                 }
-
-                systemPromptBuilder.AppendLine("CARA MENJAWAB:");
-                systemPromptBuilder.AppendLine("1. Pahami konteks pertanyaan dengan HATI-HATI");
-                systemPromptBuilder.AppendLine("2. Cari bagian Knowledge Base yang PALING RELEVAN");
-                systemPromptBuilder.AppendLine("3. Rangkum informasi dengan JELAS dan TERSTRUKTUR");
-                systemPromptBuilder.AppendLine("4. Sertakan nama MENU dan FITUR yang sesuai dalam JIFAS");
-                systemPromptBuilder.AppendLine("5. Jika ada langkah-langkah, berikan NOMOR yang urut dan JELAS");
-                systemPromptBuilder.AppendLine("6. Sertakan TIPS atau CATATAN PENTING jika relevan");
+                
+                // Add query-type specific guidance
+                systemPromptBuilder.AppendLine($"TIPE PERTANYAAN: {queryType}");
+                switch (queryType)
+                {
+                    case "HowTo":
+                        systemPromptBuilder.AppendLine("? Berikan langkah-langkah yang jelas dan actionable");
+                        break;
+                    case "Troubleshooting":
+                        systemPromptBuilder.AppendLine("? Identifikasi masalah dan berikan solusi spesifik");
+                        break;
+                    case "Explanation":
+                        systemPromptBuilder.AppendLine("? Jelaskan konsep dengan ringkas tapi lengkap");
+                        break;
+                    case "Navigation":
+                        systemPromptBuilder.AppendLine("? Tunjukkan lokasi menu/fitur dengan path yang jelas");
+                        break;
+                }
                 systemPromptBuilder.AppendLine();
 
-                systemPromptBuilder.AppendLine("ATURAN KETAT TANPA PENGECUALIAN:");
-                systemPromptBuilder.AppendLine("- JANGAN membuat atau mengarang informasi yang tidak ada di KB");
-                systemPromptBuilder.AppendLine("- Jika ada keraguan, tanyakan klarifikasi kepada user");
-                systemPromptBuilder.AppendLine("- Jawab dalam Bahasa Indonesia yang profesional dan jelas");
-                systemPromptBuilder.AppendLine("- Jika KB tidak memiliki jawaban, katakan dengan TERUS TERANG");
-                systemPromptBuilder.AppendLine("- Hindari jawaban yang terlalu singkat - detail adalah kunci");
-                systemPromptBuilder.AppendLine("- Jangan rujuk ke fitur yang tidak disebutkan di Knowledge Base");
-                systemPromptBuilder.AppendLine();
-
-                systemPromptBuilder.AppendLine("RESPONSE QUALITY CHECKLIST SEBELUM JAWAB:");
-                systemPromptBuilder.AppendLine("? Apakah jawaban SPESIFIK untuk pertanyaan user? (bukan umum)");
-                systemPromptBuilder.AppendLine("? Apakah semua informasi BERASAL dari KB? (no hallucination)");
-                systemPromptBuilder.AppendLine("? Apakah jawaban TERSTRUKTUR dan MUDAH DIMENGERTI?");
-                systemPromptBuilder.AppendLine("? Apakah mencakup LANGKAH-LANGKAH atau PROSEDUR yang lengkap?");
+                // === QUALITY STANDARDS (Balanced) ===
+                systemPromptBuilder.AppendLine("STANDAR KUALITAS:");
+                systemPromptBuilder.AppendLine("? Spesifik - jawab pertanyaan yang ditanya, bukan yang lain");
+                systemPromptBuilder.AppendLine("? Akurat - semua info harus dari KB, tidak ada karangan");
+                systemPromptBuilder.AppendLine("? Lengkap - cukup detail untuk user bisa action");
+                systemPromptBuilder.AppendLine("? Ringkas - tidak bertele-tele atau repetitif");
 
                 return systemPromptBuilder.ToString();
             }

@@ -95,14 +95,14 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<ILoggerService, FileLoggerService>();
 builder.Services.AddScoped<ICacheService, MemoryCacheService>();
 builder.Services.AddScoped<IInputValidator, InputValidator>();
-builder.Services.AddScoped<ILocalizationService, LocalizationService>();  // ? NEW: Multi-language support
+builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
 builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();
 
 // AI Service - USE LOCAL AI INSTEAD OF GEMINI
 // Swap comments to switch between LocalAI and Gemini
-builder.Services.AddScoped<IGeminiService, LocalAIService>();  // ? Local AI (Ollama) - ACTIVE
-// builder.Services.AddScoped<IGeminiService, GeminiService>();  // ? Gemini API - DISABLED
+builder.Services.AddScoped<IGeminiService, LocalAIService>();  // Local AI (Ollama) - ACTIVE
+// builder.Services.AddScoped<IGeminiService, GeminiService>();  // Gemini API - DISABLED
 
 // Embedding Service - Ollama qwen3-embedding:4b
 builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
@@ -111,7 +111,6 @@ builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
 builder.Services.AddScoped<IKnowledgeBaseLoaderService, KnowledgeBaseLoaderService>();
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();
-builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
@@ -119,6 +118,17 @@ builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
 builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
 builder.Services.AddScoped<IKnowledgeBaseContextService, KnowledgeBaseContextService>();
+
+// ========== NEW: Consolidated AI Quality Services (3 files instead of 6) ==========
+builder.Services.AddScoped<IQueryUnderstandingService, QueryUnderstandingService>();
+builder.Services.AddScoped<IResponseQualityService, ResponseQualityService>();
+builder.Services.AddScoped<IConversationIntelligenceService, ConversationIntelligenceService>();
+// Register legacy interfaces pointing to consolidated services
+builder.Services.AddScoped<IConversationMemoryService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
+builder.Services.AddScoped<IFeedbackLearningService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
+
+// ChatService - MUST be registered AFTER all its dependencies
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // ========== Optional Services ==========
 builder.Services.AddSingleton<ICommonQueryCacheService, CommonQueryCacheService>();
