@@ -12,11 +12,10 @@ using Newtonsoft.Json.Linq;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Gemini 2.5 Flash AI Service - pengganti LocalAI/Ollama
-    /// Menggunakan Google Gemini API untuk generasi respons yang lebih cerdas dan relevan
-    /// Model: gemini-2.5-flash-preview-05-20 - cepat, hemat, dan cerdas
+    /// Ollama AI Service - menggunakan Ollama API untuk generasi respons
+    /// Model dikonfigurasi via Ollama:Model di appsettings.json
     /// </summary>
-    public class GeminiService : IOllamaService
+    public class OllamaAIService : IOllamaService
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
@@ -29,9 +28,9 @@ namespace Jifas.Assistant.Services
         private readonly float _temperature;
         private readonly int _maxOutputTokens;
 
-        private const string GEMINI_GENERATE_ENDPOINT = ":generateContent?key=";
+        private const string OLLAMA_CHAT_ENDPOINT = "/api/chat";
 
-        public GeminiService(
+        public OllamaAIService(
             HttpClient httpClient,
             IConfiguration configuration,
             ILoggerService logger,
@@ -44,20 +43,20 @@ namespace Jifas.Assistant.Services
             _promptEngineering = promptEngineering ?? throw new ArgumentNullException(nameof(promptEngineering));
             _kbSearch = kbSearch ?? throw new ArgumentNullException(nameof(kbSearch));
 
-            _apiKey = _configuration["Gemini:ApiKey"] ?? throw new InvalidOperationException("Gemini:ApiKey is required");
-            _model = _configuration["Gemini:Model"] ?? "models/gemini-2.5-flash";
-            _baseUrl = _configuration["Gemini:BaseUrl"] ?? "https://generativelanguage.googleapis.com/v1beta";
-            _temperature = _configuration.GetValue<float>("Gemini:Temperature", 0.3f);
-            _maxOutputTokens = _configuration.GetValue<int>("Gemini:MaxOutputTokens", 2048);
+            _apiKey = _configuration["Ollama:ApiKey"] ?? string.Empty;
+            _model = _configuration["Ollama:Model"] ?? "qwen3:8b";
+            _baseUrl = _configuration["Ollama:BaseUrl"] ?? "http://10.0.12.54:11434";
+            _temperature = _configuration.GetValue<float>("Ollama:Temperature", 0.3f);
+            _maxOutputTokens = _configuration.GetValue<int>("Ollama:MaxTokens", 2048);
 
-            var timeout = _configuration.GetValue<int>("Gemini:TimeoutSeconds", 120);
+            var timeout = _configuration.GetValue<int>("Ollama:TimeoutSeconds", 120);
             _httpClient.Timeout = TimeSpan.FromSeconds(timeout);
 
-            _logger.LogInformation("[GeminiService] Initialized with model: {0}", _model);
+            _logger.LogInformation("[OllamaAIService] Initialized with model: {0}", _model);
         }
 
         /// <summary>
-        /// Generate response menggunakan Gemini 2.5 Flash dengan knowledge base context
+        /// Generate response menggunakan Ollama dengan knowledge base context
         /// </summary>
         public async Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null)
         {
@@ -66,15 +65,15 @@ namespace Jifas.Assistant.Services
                 if (string.IsNullOrWhiteSpace(userQuery))
                     return "Pertanyaan tidak valid. Silakan berikan pertanyaan yang jelas.";
 
-                _logger.LogInformation("[GeminiService] Processing query: {0}", userQuery);
+                _logger.LogInformation("[OllamaAIService] Processing query: {0}", userQuery);
 
                 if (kbResults == null || kbResults.Count == 0)
                 {
-                    _logger.LogWarning("[GeminiService] No KB results for query: {0}", userQuery);
+                    _logger.LogWarning("[OllamaAIService] No KB results for query: {0}", userQuery);
                     return BuildNoResultsMessage(userQuery);
                 }
 
-                _logger.LogInformation("[GeminiService] Found {0} KB results (relevance: {1:P0}), context: {2}",
+                _logger.LogInformation("[OllamaAIService] Found {0} KB results (relevance: {1:P0}), context: {2}",
                     kbResults.Count, kbResults.Max(r => r.Score), sessionContext ?? "(none)");
 
                 var intelligentPrompt = await _promptEngineering.BuildIntelligentPromptAsync(
@@ -85,17 +84,17 @@ namespace Jifas.Assistant.Services
                 if (string.IsNullOrEmpty(response))
                     return "Maaf, terjadi kesalahan dalam memproses jawaban. Silakan coba lagi.";
 
-                _logger.LogInformation("[GeminiService] Generated response: {0} chars", response.Length);
+                _logger.LogInformation("[OllamaAIService] Generated response: {0} chars", response.Length);
                 return response;
             }
             catch (HttpRequestException httpEx)
             {
-                _logger.LogError("[GeminiService] HTTP error calling Gemini API: {0}", httpEx, new object[] { httpEx.Message });
+                _logger.LogError("[OllamaAIService] HTTP error calling Ollama API: {0}", httpEx, new object[] { httpEx.Message });
                 return "Maaf, layanan AI saat ini tidak tersedia. Silakan coba lagi nanti.";
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error generating response: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error generating response: {0}", ex, new object[] { ex.Message });
                 return "Maaf, terjadi kesalahan dalam memproses permintaan Anda.";
             }
         }
@@ -139,21 +138,18 @@ Tulis HANYA 3 pertanyaan, format:
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error generating suggestions: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error generating suggestions: {0}", ex, new object[] { ex.Message });
                 return GetDefaultSuggestions();
             }
         }
 
         /// <summary>
-        /// Check apakah query dalam scope JIFAS menggunakan Gemini
-        /// </summary>
-        /// <summary>
-        /// Scope check tanpa LLM call â€” sudah dihandle OutOfScopeDetector via keyword matching.
+        /// Scope check tanpa LLM call - sudah dihandle OutOfScopeDetector via keyword matching.
         /// Method ini dipertahankan untuk kompatibilitas interface.
         /// </summary>
         public Task<bool> IsInScopeAsync(string userQuery)
         {
-            // Keyword-based check tanpa menggunakan Gemini API quota
+            // Keyword-based check tanpa menggunakan AI API
             var outOfScope = new[] { "cuaca", "berita", "politik", "film", "resep", "crypto", "bitcoin", "agama" };
             var query = userQuery?.ToLowerInvariant() ?? "";
             var isOut = outOfScope.Any(k => query.Contains(k));
@@ -161,8 +157,7 @@ Tulis HANYA 3 pertanyaan, format:
         }
 
         /// <summary>
-        /// Memanggil Gemini 2.5 Flash API dengan retry on 429 (rate limit)
-        /// Endpoint: POST /v1beta/{model}:generateContent?key={apiKey}
+        /// Memanggil Ollama API dengan retry on error
         /// </summary>
         public async Task<string> CallOllamaApiAsync(string prompt)
         {
@@ -173,81 +168,62 @@ Tulis HANYA 3 pertanyaan, format:
             {
                 try
                 {
-                    return await CallGeminiApiInternalAsync(prompt);
+                    return await CallOllamaApiInternalAsync(prompt);
                 }
                 catch (HttpRequestException ex) when (ex.Message.Contains("TooManyRequests") && attempt < maxRetries)
                 {
                     var delayMs = retryDelaysMs[attempt];
-                    _logger.LogWarning("[GeminiService] Rate limited (429), retry {0}/{1} in {2}ms...", (attempt + 1), maxRetries, delayMs);
+                    _logger.LogWarning("[OllamaAIService] Rate limited (429), retry {0}/{1} in {2}ms...", (attempt + 1), maxRetries, delayMs);
                     await Task.Delay(delayMs);
                 }
             }
 
-            throw new HttpRequestException("Gemini API rate limit exceeded after retries");
+            throw new HttpRequestException("Ollama API rate limit exceeded after retries");
         }
 
-        private async Task<string> CallGeminiApiInternalAsync(string prompt)
+        private async Task<string> CallOllamaApiInternalAsync(string prompt)
         {
             try
             {
-                var endpoint = $"{_baseUrl}/{_model}{GEMINI_GENERATE_ENDPOINT}{_apiKey}";
+                var endpoint = $"{_baseUrl}{OLLAMA_CHAT_ENDPOINT}";
 
-                // Gemini API request body
+                // Ollama /api/chat request body
                 var requestBody = new
                 {
-                    systemInstruction = new
+                    model = _model,
+                    messages = new[]
                     {
-                        parts = new[]
-                        {
-                            new
-                            {
-                                text = BuildJifasSystemInstruction()
-                            }
-                        }
+                        new { role = "system", content = BuildJifasSystemInstruction() },
+                        new { role = "user", content = prompt }
                     },
-                    contents = new[]
-                    {
-                        new
-                        {
-                            role = "user",
-                            parts = new[] { new { text = prompt } }
-                        }
-                    },
-                    generationConfig = new
+                    stream = false,
+                    options = new
                     {
                         temperature = _temperature,
-                        topP = 0.85,
-                        topK = 40,
-                        maxOutputTokens = _maxOutputTokens,
-                        responseMimeType = "text/plain"
-                    },
-                    safetySettings = new[]
-                    {
-                        new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_NONE" },
-                        new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_NONE" },
-                        new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_NONE" },
-                        new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_NONE" }
+                        top_p = 0.85,
+                        top_k = 40,
+                        num_predict = _maxOutputTokens
                     }
                 };
 
                 var jsonContent = JsonConvert.SerializeObject(requestBody, Formatting.None);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                _logger.LogDebug("[GeminiService] Calling Gemini endpoint: {0}", _model);
+                _logger.LogDebug("[OllamaAIService] Calling Ollama endpoint: {0}", endpoint);
 
                 var response = await _httpClient.PostAsync(endpoint, content);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorBody = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"[GeminiService] API error {response.StatusCode}: {errorBody}");
-                    throw new HttpRequestException($"Gemini API returned {response.StatusCode}: {errorBody}");
+                    _logger.LogError($"[OllamaAIService] API error {response.StatusCode}: {errorBody}");
+                    throw new HttpRequestException($"Ollama API returned {response.StatusCode}: {errorBody}");
                 }
 
                 var responseText = await response.Content.ReadAsStringAsync();
-                _logger.LogDebug("[GeminiService] Response received, parsing...");
+                _logger.LogDebug("[OllamaAIService] Response received, parsing...");
 
-                return ParseGeminiResponse(responseText);
+                return ParseOllamaResponse(responseText);
             }
             catch (HttpRequestException)
             {
@@ -255,40 +231,38 @@ Tulis HANYA 3 pertanyaan, format:
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error calling Gemini API: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error calling Ollama API: {0}", ex, new object[] { ex.Message });
                 throw;
             }
-        } // end CallGeminiApiInternalAsync
+        } // end CallOllamaApiInternalAsync
 
         /// <summary>
-        /// Parse response dari Gemini API format JSON
+        /// Parse response dari Ollama API format JSON.
+        /// Format: { "message": { "role": "assistant", "content": "..." } }
         /// </summary>
-        private string ParseGeminiResponse(string responseJson)
+        private string ParseOllamaResponse(string responseJson)
         {
             try
             {
                 var json = JObject.Parse(responseJson);
 
-                // Navigasi ke: candidates[0].content.parts[0].text
-                var text = json["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                // Ollama /api/chat response: message.content
+                var text = json["message"]?["content"]?.ToString();
 
                 if (!string.IsNullOrEmpty(text))
                     return text.Trim();
 
-                // Cek finish reason untuk error handling
-                var finishReason = json["candidates"]?[0]?["finishReason"]?.ToString();
-                if (finishReason == "SAFETY")
-                {
-                    _logger.LogWarning("[GeminiService] Response blocked by safety filter");
-                    return "Maaf, respons tidak dapat ditampilkan karena filter keamanan. Silakan reformulasikan pertanyaan Anda.";
-                }
+                // Fallback: cek field "response" (Ollama /api/generate format)
+                var fallback = json["response"]?.ToString();
+                if (!string.IsNullOrEmpty(fallback))
+                    return fallback.Trim();
 
-                _logger.LogWarning("[GeminiService] Could not extract text from response: {0}", responseJson.Substring(0, Math.Min(200, responseJson.Length)));
+                _logger.LogWarning("[OllamaAIService] Could not extract text from response: {0}", responseJson.Substring(0, Math.Min(200, responseJson.Length)));
                 return string.Empty;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiService] Error parsing Gemini response: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error parsing Ollama response: {0}", ex, new object[] { ex.Message });
                 return string.Empty;
             }
         }
@@ -446,7 +420,7 @@ Kamu adalah wajah digital JIFAS â€” bantu user dengan penuh keyakinan dan k
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("[GeminiService] Error parsing suggestions: {0}", ex.Message);
+                _logger.LogWarning("[OllamaAIService] Error parsing suggestions: {0}", ex.Message);
             }
 
             return suggestions.Count > 0 ? suggestions.Take(3).ToList() : GetDefaultSuggestions();
@@ -460,4 +434,8 @@ Kamu adalah wajah digital JIFAS â€” bantu user dengan penuh keyakinan dan k
         };
     }
 }
+
+
+
+
 

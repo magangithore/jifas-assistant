@@ -13,7 +13,7 @@ namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Local AI Service using Ollama/compatible server with Qwen3:8b model
-    /// - Replaces Gemini API for development and internal deployment
+    /// - Uses Ollama API for development and internal deployment
     /// - Same interface as IOllamaService for easy switching
     /// - Base URL: 10.0.12.54:11434
     /// - Model: qwen3:8b
@@ -51,7 +51,7 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Generate response using local AI with knowledge base context
         /// </summary>
-        public async Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults)
+        public async Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null)
         {
             try
             {

@@ -100,8 +100,8 @@ builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchServi
 builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();
 
 // AI Service - Ollama qwen3:8b (typed HttpClient + scoped interface registration)
-builder.Services.AddHttpClient<OllamaService>().Services
-    .AddScoped<IOllamaService, OllamaService>();
+builder.Services.AddHttpClient<OllamaAIService>().Services
+    .AddScoped<IOllamaService, OllamaAIService>();
 
 // Embedding Service - Ollama qwen3-embedding:4b
 builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();

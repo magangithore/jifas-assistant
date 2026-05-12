@@ -12,35 +12,35 @@ using Microsoft.Extensions.Logging;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Legacy Gemini Embedding Service (tidak aktif - gunakan OllamaEmbeddingService)
-    /// Menggantikan OllamaEmbeddingService - menghasilkan 768-dimensional vectors
-    /// Model: models/text-embedding-004 (state-of-the-art, gratis tier tersedia)
+    /// Legacy Embedding Service (tidak aktif - gunakan OllamaEmbeddingService)
+    /// Menghasilkan embedding vectors untuk Knowledge Base
+    /// Model dikonfigurasi via Embedding:Model di appsettings.json
     /// </summary>
-    public class GeminiEmbeddingService : IEmbeddingService
+    public class OllamaLegacyEmbeddingService : IEmbeddingService
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<GeminiEmbeddingService> _logger;
+        private readonly ILogger<OllamaLegacyEmbeddingService> _logger;
         private readonly string _apiKey;
         private readonly string _embeddingModel;
         private readonly int _timeoutSeconds;
-        private const string GEMINI_EMBED_BASE = "https://generativelanguage.googleapis.com/v1beta";
+        private const string OLLAMA_EMBED_BASE = "http://10.0.12.54:11434";
 
-        public GeminiEmbeddingService(
+        public OllamaLegacyEmbeddingService(
             HttpClient httpClient,
             IConfiguration configuration,
-            ILogger<GeminiEmbeddingService> logger)
+            ILogger<OllamaLegacyEmbeddingService> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
-            _apiKey = configuration["Gemini:ApiKey"] ?? throw new InvalidOperationException("Gemini:ApiKey is required");
-            _embeddingModel = configuration["Embedding:Model"] ?? "models/text-embedding-004";
+            _apiKey = configuration["Ollama:ApiKey"] ?? string.Empty;
+            _embeddingModel = configuration["Embedding:Model"] ?? "qwen3-embedding:4b";
             _timeoutSeconds = configuration.GetValue<int>("Embedding:TimeoutSeconds", 30);
         }
 
         /// <summary>
-        /// Generate single embedding dari text menggunakan Gemini text-embedding-004
+        /// Generate single embedding dari text
         /// </summary>
         public async Task<byte[]> GenerateEmbeddingAsync(string text)
         {
@@ -48,7 +48,7 @@ namespace Jifas.Assistant.Services
             {
                 if (string.IsNullOrWhiteSpace(text))
                 {
-                    _logger.LogWarning("[GeminiEmbedding] Empty text provided");
+                    _logger.LogWarning("[OllamaEmbedding] Empty text provided");
                     return null;
                 }
 
@@ -57,13 +57,13 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiEmbedding] Error generating embedding: {0}", ex.Message);
+                _logger.LogError("[OllamaEmbedding] Error generating embedding: {0}", ex.Message);
                 throw;
             }
         }
 
         /// <summary>
-        /// Generate multiple embeddings menggunakan Gemini batchEmbedContents API
+        /// Generate multiple embeddings menggunakan Ollama batchEmbedContents API
         /// </summary>
         public async Task<byte[][]> GenerateEmbeddingsAsync(string[] texts)
         {
@@ -71,12 +71,12 @@ namespace Jifas.Assistant.Services
             {
                 if (texts == null || texts.Length == 0)
                 {
-                    _logger.LogWarning("[GeminiEmbedding] No texts provided");
+                    _logger.LogWarning("[OllamaEmbedding] No texts provided");
                     return Array.Empty<byte[]>();
                 }
 
-                // Gemini batchEmbedContents endpoint
-                var url = $"{GEMINI_EMBED_BASE}/{_embeddingModel}:batchEmbedContents?key={_apiKey}";
+                // Ollama embedding endpoint
+                var url = $"{OLLAMA_EMBED_BASE}/{_embeddingModel}:batchEmbedContents?key={_apiKey}";
 
                 // Build batch request
                 var requests = texts.Select(t => new
@@ -94,15 +94,15 @@ namespace Jifas.Assistant.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
-                _logger.LogDebug("[GeminiEmbedding] Generating {0} embeddings with {1}", texts.Length, _embeddingModel);
+                _logger.LogDebug("[OllamaEmbedding] Generating {0} embeddings with {1}", texts.Length, _embeddingModel);
 
                 var response = await _httpClient.PostAsync(url, content, cts.Token);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("[GeminiEmbedding] API error {0}: {1}", response.StatusCode, error);
-                    throw new Exception($"Gemini Embedding API returned {response.StatusCode}: {error}");
+                    _logger.LogError("[OllamaEmbedding] API error {0}: {1}", response.StatusCode, error);
+                    throw new Exception($"Ollama Embedding API returned {response.StatusCode}: {error}");
                 }
 
                 var responseContent = await response.Content.ReadAsStringAsync();
@@ -127,25 +127,27 @@ namespace Jifas.Assistant.Services
                     result.Add(memoryStream.ToArray());
                 }
 
-                _logger.LogInformation("[GeminiEmbedding] Generated {0} embeddings successfully", result.Count);
+                _logger.LogInformation("[OllamaEmbedding] Generated {0} embeddings successfully", result.Count);
                 return result.ToArray();
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError("[GeminiEmbedding] HTTP error: {0}", ex.Message);
+                _logger.LogError("[OllamaEmbedding] HTTP error: {0}", ex.Message);
                 throw;
             }
             catch (OperationCanceledException)
             {
-                _logger.LogError("[GeminiEmbedding] Embedding request timeout ({0}s)", _timeoutSeconds);
+                _logger.LogError("[OllamaEmbedding] Embedding request timeout ({0}s)", _timeoutSeconds);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError("[GeminiEmbedding] Error generating embeddings: {0}", ex.Message);
+                _logger.LogError("[OllamaEmbedding] Error generating embeddings: {0}", ex.Message);
                 throw;
             }
         }
     }
 }
+
+
 

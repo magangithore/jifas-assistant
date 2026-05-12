@@ -19,7 +19,7 @@ namespace Jifas.Assistant.Services
     /// <summary>
     /// Detects out-of-scope queries using a two-stage approach:
     /// 1. Fast keyword pre-filter (no API call) to catch obvious off-topic queries
-    /// 2. Gemini AI for ambiguous cases — tight binary prompt (minimal tokens)
+    /// 2. Ollama AI for ambiguous cases — tight binary prompt (minimal tokens)
     /// In-scope by default to avoid blocking legitimate JIFAS questions.
     /// </summary>
     public class OutOfScopeDetector : IOutOfScopeDetector

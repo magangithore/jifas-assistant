@@ -45,7 +45,7 @@ namespace Jifas.Assistant.Services
         private const int MAX_REGENERATION_ATTEMPTS = 2;
 
         public ChatService(
-            IOllamaService geminiService,
+            IOllamaService ollamaService,
             IKnowledgeBaseService knowledgeBaseService,
             IOutOfScopeDetector outOfScopeDetector,
             ISuggestionService suggestionService,
@@ -62,7 +62,7 @@ namespace Jifas.Assistant.Services
             IResponseQualityService responseQuality,
             IConversationIntelligenceService conversationIntelligence)
         {
-            _ollamaService = geminiService;
+            _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
             _outOfScopeDetector = outOfScopeDetector;
             _suggestionService = suggestionService;
