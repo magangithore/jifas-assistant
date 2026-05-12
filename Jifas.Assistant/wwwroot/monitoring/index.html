@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JIFAS AI Monitoring Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --card:     #1a1d27;
+    --border:   #2a2d3e;
+    --accent:   #6366f1;
+    --green:    #22c55e;
+    --yellow:   #eab308;
+    --red:      #ef4444;
+    --blue:     #3b82f6;
+    --cyan:     #06b6d4;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --radius:   12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .brand { display: flex; align-items: center; gap: 12px; }
+  header .logo  { font-size: 22px; }
+  header h1     { font-size: 17px; font-weight: 700; color: #fff; }
+  header .sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  #status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #1e2a1e;
+    color: var(--green);
+    border: 1px solid #2a4a2a;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #status-badge.disconnected { background: #2a1e1e; color: var(--red); border-color: #4a2a2a; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .controls { display: flex; align-items: center; gap: 8px; }
+  select, button {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  select:hover, button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+  /* ── Layout ── */
+  main { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 24px 0 10px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* ── KPI cards ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: #fff; margin: 6px 0 2px; line-height: 1; }
+  .kpi-sub   { font-size: 11px; color: var(--muted); }
+  .kpi.accent  { border-top: 3px solid var(--accent); }
+  .kpi.green   { border-top: 3px solid var(--green);  }
+  .kpi.yellow  { border-top: 3px solid var(--yellow); }
+  .kpi.red     { border-top: 3px solid var(--red);    }
+  .kpi.blue    { border-top: 3px solid var(--blue);   }
+  .kpi.cyan    { border-top: 3px solid var(--cyan);   }
+
+  /* ── Charts row ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+  }
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .chart-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .chart-wrap { position: relative; height: 180px; }
+  .chart-wrap.tall { height: 240px; }
+
+  /* ── Live feed ── */
+  #live-feed {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    height: 130px;
+    overflow-y: auto;
+    padding: 10px 14px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .feed-line { color: var(--muted); }
+  .feed-line span.hi { color: var(--cyan); }
+  .feed-line span.ok { color: var(--green); }
+  .feed-line span.warn { color: var(--yellow); }
+  .feed-line span.err { color: var(--red); }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .table-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-header h3 { font-size: 13px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 1px solid var(--border);
+    background: #13161f;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #1e2130;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1e2035; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-ok   { background: #1a3a1a; color: var(--green); }
+  .badge-err  { background: #3a1a1a; color: var(--red); }
+  .badge-type { background: #1a1f3a; color: var(--blue); }
+
+  /* ── Gauge ── */
+  .gauge-row { display: flex; flex-direction: column; gap: 8px; }
+  .gauge-item { }
+  .gauge-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .gauge-track { background: #1e2130; border-radius: 4px; height: 6px; overflow: hidden; }
+  .gauge-fill  { height: 100%; border-radius: 4px; transition: width .4s ease; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .chart-grid   { grid-template-columns: 1fr; }
+    .chart-grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ═══════════════════════════════ -->
+<header>
+  <div class="brand">
+    <div>
+      <h1>JIFAS AI Monitoring</h1>
+      <div class="sub">Real-time token & performance dashboard</div>
+    </div>
+  </div>
+  <div class="controls">
+    <span id="wib-clock" style="font-size:12px;color:var(--cyan);font-family:monospace;margin-right:4px"></span>
+    <select id="window-select" onchange="changeWindow(this.value)">
+      <option value="15">Last 15 min</option>
+      <option value="60" selected>Last 60 min</option>
+      <option value="360">Last 6 h</option>
+      <option value="1440">Last 24 h</option>
+    </select>
+    <button onclick="refresh()" class="primary">⟳ Refresh</button>
+    <div id="status-badge"><span class="dot"></span><span id="status-text">Connecting…</span></div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ MAIN ════════════════════════════════ -->
+<main>
+
+  <!-- KPI row -->
+  <div class="section-title">Key Metrics</div>
+  <div class="kpi-grid">
+    <div class="kpi accent">
+      <div class="kpi-label">Total Calls</div>
+      <div class="kpi-value" id="kpi-calls">–</div>
+      <div class="kpi-sub" id="kpi-window">last 60 min</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Avg Latency</div>
+      <div class="kpi-value" id="kpi-latency">–</div>
+      <div class="kpi-sub">ms per call</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Tokens/sec</div>
+      <div class="kpi-value" id="kpi-tps">–</div>
+      <div class="kpi-sub">generation speed</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-label">Prompt Tokens</div>
+      <div class="kpi-value" id="kpi-prompt-tok">–</div>
+      <div class="kpi-sub" id="kpi-prompt-sub">avg / total</div>
+    </div>
+    <div class="kpi cyan">
+      <div class="kpi-label">Output Tokens</div>
+      <div class="kpi-value" id="kpi-out-tok">–</div>
+      <div class="kpi-sub" id="kpi-out-sub">avg / total</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">Error Rate</div>
+      <div class="kpi-value" id="kpi-errors">–</div>
+      <div class="kpi-sub" id="kpi-err-count">– errors</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">Avg Response</div>
+      <div class="kpi-value" id="kpi-resp-len">–</div>
+      <div class="kpi-sub">chars</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Last Call</div>
+      <div class="kpi-value" style="font-size:15px;margin-top:8px" id="kpi-last">–</div>
+      <div class="kpi-sub">UTC</div>
+    </div>
+  </div>
+
+  <!-- Time-series charts -->
+  <div class="section-title">Timeline</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>📈 Calls & Latency over Time</h3>
+      <div class="chart-wrap tall"><canvas id="chart-timeline"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🔤 Token Usage over Time</h3>
+      <div class="chart-wrap tall"><canvas id="chart-tokens"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Detail charts -->
+  <div class="section-title">Breakdown</div>
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <h3>⏱ Timing Breakdown (avg ms)</h3>
+      <div class="chart-wrap"><canvas id="chart-timing"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>📋 Call Type Distribution</h3>
+      <div class="chart-wrap"><canvas id="chart-calltype"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🏆 Top Modules</h3>
+      <div class="gauge-row" id="gauge-modules" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- Live feed -->
+  <div class="section-title">Live Event Stream</div>
+  <div id="live-feed"></div>
+
+  <!-- Recent logs table -->
+  <div class="section-title">Recent AI Calls</div>
+  <div class="table-card">
+    <div class="table-header">
+      <h3>Call Log</h3>
+      <span style="font-size:11px;color:var(--muted)" id="log-count">0 entries</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Time (WIB)</th>
+            <th>User</th>
+            <th>Module</th>
+            <th>Type</th>
+            <th>Prompt tok</th>
+            <th>Output tok</th>
+            <th>Total ms</th>
+            <th>Tok/s</th>
+            <th>Response chars</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>JIFAS AI Monitoring Dashboard · Real-time via SignalR · Data from SQL Server</footer>
+
+<!-- ═══════════════════════════════ SCRIPT ═══════════════════════════════ -->
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let currentWindow = 60;
+let allLogs       = [];
+let charts        = {};
+
+// ── Utility ────────────────────────────────────────────────────────────────
+// Use en-US for numbers so 2418 → "2,418" not "2.418" (id-ID uses . as thousands which looks like decimal)
+const fmtNum  = (n, d = 0) => n == null ? '–' : (typeof n === 'number' ? n.toLocaleString('en-US', {maximumFractionDigits: d, minimumFractionDigits: d}) : n);
+const fmt     = fmtNum; // alias kept for compatibility
+
+// Timezone Jakarta WIB (UTC+7)
+const JAKARTA_TZ = 'Asia/Jakarta';
+
+// Safe UTC parser — ensures ISO string without 'Z' still parses as UTC
+function parseUtc(iso) {
+  if (!iso) return null;
+  // If already ends with Z or +offset, parse directly; otherwise append Z
+  const s = /[Z+\-]\d*$/.test(iso) ? iso : iso + 'Z';
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+const fmtTime = iso => {
+  const d = parseUtc(iso);
+  return d ? d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit', timeZone: JAKARTA_TZ}) : '–';
+};
+const fmtDateTime = iso => {
+  const d = parseUtc(iso);
+  return d ? d.toLocaleString('id-ID', {timeZone: JAKARTA_TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'}) : '–';
+};
+
+// Live WIB clock in header
+function startClock() {
+  const tick = () => {
+    const now = new Date();
+    const wib = now.toLocaleString('id-ID', {timeZone: JAKARTA_TZ, hour:'2-digit', minute:'2-digit', second:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'});
+    const clockEl = el('wib-clock');
+    if (clockEl) clockEl.textContent = wib + ' WIB';
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+function el(id) { return document.getElementById(id); }
+
+// ── Chart defaults ──────────────────────────────────────────────────────────
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = '#2a2d3e';
+const chartFont = { family: "'Segoe UI', system-ui, sans-serif", size: 11 };
+
+function makeChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = el(id).getContext('2d');
+  charts[id] = new Chart(ctx, config);
+  return charts[id];
+}
+
+// ── KPI update ──────────────────────────────────────────────────────────────
+function updateKPIs(stats) {
+  if (!stats) return;
+  el('kpi-calls').textContent    = fmt(stats.totalCalls);
+  el('kpi-window').textContent   = `last ${currentWindow} min`;
+  el('kpi-latency').textContent  = fmt(stats.avgTotalDurationMs, 0);
+  el('kpi-tps').textContent      = fmt(stats.avgTokensPerSecond, 1);
+  el('kpi-prompt-tok').textContent = fmt(stats.avgPromptTokens, 0);
+  el('kpi-prompt-sub').textContent = `avg · ${fmt(stats.totalPromptTokens)} total`;
+  el('kpi-out-tok').textContent  = fmt(stats.avgCompletionTokens, 0);
+  el('kpi-out-sub').textContent  = `avg · ${fmt(stats.totalCompletionTokens)} total`;
+  el('kpi-errors').textContent   = (stats.errorRate ?? 0).toFixed(1) + '%';
+  el('kpi-err-count').textContent = `${fmt(stats.errorCalls)} errors`;
+  el('kpi-resp-len').textContent = fmt(stats.avgResponseLengthChars, 0);
+  el('kpi-last').textContent     = stats.lastCallAt ? fmtTime(stats.lastCallAt) : '–';
+}
+
+// ── Timeline chart ──────────────────────────────────────────────────────────
+function updateTimeline(series) {
+  const labels  = series.map(p => fmtTime(p.minute));
+  const calls   = series.map(p => p.calls);
+  const latency = series.map(p => p.avgDurationMs);
+
+  makeChart('chart-timeline', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Calls',
+          data: calls,
+          backgroundColor: 'rgba(99,102,241,0.55)',
+          borderColor: '#6366f1',
+          borderWidth: 1,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Avg Latency (ms)',
+          data: latency,
+          type: 'line',
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.08)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { labels: { font: chartFont, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { font: chartFont, maxRotation: 45, maxTicksLimit: 12 } },
+        y:  { position: 'left',  title: { display: true, text: 'Calls',  font: chartFont }, ticks: { font: chartFont } },
+        y1: { position: 'right', title: { display: true, text: 'ms', font: chartFont }, ticks: { font: chartFont }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+// ── Token chart ─────────────────────────────────────────────────────────────
+function updateTokenChart(series) {
+  const labels = series.map(p => fmtTime(p.minute));
+  const tokens = series.map(p => p.totalTokens);
+
+  makeChart('chart-tokens', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Total Tokens',
+        data: tokens,
+        borderColor: '#eab308',
+        backgroundColor: 'rgba(234,179,8,0.12)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { labels: { font: chartFont, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { font: chartFont, maxRotation: 45, maxTicksLimit: 12 } },
+        y: { ticks: { font: chartFont } }
+      }
+    }
+  });
+}
+
+// ── Timing breakdown ─────────────────────────────────────────────────────────
+function updateTimingChart(logs) {
+  if (!logs.length) return;
+  const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length || 0;
+  const data = {
+    load:   avg(logs.map(l => l.loadDurationMs  || 0)),
+    prompt: avg(logs.map(l => l.promptEvalDurationMs || 0)),
+    gen:    avg(logs.map(l => l.evalDurationMs   || 0))
+  };
+
+  makeChart('chart-timing', {
+    type: 'bar',
+    data: {
+      labels: ['Load Model', 'Prompt Eval', 'Generation'],
+      datasets: [{
+        data: [data.load, data.prompt, data.gen],
+        backgroundColor: ['#6366f1','#3b82f6','#22c55e'],
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { font: chartFont } }, y: { ticks: { font: chartFont } } }
+    }
+  });
+}
+
+// ── Call type donut ──────────────────────────────────────────────────────────
+function updateCallTypeChart(logs) {
+  const counts = {};
+  logs.forEach(l => { const t = l.callType || 'chat'; counts[t] = (counts[t] || 0) + 1; });
+  const labels = Object.keys(counts);
+  const data   = Object.values(counts);
+  const colors = ['#6366f1','#3b82f6','#22c55e','#eab308','#ef4444','#06b6d4'];
+
+  makeChart('chart-calltype', {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors.slice(0, labels.length),
+        borderWidth: 2,
+        borderColor: '#1a1d27'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: chartFont, boxWidth: 12, padding: 10 } }
+      }
+    }
+  });
+}
+
+// ── Module gauge ─────────────────────────────────────────────────────────────
+function updateModuleGauges(logs) {
+  const counts = {};
+  logs.forEach(l => { if (l.activeModule) counts[l.activeModule] = (counts[l.activeModule] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const max    = sorted.length ? sorted[0][1] : 1;
+  const gaugeCols = ['#6366f1','#3b82f6','#22c55e','#eab308','#ef4444','#06b6d4'];
+  const container = el('gauge-modules');
+  container.innerHTML = '';
+  if (!sorted.length) { container.innerHTML = '<div style="color:var(--muted);font-size:12px">No module data yet</div>'; return; }
+  sorted.forEach(([mod, cnt], i) => {
+    const pct = Math.round(cnt / max * 100);
+    container.insertAdjacentHTML('beforeend', `
+      <div class="gauge-item">
+        <div class="gauge-label"><span>${mod}</span><span>${cnt}</span></div>
+        <div class="gauge-track"><div class="gauge-fill" style="width:${pct}%;background:${gaugeCols[i % gaugeCols.length]}"></div></div>
+      </div>`);
+  });
+}
+
+// ── Log table ────────────────────────────────────────────────────────────────
+function renderTable(logs) {
+  el('log-count').textContent = `${logs.length} entries`;
+  const tbody = el('log-tbody');
+  tbody.innerHTML = '';
+  logs.slice(0, 200).forEach(l => {
+    const tps   = (l.tokensPerSecond != null && l.tokensPerSecond > 0) ? fmtNum(l.tokensPerSecond, 1) : '–';
+    const user  = l.userId && l.userId.trim() ? l.userId.trim().substring(0, 22) : '<span style="color:var(--muted)">–</span>';
+    const badge = l.isError
+      ? '<span class="badge badge-err">ERROR</span>'
+      : '<span class="badge badge-ok">OK</span>';
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${fmtDateTime(l.createdAt)}</td>
+        <td title="${l.userId||''}">${user}</td>
+        <td>${l.activeModule || '<span style="color:var(--muted)">–</span>'}</td>
+        <td><span class="badge badge-type">${l.callType || 'chat'}</span></td>
+        <td><strong>${fmtNum(l.promptTokens)}</strong></td>
+        <td><strong>${fmtNum(l.completionTokens)}</strong></td>
+        <td>${fmtNum(l.totalDurationMs)} ms</td>
+        <td>${tps}</td>
+        <td>${fmtNum(l.responseLengthChars)}</td>
+        <td>${badge}</td>
+      </tr>`);
+  });
+}
+
+// ── Live feed ────────────────────────────────────────────────────────────────
+function addFeedLine(m) {
+  const feed   = el('live-feed');
+  const ts     = fmtTime(m.createdAt);
+  const user   = m.userId && m.userId.trim() ? m.userId.trim() : 'unknown';
+  const mod    = m.activeModule || '–';
+  const status = m.isError ? '<span class="err">ERROR</span>' : '<span class="ok">OK</span>';
+  const tps    = (m.tokensPerSecond != null && m.tokensPerSecond > 0) ? fmtNum(m.tokensPerSecond, 1) + ' t/s' : '? t/s';
+  feed.insertAdjacentHTML('afterbegin',
+    `<div class="feed-line"><span class="hi">${ts}</span> · ${status} · `+
+    `user=<span class="hi">${user}</span> · `+
+    `mod=<span class="hi">${mod}</span> · `+
+    `prompt=<span class="warn">${fmtNum(m.promptTokens)}t</span> · `+
+    `output=<span class="warn">${fmtNum(m.completionTokens)}t</span> · `+
+    `<span class="ok">${fmtNum(m.totalDurationMs)}ms</span> · `+
+    `<span class="hi">${tps}</span></div>`);
+  // Keep max 200 lines
+  while (feed.children.length > 200) feed.removeChild(feed.lastChild);
+}
+
+// ── Full refresh ─────────────────────────────────────────────────────────────
+async function refresh() {
+  try {
+    const r    = await fetch(`/api/monitoring/all?minutes=${currentWindow}`);
+    const data = await r.json();
+    updateKPIs(data.stats);
+    updateTimeline(data.timeSeries || []);
+    updateTokenChart(data.timeSeries || []);
+    allLogs = data.logs || [];
+    renderTable(allLogs);
+    updateTimingChart(allLogs);
+    updateCallTypeChart(allLogs);
+    updateModuleGauges(allLogs);
+  } catch (e) {
+    console.error('Refresh error:', e);
+  }
+}
+
+function changeWindow(val) {
+  currentWindow = parseInt(val);
+  refresh();
+}
+
+// ── SignalR real-time ─────────────────────────────────────────────────────────
+const connection = new signalR.HubConnectionBuilder()
+  .withUrl('/hubs/monitoring')
+  .withAutomaticReconnect([1000, 3000, 10000])
+  .build();
+
+connection.on('NewMetric', metric => {
+  addFeedLine(metric);
+  // Prepend to log table
+  allLogs.unshift(metric);
+  if (allLogs.length > 500) allLogs.pop();
+  renderTable(allLogs);
+  // Update timing/module gauges live
+  updateTimingChart(allLogs.slice(0, 50));
+  updateCallTypeChart(allLogs);
+  updateModuleGauges(allLogs);
+  // Refresh KPIs from API (quick fetch)
+  fetch(`/api/monitoring/stats?minutes=${currentWindow}`)
+    .then(r => r.json()).then(updateKPIs).catch(() => {});
+});
+
+connection.onreconnecting(() => {
+  el('status-badge').className = 'disconnected';
+  el('status-text').textContent = 'Reconnecting…';
+});
+connection.onreconnected(() => {
+  el('status-badge').className = '';
+  el('status-text').textContent = 'Live';
+  refresh();
+});
+connection.onclose(() => {
+  el('status-badge').className = 'disconnected';
+  el('status-text').textContent = 'Disconnected';
+});
+
+async function startSignalR() {
+  try {
+    await connection.start();
+    el('status-badge').className = '';
+    el('status-text').textContent = 'Live';
+  } catch (e) {
+    el('status-badge').className = 'disconnected';
+    el('status-text').textContent = 'No SignalR';
+    console.warn('SignalR unavailable:', e);
+  }
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+(async () => {
+  startClock();
+  await Promise.all([refresh(), startSignalR()]);
+  // Periodic refresh for timeline even when no new events
+  setInterval(refresh, 30_000);
+})();
+</script>
+</body>
+</html>

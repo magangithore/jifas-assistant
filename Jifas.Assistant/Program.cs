@@ -9,6 +9,7 @@ using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
 using Jifas.Assistant.Middleware;
+using Jifas.Assistant.Hubs;
 using jifas_assistant.DAL.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -87,6 +88,9 @@ builder.Services.AddCors(options =>
 // 7. Add In-Memory Caching
 builder.Services.AddMemoryCache();
 
+// 7.1 Add SignalR for real-time monitoring dashboard
+builder.Services.AddSignalR();
+
 // 7.5 Add HttpClient Factory
 builder.Services.AddHttpClient();
 
@@ -128,6 +132,9 @@ builder.Services.AddScoped<IFeedbackLearningService>(sp => sp.GetRequiredService
 
 // User long-term memory (persistent per-user profile)
 builder.Services.AddScoped<IUserMemoryService, UserMemoryService>();
+
+// AI Monitoring Service (persist + broadcast metrics)
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 
 // ChatService - MUST be registered AFTER all its dependencies
 builder.Services.AddScoped<IChatService, ChatService>();
@@ -227,6 +234,7 @@ app.UseAuthorization();
 // 6. Map Endpoints (MUST be before Swagger for discovery)
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapHub<MonitoringHub>("/hubs/monitoring");  // SignalR real-time monitoring
 
 // 7. Swagger MIDDLEWARE (AFTER endpoint mapping for proper discovery)
 // Enable Swagger ONLY in Development

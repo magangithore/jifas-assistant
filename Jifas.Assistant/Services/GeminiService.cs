@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -22,6 +23,7 @@ namespace Jifas.Assistant.Services
         private readonly ILoggerService _logger;
         private readonly IPromptEngineeringService _promptEngineering;
         private readonly IKnowledgeBaseSearchService _kbSearch;
+        private readonly IMonitoringService _monitoring;
         private readonly string _apiKey;
         private readonly string _model;
         private readonly string _baseUrl;
@@ -30,14 +32,31 @@ namespace Jifas.Assistant.Services
 
         private const string OLLAMA_CHAT_ENDPOINT = "/api/chat";
 
+        // AsyncLocal is safe across await boundaries (unlike [ThreadStatic])
+        private static readonly AsyncLocal<string?> _currentCallType  = new();
+        private static readonly AsyncLocal<string?> _currentUserId    = new();
+        private static readonly AsyncLocal<string?> _currentSessionId = new();
+        private static readonly AsyncLocal<string?> _currentModule    = new();
+
+        /// <inheritdoc />
+        public void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat")
+        {
+            _currentCallType.Value  = callType;
+            _currentUserId.Value    = userId;
+            _currentSessionId.Value = sessionId;
+            _currentModule.Value    = activeModule;
+        }
+
         public OllamaAIService(
             HttpClient httpClient,
             IConfiguration configuration,
             ILoggerService logger,
             IPromptEngineeringService promptEngineering,
-            IKnowledgeBaseSearchService kbSearch)
+            IKnowledgeBaseSearchService kbSearch,
+            IMonitoringService monitoring)
         {
             _httpClient = httpClient;
+            _monitoring = monitoring;
             _configuration = configuration;
             _logger = logger;
             _promptEngineering = promptEngineering ?? throw new ArgumentNullException(nameof(promptEngineering));
@@ -183,6 +202,11 @@ Tulis HANYA 3 pertanyaan, format:
 
         private async Task<string> CallOllamaApiInternalAsync(string prompt)
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            bool isError = false;
+            string? errorMsg = null;
+            string responseText = string.Empty;
+
             try
             {
                 var endpoint = $"{_baseUrl}{OLLAMA_CHAT_ENDPOINT}";
@@ -207,11 +231,11 @@ Tulis HANYA 3 pertanyaan, format:
                 };
 
                 var jsonContent = JsonConvert.SerializeObject(requestBody, Formatting.None);
-                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 _logger.LogDebug("[OllamaAIService] Calling Ollama endpoint: {0}", endpoint);
 
-                var response = await _httpClient.PostAsync(endpoint, content);
+                var response = await _httpClient.PostAsync(endpoint, httpContent);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -220,21 +244,111 @@ Tulis HANYA 3 pertanyaan, format:
                     throw new HttpRequestException($"Ollama API returned {response.StatusCode}: {errorBody}");
                 }
 
-                var responseText = await response.Content.ReadAsStringAsync();
+                responseText = await response.Content.ReadAsStringAsync();
+                sw.Stop();
                 _logger.LogDebug("[OllamaAIService] Response received, parsing...");
+
+                // ── Extract Ollama performance metrics ──────────────────────
+                var parsed = ExtractOllamaMetrics(responseText, prompt, sw.ElapsedMilliseconds);
+                _ = _monitoring.RecordAsync(parsed); // fire-and-forget; never blocks generation
+                // ────────────────────────────────────────────────────────────
 
                 return ParseOllamaResponse(responseText);
             }
             catch (HttpRequestException)
             {
+                sw.Stop();
+                isError = true;
+                errorMsg = "HTTP error calling Ollama";
+                _ = _monitoring.RecordAsync(new AiCallMetrics
+                {
+                    Model       = _model,
+                    CallType    = _currentCallType.Value ?? "chat",
+                    PromptLengthChars = prompt.Length,
+                    TotalDurationMs   = sw.ElapsedMilliseconds,
+                    IsError     = true,
+                    ErrorMessage = errorMsg,
+                    CreatedAt   = DateTime.UtcNow
+                });
                 throw;
             }
             catch (Exception ex)
             {
+                sw.Stop();
                 _logger.LogError("[OllamaAIService] Error calling Ollama API: {0}", ex, new object[] { ex.Message });
+                _ = _monitoring.RecordAsync(new AiCallMetrics
+                {
+                    Model       = _model,
+                    CallType    = _currentCallType.Value ?? "chat",
+                    PromptLengthChars = prompt.Length,
+                    TotalDurationMs   = sw.ElapsedMilliseconds,
+                    IsError     = true,
+                    ErrorMessage = ex.Message,
+                    CreatedAt   = DateTime.UtcNow
+                });
                 throw;
             }
         } // end CallOllamaApiInternalAsync
+
+        /// <summary>
+        /// Extracts token counts and timing from Ollama /api/chat response JSON.
+        /// Ollama returns durations in nanoseconds; we convert to milliseconds.
+        /// Fields: prompt_eval_count, eval_count, total_duration, load_duration,
+        ///         prompt_eval_duration, eval_duration.
+        /// </summary>
+        private AiCallMetrics ExtractOllamaMetrics(string responseJson, string prompt, long wallClockMs)
+        {
+            try
+            {
+                var j = JObject.Parse(responseJson);
+
+                long NsToMs(string field) => j[field] != null
+                    ? (long)(j[field]!.Value<long>() / 1_000_000.0)
+                    : 0;
+
+                var promptTokens     = j["prompt_eval_count"]?.Value<int>() ?? 0;
+                var completionTokens = j["eval_count"]?.Value<int>() ?? 0;
+                var evalDurationMs   = NsToMs("eval_duration");
+                var tokensPerSec     = evalDurationMs > 0
+                    ? completionTokens / (evalDurationMs / 1000.0) : 0;
+
+                var responseContent  = j["message"]?["content"]?.ToString() ?? string.Empty;
+
+                _logger.LogInformation(
+                    "[OllamaAIService][Metrics] prompt={0}t completion={1}t total={2}ms tps={3:F1} | callType={4} userId={5}",
+                    promptTokens, completionTokens, wallClockMs, tokensPerSec, 
+                    _currentCallType.Value ?? "(null)", _currentUserId.Value ?? "(null)");
+
+                return new AiCallMetrics
+                {
+                    UserId               = _currentUserId.Value,
+                    SessionId            = _currentSessionId.Value,
+                    ActiveModule         = _currentModule.Value,
+                    Model                = _model,
+                    CallType             = _currentCallType.Value ?? "chat",
+                    PromptTokens         = promptTokens,
+                    CompletionTokens     = completionTokens,
+                    TotalDurationMs      = NsToMs("total_duration") > 0 ? NsToMs("total_duration") : wallClockMs,
+                    LoadDurationMs       = NsToMs("load_duration"),
+                    PromptEvalDurationMs = NsToMs("prompt_eval_duration"),
+                    EvalDurationMs       = evalDurationMs,
+                    PromptLengthChars    = prompt.Length,
+                    ResponseLengthChars  = responseContent.Length,
+                    IsError              = false,
+                    CreatedAt            = DateTime.UtcNow
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[OllamaAIService] Could not extract metrics: {0}", ex.Message);
+                return new AiCallMetrics
+                {
+                    Model = _model, CallType = _currentCallType.Value ?? "chat",
+                    TotalDurationMs = wallClockMs, PromptLengthChars = prompt.Length,
+                    CreatedAt = DateTime.UtcNow
+                };
+            }
+        }
 
         /// <summary>
         /// Parse response dari Ollama API format JSON.

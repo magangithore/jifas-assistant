@@ -31,5 +31,13 @@ public partial class JIFAS_AssistantContext
             entity.Property(e => e.LastSeenAt).HasDefaultValueSql("(getutcdate())");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
         });
+
+        modelBuilder.Entity<AiUsageLog>(entity =>
+        {
+            entity.ToTable("AiUsageLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.Model).HasDefaultValue("qwen3:8b");
+        });
     }
 }

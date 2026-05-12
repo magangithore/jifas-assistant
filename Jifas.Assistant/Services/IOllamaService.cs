@@ -35,6 +35,13 @@ namespace Jifas.Assistant.Services
         /// Uses Local Ollama (qwen3:8b model) for generating natural responses
         /// </summary>
         Task<string> CallOllamaApiAsync(string prompt);
+
+        /// <summary>
+        /// Set per-call context (userId, sessionId, module, callType) so monitoring
+        /// can attach identity information to each recorded metric.
+        /// Must be called before GenerateResponseAsync / GenerateSuggestionsAsync.
+        /// </summary>
+        void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat");
     }
 
     public class KnowledgeBaseResult

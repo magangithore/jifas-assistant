@@ -71,8 +71,5 @@
   <ItemGroup>
     <ProjectReference Include="..\jifas_assistant.DAL\jifas_assistant.DAL.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
 
 </Project>

@@ -393,5 +393,8 @@ namespace Jifas.Assistant.Services
             "Apa saja status dalam workflow approval JIFAS?",
             "Bagaimana cara melihat riwayat transaksi di JIFAS?"
         ];
+
+        // OllamaService does not record metrics; SetCallContext is a no-op here.
+        public void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat") { }
     }
 }

@@ -41,6 +41,7 @@ namespace Jifas.Assistant.Services
         private readonly IResponseQualityService _responseQuality;
         private readonly IConversationIntelligenceService _conversationIntelligence;
         private readonly IUserMemoryService _userMemory;
+        private readonly IMonitoringService _monitoring;
 
         private const int MIN_KB_RESULTS_REQUIRED = 1;
         private const int MAX_REGENERATION_ATTEMPTS = 2;
@@ -62,7 +63,8 @@ namespace Jifas.Assistant.Services
             IQueryUnderstandingService queryUnderstanding,
             IResponseQualityService responseQuality,
             IConversationIntelligenceService conversationIntelligence,
-            IUserMemoryService userMemory)
+            IUserMemoryService userMemory,
+            IMonitoringService monitoring)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
@@ -82,6 +84,7 @@ namespace Jifas.Assistant.Services
             _responseQuality = responseQuality ?? throw new ArgumentNullException(nameof(responseQuality));
             _conversationIntelligence = conversationIntelligence ?? throw new ArgumentNullException(nameof(conversationIntelligence));
             _userMemory = userMemory ?? throw new ArgumentNullException(nameof(userMemory));
+            _monitoring = monitoring ?? throw new ArgumentNullException(nameof(monitoring));
         }
 
         public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request)
@@ -103,6 +106,14 @@ namespace Jifas.Assistant.Services
 
             // ?? INITIALIZE PERFORMANCE METRICS
             var metrics = new PerformanceMetrics();
+
+            // ?? SET MONITORING CONTEXT EARLY (before any processing)
+            // This ensures all AI calls are tracked with user identity
+            _ollamaService.SetCallContext(
+                userId:       request?.UserId,
+                sessionId:    request?.SessionId,
+                activeModule: request?.Context?.ActiveModule,
+                callType:     "chat");
 
             var isFirstMessage = string.IsNullOrWhiteSpace(request?.SessionId);
 
@@ -404,16 +415,40 @@ namespace Jifas.Assistant.Services
 
                  // ?? STEP 7: GENERATE SUGGESTIONS (with caching)
                  var suggestionsStopwatch2 = Stopwatch.StartNew();
+
+                 // Update callType for suggestions
+                 _ollamaService.SetCallContext(
+                     userId:       request?.UserId,
+                     sessionId:    request?.SessionId,
+                     activeModule: request?.Context?.ActiveModule,
+                     callType:     "suggestions");
+
                  if (enableCache)
                  {
                      var suggestionCacheKey = $"Suggestions_{HashHelper.ToShortStableHash(aiResponse)}";
                      var cachedResult = _cacheService.Get<List<string>>(suggestionCacheKey);
-                     
+
                      if (cachedResult != null)
                      {
                          _logger.LogInformation("[ChatService] ?? Suggestions cache HIT");
                          response.Suggestions = cachedResult;
                          metrics.SuggestionsCached = true;
+
+                         // Still record a monitoring entry so the dashboard shows this call
+                         _ = _monitoring.RecordAsync(new AiCallMetrics
+                         {
+                             UserId              = request?.UserId,
+                             SessionId           = request?.SessionId,
+                             ActiveModule        = request?.Context?.ActiveModule,
+                             CallType            = "suggestions",
+                             Model               = "cache",
+                             PromptTokens        = 0,
+                             CompletionTokens    = 0,
+                             TotalDurationMs     = 0,
+                             ResponseLengthChars = cachedResult.Sum(s => s.Length),
+                             IsError             = false,
+                             CreatedAt           = DateTime.UtcNow
+                         });
                      }
                      else
                      {

@@ -223,6 +223,9 @@ ATURAN WAJIB:
             return await CallLocalAIAsync(prompt);
         }
 
+        // LocalAIService does not record metrics; SetCallContext is a no-op here.
+        public void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat") { }
+
         /// <summary>
         /// Helper: Normalize query for better matching
         /// </summary>

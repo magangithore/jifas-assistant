@@ -52,6 +52,12 @@ namespace Jifas.Assistant.Controllers
                     return BadRequest(new { error = "Invalid request", details = ModelState });
                 }
 
+                // Extract user from HTTP context if not provided in request
+                if (string.IsNullOrWhiteSpace(request?.UserId))
+                {
+                    request.UserId = HttpContext?.User?.Identity?.Name ?? "unknown";
+                }
+
                 // ?? BACKEND DEBUG: Log received context from frontend
                 _loggerService.LogDebug(
                     $"[ChatController] Request received — UserId: {request?.UserId}, " +
