@@ -1,4 +1,4 @@
-LAPORAN INQUIRY AP (ACCOUNTS PAYABLE INQUIRY)
+﻿LAPORAN INQUIRY AP (ACCOUNTS PAYABLE INQUIRY)
 
 TUJUAN:
 Memberikan informasi DETAIL tentang setiap tagihan/invoice dari vendor/supplier yang diterima dan tercatat sebagai hutang (AP).
@@ -167,7 +167,7 @@ PEMAHAMAN ISTILAH PENTING:
    - Adalah pajak penjualan/konsumsi yang dikenakan atas transaksi pembelian
    - Rate standar di Indonesia: 10% (sejak 2022, sebelumnya 9%)
    - Rumus: PPN = DPP × 10%
-   - Contoh: DPP 500.000 → PPN = 50.000
+   - Contoh: DPP 500.000 -> PPN = 50.000
    - PPN adalah pajak yang dapat dikreditkan (dapat diklaim kembali)
    - Bisa 0 jika invoice exempt dari PPN (barang/jasa tertentu)
 
@@ -177,8 +177,8 @@ PEMAHAMAN ISTILAH PENTING:
    - Contoh PPH 23: Dipotong 2% untuk jasa dan sewa, 15% untuk honorarium, dll
    - PPH merupakan pajak terutang vendor, tapi dipotong oleh pembayar
    - Rumus berbeda-beda tergantung jenis pelayanan
-   - Contoh: Invoice 1.000.000 dengan PPH 23 sebesar 2% → PPH = 20.000
-            → Pembayaran = 1.000.000 - 20.000 = 980.000
+   - Contoh: Invoice 1.000.000 dengan PPH 23 sebesar 2% -> PPH = 20.000
+            -> Pembayaran = 1.000.000 - 20.000 = 980.000
 
 7. TOTAL (IDR)
    - Adalah total nilai akhir yang harus dibayarkan
@@ -202,15 +202,15 @@ PEMAHAMAN ISTILAH PENTING:
 
 10. STATUS (POSTED vs UNPOSTED)
     - POSTED: Invoice sudah di-post di sistem AP (hutang sudah diakui)
-             → Sudah tercatat di GL (General Ledger)
-             → Included dalam AP aging report
-             → Ready untuk pembayaran
+             -> Sudah tercatat di GL (General Ledger)
+             -> Included dalam AP aging report
+             -> Ready untuk pembayaran
     
     - UNPOSTED: Invoice belum di-post di sistem AP
-               → Masih dalam review atau approval
-               → Belum tercatat di GL
-               → Belum included dalam AP outstanding
-               → Status: PENDING
+               -> Masih dalam review atau approval
+               -> Belum tercatat di GL
+               -> Belum included dalam AP outstanding
+               -> Status: PENDING
 
 KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
 
@@ -276,9 +276,9 @@ Ketika pengguna mengubah status (dengan company yang sama):
 - Akan tampil hanya invoice dengan status yang dipilih
 
 Contoh:
-- Filter Status = "Posted" → Hanya invoice yang sudah di-post yang tampil
-- Filter Status = "Unposted" → Hanya invoice yang belum di-post yang tampil
-- Filter Status = "All Status" → Semua invoice (posted + unposted) tampil
+- Filter Status = "Posted" -> Hanya invoice yang sudah di-post yang tampil
+- Filter Status = "Unposted" -> Hanya invoice yang belum di-post yang tampil
+- Filter Status = "All Status" -> Semua invoice (posted + unposted) tampil
 
 FITUR PERPINDAHAN PERIODE TANGGAL:
 Ketika pengguna mengubah range periode tanggal:

@@ -26,7 +26,7 @@
 JIFAS AI Assistant is a **Retrieval-Augmented Generation (RAG)** system designed specifically for the JIFAS accounting system. It combines:
 
 - **Knowledge Base Search**: Keyword + semantic search untuk menemukan informasi relevan
-- **AI Response Generation**: Google Gemini API untuk menghasilkan jawaban berdasarkan KB
+- **AI Response Generation**: Ollama (qwen3:8b) untuk menghasilkan jawaban berdasarkan KB
 - **Smart Confidence Scoring**: Memastikan hanya jawaban akurat yang ditampilkan
 - **Performance Monitoring**: Tracking latency & metrics untuk setiap request
 
@@ -42,9 +42,9 @@ JIFAS AI Assistant is a **Retrieval-Augmented Generation (RAG)** system designed
 - **C# 13.0** - Latest language features
 
 ### APIs & Integrations
-- **Google Gemini API** - LLM untuk response generation
-  - Model: `gemini-2.0-flash` (fastest tier)
-  - Embeddings: `gemini-embedding-001` (3072-dimensional)
+- **Ollama (Local AI)** - LLM untuk response generation
+  - Model: `qwen3:8b` (local Ollama)
+  - Embeddings: `qwen3-embedding:4b` (1024-dimensional, local Ollama)
   - Both FREE tier available!
 - **Google Generative AI NuGet** - Official SDK
 
@@ -82,7 +82,7 @@ Client Request
     │   ├─ Keyword search (database-side filtering)
     │   └─ Semantic search (embeddings similarity)
     ├─ [ConfidenceCalculator] - Score relevance
-    ├─ [GeminiService] - Generate AI response
+    ├─ [OllamaService] - Generate AI response
     │   └─ [PromptEngineeringService] - Smart prompts
     ├─ [SuggestionService] - Generate follow-up suggestions
     └─ [ChatHistoryService] - Save conversation
@@ -120,8 +120,8 @@ jifas-assistant/
 │   │
 │   ├── Services/                             Business Logic (23+ services)
 │   │   ├── ChatService.cs                    🔴 CORE - Orchestrates entire chat flow
-│   │   ├── GeminiService.cs                  🔴 CORE - Calls Google Gemini API
-│   │   ├── GeminiEmbeddingService.cs         🔴 CORE - Generates text embeddings
+│   │   ├── OllamaService.cs                  🔴 CORE - Calls Local Ollama API
+│   │   ├── OllamaEmbeddingService.cs         🔴 CORE - Generates text embeddings (qwen3-embedding:4b)
 │   │   ├── KnowledgeBaseSearchService.cs     🔴 CORE - Search KB (keyword + semantic)
 │   │   ├── KnowledgeBaseService.cs           KB document management
 │   │   ├── PromptEngineeringService.cs       🟠 Smart prompt generation
@@ -135,7 +135,7 @@ jifas-assistant/
 │   │
 │   ├── Configuration/                        Settings & Config
 │   │   ├── AppSettings.cs                    Strongly-typed config accessor
-│   │   ├── GeminiSettings.cs                 Gemini API settings
+│   │   ├── OllamaSettings.cs                 Ollama AI settings
 │   │   ├── QdrantSettings.cs                 Vector DB settings
 │   │   ├── CachingSettings.cs                Cache configuration
 │   │   └── [+5 more settings classes]
@@ -299,7 +299,7 @@ GET /health                              Application health status
 - **.NET 10.0 SDK** - Download from https://dotnet.microsoft.com/download
 - **SQL Server 2019+** atau **LocalDB** (included with Visual Studio)
 - **Git** - Version control
-- **Google Gemini API Key** - Free tier at https://ai.google.dev
+- **Ollama Local AI Server** - running at http://10.0.12.54:11434
 
 ### Quick Start (5 minutes)
 
@@ -311,7 +311,7 @@ cd jifas-assistant
 # 2. Set up local secrets (don't commit credentials!)
 cd Jifas.Assistant
 dotnet user-secrets init
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_ACTUAL_API_KEY"
+# No API key needed - Ollama runs locally
 
 # 3. Create database & run migrations
 dotnet ef database update
@@ -333,8 +333,8 @@ See **SETUP.md** for detailed configuration options.
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `Gemini:ApiKey` | Google Gemini API key | `AIza...` |
-| `Gemini:Model` | LLM model name | `gemini-2.0-flash` |
+| `Ollama:BaseUrl` | Ollama server URL | `http://10.0.12.54:11434` |
+| `Ollama:Model` | LLM model name | `qwen3:8b` |
 | `ConnectionStrings:DefaultConnection` | Database connection | `Server=localhost;Database=JIFAS...` |
 | `ASPNETCORE_ENVIRONMENT` | Environment (Development/Production) | `Production` |
 | `Caching:EnableResponseCache` | Enable response caching | `true` |
@@ -532,4 +532,5 @@ Internal Project - Jababeka IT Department
 **Last Updated**: 18 February 2026  
 **Version**: 2.0 (With 6 Code Optimizations)  
 **Status**: 🟢 Production Ready
+
 

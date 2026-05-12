@@ -1,4 +1,4 @@
-LAPORAN BUDGET CARD (KARTU ANGGARAN)
+﻿LAPORAN BUDGET CARD (KARTU ANGGARAN)
 
 TUJUAN:
 Memberikan informasi DETAIL tentang pergerakan budget, komitmen (committed), dan saldo budget untuk setiap account/kode anggaran (COA).
@@ -213,13 +213,13 @@ PEMAHAMAN ISTILAH PENTING:
     - Adalah tingkat organisasi pertama di perusahaan
     - Contoh: HO (Holding), Manufacturing, Distribution, dll
     - Setiap company bisa punya multiple divisions
-    - Cascade: Company → Division → Department → COA
+    - Cascade: Company -> Division -> Department -> COA
 
 11. DEPARTMENT (DEPARTEMEN)
     - Adalah tingkat organisasi di bawah Division
     - Contoh: Finance Accounting, HR, Operations, dll
     - Setiap Division bisa punya multiple departments
-    - Cascade: Company → Division → Department → COA
+    - Cascade: Company -> Division -> Department -> COA
 
 12. COMPANY (PERUSAHAAN)
     - Adalah entitas hukum/anak perusahaan di group
@@ -237,7 +237,7 @@ KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
 2. DETAIL TRANSACTION TRACING
    - Find detail setiap transaksi yang impact account tertentu
    - Lihat invoice mana, PUM mana, payment mana yang memukul account
-   - Trace dari budget card → invoice → payment untuk full audit trail
+   - Trace dari budget card -> invoice -> payment untuk full audit trail
    - Support untuk audit & verification
 
 3. BUDGET VARIANCE ANALYSIS
@@ -286,17 +286,17 @@ FITUR CASCADE (DEPENDENT DROPDOWN):
 Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
 
 Urutan cascade:
-1. Company (mandiri) → aktifkan Division
-2. Division (cascading dari Company) → aktifkan Department
-3. Department (cascading dari Division) → aktifkan COA Code
-4. COA Code (cascading dari Department) → final selection
+1. Company (mandiri) -> aktifkan Division
+2. Division (cascading dari Company) -> aktifkan Department
+3. Department (cascading dari Division) -> aktifkan COA Code
+4. COA Code (cascading dari Department) -> final selection
 5. Date (independent date picker)
 
 Contoh flow:
-- Pilih Company "KI" → Division dropdown aktif, tampil divisi yang ada di KI
-- Pilih Division "HO" → Department dropdown aktif, tampil department yang ada di HO
-- Pilih Department "FA" → COA Code dropdown aktif, tampil COA yang ada di FA
-- Pilih COA Code "60205.0300.0000" → siap untuk search
+- Pilih Company "KI" -> Division dropdown aktif, tampil divisi yang ada di KI
+- Pilih Division "HO" -> Department dropdown aktif, tampil department yang ada di HO
+- Pilih Department "FA" -> COA Code dropdown aktif, tampil COA yang ada di FA
+- Pilih COA Code "60205.0300.0000" -> siap untuk search
 - Pilih Date "13/02/2026"
 - Klik Search
 
@@ -409,7 +409,7 @@ Action:
 2. Need find budget card yang kena impact
 3. Search dengan berbagai COA code
 4. Find commitment terjadi (lihat doc no invoice)
-5. Trace dari payment → commitment → budget account
+5. Trace dari payment -> commitment -> budget account
 
 TROUBLESHOOTING UMUM:
 MASALAH: "Balance negatif - sudah over-budget"
@@ -432,7 +432,7 @@ SOLUSI:
 MASALAH: "Perbedaan antara budget card balance vs GL account balance"
 SOLUSI:
 - Budget card menunjukkan committed, GL menunjukkan actual payment
-- Balance invoice ≠ balance payment (timing difference)
+- Balance invoice != balance payment (timing difference)
 - Reconcile antara AP (committed) vs CB (paid)
 - Check apakah ada accrual atau adjustment yang belum tercatat
 - GL adjustment mungkin diperlukan
@@ -567,10 +567,10 @@ BEST PRACTICES:
 KEYS TO REMEMBER:
 1. Budget Card = Detail per account (satu COA satu Card)
 2. Balance = Budget - Committed (running total)
-3. Cascade mandatory: Company → Division → Department → COA
+3. Cascade mandatory: Company -> Division -> Department -> COA
 4. Date = "as of date" untuk budget position
 5. Transaksi dari berbagai source: Invoice, PUM, Payment
-6. DOC DATE ≠ DATE (commitment date ≠ payment date)
+6. DOC DATE != DATE (commitment date != payment date)
 7. Negative balance = Over-budget condition
 8. Creditor identify siapa yang terima pembayaran
 9. Payment No confirm transaksi sudah dibayar

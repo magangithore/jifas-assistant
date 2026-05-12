@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -14,11 +14,11 @@ namespace Jifas.Assistant.Services
     /// <summary>
     /// Local AI Service using Ollama/compatible server with Qwen3:8b model
     /// - Replaces Gemini API for development and internal deployment
-    /// - Same interface as IGeminiService for easy switching
+    /// - Same interface as IOllamaService for easy switching
     /// - Base URL: 10.0.12.54:11434
     /// - Model: qwen3:8b
     /// </summary>
-    public class LocalAIService : IGeminiService
+    public class LocalAIService : IOllamaService
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
@@ -217,8 +217,8 @@ ATURAN WAJIB:
             }
         }
 
-        // Implement IGeminiService.CallGeminiApiAsync to use local AI
-        public async Task<string> CallGeminiApiAsync(string prompt)
+        // Implement IOllamaService.CallOllamaApiAsync to use local AI
+        public async Task<string> CallOllamaApiAsync(string prompt)
         {
             return await CallLocalAIAsync(prompt);
         }
@@ -287,3 +287,4 @@ ATURAN WAJIB:
         }
     }
 }
+

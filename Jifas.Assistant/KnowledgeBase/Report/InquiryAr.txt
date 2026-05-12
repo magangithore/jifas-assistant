@@ -1,4 +1,4 @@
-LAPORAN INQUIRY AR (ACCOUNTS RECEIVABLE INQUIRY)
+﻿LAPORAN INQUIRY AR (ACCOUNTS RECEIVABLE INQUIRY)
 
 TUJUAN:
 Memberikan informasi DETAIL tentang setiap transaksi penjualan/piutang kepada customer/debtor yang belum lunas.
@@ -170,7 +170,7 @@ PEMAHAMAN ISTILAH PENTING:
    - Adalah pajak penjualan/konsumsi yang dikenakan atas transaksi penjualan
    - Rate standar di Indonesia: 10% (sejak 2022, sebelumnya 9%)
    - Rumus: PPN = Amount × 10%
-   - Contoh: Amount 500.000 → PPN = 50.000
+   - Contoh: Amount 500.000 -> PPN = 50.000
    - PPN adalah pajak yang wajib disetorkan ke negara
    - Bisa 0 jika penjualan exempt dari PPN (barang/jasa tertentu)
 
@@ -213,15 +213,15 @@ PEMAHAMAN ISTILAH PENTING:
 
 11. STATUS (POSTED vs UNPOSTED)
     - POSTED: Invoice sudah di-post di sistem AR (piutang sudah diakui)
-             → Sudah tercatat di GL (General Ledger)
-             → Included dalam AR aging report
-             → Ready untuk collection/penagihan
+             -> Sudah tercatat di GL (General Ledger)
+             -> Included dalam AR aging report
+             -> Ready untuk collection/penagihan
     
     - UNPOSTED: Invoice belum di-post di sistem AR
-               → Masih dalam review atau approval
-               → Belum tercatat di GL
-               → Belum included dalam AR outstanding
-               → Status: PENDING
+               -> Masih dalam review atau approval
+               -> Belum tercatat di GL
+               -> Belum included dalam AR outstanding
+               -> Status: PENDING
 
 KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
 
@@ -287,9 +287,9 @@ Ketika pengguna mengubah status (dengan company yang sama):
 - Akan tampil hanya invoice dengan status yang dipilih
 
 Contoh:
-- Filter Status = "Posted" → Hanya invoice yang sudah di-post yang tampil
-- Filter Status = "Unposted" → Hanya invoice yang belum di-post yang tampil
-- Filter Status = "All Status" → Semua invoice (posted + unposted) tampil
+- Filter Status = "Posted" -> Hanya invoice yang sudah di-post yang tampil
+- Filter Status = "Unposted" -> Hanya invoice yang belum di-post yang tampil
+- Filter Status = "All Status" -> Semua invoice (posted + unposted) tampil
 
 FITUR PERPINDAHAN PERIODE TANGGAL:=
 Ketika pengguna mengubah range periode tanggal:

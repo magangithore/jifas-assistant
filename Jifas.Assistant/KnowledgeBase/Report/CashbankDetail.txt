@@ -1,4 +1,4 @@
-LAPORAN RINCI POSISI KAS BANK HARIAN (CASHBANK DETAIL DAILY)
+﻿LAPORAN RINCI POSISI KAS BANK HARIAN (CASHBANK DETAIL DAILY)
 
 TUJUAN:
 Memberikan informasi DETAIL tentang setiap transaksi kas/bank yang terjadi dalam periode tertentu,
@@ -256,9 +256,9 @@ INTERPRETASI KOLOM MUTASI:
    - Ini memudahkan sorting dan filtering
 
 2. READING YANG BENAR
-   - Jika Mutasi Kredit ada nilai → Uang MASUK
-   - Jika Mutasi Debit ada nilai → Uang KELUAR
-   - Jika kedua kosong → Ada yang tidak normal (periksa data)
+   - Jika Mutasi Kredit ada nilai -> Uang MASUK
+   - Jika Mutasi Debit ada nilai -> Uang KELUAR
+   - Jika kedua kosong -> Ada yang tidak normal (periksa data)
 
 3. RUMUS SALDO RUNNING BALANCE
    - Saldo Hari Ini = Saldo Kemarin + Mutasi Kredit - Mutasi Debit

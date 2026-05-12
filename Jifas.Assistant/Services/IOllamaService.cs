@@ -5,15 +5,20 @@ using System.Threading.Tasks;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Interface for AI service - uses Local Ollama (previously named for Gemini, now using LocalAI/Ollama)
-    /// Used for summarization and response generation based on JIFAS Knowledge Base content
+    /// Interface for AI service - uses Local Ollama for response generation based on JIFAS Knowledge Base content
     /// </summary>
-    public interface IGeminiService
+    public interface IOllamaService
     {
         /// <summary>
-        /// Generate response based on knowledge base context
+        /// Generate response based on knowledge base context.
         /// </summary>
-        Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults);
+        /// <param name="userQuery">The user's question.</param>
+        /// <param name="kbResults">Knowledge base search results.</param>
+        /// <param name="sessionContext">
+        /// Optional active page context from the frontend.
+        /// Format: "PAGE:{url}|MODULE:{module}|TITLE:{title}|DOC:{docId}|DOCTYPE:{type}|STATUS:{status}"
+        /// </param>
+        Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null);
 
         /// <summary>
         /// Generate follow-up suggestions based on context
@@ -26,10 +31,10 @@ namespace Jifas.Assistant.Services
         Task<bool> IsInScopeAsync(string userQuery);
 
         /// <summary>
-        /// Call AI service directly with custom prompt
-        /// Uses Local Ollama (gemma3:4b model) for generating natural responses
+        /// Call Ollama AI service directly with custom prompt
+        /// Uses Local Ollama (qwen3:8b model) for generating natural responses
         /// </summary>
-        Task<string> CallGeminiApiAsync(string prompt);
+        Task<string> CallOllamaApiAsync(string prompt);
     }
 
     public class KnowledgeBaseResult

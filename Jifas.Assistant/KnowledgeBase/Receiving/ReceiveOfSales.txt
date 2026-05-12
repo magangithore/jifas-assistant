@@ -1,4 +1,4 @@
-
+﻿
 MODUL RECEIVE OF SALES (RV) - DOKUMENTASI KNOWLEDGE BASE
 
 Dokumentasi ini dirancang untuk staff Finance dan Accounting yang menggunakan modul 
@@ -150,7 +150,7 @@ MODE 2 - JIKA UANG UNTUK TUJUAN LAIN (RV Non-IK)
 
 LANGKAH 5: ALOKASI SELISIH (JIKA ADA)
 
-Jika total uang ≠ total alokasi, akan ada "Unknown Allocation":
+Jika total uang != total alokasi, akan ada "Unknown Allocation":
 - Pilih ke pos mana selisih itu dialokasikan
 - Contoh: ke "Suspense Account" atau "General Income"
 - Field "Set Unknown To" hanya aktif jika ada selisih
@@ -272,8 +272,8 @@ RV UNTUK NON-IK (Non-Invoice Receive):
 - Grid detail bisa ditambah/dihapus row sesuai kebutuhan
 
 BAGAIMANA SISTEM TAHU PILIH MANA?
-- Jika pelanggan ada di BAST dan sudah bayar (flag_ik = true) → RV untuk IK
-- Jika tidak ada keterkaitan BAST atau custom penerimaan → RV Non-IK
+- Jika pelanggan ada di BAST dan sudah bayar (flag_ik = true) -> RV untuk IK
+- Jika tidak ada keterkaitan BAST atau custom penerimaan -> RV Non-IK
 
 H. TIPS & TRIK MENGGUNAKAN SALES RECEIVE
 
@@ -389,36 +389,36 @@ Untuk perusahaan NORMAL:
 K. ALUR KESELURUHAN SALES RECEIVE
 
 [1] PELANGGAN MEMBAYAR INVOICE
-        ↓
+        v
 [2] UANG MASUK KE REKENING BANK
-        ↓
+        v
 [3] STAFF FINANCE BUAT DOKUMEN RV DI SISTEM
     - Input bank, amount, pelanggan
     - Alokasikan ke invoice yang dibayarkan
-        ↓
+        v
 [4] SUBMIT RV (Status: NEED FINANCE CHECKING - HIJAU)
-        ↓
+        v
 [5] FINANCE TEAM REVIEW
     - Cek data, jumlah, kelengkapan dokumen
     - Klik "Checking" untuk approve
-        ↓
+        v
 [6] MOVE KE TAX APPROVAL (Status: NEED TAX APPROVAL)
     - Tax team verifikasi pajak
-        ↓
+        v
 [7] MOVE KE ACCOUNTING POSTING (Status: NEED ACCOUNTING CHECKING)
     - Accounting finalisasi dan post ke General Ledger
-        ↓
+        v
 [8] SELESAI (Status: READY TO PAY / PAID - HITAM)
     - RV siap untuk laporan
     - Data sudah tercatat di akuntansi
 
 JIKA TERJADI KESALAHAN:
-[3] Saat Create → EDIT sebelum submit
-    [4] Sudah Submit → VOID dokumen lama + BUAT dokumen baru
+[3] Saat Create -> EDIT sebelum submit
+    [4] Sudah Submit -> VOID dokumen lama + BUAT dokumen baru
 
 L. KESIMPULAN & CATATAN PENTING
 Sales Receive adalah dokumen penting untuk mencatat penerimaan uang dari pelanggan
-Ada approval workflow - tidak bisa langsung terbit, harus approval Finance → Tax
+Ada approval workflow - tidak bisa langsung terbit, harus approval Finance -> Tax
 Dua mode: RV untuk Invoice (IK-based) dan RV Non-Invoice (custom allocation)
 SELALU validasi: Total terima = Total alokasi (atau + unknown allocation)
 Gunakan Virtual Account jika tersedia untuk input yang lebih akurat

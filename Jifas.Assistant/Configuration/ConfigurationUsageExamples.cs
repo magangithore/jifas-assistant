@@ -1,4 +1,4 @@
-using Jifas.Assistant.Configuration;
+﻿using Jifas.Assistant.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
@@ -14,29 +14,29 @@ namespace Jifas.Assistant.Services.Examples
         // METHOD 1: Menggunakan IOptions<T> (Recommended untuk single config section)
         // ========================================
 
-        public class GeminiServiceExample
+        public class OllamaServiceExample
         {
-            private readonly IOptions<GeminiSettings> _geminiSettings;
+            private readonly IOptions<OllamaSettings> _OllamaSettings;
 
-            public GeminiServiceExample(IOptions<GeminiSettings> geminiSettings)
+            public OllamaServiceExample(IOptions<OllamaSettings> OllamaSettings)
             {
-                _geminiSettings = geminiSettings;
+                _OllamaSettings = OllamaSettings;
             }
 
-            public async Task<string> CallGeminiAPI(string prompt)
+            public async Task<string> CallOllamaAPI(string prompt)
             {
-                var apiKey = _geminiSettings.Value.ApiKey;
-                var model = _geminiSettings.Value.Model;
-                var baseUrl = _geminiSettings.Value.BaseUrl;
+                var apiKey = _OllamaSettings.Value.ApiKey;
+                var model = _OllamaSettings.Value.Model;
+                var baseUrl = _OllamaSettings.Value.BaseUrl;
 
-                Console.WriteLine($"Using Gemini Model: {model}");
+                Console.WriteLine($"Using Ollama Model: {model}");
                 Console.WriteLine($"API URL: {baseUrl}");
 
-                // Call Gemini API dengan credentials dari configuration
+                // Call Ollama API dengan credentials dari configuration
                 // var response = await CallAPI(apiKey, model, prompt);
                 // return response;
 
-                return "Response dari Gemini";
+                return "Response dari Ollama";
             }
         }
 
@@ -181,3 +181,4 @@ namespace Jifas.Assistant.Services.Examples
         }
     }
 }
+

@@ -91,27 +91,53 @@ namespace Jifas.Assistant.Models
     }
 
     /// <summary>
-    /// Context information for request - optional additional context
+    /// Context informasi aktif dari halaman JIFAS yang sedang dibuka user
+    /// Memungkinkan AI memberikan jawaban yang relevan dengan halaman yang sedang aktif
     /// </summary>
     public class RequestContext
     {
         /// <summary>
-        /// Current page/route in JIFAS Web
-        /// Examples: "/Invoice/Finance/Index", "/Payment/Monitor"
+        /// URL/route halaman JIFAS yang sedang aktif
+        /// Contoh: "/Invoice/Finance/Index", "/Payment/Monitor", "/GL/JournalEntry"
+        /// AI akan memberikan respons yang kontekstual sesuai halaman ini
         /// </summary>
         public string? CurrentPage { get; set; }
 
         /// <summary>
-        /// Selected document ID (optional)
-        /// Examples: "INV-2024-001", "PMT-2024-050"
-        /// User can ask specific questions about this document
+        /// Nama modul JIFAS yang sedang aktif
+        /// Contoh: "Invoice", "Payment", "GL", "PUM", "Receiving", "AR", "AP"
+        /// </summary>
+        public string? ActiveModule { get; set; }
+
+        /// <summary>
+        /// Judul/nama halaman yang sedang dibuka (human-readable)
+        /// Contoh: "Finance Invoice List", "Journal Entry Form", "Payment Monitor"
+        /// </summary>
+        public string? PageTitle { get; set; }
+
+        /// <summary>
+        /// ID dokumen yang sedang dipilih/dibuka (opsional)
+        /// Contoh: "INV-2024-001", "PMT-2024-050", "JE-2024-100"
+        /// User bisa bertanya spesifik tentang dokumen ini
         /// </summary>
         public string? SelectedDocumentId { get; set; }
 
         /// <summary>
-        /// Additional custom context data as JSON object
-        /// For future extensibility
+        /// Tipe dokumen yang sedang dibuka
+        /// Contoh: "Invoice", "PaymentRequest", "JournalEntry", "PurchaseOrder"
         /// </summary>
-        public Dictionary<string, object> CustomData { get; set; }
+        public string? DocumentType { get; set; }
+
+        /// <summary>
+        /// Status dokumen yang sedang aktif (opsional)
+        /// Contoh: "Draft", "Submitted", "Approved", "Rejected", "Posted"
+        /// </summary>
+        public string? DocumentStatus { get; set; }
+
+        /// <summary>
+        /// Additional custom context data sebagai JSON object
+        /// Untuk extensibility di masa mendatang
+        /// </summary>
+        public Dictionary<string, object>? CustomData { get; set; }
     }
 }

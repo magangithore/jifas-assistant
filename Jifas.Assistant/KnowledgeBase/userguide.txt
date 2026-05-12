@@ -1,7 +1,7 @@
-═══════════════════════════════════════════════════════════════════════════════
+﻿=
                             PANDUAN PENGGUNA APLIKASI JIFAS
                        Sistem Informasi Keuangan dan Aset Perusahaan
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 DAFTAR ISI:
 1. Akses Aplikasi
@@ -15,34 +15,34 @@ DAFTAR ISI:
 9. Modul Accounting (Jurnal dan Laporan Keuangan)
 10. Troubleshooting Umum
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 1. AKSES APLIKASI
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Langkah pertama untuk mengakses aplikasi JIFAS adalah membuka web browser dan 
 mengetik alamat sesuai dengan perusahaan/lokasi Anda:
 
 LOKASI KIJ, GBC, MPK, JM, BW, TL, SPPK (Jababeka):
-  → URL: jifas.jababeka.com
-  → IP: http://10.0.8.57/
+  -> URL: jifas.jababeka.com
+  -> IP: http://10.0.8.57/
 
 LOKASI JI, ICTEL, NGE:
-  → URL: http://jifasweb.jiinfra.com/
-  → IP: http://10.10.1.30/
+  -> URL: http://jifasweb.jiinfra.com/
+  -> IP: http://10.10.1.30/
 
 LOKASI BP, UP, TS:
-  → URL: http://jifas-bp.bekasipower.co.id/
-  → IP: http://10.12.0.47/
+  -> URL: http://jifas-bp.bekasipower.co.id/
+  -> IP: http://10.12.0.47/
 
 LOKASI KIK:
-  → URL: http://jifas.kik.com
-  → IP: http://10.5.1.240/
+  -> URL: http://jifas.kik.com
+  -> IP: http://10.5.1.240/
 
 Catatan: Pastikan koneksi internet Anda stabil sebelum mengakses aplikasi.
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 2. LOGIN DAN KELUAR
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 MASUK (LOGIN):
   1. Setelah membuka URL aplikasi, Anda akan melihat halaman login
@@ -60,33 +60,33 @@ KELUAR (LOGOUT):
 
 Catatan: Jangan lupa logout jika Anda menggunakan komputer bersama.
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 3. MENU UTAMA
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Setelah login, Anda akan melihat halaman Home dengan menu utama seperti berikut:
 
 MENU NAVIGASI UTAMA:
-  • Master Data    → Untuk pengaturan data dasar seperti Perusahaan, Divisi, dll
-  • Invoice        → Untuk pengajuan pembayaran berdasarkan invoice/bukti
-  • PUM            → Untuk pengajuan uang muka (advance)
-  • Receiving      → Untuk pencatatan penerimaan barang/jasa
-  • Payment        → Untuk proses pembayaran
-  • Accounting     → Untuk jurnal dan laporan keuangan
-  • Report         → Untuk melihat berbagai laporan keuangan
-  • Settings       → Untuk pengaturan user dan akses (Hanya Admin)
+  • Master Data    -> Untuk pengaturan data dasar seperti Perusahaan, Divisi, dll
+  • Invoice        -> Untuk pengajuan pembayaran berdasarkan invoice/bukti
+  • PUM            -> Untuk pengajuan uang muka (advance)
+  • Receiving      -> Untuk pencatatan penerimaan barang/jasa
+  • Payment        -> Untuk proses pembayaran
+  • Accounting     -> Untuk jurnal dan laporan keuangan
+  • Report         -> Untuk melihat berbagai laporan keuangan
+  • Settings       -> Untuk pengaturan user dan akses (Hanya Admin)
 
 Catatan: Menu yang tersedia tergantung dari role/posisi Anda dalam sistem.
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 4. MASTER DATA (PENGATURAN DASAR)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Master Data adalah pengaturan dasar yang harus disetup terlebih dahulu sebelum 
 menggunakan modul lainnya. Akses melalui Menu: Master Data
 
 4.1 MASTER PERUSAHAAN (Company)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: IT Admin
 
 Fungsi: Menambah atau mengubah data perusahaan yang akan digunakan dalam sistem
@@ -110,7 +110,7 @@ Mengubah Data Perusahaan:
 Catatan: Perusahaan yang sudah memiliki transaksi mungkin tidak bisa dihapus.
 
 4.2 MASTER DIVISI (Division)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Supervisor
 
 Fungsi: Mengelola divisi/bagian dalam struktur organisasi
@@ -129,7 +129,7 @@ Mengubah Divisi:
   3. Klik "UPDATE"
 
 4.3 MASTER DEPARTEMEN (Department)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Supervisor
 
 Fungsi: Mengelola departemen/unit kerja dalam organisasi
@@ -149,7 +149,7 @@ Mengubah Departemen:
   3. Klik "UPDATE"
 
 4.4 MASTER VENDOR (Supplier/Penyedia Jasa)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Supervisor
 
 Fungsi: Mengelola daftar pemasok/penyedia barang dan jasa
@@ -164,17 +164,17 @@ Menambah Vendor:
      - Kontak
      - Bank Account (untuk pembayaran)
      - Pajak yang berlaku (PPN, PPH)
-  4. Klik tanda checkmark (✔) untuk simpan
+  4. Klik tanda checkmark (✓) untuk simpan
 
 Mengubah Data Vendor:
   1. Klik ikon "EDIT"
   2. Ubah data sesuai kebutuhan
-  3. Klik checkmark (✔)
+  3. Klik checkmark (✓)
 
 Catatan: Data vendor sangat penting untuk proses pembayaran dan pajak.
 
 4.5 MASTER COA (Chart of Accounts - Daftar Rekening)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Accounting Head Office
 
 Fungsi: Mengelola struktur akun yang digunakan untuk pencatatan transaksi
@@ -216,7 +216,7 @@ Menghapus COA:
 Catatan: Hati-hati saat menghapus, pastikan akun belum digunakan.
 
 4.6 MASTER ANGGARAN (Budget)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Supervisor
 
 Fungsi: Mengatur anggaran tahunan per departemen/divisi
@@ -244,7 +244,7 @@ PENTING: Total anggaran per bulan harus sama dengan total anggaran tahunan.
          Jika tidak sama, sistem akan memberikan peringatan.
 
 4.7 PERIODE AKUNTANSI (Accounting Period)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Accounting Head Office
 
 Fungsi: Mengatur periode akuntansi (bulan/tahun) yang sedang aktif
@@ -271,9 +271,9 @@ CATATAN PENTING:
   • Setelah proses tutup buku (closing), periode ditandai CLOSED
   • Jangan buat periode duplikat untuk bulan yang sama
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 5. MODUL INVOICE (PENGAJUAN PEMBAYARAN)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Invoice digunakan untuk mencatat dan mengajukan pembayaran berdasarkan bukti 
 pembayaran yang ada (misalnya: invoice vendor, receipt, dll).
@@ -281,14 +281,14 @@ pembayaran yang ada (misalnya: invoice vendor, receipt, dll).
 ALUR PROSES INVOICE:
   
   Pemohon          Head Department       Finance           Accounting
-     ↓                  ↓                    ↓                  ↓
-  [CREATE]  →      [APPROVAL]    →    [APPROVAL]    →    [CHECK & POST]
+     v                  v                    v                  v
+  [CREATE]  ->      [APPROVAL]    ->    [APPROVAL]    ->    [CHECK & POST]
   
 5.1 PENGAJUAN INVOICE (Dibuat oleh Pemohon)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Pemohon Invoice
 
-Menu: Invoice → Create
+Menu: Invoice -> Create
 
 Langkah Membuat Invoice:
 
@@ -336,10 +336,10 @@ CATATAN:
   • Simpan invoice berkali-kali sebelum di-submit jika perlu edit
 
 5.2 PERSETUJUAN KEPALA DEPARTEMEN (Head Department Approval)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Kepala Departemen
 
-Menu: Invoice → Head Approval
+Menu: Invoice -> Head Approval
 
 Langkah Approval:
 
@@ -368,7 +368,7 @@ JIKA DITOLAK (REJECT):
   - Pemohon harus melihat keterangan penolakan dan memperbaiki
 
 5.3 KOREKSI INVOICE (Jika Ada Kesalahan)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Pemohon Invoice
 
 Status: "NEED CORRECTION"
@@ -388,10 +388,10 @@ Langkah Koreksi:
 CATATAN: Setiap ada perubahan nominal, approval harus diulang dari kepala dept.
 
 5.4 PERSETUJUAN FINANCE (Finance Approval)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Staff Finance
 
-Menu: Invoice → Finance → PD Approval
+Menu: Invoice -> Finance -> PD Approval
 
 Tahapan Finance Approval:
 
@@ -412,10 +412,10 @@ Tahapan Finance Approval:
 STATUS SETELAH DISETUJUI: "WAITING FOR FINANCE CHECKING"
 
 5.5 PENGECEKAN INVOICE (Finance Head Checking)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Head
 
-Menu: Invoice → Finance → Invoice List
+Menu: Invoice -> Finance -> Invoice List
 
 Status: "NEED FINANCE CHECKING"
 
@@ -433,10 +433,10 @@ Langkah Checking:
 STATUS SETELAH CHECKED: "READY FOR PAYMENT"
 
 5.6 PEMBAYARAN INVOICE (Payment)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Staff
 
-Menu: Payment → Invoice
+Menu: Payment -> Invoice
 
 Langkah Membuat Pembayaran:
 
@@ -455,9 +455,9 @@ STATUS SETELAH DISIMPAN: "WAITING FOR ACCOUNTING CHECKING"
 Catatan: Pembayaran baru bisa diproses ke accounting setelah invoice telah 
          melalui semua tahap approval dan checking.
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 6. MODUL PUM (PENGAJUAN UANG MUKA)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 PUM (Pengajuan Uang Muka) digunakan untuk meminta uang muka/advance sebelum 
 melakukan pembelian atau kegiatan lainnya.
@@ -465,14 +465,14 @@ melakukan pembelian atau kegiatan lainnya.
 ALUR PROSES PUM:
 
   Pemohon       Head Dept      Finance       Accounting      Pemohon (Realisasi)
-     ↓             ↓               ↓              ↓                   ↓
-  [PPUM]    →  [APPROVAL]  →  [PAYMENT]  →  [CHECK]   →        [REALISASI]
+     v             v               v              v                   v
+  [PPUM]    ->  [APPROVAL]  ->  [PAYMENT]  ->  [CHECK]   ->        [REALISASI]
 
 6.1 PENGAJUAN UANG MUKA (PPUM)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Pemohon PUM
 
-Menu: PUM → Pengajuan → PPUM
+Menu: PUM -> Pengajuan -> PPUM
 
 Langkah Membuat PPUM:
 
@@ -492,24 +492,24 @@ SISTEM AKAN MENGECEK STATUS ANGGARAN:
   ✓ OK
     = Anggaran masih cukup, permohonan bisa dilanjutkan
 
-  ⚠ CM (Cross Month)
+  [PERINGATAN] CM (Cross Month)
     = Anggaran bulan ini sudah habis, tapi total tahun masih OK
     = Permohonan masih bisa dilanjutkan
 
-  ⚠ CA (Cross Accumulation)
+  [PERINGATAN] CA (Cross Accumulation)
     = Anggaran sudah over, perlu persetujuan khusus
 
-  ✗ CY (Cross Year)
+  x CY (Cross Year)
     = Over budget besar, TIDAK BISA DILANJUTKAN
     = Harus mengajukan perubahan anggaran terlebih dahulu
 
 STATUS SETELAH DISIMPAN: "WAITING FOR HEAD APPROVAL"
 
 6.2 PERSETUJUAN KEPALA DEPARTEMEN
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Kepala Departemen
 
-Menu: PUM → Approval (Head Dept)
+Menu: PUM -> Approval (Head Dept)
 
 Langkah Approval:
 
@@ -532,10 +532,10 @@ Setelah Finance Approval:
   - Contoh: UM-2024-0001
 
 6.3 PEMBAYARAN UANG MUKA (Payment PUM)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Staff
 
-Menu: Payment → Payment PUM
+Menu: Payment -> Payment PUM
 
 Langkah Membuat Pembayaran PUM:
 
@@ -550,10 +550,10 @@ Langkah Membuat Pembayaran PUM:
 STATUS: "WAITING FOR ACCOUNTING CHECKING"
 
 6.4 REALISASI UANG MUKA (Pembelian Dengan UM)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Pemohon PUM
 
-Menu: PUM → Pengajuan → Realization
+Menu: PUM -> Pengajuan -> Realization
 
 Catatan: Realisasi dibuat SETELAH pembayaran uang muka dilakukan
 
@@ -572,11 +572,11 @@ Langkah Membuat Realisasi:
 5. Ulangi sampai semua pembelian tercatat
 
 SISA/KEKURANGAN UANG MUKA:
-  - Jika ada sisa (pembelian < UM) → otomatis masuk Cash Bank
-  - Jika ada kekurangan (pembelian > UM) → perlu pembayaran tambahan
+  - Jika ada sisa (pembelian < UM) -> otomatis masuk Cash Bank
+  - Jika ada kekurangan (pembelian > UM) -> perlu pembayaran tambahan
 
 6.5 VERIFIKASI DAN CHECKING REALISASI
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Staff & Accounting
 
 Tahapan:
@@ -596,9 +596,9 @@ Tahapan:
 
 STATUS: "READY FOR POSTING"
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 7. MODUL RECEIVING (PENERIMAAN BARANG/JASA)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Modul Receiving digunakan untuk mencatat penerimaan barang atau jasa dari vendor.
 Terbagi menjadi 2 tipe:
@@ -606,16 +606,16 @@ Terbagi menjadi 2 tipe:
   2. Receiving tanpa Invoice Billing - input manual
 
 7.1 INVOICE BILLING (IK) - DENGAN DOKUMEN
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Besar Akses: Finance Staff
 
-Menu: Receiving → Create → Invoice (IK)
+Menu: Receiving -> Create -> Invoice (IK)
 
 ALUR INVOICE BILLING:
 
   Finance Input      Tax Approval       Finance Check       Accounting Check
-      ↓                   ↓                   ↓                    ↓
-   [CREATE] →        [APPROVAL]   →     [CHECKING]   →      [POSTING]
+      v                   v                   v                    v
+   [CREATE] ->        [APPROVAL]   ->     [CHECKING]   ->      [POSTING]
 
 Langkah Membuat Invoice Billing:
 
@@ -641,7 +641,7 @@ Langkah Membuat Invoice Billing:
 STATUS: "WAITING FOR TAX APPROVAL"
 
 7.2 TAX APPROVAL (Persetujuan Pajak)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Tax Department
 
 Catatan: Wajib upload dokumen PPN dan PPH sebelum approval
@@ -655,10 +655,10 @@ Catatan: Wajib upload dokumen PPN dan PPH sebelum approval
 STATUS: "WAITING FOR FINANCE CHECKING"
 
 7.3 RECEIVING TANPA INVOICE BILLING (RV) - INPUT MANUAL
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Staff
 
-Menu: Receiving → Create → Receiving (RV)
+Menu: Receiving -> Create -> Receiving (RV)
 
 Digunakan untuk mencatat penerimaan barang/jasa tanpa dokumen invoice resmi
 (contoh: penerimaan internal, biaya jasa manual, dll)
@@ -679,7 +679,7 @@ Langkah:
 STATUS: "WAITING FOR CHECKING"
 
 7.4 FINANCE CHECKING (Pengecekan Finance)
-─────────────────────────────────────────────────────────────────────────────
+-
 
 1. Review data lengkap
 2. Cek dokumen pendukung
@@ -689,7 +689,7 @@ STATUS: "WAITING FOR CHECKING"
 STATUS: "WAITING FOR ACCOUNTING CHECKING"
 
 7.5 ACCOUNTING CHECKING (Pengecekan Accounting)
-─────────────────────────────────────────────────────────────────────────────
+-
 
 1. Final review sebelum posting jurnal
 2. Cek COA sudah benar
@@ -697,24 +697,24 @@ STATUS: "WAITING FOR ACCOUNTING CHECKING"
 
 STATUS: "READY FOR POSTING"
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 8. MODUL PAYMENT (PEMBAYARAN)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Payment digunakan untuk mencatat semua pembayaran (Invoice, PUM, atau arus kas lainnya).
 
 Jenis Pembayaran:
 
-  1. PAYMENT INVOICE → Pembayaran untuk invoice (lihat bagian Invoice)
-  2. PAYMENT PUM → Pembayaran uang muka (lihat bagian PUM)
-  3. CASH BANK PAYMENT → Pembayaran kas lainnya
-  4. CASH BANK RECEIVING → Penerimaan kas lainnya
+  1. PAYMENT INVOICE -> Pembayaran untuk invoice (lihat bagian Invoice)
+  2. PAYMENT PUM -> Pembayaran uang muka (lihat bagian PUM)
+  3. CASH BANK PAYMENT -> Pembayaran kas lainnya
+  4. CASH BANK RECEIVING -> Penerimaan kas lainnya
 
 8.1 CASH BANK PAYMENT & RECEIVING
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Finance Staff
 
-Menu: Cash Bank → Payment / Receiving
+Menu: Cash Bank -> Payment / Receiving
 
 Digunakan untuk mencatat pembayaran atau penerimaan kas yang tidak termasuk
 Invoice atau PUM. Contoh:
@@ -748,20 +748,20 @@ Langkah Membuat CB Receiving:
 STATUS: "WAITING FOR FINANCE CHECKING"
 
 Tahapan selanjutnya:
-  → Finance Checking → Accounting Checking → Posting ke Jurnal
+  -> Finance Checking -> Accounting Checking -> Posting ke Jurnal
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 9. MODUL ACCOUNTING (JURNAL DAN LAPORAN KEUANGAN)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Modul Accounting adalah jantung sistem, di mana semua transaksi dicatat dalam 
 bentuk jurnal akuntansi yang kemudian menghasilkan laporan keuangan.
 
 9.1 JOURNAL TRANSACTION (JURNAL TRANSAKSI)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Accounting Staff
 
-Menu: Accounting → Journal Transaction
+Menu: Accounting -> Journal Transaction
 
 Jenis Jurnal Otomatis dari Transaksi:
   - IV (Invoice) = Jurnal dari pengajuan invoice
@@ -807,10 +807,10 @@ FITUR JOURNAL TRANSACTION:
    - Klik "REVERSE"
 
 9.2 JOURNAL MEMORIAL (JURNAL MANUAL)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Accounting Staff
 
-Menu: Accounting → Journal Transaction → Memorial
+Menu: Accounting -> Journal Transaction -> Memorial
 
 Digunakan untuk membuat jurnal manual (tidak dari transaksi sistem).
 Contoh: Penyesuaian, Penjumlahan ulang, Koreksi, dll
@@ -834,13 +834,13 @@ Langkah Membuat Journal Memorial:
 STATUS: "DRAFT"
 
 Tahapan selanjutnya:
-  - Edit (jika perlu) → Check → Post
+  - Edit (jika perlu) -> Check -> Post
 
 9.3 BULK POSTING (POSTING MASSAL)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Accounting Supervisor
 
-Menu: Accounting → Bulk Posting
+Menu: Accounting -> Bulk Posting
 
 Fitur untuk melakukan posting/check pada multiple dokumen sekaligus.
 
@@ -858,10 +858,10 @@ Keuntungan:
   - Cocok untuk end-of-period posting
 
 9.4 REPORT SETUP (PENGATURAN LAPORAN)
-─────────────────────────────────────────────────────────────────────────────
+-
 User yang Bisa Akses: Accounting Supervisor
 
-Menu: Master Data → Report Setup
+Menu: Master Data -> Report Setup
 
 Fungsi: Memetakan COA ke baris-baris laporan keuangan
 
@@ -889,32 +889,32 @@ Menghapus Mapping:
 Catatan: Mapping ini penting agar laporan keuangan tampil dengan benar.
 
 9.5 LAPORAN KEUANGAN (Financial Reports)
-─────────────────────────────────────────────────────────────────────────────
+-
 
 Jenis Laporan yang Tersedia:
 
 A. BALANCE SHEET (NERACA)
-   Menu: Accounting Report → Balance Sheet
+   Menu: Accounting Report -> Balance Sheet
    Menampilkan: Aset, Liabilitas, Ekuitas pada tanggal tertentu
 
 B. PROFIT & LOSS (LABA RUGI)
-   Menu: Accounting Report → Profit & Loss
+   Menu: Accounting Report -> Profit & Loss
    Menampilkan: Pendapatan, Beban, dan Laba/Rugi untuk periode tertentu
 
 C. TRIAL BALANCE (NERACA SALDO)
-   Menu: Accounting Report → Trial Balance
+   Menu: Accounting Report -> Trial Balance
    Menampilkan: Daftar akun dan saldo (Debit/Kredit) untuk verifikasi
 
 D. LEDGER (BUKU BESAR)
-   Menu: Accounting Report → Ledger
+   Menu: Accounting Report -> Ledger
    Menampilkan: Detail transaksi per akun
 
 E. CASH FLOW (ARUS KAS)
-   Menu: Accounting Report → Cash Flow
+   Menu: Accounting Report -> Cash Flow
    Menampilkan: Pergerakan kas dari berbagai aktivitas
 
 F. AGING REPORT:
-   Menu: Accounting Report → Aging AP (Hutang) / Aging AR (Piutang)
+   Menu: Accounting Report -> Aging AP (Hutang) / Aging AR (Piutang)
    Menampilkan: Analisis umur piutang/hutang
 
 Cara Melihat Laporan:
@@ -929,9 +929,9 @@ Cara Melihat Laporan:
 5. Laporan akan ditampilkan di layar
 6. Klik "DOWNLOAD" atau "PRINT" untuk simpan/cetak
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 10. FITUR VOID DAN REVERSE (PEMBATALAN TRANSAKSI)
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 Fitur untuk membatalkan transaksi yang sudah dibuat.
 
@@ -970,9 +970,9 @@ LANGKAH VOID/REVERSE:
 4. Klik "YES" untuk konfirmasi
 5. Transaksi otomatis dibatalkan
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 11. TROUBLESHOOTING & TIPS UMUM
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 MASALAH: Tidak bisa login
 
@@ -985,7 +985,7 @@ SOLUSI:
   6. Gunakan browser yang lain jika masih tidak bisa
   7. Hubungi IT Support jika masih gagal
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Tombol SAVE/CREATE tidak aktif atau tidak merespons
 
@@ -996,7 +996,7 @@ SOLUSI:
   4. Cek browser console (F12) apakah ada error message
   5. Pastikan tidak ada data yang duplikat (jika sistem memiliki unique constraint)
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Invoice tidak bisa disetujui karena "Over Budget"
 
@@ -1011,7 +1011,7 @@ SOLUSI:
      - Tidak bisa dilanjutkan
      - Harus mengajukan perubahan/penambahan anggaran terlebih dahulu
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Dokumen yang diupload tidak muncul atau error
 
@@ -1028,7 +1028,7 @@ SOLUSI:
      - Contoh: Invoice ABC @2024.pdf (tidak OK)
   4. Coba ulang upload atau gunakan file yang lain
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Periode akuntansi tidak muncul di dropdown
 
@@ -1040,7 +1040,7 @@ SOLUSI:
   3. Cek dropdown apakah sudah refresh
      - Coba reload halaman (F5)
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: COA tidak ada di daftar atau tidak bisa dipilih
 
@@ -1053,9 +1053,9 @@ SOLUSI:
      - COA inactive tidak bisa dipilih untuk transaksi baru
      - Hubungi Accounting untuk mengaktifkan
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
-MASALAH: Jurnal tidak balanced (Debit ≠ Kredit)
+MASALAH: Jurnal tidak balanced (Debit != Kredit)
 
 SOLUSI:
   1. Cek kembali setiap detail jurnal
@@ -1065,7 +1065,7 @@ SOLUSI:
   5. Edit jurnal dan perbaiki jumlah yang salah
   6. Klik UPDATE dan pastikan sistem menerima
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Tidak bisa membuat payment karena invoice belum ready
 
@@ -1078,7 +1078,7 @@ SOLUSI:
   3. Jika belum, minta kepala dept atau finance untuk approve/check
   4. Jangan lewati tahap approval
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Laporan keuangan tidak menampilkan data atau angka 0 semua
 
@@ -1093,7 +1093,7 @@ SOLUSI:
      - Jurnal yang masih DRAFT tidak muncul di laporan
   5. Jika masih tidak muncul, hubungi Accounting Supervisor
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 MASALAH: Tidak bisa menghapus atau mengubah COA
 
@@ -1107,7 +1107,7 @@ SOLUSI:
      - Hubungi Accounting Head Office
      - Mungkin perlu reverse transaksi terlebih dahulu
 
-─────────────────────────────────────────────────────────────────────────────
+-
 
 TIPS UMUM UNTUK PENGGUNAAN YANG EFISIEN:
 
@@ -1151,7 +1151,7 @@ TIPS UMUM UNTUK PENGGUNAAN YANG EFISIEN:
    - Jika ada banyak dokumen, gunakan bulk posting
    - Lebih efisien daripada one by one
 
-═══════════════════════════════════════════════════════════════════════════════
+=
 
 KONTAK SUPPORT:
 

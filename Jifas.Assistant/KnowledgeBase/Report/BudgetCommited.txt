@@ -1,4 +1,4 @@
-LAPORAN BUDGET VERSUS COMMITTED (LAPORAN REKAPITULASI BUDGET VERSUS KOMITMEN)
+﻿LAPORAN BUDGET VERSUS COMMITTED (LAPORAN REKAPITULASI BUDGET VERSUS KOMITMEN)
 
 TUJUAN:
 Memberikan informasi RINGKASAN perbandingan antara Budget Allocation dengan komitmen/penggunaan aktual untuk semua account di satu department.
@@ -164,14 +164,14 @@ PEMAHAMAN ISTILAH PENTING:
    - Berarti sudah menggunakan lebih banyak dari yang dialokasikan
    - Butuh budget top-up atau reallocation untuk proceed
    - Critical condition untuk budget control
-   - Contoh: Budget 50 juta, tapi committed 80 juta → Over 30 juta
+   - Contoh: Budget 50 juta, tapi committed 80 juta -> Over 30 juta
 
 6. UNDER-BUDGET (BELUM MENGGUNAKAN SEMUA BUDGET)
    - Terjadi ketika Committed < Budget (Variance positif)
    - Berarti masih banyak budget sisa yang bisa digunakan
    - Comfortable position - masih ada runway
    - Bisa digunakan untuk approval transaksi baru
-   - Contoh: Budget 100 juta, committed 60 juta → Sisa 40 juta
+   - Contoh: Budget 100 juta, committed 60 juta -> Sisa 40 juta
 
 7. COA (CHART OF ACCOUNT)
    - Adalah daftar lengkap semua account di perusahaan
@@ -258,39 +258,39 @@ CARA MEMBACA VARIANCE:
    Berarti: Budget > Committed (masih ada sisa budget)
    Status: Comfortable, bisa approve transaksi baru
    Action: Monitor untuk efficient utilization
-   Contoh: Budget 100M, Committed 60M → Variance +40M (masih ada 40M)
+   Contoh: Budget 100M, Committed 60M -> Variance +40M (masih ada 40M)
 
 2. VARIANCE NEGATIF (DEFICIT / OVER-BUDGET)
    Berarti: Budget < Committed (sudah exceed budget)
    Status: Alert/Critical, tidak boleh add more commitment
    Action: Budget top-up needed atau cost reduction
-   Contoh: Budget 50M, Committed 80M → Variance -30M (excess 30M)
+   Contoh: Budget 50M, Committed 80M -> Variance -30M (excess 30M)
 
 3. VARIANCE ZERO (EXACT MATCH)
    Berarti: Budget = Committed (perfectly matched)
    Status: Fully utilized, no room for more
    Action: Monitor tight, tidak ada buffer
-   Contoh: Budget 100M, Committed 100M → Variance 0
+   Contoh: Budget 100M, Committed 100M -> Variance 0
 
 4. VARIANCE TIDAK APPLICABLE (BUDGET = 0)
    Berarti: Account tidak punya allocated budget
    Status: Depends on Committed (jika ada commitment = over-budget)
    Action: Budget allocation needed jika ada commitment
-   Contoh: Budget 0, Committed 50M → Variance -50M (full amount over-budget)
+   Contoh: Budget 0, Committed 50M -> Variance -50M (full amount over-budget)
 
 FITUR CASCADE (DEPENDENT DROPDOWN):
 Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
 
 Urutan cascade:
-1. Company (mandiri) → aktifkan Division
-2. Division (cascading dari Company) → aktifkan Department
-3. Department (cascading dari Division) → aktif untuk filtering account
+1. Company (mandiri) -> aktifkan Division
+2. Division (cascading dari Company) -> aktifkan Department
+3. Department (cascading dari Division) -> aktif untuk filtering account
 4. From Date & To Date (independent date pickers)
 
 Contoh flow:
-- Pilih Company "KI" → Division dropdown aktif, tampil divisi yang ada di KI
-- Pilih Division "HO" → Department dropdown aktif, tampil department yang ada di HO
-- Pilih Department "FA" → Display semua account milik FA dengan budget vs committed
+- Pilih Company "KI" -> Division dropdown aktif, tampil divisi yang ada di KI
+- Pilih Division "HO" -> Department dropdown aktif, tampil department yang ada di HO
+- Pilih Department "FA" -> Display semua account milik FA dengan budget vs committed
 - Atur From/To date untuk periode
 - Klik Search
 
@@ -572,7 +572,7 @@ KEYS TO REMEMBER:
 3. Over-budget = negative variance (commitment > budget)
 4. One row = One account/COA (multiple account tidak bisa di-roll-up)
 5. Period = Date range (From/To), bukan single date
-6. Cascade mandatory: Company → Division → Department
+6. Cascade mandatory: Company -> Division -> Department
 7. Budget adalah rencana, Committed adalah realisasi actual
 8. Large negative variance = Priority untuk investigation
 9. Department owner responsible untuk budget control

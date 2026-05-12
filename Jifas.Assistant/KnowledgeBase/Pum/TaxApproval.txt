@@ -537,13 +537,13 @@ Fitur-fitur
 
 4. Automatic Tax Calculation
  Saat tax code dipilih di tax correction, sistem otomatis hitung PPN/PPH
- Rumus: PPN = DPP Ã— PPH% ; PPH = DPP Ã— PPH%
+ Rumus: PPN = DPP × PPH% ; PPH = DPP × PPH%
  Nilai terupdate secara real-time
 
 5. Tax Rounding dengan Suggestion
  Fitur pembulatan UP (ke atas) dan DOWN (ke bawah)
  Sistem memberikan suggested value untuk rounding
- Contoh: PPN Rp 123.456 di-round UP â†’ Rp 123.500
+ Contoh: PPN Rp 123.456 di-round UP -> Rp 123.500
 
 6. Detail Grid Management (PPN & PPH)
  Tombol "Request" untuk menambah faktur pajak / bukti potong baru
@@ -641,10 +641,10 @@ Perhitungan dan Validasi
 Formula Dasar:
 
 1. DPP (Dasar Pengenaan Pajak) = Nilai dasar yang menjadi acuan perhitungan pajak
-2. PPN = DPP Ã— Persentase PPN
-   Contoh: DPP Rp 1.000.000 Ã— 10% = Rp 100.000
-3. PPH = DPP Ã— Persentase PPH
-   Contoh: DPP Rp 1.000.000 Ã— 1% (PPH 23) = Rp 10.000
+2. PPN = DPP × Persentase PPN
+   Contoh: DPP Rp 1.000.000 × 10% = Rp 100.000
+3. PPH = DPP × Persentase PPH
+   Contoh: DPP Rp 1.000.000 × 1% (PPH 23) = Rp 10.000
 
 Validasi Otomatis:
  Jumlah tidak boleh 0 atau negatif

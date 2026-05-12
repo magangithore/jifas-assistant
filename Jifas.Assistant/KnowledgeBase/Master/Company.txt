@@ -66,7 +66,7 @@ Is Active: Menggunakan Switch. Berfungsi untuk status aktif perusahaan dengan ni
 
 Kolom Teks Biasa: Tempat mengetik data secara bebas (nama, alamat, dll).
 Dropdown Pilihan: Daftar pilihan yang sudah tersedia, tinggal klik pilih.
-Dropdown Berjenjang: Pilihan yang terhubung, contoh: Provinsi → Kabupaten → Kecamatan → Kelurahan. Harus dipilih secara urut dari atas.
+Dropdown Berjenjang: Pilihan yang terhubung, contoh: Provinsi -> Kabupaten -> Kecamatan -> Kelurahan. Harus dipilih secara urut dari atas.
 Kolom dengan Format Khusus: Nomor telepon, fax, NPWP otomatis terformat dengan benar.
 Tombol On/Off: Untuk mengaktifkan atau menonaktifkan company.
 
@@ -101,5 +101,5 @@ Catatan Tambahan
 
 Sebuah company bisa punya parent company (induk) jika merupakan bagian dari grup perusahaan.
 Kode Company tidak bisa diubah setelah data dibuat, hanya bisa diisi pertama kali saat membuat data baru.
-Kolom lokasi (Provinsi → Kabupaten → Kecamatan → Kelurahan) harus dipilih secara urut dari atas ke bawah.
+Kolom lokasi (Provinsi -> Kabupaten -> Kecamatan -> Kelurahan) harus dipilih secara urut dari atas ke bawah.
 Kolom telepon, fax, dan NPWP otomatis terformat dengan benar saat mengetik untuk menghindari kesalahan penulisan.

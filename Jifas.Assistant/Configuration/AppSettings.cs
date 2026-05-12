@@ -9,13 +9,18 @@ namespace Jifas.Assistant.Configuration
     // ========================================
 
     /// <summary>
-    /// Gemini API Settings
+    /// Ollama Local AI Settings
     /// </summary>
-    public class GeminiSettings
+    public class OllamaSettings
     {
-        public string ApiKey { get; set; }
-        public string Model { get; set; }
-        public string BaseUrl { get; set; }
+        public string ApiKey { get; set; } = string.Empty;
+        public string Model { get; set; } = "qwen3:8b";
+        public string BaseUrl { get; set; } = "http://10.0.12.54:11434";
+        public float Temperature { get; set; } = 0.3f;
+        public float TopP { get; set; } = 0.85f;
+        public int TopK { get; set; } = 40;
+        public int MaxOutputTokens { get; set; } = 2048;
+        public int TimeoutSeconds { get; set; } = 180;
     }
 
     /// <summary>
@@ -184,10 +189,10 @@ namespace Jifas.Assistant.Configuration
         }
 
         /// <summary>
-        /// Get Gemini Settings
-        /// Usage: var apiKey = settings.Gemini.ApiKey;
+        /// Get Ollama Settings
+        /// Usage: var model = settings.Ollama.Model;
         /// </summary>
-        public GeminiSettings Gemini => _configuration.GetSection("Gemini").Get<GeminiSettings>() ?? new GeminiSettings();
+        public OllamaSettings Ollama => _configuration.GetSection("Ollama").Get<OllamaSettings>() ?? new OllamaSettings();
 
         /// <summary>
         /// Get OpenAI Settings (Optional)

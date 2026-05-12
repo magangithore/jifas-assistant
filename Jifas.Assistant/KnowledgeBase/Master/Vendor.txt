@@ -15,7 +15,7 @@ Create (Menambah Vendor Baru)
 1. Klik tombol Create (ikon "+") di toolbar bagian atas grid.
 2. Jendela input akan muncul dengan form kosong.
 3. Lengkapi seluruh field yang diperlukan (ditandai dengan asterisk *).
-4. Perhatikan cascade dropdown untuk Provinsi → Kabupaten → Kecamatan → Kelurahan.
+4. Perhatikan cascade dropdown untuk Provinsi -> Kabupaten -> Kecamatan -> Kelurahan.
 5. Setelah data terisi benar, klik tombol Save (Simpan) untuk menyimpan vendor baru.
 6. Akan muncul konfirmasi "Apakah Anda yakin ingin MENYIMPAN vendor ini?" klik OK untuk melanjutkan.
 
@@ -58,9 +58,9 @@ Pilihan yang sudah ditentukan sebelumnya. Sistem akan menampilkan daftar lengkap
 
 3. Pilihan Cascade (Bertingkat)
 Sistem yang mengandalkan satu pilihan untuk mengaktifkan pilihan berikutnya:
-Provinsi → Setelah dipilih, akan mengaktifkan field Kabupaten (hanya menampilkan kabupaten di provinsi tersebut)
-Kabupaten → Setelah dipilih, akan mengaktifkan field Kecamatan (hanya menampilkan kecamatan di kabupaten tersebut)
-Kecamatan → Setelah dipilih, akan mengaktifkan field Kelurahan (hanya menampilkan kelurahan di kecamatan tersebut)
+Provinsi -> Setelah dipilih, akan mengaktifkan field Kabupaten (hanya menampilkan kabupaten di provinsi tersebut)
+Kabupaten -> Setelah dipilih, akan mengaktifkan field Kecamatan (hanya menampilkan kecamatan di kabupaten tersebut)
+Kecamatan -> Setelah dipilih, akan mengaktifkan field Kelurahan (hanya menampilkan kelurahan di kecamatan tersebut)
 
 Cara kerjanya: Jika Anda memilih "Jawa Barat" di Provinsi, maka Kabupaten akan menampilkan daftar kota/kabupaten yang ada di Jawa Barat saja. Ini memudahkan pengguna untuk tidak salah memilih.
 

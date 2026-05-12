@@ -4,7 +4,7 @@ Master Budget digunakan untuk mengelola anggaran tahunan perusahaan pada setiap 
 
 Deskripsi
 
-Master Budget adalah fondasi perencanaan keuangan JIFAS yang menentukan alokasi dana untuk setiap akun di setiap unit organisasi selama satu tahun anggaran. Dengan struktur hierarki (Perusahaan → Divisi → Departemen → Akun COA), budget memungkinkan kontrol pengeluaran yang detail dan pelaporan yang akurat.
+Master Budget adalah fondasi perencanaan keuangan JIFAS yang menentukan alokasi dana untuk setiap akun di setiap unit organisasi selama satu tahun anggaran. Dengan struktur hierarki (Perusahaan -> Divisi -> Departemen -> Akun COA), budget memungkinkan kontrol pengeluaran yang detail dan pelaporan yang akurat.
 
 Fungsi
 
@@ -87,9 +87,9 @@ MONTH1 s/d MONTH12: Input Angka. Tidak wajib diisi dalam file Excel. Merupakan k
 
 1. Dropdown Cascade (Bertingkat)
 Pilihan yang saling tergantung satu sama lain:
-Company → Setelah dipilih, akan mengaktifkan filter Division (hanya divisi di perusahaan tersebut)
-Division → Setelah dipilih, akan mengaktifkan filter Department (hanya departemen di divisi tersebut)
-Department → Setelah dipilih, akan mengaktifkan filter COA (hanya COA untuk departemen tersebut)
+Company -> Setelah dipilih, akan mengaktifkan filter Division (hanya divisi di perusahaan tersebut)
+Division -> Setelah dipilih, akan mengaktifkan filter Department (hanya departemen di divisi tersebut)
+Department -> Setelah dipilih, akan mengaktifkan filter COA (hanya COA untuk departemen tersebut)
 
 Contoh: Jika memilih "PT. Kawasan Industri Jababeka", maka Division hanya akan menampilkan divisi yang ada di PT. Kawasan Industri Jababeka.
 
@@ -152,7 +152,7 @@ Fitur Khusus Budget
 
 1. Cascade Dropdown Hierarki
 Pemilihan hierarki dengan sistem bertingkat:
-Company → Division → Department → COA
+Company -> Division -> Department -> COA
 Setiap level hanya menampilkan pilihan yang valid untuk level sebelumnya
 Sistem ini memastikan data yang dipilih konsisten dengan struktur organisasi
 
@@ -160,7 +160,7 @@ Sistem ini memastikan data yang dipilih konsisten dengan struktur organisasi
 Sistem otomatis membagi anggaran tahunan ke 12 bulan:
 Tekan tombol Generate Budget setelah mengisi Budget Amount
 Sistem akan membagi rata anggaran tahunan ke 12 bulan
-Contoh: Anggaran 12 juta → setiap bulan 1 juta
+Contoh: Anggaran 12 juta -> setiap bulan 1 juta
 Pembagian dapat disesuaikan manual jika diperlukan
 
 3. Validasi Keseimbangan Budget
@@ -224,7 +224,7 @@ Saat Upload: "Apakah Anda yakin ingin menyimpan budget ini?"
 
 Catatan Tambahan
 
-Cascade Selection: Pastikan memilih Company → Division → Department secara urut; jika Company diubah, Division dan Department akan direset
+Cascade Selection: Pastikan memilih Company -> Division -> Department secara urut; jika Company diubah, Division dan Department akan direset
 Year Selection: Tahun hanya bisa dipilih dari tahun lalu hingga tahun depan; untuk tahun lama/depan, hubungi Admin
 Budget Generation: Klik tombol "Generate Budget" SEBELUM menyimpan untuk memastikan alokasi bulanan terisi
 Validation: Total 12 bulan harus persis sama dengan Budget Amount; jika berbeda, periksa kembali pembagian bulanan

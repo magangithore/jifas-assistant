@@ -60,7 +60,7 @@ WMTR: Webmaster
 Kolom Teks: Tempat mengetik data secara bebas.
 Kolom Teks Read-only: Tidak bisa diedit, hanya bisa dilihat.
 Dropdown Pilihan: Daftar pilihan yang tersedia, tinggal klik pilih.
-Dropdown Berjenjang: Pilihan tergantung pada pilihan sebelumnya (Company → Division → Department).
+Dropdown Berjenjang: Pilihan tergantung pada pilihan sebelumnya (Company -> Division -> Department).
 Kolom dengan Format Khusus: Nomor telepon otomatis terformat dengan benar.
 Sub-Grid (Roles): Tabel khusus untuk menambah/hapus role karyawan dengan company.
 
@@ -87,14 +87,14 @@ Tombol Create ada di atas tabel untuk menambah employee baru.
 
 Fitur Khusus Employee
 
-Cascade Dropdown (Company → Division → Department)
+Cascade Dropdown (Company -> Division -> Department)
 Pilih Company terlebih dahulu.
 Division akan otomatis menampilkan divisi yang sesuai dengan company yang dipilih.
 Department akan otomatis menampilkan departemen yang sesuai dengan division yang dipilih.
 
 Auto-Generate Username dari Email
 Ketika email diisi, username akan otomatis tergenerate dari bagian sebelum tanda "@".
-Contoh: email "ahmad.rp@jifas.com" → username "ahmad.rp".
+Contoh: email "ahmad.rp@jifas.com" -> username "ahmad.rp".
 
 Manajemen Role/Hak Akses
 Saat membuat atau mengubah employee, ada sub-grid untuk menambah role yang diberikan kepada employee.

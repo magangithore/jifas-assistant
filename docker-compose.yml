@@ -14,9 +14,16 @@ services:
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Server=(localdb)\\MSSQLLocalDB;Database=JIFAS_Assistant;Integrated Security=true;Encrypt=false;TrustServerCertificate=true}
       
       # Gemini API Configuration
-      Gemini__ApiKey: ${Gemini__ApiKey:-}
-      Gemini__Model: ${Gemini__Model:-gemini-2.0-flash}
+      Gemini__ApiKey: ${Gemini__ApiKey:-AIzaSyCZ8ECLJTSdKcozs3TADwSrMgYGrJwMRw4}
+      Gemini__Model: ${Gemini__Model:-gemini-2.5-flash-preview-05-20}
       Gemini__BaseUrl: ${Gemini__BaseUrl:-https://generativelanguage.googleapis.com/v1beta/models}
+      Gemini__Temperature: ${Gemini__Temperature:-0.3}
+      Gemini__MaxOutputTokens: ${Gemini__MaxOutputTokens:-2048}
+
+      # Embedding Configuration  
+      Embedding__Provider: Gemini
+      Embedding__Model: models/text-embedding-004
+      Embedding__Dimensions: 768
       
       # ASP.NET Core
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}

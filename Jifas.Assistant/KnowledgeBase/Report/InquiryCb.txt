@@ -1,4 +1,4 @@
-LAPORAN INQUIRY CB (CASHIER BOOK INQUIRY / INQUIRY CASH PAYMENT)
+﻿LAPORAN INQUIRY CB (CASHIER BOOK INQUIRY / INQUIRY CASH PAYMENT)
 
 TUJUAN:
 Memberikan informasi DETAIL tentang setiap transaksi pembayaran/pengeluaran kas yang telah dilakukan dan tercatat di sistem.
@@ -189,15 +189,15 @@ PEMAHAMAN ISTILAH PENTING:
 
 10. STATUS (POSTED vs UNPOSTED)
     - POSTED: Pembayaran sudah di-post di sistem CB (pengeluaran sudah diakui)
-             → Sudah tercatat di GL (General Ledger)
-             → Sudah dicatat di Bank Reconciliation
-             → Final & tidak bisa diubah
+             -> Sudah tercatat di GL (General Ledger)
+             -> Sudah dicatat di Bank Reconciliation
+             -> Final & tidak bisa diubah
     
     - UNPOSTED: Pembayaran belum di-post di sistem CB
-               → Masih dalam draft atau pending approval
-               → Belum tercatat di GL
-               → Belum included dalam bank reconciliation
-               → Status: PENDING posting
+               -> Masih dalam draft atau pending approval
+               -> Belum tercatat di GL
+               -> Belum included dalam bank reconciliation
+               -> Status: PENDING posting
 
 KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
 1. TRACKING & VERIFICATION PENGELUARAN KAS
@@ -262,9 +262,9 @@ Ketika pengguna mengubah status (dengan company yang sama):
 - Akan tampil hanya pembayaran dengan status yang dipilih
 
 Contoh:
-- Filter Status = "Posted" → Hanya pembayaran yang sudah di-post yang tampil
-- Filter Status = "Unposted" → Hanya pembayaran yang belum di-post yang tampil
-- Filter Status = "All Status" → Semua pembayaran (posted + unposted) tampil
+- Filter Status = "Posted" -> Hanya pembayaran yang sudah di-post yang tampil
+- Filter Status = "Unposted" -> Hanya pembayaran yang belum di-post yang tampil
+- Filter Status = "All Status" -> Semua pembayaran (posted + unposted) tampil
 
 FITUR PERPINDAHAN PERIODE TANGGAL:
 Ketika pengguna mengubah range periode tanggal:
@@ -398,7 +398,7 @@ SOLUSI:
 
 MASALAH: "Total Amount tidak sesuai dengan bank statement"
 SOLUSI:
-- Check apakah ada currency conversion (jika USD/EUR → IDR)
+- Check apakah ada currency conversion (jika USD/EUR -> IDR)
 - Check jumlah di invoice asli vs sistem
 - Verify tidak ada cancel atau return yang belum dicatat
 - Check apakah pembayaran belum clear di bank (outstanding item)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -23,7 +23,7 @@ namespace Jifas.Assistant.Services
 
     public class ChatService : IChatService
     {
-        private readonly IGeminiService _geminiService;
+        private readonly IOllamaService _ollamaService;
         private readonly IKnowledgeBaseService _knowledgeBaseService;
         private readonly IOutOfScopeDetector _outOfScopeDetector;
         private readonly ISuggestionService _suggestionService;
@@ -45,7 +45,7 @@ namespace Jifas.Assistant.Services
         private const int MAX_REGENERATION_ATTEMPTS = 2;
 
         public ChatService(
-            IGeminiService geminiService,
+            IOllamaService geminiService,
             IKnowledgeBaseService knowledgeBaseService,
             IOutOfScopeDetector outOfScopeDetector,
             ISuggestionService suggestionService,
@@ -62,7 +62,7 @@ namespace Jifas.Assistant.Services
             IResponseQualityService responseQuality,
             IConversationIntelligenceService conversationIntelligence)
         {
-            _geminiService = geminiService;
+            _ollamaService = geminiService;
             _knowledgeBaseService = knowledgeBaseService;
             _outOfScopeDetector = outOfScopeDetector;
             _suggestionService = suggestionService;
@@ -353,12 +353,17 @@ namespace Jifas.Assistant.Services
 
                 // ?? STEP 6: GENERATE KB-BASED RESPONSE (Enhanced with context)
                 var responseStopwatch = Stopwatch.StartNew();
+
+                // Build active page context dari request.Context
+                var activePageContext = BuildActivePageContextFromRequest(request);
+
                 var aiResponse = await GenerateEnhancedResponseAsync(
                     userMessage, 
                     validatedResults, 
                     intentResult.Intent,
                     conversationContext,
-                    isFollowUp);
+                    isFollowUp,
+                    activePageContext);
                 responseStopwatch.Stop();
                 metrics.LlmResponseMs = (long)responseStopwatch.Elapsed.TotalMilliseconds;
 
@@ -597,7 +602,7 @@ namespace Jifas.Assistant.Services
         }
 
         /// <summary>
-        /// Generate partial match response using Gemini
+        /// Generate partial match response using Ollama
         /// When KB has some results but confidence is borderline
         /// </summary>
         private async Task<string> GeneratePartialMatchResponseAsync(string userQuery, List<KnowledgeBaseResult> partialResults)
@@ -625,7 +630,7 @@ Buatlah respons yang:
 
 Buatlah respons langsung tanpa penjelasan tambahan.";
 
-                var response = await _geminiService.CallGeminiApiAsync(prompt);
+                var response = await _ollamaService.CallOllamaApiAsync(prompt);
                 _logger.LogInformation("[ChatService] Generated partial match response");
                 return response;
             }
@@ -637,7 +642,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         }
 
         /// <summary>
-        /// Generate natural no-match response using Gemini
+        /// Generate natural no-match response using Ollama
         /// When KB confidence is too low or no relevant results found
         /// </summary>
         private async Task<string> GenerateNoMatchResponseAsync(string userQuery)
@@ -658,7 +663,7 @@ Buatlah respons yang:
 
 Buatlah respons langsung tanpa penjelasan tambahan.";
 
-                var response = await _geminiService.CallGeminiApiAsync(prompt);
+                var response = await _ollamaService.CallOllamaApiAsync(prompt);
                 _logger.LogInformation("[ChatService] Generated no-match response");
                 return response;
             }
@@ -671,7 +676,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
 
         /// <summary>
         /// Display AI introduction to JIFAS system on first user message
-        /// Generates natural welcome message from Gemini with DYNAMIC system context
+        /// Generates natural welcome message from Ollama with DYNAMIC system context
         /// </summary>
         private async Task ShowJIFASIntroductionAsync(ChatResponse response)
         {
@@ -696,7 +701,7 @@ Petunjuk pembuatan:
 
 Buatlah respons langsung tanpa penjelasan tambahan.";
 
-                var introMessage = await _geminiService.CallGeminiApiAsync(prompt);
+                var introMessage = await _ollamaService.CallOllamaApiAsync(prompt);
 
                 response.Message = introMessage;
                 response.Source = "JIFAS AI Assistant";
@@ -946,7 +951,7 @@ INSTRUKSI:
 
 Respons langsung:";
 
-                return await _geminiService.CallGeminiApiAsync(prompt);
+                return await _ollamaService.CallOllamaApiAsync(prompt);
             }
             catch (Exception ex)
             {
@@ -981,7 +986,7 @@ JANGAN pernah mengarang informasi!
 
 Respons langsung:";
 
-                return await _geminiService.CallGeminiApiAsync(prompt);
+                return await _ollamaService.CallOllamaApiAsync(prompt);
             }
             catch
             {
@@ -990,37 +995,76 @@ Respons langsung:";
         }
 
         /// <summary>
-        /// Generate enhanced response with conversation context
+        /// Generate enhanced response dengan conversation context dan active page context
         /// </summary>
         private async Task<string> GenerateEnhancedResponseAsync(
             string userQuery,
             List<KnowledgeBaseResult> kbResults,
             IntentType intent,
             string conversationContext,
-            bool isFollowUp)
+            bool isFollowUp,
+            string? activePageContext = null)
         {
             try
             {
-                // If follow-up, use conversation context
+                // Bangun session context yang menggabungkan conversation + active page
+                var sessionContext = BuildSessionContext(conversationContext, isFollowUp, activePageContext);
+
+                // Gunakan prompt engineering dengan session context yang lengkap
+                var enhancedQuery = userQuery;
                 if (isFollowUp && !string.IsNullOrEmpty(conversationContext))
                 {
-                    var contextPrompt = $@"{conversationContext}
+                    enhancedQuery = $@"{conversationContext}
 
-PERTANYAAN SAAT INI (follow-up dari percakapan di atas): ""{userQuery}""
-
-Jawab dengan mempertimbangkan konteks percakapan sebelumnya. Pastikan jawabannya koheren dengan diskusi sebelumnya.";
-
-                    return await _geminiService.GenerateResponseAsync(contextPrompt, kbResults);
+PERTANYAAN SAAT INI (follow-up): ""{userQuery}""
+Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
                 }
 
-                // Normal response
-                return await _geminiService.GenerateResponseAsync(userQuery, kbResults);
+                return await _ollamaService.GenerateResponseAsync(enhancedQuery, kbResults, sessionContext: sessionContext);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"[ChatService] Error generating enhanced response: {ex.Message}");
-                return await _geminiService.GenerateResponseAsync(userQuery, kbResults);
+                return await _ollamaService.GenerateResponseAsync(userQuery, kbResults, sessionContext: activePageContext);
             }
+        }
+
+        /// <summary>
+        /// Bangun session context string dari active page context di request
+        /// Format output: "PAGE:{page}|MODULE:{module}|TITLE:{title}|DOC:{docId}|DOCTYPE:{type}|STATUS:{status}"
+        /// </summary>
+        private string? BuildActivePageContextFromRequest(ChatRequest? request)
+        {
+            var ctx = request?.Context;
+            if (ctx == null) return null;
+
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(ctx.CurrentPage))
+                parts.Add($"PAGE:{ctx.CurrentPage}");
+            if (!string.IsNullOrWhiteSpace(ctx.ActiveModule))
+                parts.Add($"MODULE:{ctx.ActiveModule}");
+            if (!string.IsNullOrWhiteSpace(ctx.PageTitle))
+                parts.Add($"TITLE:{ctx.PageTitle}");
+            if (!string.IsNullOrWhiteSpace(ctx.SelectedDocumentId))
+                parts.Add($"DOC:{ctx.SelectedDocumentId}");
+            if (!string.IsNullOrWhiteSpace(ctx.DocumentType))
+                parts.Add($"DOCTYPE:{ctx.DocumentType}");
+            if (!string.IsNullOrWhiteSpace(ctx.DocumentStatus))
+                parts.Add($"STATUS:{ctx.DocumentStatus}");
+
+            return parts.Count > 0 ? string.Join("|", parts) : null;
+        }
+
+        /// <summary>
+        /// Bangun session context string dari active page context di request
+        /// </summary>
+        private string BuildSessionContext(string? conversationContext, bool isFollowUp, string? activePageContext)
+        {
+            if (!string.IsNullOrEmpty(activePageContext))
+                return activePageContext;
+            if (isFollowUp && !string.IsNullOrEmpty(conversationContext))
+                return conversationContext;
+            return string.Empty;
         }
 
         /// <summary>
@@ -1055,12 +1099,12 @@ Buatlah jawaban yang LEBIH BAIK dengan memperhatikan:
 
 Respons langsung:";
 
-                return await _geminiService.CallGeminiApiAsync(prompt);
+                return await _ollamaService.CallOllamaApiAsync(prompt);
             }
             catch
             {
                 // Fallback to original method
-                return await _geminiService.GenerateResponseAsync(userQuery, kbResults);
+                return await _ollamaService.GenerateResponseAsync(userQuery, kbResults);
             }
         }
 
@@ -1166,4 +1210,5 @@ Respons langsung:";
         #endregion
     }
 }
+
 

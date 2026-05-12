@@ -27,7 +27,7 @@ namespace Jifas.Assistant.Services
 
     /// <summary>
     /// Advanced prompt engineering service for JIFAS AI Assistant
-    /// Creates intelligent, context-aware prompts that guide Gemini to find answers
+    /// Creates intelligent, context-aware prompts that guide Ollama to find answers
     /// This is NOT hardcoded - it analyzes KB content and builds dynamic prompts
     /// </summary>
     public interface IPromptEngineeringService
@@ -100,36 +100,38 @@ namespace Jifas.Assistant.Services
                 var contextAnalysis = await AnalyzeContextAsync(userQuery, kbResults);
                 _logger.LogInformation($"[PromptEngineering] Context analysis - Relevance: {contextAnalysis.OverallRelevance}%, Coverage: {contextAnalysis.ContentCoverage}");
 
-                // Improvement #2: Build enhanced JIFAS-specific system prompt
+                // Build JIFAS system prompt
                 var systemPrompt = BuildEnhancedSystemPrompt(kbResults, userQuery);
 
-                // Improvement #1 & #10: Semantic optimization for main prompt
+                // Build main KB content prompt
                 var mainPrompt = BuildOptimizedMainPrompt(userQuery, kbResults, contextAnalysis, sessionContext);
 
-                // Improvement #3: Build query-type-specific instructions with few-shot examples
+                // Build query-type-specific instructions
                 var querySpecificInstructions = BuildQuerySpecificInstructionsWithExamples(queryType, userQuery, kbResults);
 
-                // Step 4: Combine system + main prompt - OPTIMIZED for precision & natural response
+                // Parse active page context from sessionContext (format: "PAGE:{page}|MODULE:{module}|TITLE:{title}|DOC:{docId}|STATUS:{status}")
+                var activePageContext = BuildActivePageContextSection(sessionContext);
+
                 var confidenceLevel = contextAnalysis.OverallRelevance >= 80 ? "TINGGI" : 
                                      contextAnalysis.OverallRelevance >= 60 ? "SEDANG" : "RENDAH";
-                
-                var finalPrompt = $@"{systemPrompt}
 
+                var finalPrompt = $@"{systemPrompt}
+{activePageContext}
 === KNOWLEDGE BASE ===
 {mainPrompt}
 === END KB ===
 
-PERTANYAAN: ""{userQuery}""
+PERTANYAAN USER: ""{userQuery}""
 CONFIDENCE KB: {confidenceLevel} ({contextAnalysis.OverallRelevance}%)
 
 {querySpecificInstructions}
 
 INSTRUKSI FINAL:
-- Confidence TINGGI: Jawab dengan lengkap dan percaya diri
-- Confidence SEDANG: Jawab dengan info yang ada, note jika ada yang kurang
-- Confidence RENDAH: Jujur bahwa info terbatas, berikan apa yang bisa
-
-FORMAT: Natural, seperti rekan kerja yang helpful. Langsung ke inti tanpa basa-basi.
+- Confidence TINGGI: Jawab dengan lengkap dan percaya diri berdasarkan KB
+- Confidence SEDANG: Jawab dengan info yang ada, tambahkan catatan jika ada yang kurang
+- Confidence RENDAH: Jujur bahwa info terbatas, sarankan hubungi IT Help Desk
+- Jika ada konteks halaman aktif di atas, prioritaskan jawaban yang relevan dengan halaman tersebut
+- Format: Natural, spesifik, actionable. Gunakan bullet/numbering untuk langkah-langkah.
 
 JAWABAN:";
 
@@ -143,75 +145,132 @@ JAWABAN:";
         }
 
         /// <summary>
-        /// Build enhanced JIFAS-specific system prompt
-        /// Improvement #2: Contains JIFAS-specific context, workflows, and constraints
-        /// ENHANCED: More natural, precise, and balanced responses
+        /// Build active page context section dari sessionContext string
+        /// Format sessionContext: "PAGE:/Invoice/Finance|MODULE:Invoice|TITLE:Finance Invoice|DOC:INV-001|STATUS:Draft"
+        /// </summary>
+        private string BuildActivePageContextSection(string? sessionContext)
+        {
+            if (string.IsNullOrWhiteSpace(sessionContext)) return string.Empty;
+
+            try
+            {
+                var parts = sessionContext.Split('|', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(p => p.Split(':', 2))
+                    .Where(p => p.Length == 2)
+                    .ToDictionary(p => p[0].Trim(), p => p[1].Trim());
+
+                var sb = new StringBuilder();
+                sb.AppendLine("=== KONTEKS HALAMAN AKTIF USER ===");
+
+                if (parts.TryGetValue("PAGE", out var page) && !string.IsNullOrEmpty(page))
+                    sb.AppendLine($"Halaman yang sedang dibuka: {page}");
+                if (parts.TryGetValue("MODULE", out var module) && !string.IsNullOrEmpty(module))
+                    sb.AppendLine($"Modul aktif: {module}");
+                if (parts.TryGetValue("TITLE", out var title) && !string.IsNullOrEmpty(title))
+                    sb.AppendLine($"Judul halaman: {title}");
+                if (parts.TryGetValue("DOC", out var doc) && !string.IsNullOrEmpty(doc))
+                    sb.AppendLine($"Dokumen yang dipilih: {doc}");
+                if (parts.TryGetValue("DOCTYPE", out var docType) && !string.IsNullOrEmpty(docType))
+                    sb.AppendLine($"Tipe dokumen: {docType}");
+                if (parts.TryGetValue("STATUS", out var status) && !string.IsNullOrEmpty(status))
+                    sb.AppendLine($"Status dokumen: {status}");
+
+                sb.AppendLine("CATATAN: Prioritaskan jawaban yang relevan dengan konteks halaman di atas!");
+                sb.AppendLine("=== END KONTEKS ===");
+
+                return sb.ToString();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Build enhanced JIFAS-specific system prompt.
+        /// Dynamically enriched based on detected KB categories, query type, and confidence level.
         /// </summary>
         public string BuildEnhancedSystemPrompt(List<KnowledgeBaseResult> kbResults, string userQuery)
         {
             try
             {
                 var categories = kbResults.GroupBy(r => r.Category).Select(g => g.Key).Distinct().ToList();
+                var documentTitles = kbResults.Select(r => r.Title).Distinct().Take(4).ToList();
                 var highestScore = kbResults.Count > 0 ? kbResults.Max(r => r.Score) : 0;
                 var queryType = ClassifyQueryType(userQuery);
+                var hasSteps = kbResults.Any(r => r.Content.Contains("langkah") || r.Content.Contains("Langkah") || r.Content.Contains("1.") || r.Content.Contains("Step"));
+                var confidenceLabel = highestScore >= 0.8 ? "TINGGI" : highestScore >= 0.55 ? "SEDANG" : "RENDAH";
 
-                var systemPromptBuilder = new StringBuilder();
-                
-                // === IDENTITY (Natural, not robotic) ===
-                systemPromptBuilder.AppendLine("Kamu adalah JIFAS AI Assistant - asisten yang helpful, akurat, dan to-the-point.");
-                systemPromptBuilder.AppendLine("Kamu ahli sistem JIFAS (Jababeka Integrated Finance Accounting System).");
-                systemPromptBuilder.AppendLine();
+                var sb = new StringBuilder();
 
-                // === PERSONALITY (Natural conversation style) ===
-                systemPromptBuilder.AppendLine("GAYA KOMUNIKASI:");
-                systemPromptBuilder.AppendLine("- Bicara seperti rekan kerja yang helpful, bukan robot");
-                systemPromptBuilder.AppendLine("- Langsung ke inti jawaban, tidak bertele-tele");
-                systemPromptBuilder.AppendLine("- Gunakan bahasa yang mudah dipahami, hindari jargon berlebihan");
-                systemPromptBuilder.AppendLine("- Jika ada langkah-langkah, berikan dengan jelas dan berurutan");
-                systemPromptBuilder.AppendLine();
+                // Core identity — compact but rich
+                sb.AppendLine("Kamu adalah JIFAS AI Assistant, AI Persona Agent untuk sistem JIFAS (Jababeka Integrated Finance Accounting System) PT Jababeka Tbk.");
+                sb.AppendLine("Kamu seperti rekan kerja senior yang sangat paham JIFAS — helpful, jujur, dan langsung ke inti.");
+                sb.AppendLine();
 
-                // === PRECISION RULES (No over/under promising) ===
-                systemPromptBuilder.AppendLine("ATURAN PRESISI:");
-                systemPromptBuilder.AppendLine("- Jawab HANYA apa yang ditanya - tidak lebih, tidak kurang");
-                systemPromptBuilder.AppendLine("- Jika KB punya jawabannya: berikan dengan percaya diri dan lengkap");
-                systemPromptBuilder.AppendLine("- Jika KB TIDAK punya: katakan jujur 'Informasi ini tidak tersedia di KB JIFAS'");
-                systemPromptBuilder.AppendLine("- JANGAN mengarang atau berasumsi - lebih baik jujur tidak tahu");
-                systemPromptBuilder.AppendLine("- JANGAN melebih-lebihkan atau mengurangi informasi dari KB");
-                systemPromptBuilder.AppendLine();
+                // Domain knowledge reminder (key concepts)
+                sb.AppendLine("DOMAIN PENGETAHUANMU (JIFAS):");
+                sb.AppendLine("- Invoice: alur Create?Finance Approval?Head Approval?Tax?Post; status Draft/Submitted/Checking/Approved/Posted");
+                sb.AppendLine("- PUM: Pengajuan Uang Muka perjalanan dinas; alur Pengajuan?Approval?Distribusi?Realisasi?Settlement");
+                sb.AppendLine("- Receiving: RV (Receive Voucher) penerimaan barang/jasa; ReceiveTax butuh NPWP+alamat WP lengkap");
+                sb.AppendLine("- Payment: Invoice Payment dan PUM Payment; alur Finance?Head?Post; metode: Transfer/BG/Cek/Giro");
+                sb.AppendLine("- Accounting: GL jurnal, AP hutang vendor, AR piutang customer, Acc Period buka/tutup bulan, Posting bulk");
+                sb.AppendLine("- Budget: Budget Card, Committed, Realization, Over Budget ? butuh approval khusus");
+                sb.AppendLine("- Report: Cashflow, Inquiry AP/AR/CB/PUM, Saldo Buku Bank, Deposito, Realisasi PUM");
+                sb.AppendLine("- Master: Company, Employee, Vendor, COA, Department, Division, Account Period, Roles");
+                sb.AppendLine("- Login: username Windows tanpa @jababeka.com; password = password Windows");
+                sb.AppendLine();
 
-                // === CONTEXT AWARENESS ===
+                // Dynamic context from KB results
                 if (categories.Count > 0)
-                {
-                    systemPromptBuilder.AppendLine($"KONTEKS TOPIK: {string.Join(", ", categories.Take(3))}");
-                }
-                
-                // Add query-type specific guidance
-                systemPromptBuilder.AppendLine($"TIPE PERTANYAAN: {queryType}");
+                    sb.AppendLine($"TOPIK YANG RELEVAN SAAT INI: {string.Join(" | ", categories.Take(4))}");
+                if (documentTitles.Count > 0)
+                    sb.AppendLine($"DOKUMEN KB YANG TERSEDIA: {string.Join(", ", documentTitles.Take(3))}");
+                sb.AppendLine($"KEPERCAYAAN JAWABAN: {confidenceLabel} ({(highestScore * 100):F0}% match)");
+                sb.AppendLine();
+
+                // Query-type adaptive behavior
+                sb.Append("MODE JAWABAN (");
+                sb.Append(queryType);
+                sb.AppendLine("):");
                 switch (queryType)
                 {
                     case "HowTo":
-                        systemPromptBuilder.AppendLine("? Berikan langkah-langkah yang jelas dan actionable");
+                        sb.AppendLine("? Berikan langkah-langkah BERNOMOR yang jelas, konkret, dan bisa langsung dilakukan.");
+                        if (hasSteps) sb.AppendLine("? KB punya panduan langkah-langkah — gunakan sepenuhnya.");
                         break;
                     case "Troubleshooting":
-                        systemPromptBuilder.AppendLine("? Identifikasi masalah dan berikan solusi spesifik");
+                        sb.AppendLine("? Identifikasi root cause terlebih dahulu, lalu berikan solusi yang actionable.");
+                        sb.AppendLine("? Jika ada beberapa kemungkinan masalah, sebutkan semuanya.");
                         break;
                     case "Explanation":
-                        systemPromptBuilder.AppendLine("? Jelaskan konsep dengan ringkas tapi lengkap");
+                        sb.AppendLine("? Jelaskan konsep dengan analogi sederhana bila perlu, lalu berikan detail teknis.");
+                        sb.AppendLine("? Pastikan jawaban mudah dipahami oleh user non-teknis.");
                         break;
                     case "Navigation":
-                        systemPromptBuilder.AppendLine("? Tunjukkan lokasi menu/fitur dengan path yang jelas");
+                        sb.AppendLine("? Tunjukkan path menu yang jelas: Modul ? Sub-menu ? Halaman.");
+                        break;
+                    case "Authorization":
+                        sb.AppendLine("? Jelaskan role/permission yang diperlukan dan siapa yang berwenang.");
+                        break;
+                    default:
+                        sb.AppendLine("? Jawab langsung dan spesifik berdasarkan KB.");
                         break;
                 }
-                systemPromptBuilder.AppendLine();
+                sb.AppendLine();
 
-                // === QUALITY STANDARDS (Balanced) ===
-                systemPromptBuilder.AppendLine("STANDAR KUALITAS:");
-                systemPromptBuilder.AppendLine("? Spesifik - jawab pertanyaan yang ditanya, bukan yang lain");
-                systemPromptBuilder.AppendLine("? Akurat - semua info harus dari KB, tidak ada karangan");
-                systemPromptBuilder.AppendLine("? Lengkap - cukup detail untuk user bisa action");
-                systemPromptBuilder.AppendLine("? Ringkas - tidak bertele-tele atau repetitif");
+                // Precision rules — non-negotiable
+                sb.AppendLine("ATURAN WAJIB:");
+                sb.AppendLine("? Confidence TINGGI: jawab lengkap dan percaya diri dari KB");
+                sb.AppendLine("? Confidence SEDANG: jawab dengan info yang ada, tambahkan catatan jika kurang");
+                sb.AppendLine("? Confidence RENDAH: jujur bahwa informasi terbatas, sarankan hubungi IT Help Desk");
+                sb.AppendLine("? JANGAN mengarang info yang tidak ada di KB");
+                sb.AppendLine("? JANGAN ulangi pertanyaan user di awal jawaban");
+                sb.AppendLine("? JANGAN tambahkan disclaimer panjang yang tidak perlu");
+                sb.AppendLine();
+                sb.AppendLine("Eskalasi jika perlu: IT Help Desk ? it@jababeka.com");
 
-                return systemPromptBuilder.ToString();
+                return sb.ToString();
             }
             catch (Exception ex)
             {
@@ -654,142 +713,114 @@ Silakan jelaskan lebih detail agar saya dapat memberikan jawaban yang tepat.";
         /// </summary>
         private string BuildQuerySpecificInstructionsWithExamples(string queryType, string userQuery, List<KnowledgeBaseResult> kbResults)
         {
+            var hasKbContent = kbResults.Count > 0;
+            var confidenceNote = hasKbContent
+                ? $"KB tersedia ({kbResults.Count} dokumen relevan) — gunakan penuh."
+                : "KB tidak punya jawaban spesifik — jujur bahwa info terbatas.";
+
             return queryType switch
             {
-                "HowTo" => @"INSTRUKSI UNTUK PERTANYAAN 'BAGAIMANA/CARA':
-Berikan LANGKAH-LANGKAH yang JELAS dan TERSTRUKTUR dengan nomor urut.
+                "HowTo" =>
+$@"INSTRUKSI — PERTANYAAN 'CARA/LANGKAH' ({confidenceNote})
+- Berikan langkah bernomor yang jelas dan actionable
+- Gunakan nama tombol/menu JIFAS yang sebenarnya (Save, Submit, Approve, Post, Void, dll)
+- Sebutkan path menu jika diketahui dari KB
+- Tambahkan catatan/tip penting di akhir jika ada
+- Jangan skip langkah — user mungkin pemula dengan JIFAS",
 
-FORMAT CONTOH JAWABAN:
-'Untuk [tujuan], ikuti langkah-langkah berikut:
+                "Troubleshooting" =>
+$@"INSTRUKSI — PERTANYAAN MASALAH/ERROR ({confidenceNote})
+- Identifikasi dulu kemungkinan penyebab masalah
+- Berikan solusi urut dari paling mudah ke kompleks
+- Jelaskan expected result setelah setiap solusi
+- Jika butuh eskalasi: it@jababeka.com
+- Jangan berasumsi user sudah familiar dengan sistem",
 
-1. [Langkah pertama dengan detail lengkap]
-   - Sub-langkah jika diperlukan
-   - Informasi tambahan
+                "Explanation" =>
+$@"INSTRUKSI — PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
+- Mulai dengan definisi singkat di kalimat pertama
+- Jelaskan peran/fungsinya di sistem JIFAS
+- Hubungkan dengan modul lain jika relevan
+- Gunakan analogi sederhana jika konsepnya abstrak
+- Berikan contoh konkret dari konteks bisnis JIFAS",
 
-2. [Langkah kedua]
+                "Navigation" =>
+$@"INSTRUKSI — PERTANYAAN NAVIGASI/LOKASI MENU ({confidenceNote})
+- Berikan path menu: Modul ? Sub-menu ? Halaman
+- Sebutkan URL relatif jika diketahui
+- Deskripsikan tampilan/ciri halaman agar mudah dikenali
+- Jika ada prasyarat (login, role, permission), sebutkan",
 
-3. [Langkah ketiga]
+                "Authorization" =>
+$@"INSTRUKSI — PERTANYAAN ROLE/HAK AKSES ({confidenceNote})
+- Jelaskan role yang diperlukan: WMTR (IT), USER (umum), USRL (PUM dept-level)
+- Tunjukkan cara request akses jika user tidak punya permission
+- Jelaskan perbedaan antar role jika relevan
+- Eskalasi akses: minta ke admin sistem atau IT Help Desk",
 
-? TIP PENTING: [sertakan tips atau catatan penting dari KB]'
+                "Technical" =>
+$@"INSTRUKSI — PERTANYAAN TEKNIS/FIELD ({confidenceNote})
+- Jelaskan field/komponen dengan detail: nama, tipe, validasi, format
+- Berikan contoh input yang valid
+- Hubungkan dengan field/modul terkait
+- Jelaskan konsekuensi jika field tidak diisi atau salah format",
 
-PASTIKAN:
-- Mulai dari yang paling dasar
-- Setiap langkah punya penjelasan detail
-- Sertakan nama MENU atau FITUR JIFAS yang digunakan
-- Jika ada screenshot, referensikan lokasinya",
-
-                "Definition" => @"INSTRUKSI UNTUK PERTANYAAN DEFINISI/PENJELASAN:
-Jelaskan dengan RINGKAS namun LENGKAP.
-
-FORMAT CONTOH JAWABAN:
-'[Istilah/Konsep] adalah [definisi singkat dan jelas].
-
-Dalam konteks JIFAS, [istilah tersebut] digunakan untuk [penjelasan penggunaan].
-
-Contoh: [berikan contoh konkret dari KB]
-
-Hubungan dengan modul lain: [jika relevan, jelaskan keterkaitan]'
-
-PASTIKAN:
-- Definisi di kalimat pertama jelas dan ringkas
-- Jelaskan MENGAPA penting di JIFAS
-- Berikan contoh praktis, bukan hanya teori",
-
-                "Troubleshooting" => @"INSTRUKSI UNTUK PERTANYAAN MASALAH/ERROR:
-Bantu user menyelesaikan masalah dengan METODIS.
-
-FORMAT CONTOH JAWABAN:
-'PENYEBAB KEMUNGKINAN:
-- [Penyebab 1: kondisi dan tanda-tandanya]
-- [Penyebab 2]
-
-SOLUSI (dari paling mudah ke kompleks):
-
-?? SOLUSI 1 - [Nama solusi]:
-1. [Langkah 1]
-2. [Langkah 2]
-Hasil yang diharapkan: [apa yang seharusnya terjadi]
-
-?? SOLUSI 2 - [Nama solusi lain]:
-1. [Langkah 1]
-...
-
-?? JIKA TETAP GAGAL: [saran untuk hubungi support/escalate]'
-
-PASTIKAN:
-- Urutkan solusi dari paling mudah
-- Jelaskan EXPECTED RESULT setelah setiap solusi
-- Jangan asumsikan user sudah tahu tentang fitur JIFAS",
-
-                "Technical" => @"INSTRUKSI UNTUK PERTANYAAN TEKNIS/FIELD/MENU:
-Jelaskan dengan DETAIL dan TERSTRUKTUR.
-
-FORMAT CONTOH JAWABAN:
-'[NAMA FIELD/MENU] adalah [penjelasan singkat].
-
-DETAIL TEKNIS:
-- Lokasi: [Path/Menu di JIFAS]
-- Tipe Data: [format yang diterima]
-- Wajib/Opsional: [status]
-- Validasi: [aturan/batasan]
-- Contoh Input: [contoh data yang valid]
-
-HUBUNGAN:
-- Field/Modul terkait: [jika ada]
-- Dampak jika tidak diisi: [konsekuensi]
-
-?? CATATAN: [tips atau hal khusus]'
-
-PASTIKAN:
-- Field description lengkap dan akurat
-- Contoh input real dan praktis
-- Jelaskan relasi dengan field lain
-- Hindari jargon teknis yang terlalu kompleks",
-
-                _ => @"INSTRUKSI UMUM UNTUK SEMUA JENIS PERTANYAAN:
-- Pahami konteks pertanyaan dengan baik
-- Gunakan informasi yang paling RELEVAN dari KB
-- Berikan jawaban yang TERSTRUKTUR dan MUDAH DIPAHAMI
-- Setiap bagian jawaban harus SPESIFIK, bukan umum
-- Jika ada yang tidak jelas di KB, KATAKAN dengan tegas"
+                _ =>
+$@"INSTRUKSI — PERTANYAAN UMUM ({confidenceNote})
+- Pahami intent user dan jawab yang paling relevan
+- Strukturkan jawaban dengan jelas menggunakan bullet atau numbering
+- Spesifik tentang fitur/proses JIFAS, hindari jawaban abstrak"
             };
         }
 
-        private string GetDefaultSystemPrompt()
-        {
-            return @"Kamu adalah JIFAS AI Assistant, asisten virtual untuk Jababeka Integrated Finance Accounting System.
+        private string GetDefaultSystemPrompt() =>
+            "Kamu adalah JIFAS AI Assistant, asisten untuk sistem JIFAS PT Jababeka Tbk. " +
+            "Jawab berdasarkan Knowledge Base yang diberikan, jujur jika info tidak ada di KB, " +
+            "gunakan Bahasa Indonesia yang natural, dan berikan jawaban yang actionable.";
 
-ATURAN:
-1. Jawab HANYA berdasarkan Knowledge Base
-2. Jangan membuat informasi baru
-3. Gunakan Bahasa Indonesia profesional
-4. Berikan jawaban ringkas tapi lengkap
-5. Jika tidak tahu, katakan dengan jelas";
-        }
-
-        /// <summary>
-        /// FIX #4: Classify query type for smarter prompt engineering
         /// </summary>
         private string ClassifyQueryType(string query)
         {
-            var lowerQuery = query.ToLower();
-            
-            if (lowerQuery.StartsWith("bagaimana") || lowerQuery.StartsWith("cara") || 
-                lowerQuery.Contains("langkah") || lowerQuery.Contains("step"))
+            var q = query.ToLowerInvariant();
+
+            // Authorization / role / permission
+            if (q.Contains("role") || q.Contains("akses") || q.Contains("permission") ||
+                q.Contains("hak") || q.Contains("otorisasi") || q.Contains("wmtr") ||
+                q.Contains("usrl") || q.Contains("user bisa") || q.Contains("bisa diakses"))
+                return "Authorization";
+
+            // Navigation / where is the menu
+            if (q.Contains("dimana") || q.Contains("di mana") || q.Contains("letak") ||
+                q.Contains("menu") || q.Contains("halaman") || q.Contains("buka") ||
+                q.Contains("navigasi") || q.Contains("ke modul") || q.Contains("di jifas"))
+                return "Navigation";
+
+            // How-to / step-by-step
+            if (q.StartsWith("bagaimana") || q.StartsWith("cara") || q.StartsWith("gimana") ||
+                q.Contains("langkah") || q.Contains("step") || q.Contains("proses") ||
+                q.Contains("alur") || q.Contains("prosedur") || q.Contains("tutup") ||
+                q.Contains("buat") || q.Contains("submit") || q.Contains("approve"))
                 return "HowTo";
-            
-            if (lowerQuery.StartsWith("apa") || lowerQuery.StartsWith("siapa") || 
-                lowerQuery.StartsWith("yang") || lowerQuery.Contains("definisi"))
-                return "Definition";
-            
-            if (lowerQuery.Contains("error") || lowerQuery.Contains("masalah") || 
-                lowerQuery.Contains("tidak bisa") || lowerQuery.Contains("error"))
+
+            // Troubleshooting / error
+            if (q.Contains("error") || q.Contains("gagal") || q.Contains("tidak bisa") ||
+                q.Contains("nggak bisa") || q.Contains("masalah") || q.Contains("kenapa") ||
+                q.Contains("why") || q.Contains("bug") || q.Contains("tidak muncul") ||
+                q.Contains("tidak jalan") || q.Contains("tidak berhasil"))
                 return "Troubleshooting";
-            
-            if (lowerQuery.Contains("field") || lowerQuery.Contains("menu") || 
-                lowerQuery.Contains("modul") || lowerQuery.Contains("teknis"))
+
+            // Definition / explanation
+            if (q.StartsWith("apa") || q.StartsWith("apakah") || q.StartsWith("siapa") ||
+                q.Contains("definisi") || q.Contains("maksud") || q.Contains("artinya") ||
+                q.Contains("jelaskan") || q.Contains("apa itu") || q.Contains("fungsi"))
+                return "Explanation";
+
+            // Technical / field-level
+            if (q.Contains("field") || q.Contains("kolom") || q.Contains("input") ||
+                q.Contains("format") || q.Contains("validasi") || q.Contains("kode") ||
+                q.Contains("tipe data") || q.Contains("teknis"))
                 return "Technical";
-            
+
             return "General";
         }
 

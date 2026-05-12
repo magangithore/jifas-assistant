@@ -128,7 +128,7 @@ COA disusun secara bertingkat:
 Level 1: 8 kategori utama (ASET, LIABILITAS, EKUITAS, PENDAPATAN, COGS, BEBAN, PENDAPATAN LAIN, PAJAK)
 Level 2+: Akun detail di bawah masing-masing kategori
 Setiap akun detail dapat memiliki sub-akun sendiri
-Contoh: ASET (10000.0000) → Kas (10100.0000) → Kas Kecil (10101.0000)
+Contoh: ASET (10000.0000) -> Kas (10100.0000) -> Kas Kecil (10101.0000)
 
 2. Validasi Deskripsi Akun
 Hanya memperbolehkan huruf, angka, spasi, tanda kurung, dan garis miring (/)
@@ -155,7 +155,7 @@ Setiap akun baru akan mendapat kode unik yang tidak duplikat
 Fixed Asset (FA Status): Menandai apakah akun ini untuk aset tetap (Yes) atau bukan (No)
 FA Type: Jika adalah fixed asset, tentukan tipe arus kas: "Cash In" (pembelian) atau "Cash Out" (penjualan)
 Budget Approval: Menunjukkan apakah akun ini memerlukan persetujuan anggaran terlebih dahulu sebelum transaksi
-Contoh: Akun "Pembelian Aset Tetap" → FA Status: Yes, FA Type: Cash Out, Budget Approval: Yes
+Contoh: Akun "Pembelian Aset Tetap" -> FA Status: Yes, FA Type: Cash Out, Budget Approval: Yes
 
 Pesan dan Konfirmasi
 

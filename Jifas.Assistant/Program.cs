@@ -32,7 +32,7 @@ builder.Services.AddDbContext<JifasAssistantDbContext>(options =>
 */
 
 // 2. Add Configuration Models (Strongly Typed Settings) - ONLY ESSENTIALS
-builder.Services.Configure<LocalAISettings>(builder.Configuration.GetSection("LocalAI"));
+builder.Services.Configure<OllamaSettings>(builder.Configuration.GetSection("Ollama"));
 builder.Services.Configure<KnowledgeBaseSettings>(builder.Configuration.GetSection("KnowledgeBase"));
 builder.Services.Configure<ChatSettings>(builder.Configuration.GetSection("Chat"));
 builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection("Caching"));
@@ -69,7 +69,7 @@ builder.Services.AddSwaggerGen(c =>
     { 
         Title = "JIFAS AI Assistant API",
         Version = "v1.0",
-        Description = "Intelligent AI-powered chatbot with Knowledge Base and Local Ollama AI Integration"
+        Description = "Intelligent AI-powered chatbot with Knowledge Base and Local Ollama (qwen3:8b) Integration"
     });
 });
 
@@ -99,10 +99,9 @@ builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 builder.Services.AddScoped<IKnowledgeBaseSearchService, KnowledgeBaseSearchService>();
 builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>();
 
-// AI Service - USE LOCAL AI INSTEAD OF GEMINI
-// Swap comments to switch between LocalAI and Gemini
-builder.Services.AddScoped<IGeminiService, LocalAIService>();  // Local AI (Ollama) - ACTIVE
-// builder.Services.AddScoped<IGeminiService, GeminiService>();  // Gemini API - DISABLED
+// AI Service - Ollama qwen3:8b (typed HttpClient + scoped interface registration)
+builder.Services.AddHttpClient<OllamaService>().Services
+    .AddScoped<IOllamaService, OllamaService>();
 
 // Embedding Service - Ollama qwen3-embedding:4b
 builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();

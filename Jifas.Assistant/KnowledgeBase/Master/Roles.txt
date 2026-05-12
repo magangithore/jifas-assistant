@@ -198,7 +198,7 @@ Audit Trail: Setiap perubahan role tercatat untuk keperluan audit dan compliance
 Role Tidak Boleh Kosong: Setiap pengguna harus memiliki minimal satu role
 Multiple Roles: Satu pengguna dapat memiliki multiple roles sekaligus
 Naming Convention: Gunakan naming convention yang konsisten untuk memudahkan manajemen (contoh: DEPTFUNCTIONLEVEL)
-Role Hierarchy: Pertimbangkan struktur hierarki role dari bawah ke atas (Magang → Staff → Supervisor → Head → Webmaster)
+Role Hierarchy: Pertimbangkan struktur hierarki role dari bawah ke atas (Magang -> Staff -> Supervisor -> Head -> Webmaster)
 Company Scope: Pastikan setiap role sudah di-assign ke company yang tepat
 Inactive Backup: Jangan langsung hapus role yang sudah tidak digunakan set ke Inactive terlebih dahulu untuk safety
 Documentation: Dokumentasikan tujuan dan scope setiap role untuk referensi tim HR/IT

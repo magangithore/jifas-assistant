@@ -1,4 +1,4 @@
-LAPORAN INQUIRY DAILY CASH FLOW
+﻿LAPORAN INQUIRY DAILY CASH FLOW
 
 DESKRIPSI LAPORAN:
 Laporan ini menampilkan aliran kas harian perusahaan dalam dua sudut pandang:
@@ -30,8 +30,8 @@ TAHAP 2: KLIK TOMBOL SEARCH
 
 TAHAP 3: TAMPILAN RINGKASAN (DAILY CASH FLOW TAB)
    • Grid atas menampilkan 2 tab:
-     Tab 1: "Daily Cash Flow" → Ringkasan akun kas utama
-     Tab 2: "Daily Cash Flow Detail" → Data transaksi detail
+     Tab 1: "Daily Cash Flow" -> Ringkasan akun kas utama
+     Tab 2: "Daily Cash Flow Detail" -> Data transaksi detail
    
    • Grid Summary menampilkan kolom:
      - Description (Deskripsi Akun Kas)
@@ -259,7 +259,7 @@ SCENARIO 2: ACTUAL LEBIH BESAR DARI BUDGET (OVERSPEND)
    Budget Amt: Rp. 100.000.000
    Actual Amt: Rp. 125.000.000
    Varians: Rp. 25.000.000 (Overspend 25%)
-   ► ANALISIS: ⚠ Ada pengeluaran yang tidak terencana atau underestimation 
+   ► ANALISIS: [PERINGATAN] Ada pengeluaran yang tidak terencana atau underestimation 
      saat penyusunan budget. Perlu investigasi penyebabnya.
 
 SCENARIO 3: ACTUAL LEBIH KECIL DARI BUDGET (UNDERSPEND)
@@ -274,16 +274,16 @@ SCENARIO 3: ACTUAL LEBIH KECIL DARI BUDGET (UNDERSPEND)
 SCENARIO 4: KAS NEGATIF / DEFICIT
    Jika Actual Acuan menunjukkan angka negatif atau tidak mampu menutupi 
    kewajiban yang harus dibayar:
-   ► ANALISIS: ⚠ Ada cash flow problem, perlu immediate action:
+   ► ANALISIS: [PERINGATAN] Ada cash flow problem, perlu immediate action:
      - Tunda pengeluaran non-urgent
      - Kejar penerimaan (pembayaran pelanggan)
      - Persiapkan pembiayaan tambahan (loan/kredit)
 
 PERBANDINGAN ANTAR PERIODE:
 Jalankan laporan untuk 2-3 periode berbeda untuk melihat tren:
-   • Jika Actual Amt konsisten naik → Indikasi inflasi biaya atau bertambahnya 
+   • Jika Actual Amt konsisten naik -> Indikasi inflasi biaya atau bertambahnya 
      volume aktivitas
-   • Jika Actual Amt konsisten turun → Indikasi penghematan atau penurunan 
+   • Jika Actual Amt konsisten turun -> Indikasi penghematan atau penurunan 
      volume aktivitas
 
 

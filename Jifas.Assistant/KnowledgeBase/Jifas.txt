@@ -1,584 +1,257 @@
-Apa Itu JIFAS?
-
-JIFAS (Jababeka Integrated Finance Accounting System) adalah aplikasi keuangan terintegrasi yang dirancang untuk mengelola proses akuntansi, anggaran, dan data master bagi berbagai unit bisnis di bawah naungan PT Jababeka Tbk.
-
-Versi JIFAS
-
-JIFAS tersedia dalam dua versi:
-
-JIFAS Desktop  digunakan sejak tahun 2005.
-JIFAS Web  sudah digunakan dan pengembangannya masih terus berjalan.
-
-Migrasi ke JIFAS Web
-
-Pengguna JIFAS Desktop saat ini diharapkan mulai bermigrasi ke JIFAS Web. Alasannya:
-
-Pengembangan JIFAS Desktop telah dihentikan.
-JIFAS Desktop memiliki banyak keterbatasan dibandingkan versi web.
-
-DOKUMENTASI LENGKAP JIFAS WEB
-Panduan Pemahaman Sistem JIFAS Web untuk Knowledge Base Chatbot
-
- DAFTAR ISI
-Apa Itu JIFAS Web?
-Tujuan dan Manfaat
-Struktur dan Komponen Utama
-Fitur-Fitur Utama
-Alur Kerja Sistem
-Siapa Yang Menggunakan JIFAS?
-Teknologi yang Digunakan
-Keamanan dan Kontrol Akses
-
-Apa Itu JIFAS Web?
-
-JIFAS Web adalah sistem aplikasi web untuk mengelola keuangan perusahaan secara digital. JIFAS adalah singkatan yang merujuk pada sebuah platform terintegrasi yang membantu perusahaan dalam menjalankan berbagai proses keuangan mulai dari pembuatan faktur (invoice), pembayaran, laporan keuangan, hingga konsolidasi data keuangan dari berbagai cabang atau divisi perusahaan.
-
-Analogi Sederhana:
-Bayangkan JIFAS Web seperti buku pembukuan digital yang canggih dan otomatis. Jika dulu perusahaan menggunakan buku tulis dan kalkulator untuk mencatat transaksi keuangan, maka JIFAS Web adalah sistem otomatis yang mencatat, menghitung, dan melaporkan semua transaksi keuangan secara real-time dan akurat.
-
-Tujuan dan Manfaat
-
-Tujuan Utama:
-Manajemen Keuangan Terpusat - Semua data keuangan perusahaan tersimpan dalam satu sistem terpadu
-Otomasi Proses - Mengurangi pekerjaan manual dan kesalahan manusia dalam pencatatan keuangan
-Transparansi - Memudahkan pemimpin perusahaan melihat posisi keuangan real-time
-Laporan Akurat - Menghasilkan laporan keuangan yang valid dan tepat waktu
-Kontrol Kualitas - Memastikan setiap transaksi melewati proses persetujuan (approval) yang ketat
-
-Manfaat Praktis:
- Penghematan Waktu: Proses yang dulunya butuh berhari-hari sekarang selesai dalam hitungan menit
- Pengurangan Biaya: Mengurangi kesalahan yang merugikan perusahaan
- Kemudahan Audit: Semua transaksi tercatat dengan rapi, memudahkan pemeriksaan
- Keputusan Bisnis Lebih Cepat: Data tersedia real-time, tidak perlu menunggu laporan manual
- Keamanan Data: Data terlindungi dengan sistem login dan kontrol akses
-
-Struktur dan Komponen Utama
-
-JIFAS Web memiliki struktur yang rapi dibagi menjadi beberapa bagian utama:
-
-Modul Manajemen Master Data (Pengaturan Dasar)
-Bagian ini adalah fondasi sistem. Di sini dilakukan pengaturan data-data dasar yang akan digunakan seluruh sistem.
-
-Komponen:
-Manajemen Perusahaan - Mendaftarkan data perusahaan, cabang, atau divisi
-Manajemen Karyawan - Data lengkap semua karyawan perusahaan
-Manajemen Vendor/Supplier - Daftar perusahaan atau supplier yang bekerja sama
-Manajemen Departemen/Divisi - Struktur organisasi perusahaan
-Manajemen Chart of Accounts (CoA) - Daftar semua akun keuangan yang digunakan
-Manajemen Periode Akuntansi - Menentukan periode laporan (bulanan, tahunan, dll)
-Pengaturan Laporan - Konfigurasi untuk pembuatan laporan
-
-Kegunaan:
-Ini seperti "setup awal" dalam sebuah permainan. Sebelum sistem berjalan, admin harus mengatur semua data dasar terlebih dahulu.
-
-Modul Invoice (Pembuatan Faktur)
-Modul ini menangani pembuatan dan pengelolaan faktur/invoice penjualan atau pengajuan biaya.
-
-Fitur Utama:
-Pembuatan Invoice - Staf dapat membuat dokumen invoice untuk penjualan atau pengajuan
-Persetujuan Invoice - Manager/kepala dapat memeriksa dan menyetujui invoice
-Posting Invoice - Setelah disetujui, invoice direkam ke sistem akuntansi
-Pelacakan Status - Dapat dilihat status invoice (draft, menunggu persetujuan, disetujui, diposting)
-
-Alur Kerja:
-
-Staf Buat Invoice
-
-Manager Review & Setuju
-
-Invoice Dicatat ke Sistem Akuntansi
-
-Invoice Selesai
-
-Kegunaan Praktis:
-Ketika perusahaan menjual barang kepada pelanggan, staf membuat invoice di sini. Kemudian manager memeriksa apakah invoice sudah benar sebelum dikirim ke pelanggan atau dicatat di sistem keuangan.
-
-Modul Payment (Pembayaran)
-Modul ini mengelola semua proses pembayaran yang harus dilakukan perusahaan.
-
-Fitur Utama:
-List Cek dan Bank Giro - Mengelola pembayaran melalui cek atau transfer bank
-Payment untuk PUM - Pembayaran khusus untuk perjalanan dinas (PUM = Pemeriksaan Umum/Perjalanan Usaha Manajerial)
-Pembayaran Invoice - Mencatat pembayaran terhadap invoice yang sudah dibuat
-Verifikasi Pembayaran - Memastikan pembayaran benar dan terekam dengan akurat
-
-Alur Kerja:
-
-Identification Invoice Harus Dibayar
-
-Verifikasi Pembayaran
-
-Proses Pembayaran (Cek/Bank/Cash)
-
-Rekam Pembayaran di Sistem
-
-Kegunaan Praktis:
-Ketika perusahaan harus membayar tagihan atau biaya operasional, proses ditangani di sini. Dari pembuatan cek, transfer bank, hingga pencatatan pembayaran.
-
-Modul Laporan Akuntansi (Pelaporan Keuangan)
-Modul terpenting untuk laporan keuangan yang memenuhi standar akuntansi.
-
-Fitur Utama:
-
-a) Jurnal Transaksi
-Mencatat setiap transaksi keuangan dengan rinci
-Setiap transaksi punya akun debit dan kredit (sesuai prinsip akuntansi)
-
-b) Ledger (Buku Besar)
-Ringkasan semua transaksi per akun keuangan
-Menunjukkan saldo akun dari awal periode hingga akhir
-
-c) Trial Balance (Neraca Saldo)
-Laporan yang menunjukkan semua akun dengan saldo debit atau kredit
-Digunakan untuk memverifikasi bahwa sistem sudah seimbang
-
-d) Balance Sheet (Neraca)
-Laporan posisi keuangan perusahaan pada tanggal tertentu
-Menunjukkan: Aset = Kewajiban + Modal
-Seperti "foto" kesehatan finansial perusahaan
-
-e) Profit & Loss (Laporan Laba Rugi)
-Menunjukkan berapa untung atau rugi perusahaan dalam periode tertentu
-Mencakup pendapatan, biaya, dan laba bersih
-
-f) Cash Flow (Arus Kas)
-Melacak pergerakan uang masuk dan keluar perusahaan
-Penting untuk melihat likuiditas perusahaan
-
-g) Ledger Pelanggan (Aging Report)
-Menunjukkan utang pelanggan yang masih belum dibayar
-Membantu mengejar pembayaran dari pelanggan
-
-h) Laporan Anggaran vs Realisasi
-Membandingkan rencana anggaran dengan pengeluaran aktual
-Membantu mengontrol pengeluaran perusahaan
-
-Kegunaan Praktis:
-Laporan-laporan ini digunakan untuk:
-Presentasi kepada direktur/pemilik
-Audit eksternal (pemeriksaan oleh pihak ketiga)
-Pelaporan ke pemerintah/pajak
-Pengambilan keputusan bisnis
-
-Modul Kas Bank (Cash Bank)
-Modul untuk mengelola uang tunai dan rekening bank perusahaan.
-
-Fitur Utama:
-Rekonsiliasi Bank - Menyesuaikan catatan perusahaan dengan laporan bank
-Manajemen Kas - Pencatatan uang tunai yang masuk dan keluar
-Laporan Kas Harian - Laporan posisi uang setiap hari
-
-Kegunaan Praktis:
-Seperti buku kas di meja kasir, tapi untuk seluruh perusahaan. Memastikan uang di tangan sama dengan catatan sistem.
-
-Modul Konsolidasi (Penggabungan Data)
-Modul untuk perusahaan dengan banyak cabang atau divisi yang ingin menggabungkan laporan keuangan.
-
-Fitur Utama:
-Upload Data dari Cabang - Setiap cabang mengirim data keuangan mereka
-Neraca Saldo Terpadu - Menggabungkan neraca saldo dari semua cabang
-Eliminasi Transaksi Internal - Menghilangkan transaksi antar cabang agar tidak dihitung ganda
-Laporan Konsolidasi - Laporan keuangan gabungan seluruh perusahaan
-
-Analogi:
-Bayangkan perusahaan punya cabang di Jakarta, Surabaya, dan Medan. Masing-masing cabang membuat laporan sendiri. Konsolidasi adalah proses menggabungkan ketiga laporan tersebut menjadi satu laporan perusahaan secara keseluruhan.
-
-Modul PUM (Perjalanan Usaha Manajerial)
-Modul khusus untuk mencatat dan memproses biaya perjalanan dinas karyawan.
-
-Fitur Utama:
-Pengajuan PUM - Karyawan mengajukan rencana perjalanan dinas
-Persetujuan PUM - Manager menyetujui atau menolak pengajuan
-Pencatatan Pengeluaran - Karyawan mencatat semua pengeluaran selama perjalanan
-Realisasi PUM - Laporan akhir pengeluaran vs budget yang dialokasikan
-Pembayaran Kembali - Pembayaran ganti rugi atau penagihan kelebihan biaya
-
-Kegunaan Praktis:
-Saat karyawan perjalanan dinas, mereka harus tahu budget berapa. Setelah kembali, semua pengeluaran dicatat di sini untuk diverifikasi dan dilaporkan.
-
-Modul Penerimaan (Receiving) (Pemeriksaan Barang)
-Modul untuk mencatat penerimaan barang dari supplier.
-
-Fitur Utama:
-Pemeriksaan Barang - Verifikasi barang yang diterima sesuai PO
-Pencatatan Tax Operasional - Pencatatan pajak pada barang yang diterima
-Update Inventori - Pencatatan barang masuk ke gudang
-
-Kegunaan Praktis:
-Ketika ada barang datang dari supplier, bagian penerima mencatat di sini. Memastikan barang yang diterima sesuai pesanan dan jumlahnya tepat.
-
-Modul Keamanan dan Akses (Security)
-Modul untuk mengatur siapa saja yang boleh akses sistem dan fitur apa saja yang bisa diakses.
-
-Fitur Utama:
-Manajemen Pengguna - Mendaftarkan user/akun di sistem
-Manajemen Role/Peran - Menentukan hak akses setiap tipe pengguna
-Manajemen Dokumen - Menentukan siapa yang bisa melihat/mengedit dokumen tertentu
-Kontrol Akses Berbasis Peran - Setiap role punya menu dan fitur yang berbeda
-
-Kegunaan Praktis:
-Kasir hanya bisa akses modul Kas, tapi tidak bisa akses modul Laporan Akuntansi. Direktur bisa akses semua. Ini menjamin data aman dan tidak ada penyalahgunaan.
-
-Modul SPK (Surat Perintah Kerja)
-Modul untuk pengelolaan surat perintah kerja atau work order.
-
-Kegunaan Praktis:
-Pencatatan pekerjaan atau proyek yang diberikan ke pihak internal atau eksternal.
-
-Modul Budget/Anggaran
-Modul untuk perencanaan dan kontrol anggaran perusahaan.
-
-Fitur Utama:
-Pembuatan Anggaran - Merencanakan budget untuk periode mendatang
-Tracking Realisasi - Memantau pengeluaran aktual vs anggaran
-Alert Over Budget - Pemberitahuan jika pengeluaran melebihi anggaran
-
-Kegunaan Praktis:
-Seperti membuat rencana keuangan pribadi. Perusahaan merencanakan ada berapa budget untuk listrik, internet, dll. Kemudian sistem memantau apakah pengeluaran sesuai rencana.
-
-Fitur-Fitur Utama
-
- Autentikasi dan Login
-User harus login dengan akun dan password
-Sistem menggunakan teknologi JWT (token keamanan)
-Setiap user memiliki role/peran tertentu
-
- Multi Bahasa
-Sistem mendukung lebih dari satu bahasa (English, Indonesia, dll)
-User dapat memilih bahasa yang diinginkan
-Laporan dapat dicetak dalam berbagai bahasa
-
- Dashboard/Ringkasan
-Halaman utama menampilkan ringkasan informasi keuangan penting
-Grafik dan chart untuk visualisasi data
-Shortcut ke modul-modul yang sering digunakan
-
- Laporan Tercetak (Print)
-Semua laporan dapat dicetak atau diunduh
-Format profesional siap presentasi atau audit
-Dapat diekspor ke berbagai format (PDF, Excel, dll)
-
- Sistem Persetujuan (Workflow)
-Dokumen harus melalui tahap persetujuan sebelum final
-Tracking status persetujuan
-Notification ke approver jika ada dokumen menunggu
-
- Periode Akuntansi
-Sistem dapat diatur untuk periode bulanan, triwulan, atau tahunan
-Lock period untuk mencegah editing data bulan yang sudah ditutup
-
- Multi Entitas
-Dapat mengelola beberapa perusahaan atau cabang dalam satu sistem
-Data terpisah per entitas tapi dapat dikonsolidasi
-
-Alur Kerja Sistem
-
-Skenario Umum: Perjalanan Invoice Dari Awal Hingga Akhir
-
- 1. STAF MEMBUAT INVOICE
-     Login ke sistem JIFAS
-     Pilih modul Invoice > Buat Invoice Baru
-     Isi data: tanggal, pelanggan, barang, jumlah, harga
-     Simpan dengan status "DRAFT" (masih bisa diedit)
-
- 2. MANAGER MEREVIEW & MENYETUJUI
-     Manager login ke sistem
-     Masuk ke modul Invoice > Head Approval
-     Review semua invoice yang pending approval
-     Cek apakah data sudah benar
-     Klik "Approve" atau "Reject"
-
- 3. INVOICE DIPOSTING KE AKUNTANSI
-     Sistem otomatis atau manual posting invoice
-     Invoice dicatat ke jurnal transaksi
-     Akun-akun yang terkait terupdate (AR naik, dll)
-     Status invoice berubah jadi "POSTED"
-
- 4. PENCATATAN PEMBAYARAN
-     Pelanggan membayar invoice
-     Staf finance memasukkan pembayaran ke modul Payment
-     Sistem otomatis update AR dan Cash
-     Invoice ditandai "PAID"
-
- 5. LAPORAN KEUANGAN OTOMATIS TERUPDATE
-     Balance Sheet, P&L, Cash Flow berubah otomatis
-     Data sudah real-time dan akurat
-     Direktur dapat melihat laporan kapan saja
-     Audit keuangan menjadi lebih mudah
-
-Siapa Yang Menggunakan JIFAS?
-
-Staf Operasional
-Tugasnya: Membuat invoice, mencatat penerimaan barang, input data transaksi
-Hak Akses: Modul invoice, receiving, input data dasar
-Tools: Form input di JIFAS Web
-
-Manager/Kepala Departemen
-Tugasnya: Mereview dan menyetujui dokumen, memantau anggaran
-Hak Akses: Approval menu, laporan departemen, dashboard
-Tools: Approval workflow, reporting
-
-Finance/Staff Keuangan
-Tugasnya: Mengelola pembayaran, reconciliation bank, verifikasi transaksi
-Hak Akses: Payment, cash bank, PUM, semua laporan keuangan
-Tools: Payment modul, reconciliation, laporan
-
-Accountant (Akuntan)
-Tugasnya: Journaling, posting, pembuatan laporan akuntansi, closing
-Hak Akses: Semua modul akuntansi, ledger, trial balance, konsolidasi
-Tools: Jurnal entry, posting tool, laporan kompleks
-
-Direktur/Pimpinan
-Tugasnya: Monitoring bisnis, pengambilan keputusan strategis
-Hak Akses: Dashboard eksekutif, semua laporan, data konsolidasi
-Tools: Dashboard visual, laporan ringkasan
-
-Auditor Eksternal/Internal
-Tugasnya: Pemeriksaan kepatuhan, verifikasi akurasi data
-Hak Akses: View only ke semua laporan dan transaksi
-Tools: Trail audit, laporan detail
-
-Administrator/IT
-Tugasnya: Setup system, manajemen user, backup, maintenance
-Hak Akses: Full access, setting konfigurasi
-Tools: User management, security settings, system config
-
-Teknologi yang Digunakan
-
-Backend (Bagian Server)
-Framework: ASP.NET MVC (Microsoft .NET Framework 4.8)
-Database: SQL Server (database penyimpanan data)
-ORM: Entity Framework (tools untuk komunikasi dengan database)
-Authentication: OWIN dan JWT Token (keamanan login)
-Reporting: Telerik Reporting (pembuat laporan profesional)
-
-Frontend (Bagian yang Dilihat User)
-Template Engine: ASP.NET MVC Views dengan HTML/CSS/JavaScript
-UI Components: Kendo UI (framework untuk membuat interface yang menarik)
-Styling: Bootstrap/CSS untuk design responsif
-
-Infrastruktur
-Web Server: IIS (Internet Information Services)
-Hosting: Dapat di-host di on-premise atau cloud
-API: RESTful API untuk komunikasi dengan client
-
-Bahasa Pemrograman
-C# (bahasa utama backend)
-HTML/CSS/JavaScript (untuk interface)
-T-SQL (query database)
-
-Keamanan dan Kontrol Akses
-
-Sistem Login Berbasis Role
-
-User Login
-
-Sistem Verifikasi Username & Password
-
-Assign Role: ADMIN, FINANCE, STAFF, MANAGER, DIRECTOR
-
-Setiap Role Punya Menu & Fitur Berbeda
-
-User Hanya Bisa Akses Yang Sesuai Role
-
-Proteksi Data Sensitif
- Encryption: Password dan data sensitif dienkripsi
- Access Control: Setiap fitur punya otorisasi
- Audit Trail: Semua aktivitas tercatat siapa yang melakukan apa
- Session Timeout: User otomatis logout jika tidak aktif
-
-Custom Authorization
-Sistem punya custom attribute @CustomAuthorize
-Setiap modul punya kode akses (contoh: "IV" untuk Invoice, "PY" untuk Payment)
-Hanya user dengan kode akses tertentu yang bisa akses modul
-
-Kontrol pada Data Dokumen
-Dokumen dalam status DRAFT: hanya creator yang bisa edit
-Dokumen dalam status PENDING: hanya approver yang bisa action
-Dokumen dalam status POSTED: tidak bisa diedit, read-only
-
-Penjelasan Istilah Umum di JIFAS
-
-- Istilah
-- Penjelasan Sederhana
-- Invoice
-- Faktur/tagihan yang dibuat untuk mencatat transaksi penjualan atau biaya
-- Posting
-- Proses memasukkan data dari dokumen ke jurnal akuntansi
-- Jurnal
-- Catatan transaksi dalam format debit-kredit
-- Ledger
-- Ringkasan semua transaksi per akun keuangan
-- Trial Balance
-- Laporan untuk verifikasi semua akun seimbang
-- Balance Sheet
-- Laporan posisi aset, kewajiban, dan modal perusahaan
-- P&L / Profit & Loss
-- Laporan keuntungan dan kerugian perusahaan
-- Cash Flow
-- Laporan pergerakan uang masuk dan keluar
-- CoA / Chart of Accounts
-- Daftar semua nomor rekening yang digunakan
-- AR / Account Receivable
-- Piutang (uang yang harus diterima dari pelanggan)
-- AP / Account Payable
-- Hutang (uang yang harus dibayar ke supplier)
-- Rekon / Reconciliation
-- Proses menyamakan catatan perusahaan dengan laporan bank
-- PUM
-- Perjalanan usaha manajerial (perjalanan dinas)
-- Bulk Posting
-- Posting banyak dokumen sekaligus
-- Konsolidasi
-- Penggabungan laporan dari beberapa cabang/divisi
-- Approval/Approval Workflow
-- Proses persetujuan dokumen sebelum final
-- Role
-- Peran atau tipe user (admin, staff, manager, dll)
-- Authorization
-- Hak akses yang diberikan ke user tertentu
-
-Alur Proses Bisnis Umum
-
-Proses 1: Penjualan dan Pembayaran Pelanggan
-
-Pelanggan Memesan
-
-Staf Buat Invoice Penjualan
-
-Manager Approve Invoice
-
-Invoice Diposting (AR naik)
-
-Pelanggan Bayar
-
-Finance Catat Pembayaran (Cash naik, AR turun)
-
-Laporan P&L & Balance Sheet Terupdate
-
-Proses 2: Pembelian dan Pembayaran Supplier
-
-Buatkan PO ke Supplier
-
-Barang Diterima
-
-Staf Input Receiving & Invoice dari Supplier
-
-Posting ke Akuntansi (Expense/AP naik)
-
-Finance Verifikasi Pembayaran
-
-Cek Dibuat & Dikirim ke Supplier
-
-Pembayaran Dicatat (AP turun, Cash turun)
-
-Proses 3: Perjalanan Dinas (PUM)
-
-Karyawan Ajukan PUM
-
-Manager Approve Budget PUM
-
-Karyawan Berangkat & Belanja
-
-Karyawan Kumpulkan Struk & Input Pengeluaran
-
-Manager Verifikasi Pengeluaran
-
-Finance Bandingkan Realisasi vs Budget
-
-Pembayaran Kembali (jika ada surplus) atau Penagihan (jika ada deficit)
-
-Proses 4: Pelaporan Rutin
-
-Akhir Bulan
-
-Verifkasi Semua Transaksi Sudah Diposting
-
-Reconciliation Bank & Kas
-
-Jurnal Penyesuaian (Adjustment Entry)
-
-Generate Trial Balance
-
-Generate Balance Sheet & P&L
-
-Review oleh Akuntan Senior
-
-Laporan Dikirim ke Manajemen/Stakeholder
-
-Keunggulan JIFAS Web dibanding Manual
-
-- Aspek
-- Manual (Buku)
-- JIFAS Web
-- Kecepatan Laporan
-- Butuh berhari-hari
-- Instant/real-time
-- Akurasi
-- Rawan kesalahan hitung
-- 100% akurat (otomatis)
-- Audit Trail
-- Tidak ada/sulit dilacak
-- Semua tercatat lengkap
-- Skalabilitas
-- Sulit jika data banyak
-- Dapat handle jutaan transaksi
-- Keamanan Data
-- Mudah rusak/hilang
-- Encrypted dan di-backup
-- Kontrol
-- Sulit enforce
-- Otomatis melalui workflow
-- Laporan
-- Format fixed
-- Bisa custom sesuai kebutuhan
-- Kolaborasi
-- Hanya satu orang
-- Multiple user simultan
-- Keamanan Fisik
-- Rentan
-- Digital dan aman
-- Cost
-- Kertas, tinta, tempat
-- Cloud/server saja
-
-Fitur Keamanan Tambahan
-
-Enkripsi Password
-Password user tidak disimpan plain text
-Menggunakan algoritma hashing yang aman
-Bahkan admin tidak bisa lihat password user
-
-JWT Token Authentication
-Setiap login mendapat unique token
-Token expired setelah waktu tertentu
-Token tidak bisa di-hack mudah
-
-Audit Trail
-Siapa login kapan tercatat
-Siapa edit dokumen apa tercatat
-Siapa approve apa tercatat
-Berguna untuk investigasi jika ada masalah
-
-Data Isolation
-Data setiap perusahaan terpisah
-User hanya bisa akses data yang authorized
-Tidak ada "kebocoran" data
-
-System Lock on Closed Period
-Periode yang sudah ditutup tidak bisa diedit
-Mencegah manipulation data historis
-Menjaga integritas laporan
-
-Kesimpulan
-
-JIFAS Web adalah sistem manajemen keuangan terintegrasi yang membantu perusahaan:
-
- Mencatat semua transaksi keuangan dengan akurat
- Mengorganisir data keuangan dalam struktur yang teratur
- Melaporkan posisi keuangan secara real-time dan profesional
- Mengontrol siapa boleh akses apa untuk keamanan data
- Mengotomasi proses yang dulunya manual dan rawan kesalahan
- Memudahkan audit dan compliance dengan regulasi
-
-Dengan JIFAS Web, perusahaan tidak perlu lagi khawatir tentang kesalahan hitung, data hilang, atau laporan terlambat. Semua proses berjalan otomatis, terukur, dan dapat diaudit dengan mudah.
+﻿JIFAS — Jababeka Integrated Finance Accounting System
+=======================================================
+Dokumen: Overview & Referensi Utama JIFAS
+Berlaku untuk: Seluruh unit bisnis Jababeka Group
+
+=======================================================
+1. APA ITU JIFAS?
+=======================================================
+
+JIFAS adalah sistem ERP keuangan terintegrasi berbasis web milik PT Jababeka Tbk.
+Digunakan oleh seluruh unit bisnis Jababeka Group untuk mengelola proses keuangan,
+akuntansi, anggaran, pembayaran, dan pelaporan secara terpusat dan real-time.
+
+JIFAS menggantikan JIFAS Desktop (digunakan sejak 2005, pengembangan dihentikan).
+Semua user JIFAS Desktop diharuskan migrasi ke JIFAS Web.
+
+=======================================================
+2. URL AKSES PER PERUSAHAAN
+=======================================================
+
+Perusahaan KIJ, GBC, MPK, JM, BW, TL, SPPK -> http://jifas.jababeka.com
+Perusahaan JI, ICTEL, NGE               -> http://jifasweb.jiinfra.com
+Perusahaan BP, UP, TS                   -> http://jifas-bp.bekasipower.co.id
+Perusahaan KIK                          -> http://jifas.kik.com
+
+=======================================================
+3. CARA LOGIN
+=======================================================
+
+Username  : Gunakan username Windows TANPA @jababeka.com
+            Contoh: joko.santoso  (bukan joko.santoso@jababeka.com)
+Password  : Sama dengan password Windows domain
+Browser   : Chrome atau Edge, desktop (layar 1366px ke atas)
+Masalah   : Jika tidak bisa login -> hubungi IT Help Desk: it@jababeka.com
+
+=======================================================
+4. MODUL-MODUL UTAMA JIFAS
+=======================================================
+
+--- 4.1 MASTER DATA ---
+Pusat referensi data yang dipakai seluruh modul operasional JIFAS.
+
+Sub-modul:
+- Company       : Data perusahaan dan cabang
+- Employee      : Data karyawan (dipakai di PUM, payroll)
+- Vendor        : Data supplier / rekanan bisnis
+- Division      : Struktur divisi organisasi
+- Department    : Struktur departemen
+- COA           : Chart of Accounts (kode akun keuangan)
+- Account Period: Buka/tutup periode akuntansi bulanan/tahunan
+- List COA      : Daftar COA aktif per periode
+- Report Setup  : Mapping COA ke template laporan keuangan
+- Budget        : Input dan kelola anggaran per COA/departemen
+- Roles         : Kelola hak akses user
+
+--- 4.2 INVOICE ---
+Modul pengajuan tagihan/biaya dari creator ke approval chain.
+
+Alur: Create -> Finance Checking -> Head Approval -> Tax -> Posting
+
+Status dokumen:
+- Draft            : Belum disubmit, masih bisa diedit
+- Submitted        : Sudah disubmit ke Finance
+- Finance Checking : Sedang diverifikasi Finance
+- Head Approval    : Sedang menunggu approval Head/Director
+- Approved         : Sudah disetujui semua pihak
+- Posted           : Sudah diposting ke GL (TIDAK bisa diedit)
+- Rejected         : Dikembalikan ke pembuat untuk diperbaiki
+- Void             : Dibatalkan permanen
+
+Tombol utama: Save | Submit | Approve | Reject | Tax Correction | Post | Void
+
+--- 4.3 PUM (Perjalanan Uang Muka / Perjalanan Dinas) ---
+Modul pengajuan uang muka operasional/perjalanan dinas karyawan.
+
+Alur: Pengajuan -> Supervisor Approval -> Finance Approval -> Distribusi -> Realisasi -> Settlement
+
+Status dokumen:
+- Draft       : Belum disubmit
+- Submitted   : Diajukan ke Supervisor
+- Approved    : Disetujui semua pihak
+- Distributed : Uang muka sudah dicairkan
+- Realization : Karyawan sedang melaporkan pengeluaran aktual
+- Settled     : Proses selesai, realisasi dikonfirmasi
+- Rejected    : Ditolak, dikembalikan ke pembuat
+
+Settlement:
+- Realisasi < Uang Muka -> karyawan kembalikan sisa ke perusahaan
+- Realisasi > Uang Muka -> perusahaan bayar kekurangannya
+
+Role khusus:
+- USRL : Bisa memilih department/divisi orang lain saat buat PUM
+- USER : Hanya bisa ajukan PUM untuk diri sendiri
+
+Sub-tab PUM:
+- PPUM (Pengajuan PUM) : Buat dan kelola pengajuan uang muka
+- Realization          : Input pengeluaran aktual setelah dinas
+
+--- 4.4 RECEIVING ---
+Modul penerimaan barang/jasa dari supplier atau internal.
+
+Sub-modul:
+- Receive of Sales           : Penerimaan dari transaksi penjualan
+- Receive Tax (Tax Approval) : Penerimaan dengan aspek perpajakan
+- Approval of Unidentified RV: Approval penerimaan tidak teridentifikasi
+
+Catatan penting:
+- Receive Tax WAJIB: NPWP lengkap + alamat WP harus diisi sebelum approve
+- Jika tax rate salah -> Reject, lalu buat dokumen baru
+- RV = Receive Voucher (nomor dokumen penerimaan)
+
+Status: Need Finance Checking -> Approved -> Posted
+
+--- 4.5 PAYMENT ---
+Modul pembayaran atas invoice dan PUM yang sudah disetujui.
+
+Sub-modul:
+- Payment Invoice : Bayar tagihan vendor/supplier
+- Payment PUM     : Cairkan/distribusikan uang muka PUM
+- Payment Tax     : Pembayaran terkait kewajiban pajak
+- List BG         : Daftar Bank Garansi yang tersedia
+
+Alur: Finance Approval -> Head Approval -> Posting
+
+Metode pembayaran: Transfer | BG (Bank Garansi) | Cek | Giro
+
+--- 4.6 ACCOUNTING ---
+Modul pencatatan jurnal dan laporan akuntansi.
+
+Sub-modul:
+- GL (General Ledger)    : Buku besar, jurnal manual (Journal Memorial)
+- AP (Account Payable)   : Manajemen hutang ke vendor/supplier
+- AR (Account Receivable): Manajemen piutang dari pelanggan
+- Posting                : Rekam transaksi ke buku besar
+- Bulk Posting           : Posting banyak dokumen sekaligus
+- Inquiry AP/AR/CB/PUM   : Lihat saldo dan detail transaksi
+- Konsolidasi            : Gabung laporan multi-cabang/divisi
+- Acc Period             : Buka/tutup periode akuntansi
+
+Tipe jurnal:
+- Journal Transaction : Jurnal harian standar
+- Journal Memorial    : Jurnal penyesuaian/koreksi manual
+- CAJE                : Jurnal kas masuk
+- PAJE                : Jurnal kas keluar
+
+--- 4.7 REPORT ---
+Modul laporan dan analisis keuangan.
+
+Laporan Budget:
+- Budget Card          : Kartu anggaran per cost center / COA
+- Budget Committed     : Komitmen anggaran yang belum terealisasi
+- Budget Payment       : Realisasi pembayaran vs anggaran
+- Budget Realization   : Laporan realisasi anggaran
+- Budget Receive       : Penerimaan terkait anggaran
+- Committed Realization: Komitmen vs realisasi aktual
+
+Laporan Kas/Bank:
+- Daily Cashflow       : Arus kas harian
+- Cashbank Detail      : Detail transaksi kas dan bank
+- Cashbank Recap       : Rekap kas dan bank per periode
+- Saldo Buku Bank      : Rekonsiliasi buku perusahaan vs bank
+- Deposito Aktif       : Daftar deposito yang sedang berjalan
+
+Laporan AP/AR/PUM:
+- Inquiry AP           : Saldo hutang ke vendor
+- Inquiry AR           : Saldo piutang dari customer
+- Inquiry CB           : Saldo kas dan bank
+- Inquiry PUM          : Saldo uang muka karyawan
+- Realisasi PUM        : Laporan realisasi pengeluaran dinas
+
+--- 4.8 OVER BUDGET ---
+Muncul ketika nominal transaksi melebihi batas anggaran yang tersedia.
+
+Status budget:
+- OK : Nominal dalam batas anggaran -> lanjut normal
+- CM : Cross Month — melebihi bulan ini, masih tersedia bulan depan
+       Tindakan: Minta approval Supervisor/Finance
+- CA : Cross Accumulation — melebihi akumulasi beberapa bulan ke depan
+       Tindakan: Minta approval Head Finance / Management
+- CY : Cross Year — melebihi total budget tahun ini
+       Tindakan: SISTEM BLOKIR -> butuh approval CFO/Director
+
+Penanganan over budget:
+1. Kurangi nominal pengajuan agar sesuai budget
+2. Gunakan COA alternatif yang budgetnya mencukupi
+3. Minta approval exception dari level manajemen yang sesuai
+4. Atau ajukan amendment budget ke Finance
+
+=======================================================
+5. ALUR APPROVAL UMUM JIFAS
+=======================================================
+
+Creator (buat & submit)
+    -> Finance (verifikasi data, COA, budget, pajak)
+    -> Head / Director (persetujuan final)
+    -> Tax (jika ada aspek perpajakan)
+    -> Posting ke GL (rekam ke buku besar — tidak bisa diedit lagi)
+
+=======================================================
+6. ROLES DAN HAK AKSES
+=======================================================
+
+WMTR (Webmaster)
+  : IT admin — akses penuh ke semua modul dan konfigurasi sistem
+
+USER (User)
+  : Pengguna umum — akses sesuai modul yang ditetapkan
+
+USRL (User All Level)
+  : Seperti USER, tapi bisa memilih dept/divisi orang lain di PUM
+
+FINA (Finance)
+  : Staff finance — view semua transaksi, proses approval finance
+
+SPVR (Supervisor Finance)
+  : Approval tingkat supervisor keuangan
+
+HDFA (Head Finance)
+  : Approval tingkat kepala keuangan
+
+TAXS (Tax)
+  : Staf pajak — akses modul Tax Approval
+
+FRPT (Finance Report)
+  : Akses laporan keuangan saja (read-only)
+
+Catatan penting:
+- WMTR hanya diberikan ke tim IT, JANGAN berikan ke non-IT
+- USRL punya hak istimewa memilih departemen orang lain saat buat PUM
+- Jika user tidak punya akses modul tertentu -> minta ke admin/IT
+
+=======================================================
+7. ATURAN PENTING SISTEM
+=======================================================
+
+1. Dokumen sudah POSTED -> tidak bisa diedit atau dihapus
+2. Periode akuntansi sudah DITUTUP -> tidak bisa input transaksi baru
+3. REJECT -> dokumen kembali ke creator untuk diperbaiki lalu re-submit
+4. VOID -> pembatalan permanen, dokumen tidak bisa diaktifkan kembali
+5. Budget CY -> sistem MEMBLOKIR penyimpanan, butuh CFO/Director approval
+6. NPWP dan alamat WP wajib lengkap sebelum Receive Tax bisa di-approve
+7. COA yang sudah dipakai dalam transaksi TIDAK bisa dihapus
+8. Laporan tidak muncul? Pastikan COA sudah di-mapping di Report Setup
+9. Data tidak muncul di laporan? Pastikan jurnal sudah di-POSTING (bukan Draft)
+
+=======================================================
+8. KONTAK ESKALASI
+=======================================================
+
+IT Help Desk (masalah teknis, akses, login, role):
+  Email : it@jababeka.com
+
+Accounting Support (masalah fungsional akuntansi):
+  Email : accounting@jababeka.com
+
+Finance Support (masalah proses keuangan, approval):
+  Email : finance@jababeka.com

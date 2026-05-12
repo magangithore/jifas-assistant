@@ -1,4 +1,4 @@
-LAPORAN COMMITTED VERSUS REALIZATION (LAPORAN KOMITMEN VERSUS REALISASI)
+﻿LAPORAN COMMITTED VERSUS REALIZATION (LAPORAN KOMITMEN VERSUS REALISASI)
 
 TUJUAN:
 Memberikan informasi RINGKASAN perbandingan antara Committed (invoice terima/AP entry) dengan Realization (pembayaran actual/cash out) 
@@ -142,14 +142,14 @@ PEMAHAMAN ISTILAH PENTING:
    - Sudah tercatat di GL sebagai hutang/liability
    - Tapi BELUM semua dibayar (masih ada unpaid AP)
    - Cumulative dari semua invoice yang diterima dalam periode
-   - Contoh: Invoice terima dari A=10jt, dari B=5jt → Committed=15jt
+   - Contoh: Invoice terima dari A=10jt, dari B=5jt -> Committed=15jt
 
 3. REAL / REALIZATION (REALISASI / CASH PAYMENT)
    - Adalah total pembayaran/cash yang benar-benar sudah dikeluarkan
    - Sudah di-post sebagai CB (Payment/Cash Book)
    - Cash sudah clear dari bank account
    - Tidak semua committed akan jadi real dalam periode yang sama
-   - Contoh: Dari committed 15jt, bayar 12jt → Real=12jt
+   - Contoh: Dari committed 15jt, bayar 12jt -> Real=12jt
 
 4. VARIANCE (SELISIH / OUTSTANDING AP)
    - Adalah perbedaan antara committed dengan realization
@@ -163,7 +163,7 @@ PEMAHAMAN ISTILAH PENTING:
    - Variance Positif = Besar outstanding AP
    - Penting untuk AP aging, payment planning, cash forecast
    - Priority untuk payment berdasarkan due date
-   - Contoh: Committed 100jt, Real 60jt → Outstanding 40jt
+   - Contoh: Committed 100jt, Real 60jt -> Outstanding 40jt
 
 6. PAYMENT EXECUTION
    - Adalah proses pembayaran dari AP entry sampai cash out
@@ -261,25 +261,25 @@ CARA MEMBACA VARIANCE:
    Berarti: Committed > Real (banyak AP belum dibayar)
    Status: Normal - ada AP outstanding
    Action: Plan payment, monitor for due date
-   Contoh: Committed 100M, Real 60M → Variance +40M (40M belum bayar)
+   Contoh: Committed 100M, Real 60M -> Variance +40M (40M belum bayar)
 
 2. VARIANCE NEGATIF (UNUSUAL - OVER-PAYMENT)
    Berarti: Committed < Real (sudah bayar lebih dari committed)
    Status: Alert - unusual condition
    Action: Investigate root cause (error entry?)
-   Contoh: Committed 50M, Real 60M → Variance -10M (bayar kelebihan)
+   Contoh: Committed 50M, Real 60M -> Variance -10M (bayar kelebihan)
 
 3. VARIANCE ZERO (FULLY PAID)
    Berarti: Committed = Real (semua AP sudah dibayar)
    Status: Normal - account fully settled
    Action: Monitor untuk next period transactions
-   Contoh: Committed 100M, Real 100M → Variance 0 (sudah lunas)
+   Contoh: Committed 100M, Real 100M -> Variance 0 (sudah lunas)
 
 4. COMMITTED = 0, REAL = 0 (NO ACTIVITY)
    Berarti: Tidak ada commitment & tidak ada realization
    Status: Inactive account (no transaction)
    Action: Normal - ignore until ada new transaction
-   Contoh: Committed 0, Real 0 → Variance 0 (dormant)
+   Contoh: Committed 0, Real 0 -> Variance 0 (dormant)
 
 PERBEDAAN ANTARA LAPORAN-LAPORAN:
 BUDGET vs COMMITTED:
@@ -304,15 +304,15 @@ FITUR CASCADE (DEPENDENT DROPDOWN):
 Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
 
 Urutan cascade:
-1. Company (mandiri) → aktifkan Division
-2. Division (cascading dari Company) → aktifkan Department
-3. Department (cascading dari Division) → aktif untuk filtering account
+1. Company (mandiri) -> aktifkan Division
+2. Division (cascading dari Company) -> aktifkan Department
+3. Department (cascading dari Division) -> aktif untuk filtering account
 4. From Date & To Date (independent date pickers)
 
 Contoh flow:
-- Pilih Company "KI" → Division dropdown aktif
-- Pilih Division "HO" → Department dropdown aktif
-- Pilih Department "FA" → Display FA account committed vs real
+- Pilih Company "KI" -> Division dropdown aktif
+- Pilih Division "HO" -> Department dropdown aktif
+- Pilih Department "FA" -> Display FA account committed vs real
 - Atur From/To date untuk periode
 - Klik Search
 
@@ -587,6 +587,6 @@ KEYS TO REMEMBER:
 5. Negative variance = Unusual (investigate error)
 6. One row = One account (summary semua invoice account)
 7. Period = Date range untuk commitment & payment
-8. Cascade mandatory: Company → Division → Department
+8. Cascade mandatory: Company -> Division -> Department
 9. Payment rate = Real / Committed % (berapa sudah dibayar)
 10. Keep untuk AP aging & payment tracking documentation
