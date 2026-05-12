@@ -52,12 +52,20 @@ namespace Jifas.Assistant.Controllers
                     return BadRequest(new { error = "Invalid request", details = ModelState });
                 }
 
+                // ?? BACKEND DEBUG: Log received context from frontend
+                _loggerService.LogDebug(
+                    $"[ChatController] Request received — UserId: {request?.UserId}, " +
+                    $"IsFirstMessage: {request?.IsFirstMessage}, " +
+                    $"UserRole: {request?.UserRole}, " +
+                    $"UserCompCode: {request?.UserCompCode}, " +
+                    $"ActiveModule: {request?.Context?.ActiveModule}");
+
                 var response = await _chatService.ProcessMessageAsync(request);
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                _loggerService.LogError($"Error in SendMessage: {ex.Message}");
+                _loggerService.LogError($"Error in SendMessage: {ex.Message}", ex);
                 return StatusCode(500, new { error = "An error occurred while processing your message", message = ex.Message });
             }
         }

@@ -40,6 +40,7 @@ namespace Jifas.Assistant.Services
         private readonly IQueryUnderstandingService _queryUnderstanding;
         private readonly IResponseQualityService _responseQuality;
         private readonly IConversationIntelligenceService _conversationIntelligence;
+        private readonly IUserMemoryService _userMemory;
 
         private const int MIN_KB_RESULTS_REQUIRED = 1;
         private const int MAX_REGENERATION_ATTEMPTS = 2;
@@ -60,7 +61,8 @@ namespace Jifas.Assistant.Services
             // NEW: Consolidated enhanced services
             IQueryUnderstandingService queryUnderstanding,
             IResponseQualityService responseQuality,
-            IConversationIntelligenceService conversationIntelligence)
+            IConversationIntelligenceService conversationIntelligence,
+            IUserMemoryService userMemory)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
@@ -79,6 +81,7 @@ namespace Jifas.Assistant.Services
             _queryUnderstanding = queryUnderstanding ?? throw new ArgumentNullException(nameof(queryUnderstanding));
             _responseQuality = responseQuality ?? throw new ArgumentNullException(nameof(responseQuality));
             _conversationIntelligence = conversationIntelligence ?? throw new ArgumentNullException(nameof(conversationIntelligence));
+            _userMemory = userMemory ?? throw new ArgumentNullException(nameof(userMemory));
         }
 
         public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request)
@@ -102,7 +105,15 @@ namespace Jifas.Assistant.Services
             var metrics = new PerformanceMetrics();
 
             var isFirstMessage = string.IsNullOrWhiteSpace(request?.SessionId);
-            
+
+            // ?? BACKEND DEBUG: Log context from frontend
+            _logger.LogDebug(
+                $"[ChatService] Processing message — UserId: {request?.UserId}, " +
+                $"IsFirstMessage: {isFirstMessage} (or request field: {request?.IsFirstMessage}), " +
+                $"UserRole: {request?.UserRole}, " +
+                $"UserCompCode: {request?.UserCompCode}, " +
+                $"ActiveModule: {request?.Context?.ActiveModule}");
+
             var jifasIntroductionKey = $"JIFAS_Intro_{response.SessionId}";
             var hasSeenIntroduction = _cacheService.Get<bool>(jifasIntroductionKey);
 
@@ -363,7 +374,8 @@ namespace Jifas.Assistant.Services
                     intentResult.Intent,
                     conversationContext,
                     isFollowUp,
-                    activePageContext);
+                    activePageContext,
+                    userId: request?.UserId);
                 responseStopwatch.Stop();
                 metrics.LlmResponseMs = (long)responseStopwatch.Elapsed.TotalMilliseconds;
 
@@ -443,10 +455,25 @@ namespace Jifas.Assistant.Services
                 // ?? LOG AUDIT TRAIL
                 _logger.LogAudit(request?.UserId ?? "Unknown", "ProcessMessage", 
                     $"Source: {response.Source}, Confidence: {response.ConfidenceScore:F2}", correlationId);
-                
+
                 // Save chat history asynchronously
                 _ = SaveChatHistoryAsync(response, userMessage, request);
-                
+
+                // Update long-term user memory (fire-and-forget)
+                // Pass new fields: isFirstMessage, userCompCode, userEmpCode, userRole, currentModule
+                _ = _userMemory.UpdateMemoryAsync(
+                    request?.UserId ?? "anonymous",
+                    userMessage,
+                    aiResponse,
+                    intentResult.Intent,
+                    confidenceScore,
+                    currentModule: request?.Context?.ActiveModule,
+                    userRole: request?.UserRole);
+
+                _logger.LogDebug(
+                    $"[ChatService] Memory update queued for user: {request?.UserId}, " +
+                    $"Message count incremented, Expertise calc pending");
+
                 return response;
             }
             catch (Exception ex)
@@ -1003,12 +1030,16 @@ Respons langsung:";
             IntentType intent,
             string conversationContext,
             bool isFollowUp,
-            string? activePageContext = null)
+            string? activePageContext = null,
+            string? userId = null)
         {
             try
             {
-                // Bangun session context yang menggabungkan conversation + active page
-                var sessionContext = BuildSessionContext(conversationContext, isFollowUp, activePageContext);
+                // Bangun user memory context (profil user jangka panjang)
+                var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
+
+                // Gabungkan user memory + active page + conversation context
+                var sessionContext = BuildSessionContext(conversationContext, isFollowUp, activePageContext, userMemoryContext);
 
                 // Gunakan prompt engineering dengan session context yang lengkap
                 var enhancedQuery = userQuery;
@@ -1058,13 +1089,24 @@ Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
         /// <summary>
         /// Bangun session context string dari active page context di request
         /// </summary>
-        private string BuildSessionContext(string? conversationContext, bool isFollowUp, string? activePageContext)
+        private string BuildSessionContext(
+            string? conversationContext,
+            bool isFollowUp,
+            string? activePageContext,
+            string? userMemoryContext = null)
         {
+            var parts = new System.Collections.Generic.List<string>();
+
+            if (!string.IsNullOrEmpty(userMemoryContext))
+                parts.Add(userMemoryContext);
+
             if (!string.IsNullOrEmpty(activePageContext))
-                return activePageContext;
+                parts.Add(activePageContext);
+
             if (isFollowUp && !string.IsNullOrEmpty(conversationContext))
-                return conversationContext;
-            return string.Empty;
+                parts.Add(conversationContext);
+
+            return string.Join("\n\n", parts);
         }
 
         /// <summary>

@@ -126,6 +126,9 @@ builder.Services.AddScoped<IConversationIntelligenceService, ConversationIntelli
 builder.Services.AddScoped<IConversationMemoryService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
 builder.Services.AddScoped<IFeedbackLearningService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
 
+// User long-term memory (persistent per-user profile)
+builder.Services.AddScoped<IUserMemoryService, UserMemoryService>();
+
 // ChatService - MUST be registered AFTER all its dependencies
 builder.Services.AddScoped<IChatService, ChatService>();
 
