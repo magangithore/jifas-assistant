@@ -1,0 +1,1409 @@
+﻿JIFAS KNOWLEDGE BASE - MODUL OLD PUM
+#Old Uang Muka, Old Payment PUM, Old User Realization, dan Old Finance Realization
+
+Dokumen ini dibuat untuk knowledge base AI chatbot JIFAS. Fokus dokumen ini adalah menjelaskan modul OLD PUM dari sisi pengguna, alur bisnis, logika finance, kontrol dokumen, realisasi uang muka, pajak, status, validasi, dan penanganan error. Dokumen ini tidak menjelaskan coding. Tujuannya agar AI chatbot dapat memahami proses OLD PUM secara utuh dan menjawab pertanyaan user dengan bahasa yang mudah dipahami.
+
+
+1. Ringkasan Modul OLD PUM
+
+OLD PUM adalah modul legacy untuk mengelola data uang muka lama yang masih perlu dipantau, dibayarkan, direalisasikan, dicek, atau diselesaikan di JIFAS. Modul ini digunakan ketika masih ada dokumen PUM dari flow lama yang belum selesai, masih outstanding, belum dibuat payment, belum dibuat realization, atau perlu diproses sampai status final.
+
+Secara sederhana, OLD PUM adalah jalur penyelesaian uang muka lama. Modul ini tidak hanya menampilkan daftar UM lama, tetapi juga membantu finance dan user untuk:
+
+1. Melihat daftar Old UM.
+2. Membuat Payment PUM lama.
+3. Melakukan checking payment PUM lama.
+4. Membuat Realization atau RU dari UM lama.
+5. Mengupdate detail RU lama.
+6. Melakukan checking RU.
+7. Menghubungkan RU ke proses tax approval bila ada PPN atau PPH.
+8. Melakukan posting RU ke proses accounting.
+9. Melakukan void jika dokumen harus dibatalkan.
+
+Modul ini penting karena dokumen lama tetap harus diselesaikan secara benar. Walaupun asal dokumennya dari flow lama, penyelesaiannya tetap harus mengikuti prinsip kontrol internal JIFAS: uang keluar harus jelas, penggunaan uang harus dipertanggungjawabkan, pajak harus benar, dan hasil akhir harus tercatat di accounting.
+
+
+2. Tujuan Bisnis Modul OLD PUM
+
+Modul OLD PUM dibuat untuk:
+
+1. Menyediakan tempat khusus untuk melihat dan memproses uang muka lama.
+2. Memastikan uang muka lama tidak hilang dari tracking perusahaan.
+3. Memastikan setiap UM lama memiliki status yang jelas: sudah dibayar, sudah direalisasi, masih outstanding, complete, unused, return, atau void.
+4. Memudahkan finance membuat pembayaran untuk UM lama.
+5. Memudahkan user membuat realisasi atas uang muka lama yang sudah dibayar.
+6. Memastikan realisasi lama tetap divalidasi oleh finance.
+7. Memastikan perhitungan pajak pada realisasi lama tetap mengikuti aturan pajak.
+8. Menyediakan audit trail untuk dokumen lama.
+9. Mengurangi risiko uang muka lama menggantung tanpa pertanggungjawaban.
+10. Membantu closing dan rekonsiliasi antara data lama, cashbank, pajak, dan accounting.
+
+
+3. Istilah Penting dalam OLD PUM
+
+#OLD PUM
+OLD PUM adalah modul untuk memproses data uang muka lama atau legacy. Data ini biasanya berasal dari proses lama tetapi masih perlu dilanjutkan di sistem JIFAS.
+
+#UM
+UM adalah Uang Muka. Ini adalah dana panjar yang diberikan perusahaan kepada karyawan untuk kebutuhan pekerjaan atau operasional.
+
+#PU
+PU adalah Payment Unit atau dokumen pembayaran PUM. PU menunjukkan bahwa UM diproses untuk dibayarkan kepada karyawan melalui bank, transfer, cek, atau giro.
+
+#RU
+RU adalah Realization Unit atau Realisasi Uang Muka. RU mencatat bagaimana uang muka dipakai setelah dana diterima.
+
+#Old User UM
+Old User UM adalah daftar monitoring UM lama dari sisi user. Halaman ini menampilkan dokumen lama beserta nomor UM, PU, RU, staff, amount, dan status.
+
+#Old Payment PUM
+Old Payment PUM adalah proses pembuatan atau pemeriksaan dokumen pembayaran untuk uang muka lama.
+
+#Old User Realization
+Old User Realization adalah proses user membuat RU dari uang muka lama yang sudah diterima.
+
+#Old Finance Realization
+Old Finance Realization adalah proses finance mengecek, mengubah, memvalidasi, mem-posting, atau membatalkan RU lama.
+
+#Purpose atau Term
+Purpose atau Term adalah tujuan atau syarat pembayaran PUM. Dalam payment PUM, purpose dapat memunculkan informasi due days atau jangka waktu pertanggungjawaban.
+
+#Cek/BG
+Cek/BG adalah metode pembayaran menggunakan cek atau bilyet giro. Jika metode ini dipilih, nomor Cek/BG, paid date, dan due date menjadi data penting.
+
+#Paid Date
+Paid Date adalah tanggal pembayaran cek/giro dilakukan.
+
+#Due Date
+Due Date adalah tanggal jatuh tempo cek/giro atau batas waktu realisasi.
+
+#Vendor
+Vendor adalah pihak penerima pembayaran atau pihak yang tertera dalam bukti pengeluaran saat realisasi.
+
+#COA
+COA adalah Chart of Account, yaitu akun accounting yang digunakan untuk membebankan pengeluaran.
+
+#Tax Code
+Tax Code adalah kode pajak yang menentukan apakah transaksi dikenakan PPN, PPH, atau tidak dikenakan pajak.
+
+#PPN
+PPN adalah Pajak Pertambahan Nilai. Dalam realisasi, PPN dihitung dari amount jika tax code yang dipilih memang dikenakan PPN.
+
+#PPH
+PPH adalah Pajak Penghasilan atau withholding tax. Dalam realisasi, PPH mengurangi total pembayaran jika transaksi dikenakan pemotongan pajak.
+
+#PPH Type atau PPH Code
+PPH Type adalah jenis PPH yang wajib dipilih jika nilai PPH lebih besar dari 0.
+
+#Allocation Amount
+Allocation Amount adalah total pengeluaran yang dialokasikan dalam realisasi. Nilai ini berasal dari total detail pengeluaran.
+
+#Base Amount
+Base Amount adalah jumlah dasar pengeluaran sebelum pajak.
+
+#DPP
+DPP adalah Dasar Pengenaan Pajak. DPP digunakan sebagai dasar perhitungan PPN dan PPH.
+
+#Total Amount
+Total Amount adalah total akhir realisasi, biasanya dihitung dari base amount ditambah PPN dan dikurangi PPH.
+
+#Checking
+Checking adalah proses review dan persetujuan operasional oleh finance atau pihak terkait sebelum dokumen lanjut ke tahap berikutnya.
+
+#Posting
+Posting adalah proses final untuk memasukkan transaksi ke accounting atau general ledger.
+
+#Void
+Void adalah pembatalan dokumen dengan alasan. Void tidak boleh dianggap sebagai delete biasa karena alasan void dibutuhkan untuk audit trail.
+
+#Unused
+Unused berarti uang muka tidak digunakan.
+
+#Unused/Return
+Unused/Return berarti uang muka tidak digunakan atau ada dana yang harus dikembalikan.
+
+
+4. Posisi OLD PUM dalam Big Picture PUM JIFAS
+
+OLD PUM berhubungan erat dengan modul PUM utama. Bedanya, modul PUM utama digunakan untuk flow baru, sedangkan OLD PUM digunakan untuk data atau proses uang muka lama.
+
+Big picture OLD PUM:
+
+UM lama tersedia di daftar Old UM
+-> Finance membuat Payment PUM jika belum dibayar
+-> Finance melakukan checking pembayaran
+-> Dana dicairkan ke karyawan
+-> User membuat Realization atas UM lama
+-> Finance mengecek dan memperbaiki RU jika perlu
+-> Jika ada pajak, dokumen masuk ke tax approval
+-> Finance atau accounting melakukan posting
+-> Jika total realisasi kurang dari UM, ada sisa uang yang harus dikembalikan
+-> Jika total realisasi lebih dari UM, ada kekurangan yang perlu ditindaklanjuti
+-> Dokumen selesai sebagai Complete, Unused, Unused/Return, Posted, atau Void sesuai kondisi
+
+Prinsip penting:
+
+1. OLD PUM tidak boleh dilewatkan hanya karena datanya lama.
+2. UM lama tetap harus punya pertanggungjawaban.
+3. Payment lama tetap harus jelas bank, penerima, nominal, dan detail UM-nya.
+4. Realisasi lama tetap harus jelas vendor, COA, tax code, amount, dan attachment jika ada.
+5. Semua pembatalan harus memakai alasan void.
+6. Error sistem harus diarahkan ke IT, bukan dipaksa oleh user.
+
+
+5. Submodul dalam OLD PUM
+
+OLD PUM terdiri dari beberapa bagian besar:
+
+1. List Old UM
+   Digunakan untuk melihat daftar UM lama.
+
+2. Old Payment PUM
+   Digunakan finance untuk membuat dan memproses pembayaran PUM lama.
+
+3. Old User Realization
+   Digunakan user untuk membuat realisasi dari UM lama yang sudah dibayarkan.
+
+4. Old Finance Realization
+   Digunakan finance untuk update, checking, posting, atau void realisasi lama.
+
+5. Tax Approval untuk RU lama
+   Jika RU lama mengandung PPN atau PPH, dokumen perlu melewati validasi pajak sebelum posting.
+
+
+6. Flow Utama OLD PUM End-to-End
+
+#6.1 Flow Normal: UM Lama Dibayar dan Direalisasikan
+
+1. User atau finance membuka daftar Old UM.
+2. Finance membuat Payment PUM dari UM lama.
+3. Finance memilih UM yang akan dibayar dari detail list.
+4. Finance memilih bank, purpose, tanggal, metode pembayaran, dan penerima.
+5. Sistem menghitung total payment dari UM yang dipilih.
+6. Finance menyimpan payment.
+7. Payment masuk status Need Finance Checking.
+8. Finance melakukan checking.
+9. Payment lanjut ke tahap accounting checking atau tahap berikutnya sesuai status.
+10. Setelah payment selesai, user membuat RU atau realisasi.
+11. User mengisi detail realisasi: vendor, description, division, department, COA, tax code, amount, PPN, PPH, dan PPH type jika perlu.
+12. Sistem menghitung total realization.
+13. User submit RU.
+14. Finance membuka RU di Old Finance Realization.
+15. Finance update detail jika ada yang perlu diperbaiki.
+16. Finance melakukan checking.
+17. Jika ada pajak, dokumen masuk ke Tax Approval.
+18. Jika sudah siap, dokumen masuk ke Need Posting Realization.
+19. Finance atau accounting melakukan posting.
+20. Dokumen selesai dan status menjadi Complete atau status final lain sesuai proses.
+
+#6.2 Flow Jika Ada Sisa Uang Muka
+
+1. UM Amount lebih besar daripada Total Realization.
+2. Selisih dianggap sebagai sisa uang muka.
+3. User atau finance harus memastikan sisa tersebut dikembalikan ke perusahaan.
+4. Sisa dapat masuk ke proses penerimaan atau settlement sesuai kebijakan finance.
+5. Dokumen tidak dianggap bersih sampai sisa diselesaikan.
+
+Contoh:
+
+UM Amount: Rp 10.000.000
+Total Realization: Rp 8.500.000
+Sisa: Rp 1.500.000
+
+AI chatbot harus menjelaskan bahwa sisa Rp 1.500.000 perlu dikembalikan atau diproses sesuai mekanisme finance.
+
+#6.3 Flow Jika Realisasi Melebihi Uang Muka
+
+1. Total Realization lebih besar daripada UM Amount.
+2. Selisih dianggap sebagai kekurangan atau additional reimbursement.
+3. Finance harus mengecek apakah kekurangan valid dan didukung bukti.
+4. Jika valid, kekurangan dapat diproses sesuai kebijakan pembayaran tambahan.
+5. Jika tidak valid, finance dapat meminta revisi atau melakukan void/reject sesuai proses.
+
+Contoh:
+
+UM Amount: Rp 10.000.000
+Total Realization: Rp 10.500.000
+Kekurangan: Rp 500.000
+
+AI chatbot harus menjelaskan bahwa kekurangan harus divalidasi finance, tidak otomatis dibayar tanpa pengecekan.
+
+#6.4 Flow Jika UM Tidak Digunakan
+
+1. UM lama ditemukan tetapi tidak digunakan.
+2. Status dapat menjadi Unused atau Unused/Return.
+3. Jika dana sudah diterima, dana perlu dikembalikan.
+4. Jika dokumen salah, finance dapat melakukan void dengan alasan.
+5. Status unused tetap perlu terdokumentasi agar tidak menjadi outstanding menggantung.
+
+#6.5 Flow Jika Dokumen Salah
+
+1. User atau finance menemukan data salah.
+2. Jika masih bisa update, lakukan Update.
+3. Jika tidak bisa diperbaiki atau transaksi batal, lakukan Void.
+4. Void reason wajib diisi.
+5. Dokumen void tidak diproses lebih lanjut.
+6. Jika dokumen sudah posted, koreksi harus mengikuti aturan accounting, tidak boleh asal edit.
+
+
+7. Submodul List Old UM
+
+#7.1 Fungsi
+
+List Old UM adalah halaman monitoring untuk melihat daftar uang muka lama. Halaman ini bersifat informatif dan membantu user atau finance mencari dokumen lama berdasarkan nomor UM, PU, RU, staff, amount, dan status.
+
+#7.2 Informasi yang Ditampilkan
+
+Grid Old UM menampilkan:
+
+1. Date Pengajuan
+   Tanggal pengajuan uang muka lama.
+
+2. UM No
+   Nomor uang muka lama.
+
+3. PU No
+   Nomor payment unit yang terhubung dengan UM.
+
+4. RU No
+   Nomor realisasi jika UM sudah dibuatkan RU.
+
+5. Description
+   Keterangan atau kebutuhan uang muka.
+
+6. Staff
+   Nama karyawan terkait.
+
+7. Amount
+   Nilai uang muka.
+
+8. Status
+   Status dokumen lama.
+
+#7.3 Business Process
+
+1. User membuka menu List Old UM.
+2. Sistem membaca company code yang sedang dipilih.
+3. Sistem menampilkan data Old UM sesuai company.
+4. User dapat filter berdasarkan tanggal, nomor, staff, description, amount, atau status.
+5. User dapat export ke Excel untuk rekonsiliasi atau laporan.
+6. Jika ada data yang tidak muncul, user perlu memastikan company yang dipilih benar dan filter tidak terlalu sempit.
+
+#7.4 Catatan untuk AI Chatbot
+
+Jika user bertanya “Old UM saya tidak ada”, AI harus mengecek kemungkinan berikut:
+
+1. User sedang memilih company yang salah.
+2. Filter grid masih aktif.
+3. Nomor UM yang dicari salah ketik.
+4. Data memang belum dimigrasikan atau belum tersedia di sistem.
+5. Ada kendala API atau akses role.
+
+Jika sudah refresh, reset filter, dan company benar tetapi data tetap tidak ada, arahkan ke IT atau admin finance untuk pengecekan data.
+
+
+8. Submodul Old Payment PUM
+
+#8.1 Fungsi
+
+Old Payment PUM digunakan untuk membuat dokumen pembayaran terhadap UM lama. Modul ini adalah jembatan antara data UM lama dan proses pencairan dana.
+
+Tujuannya adalah memastikan pembayaran uang muka lama tercatat dengan jelas:
+
+1. Siapa penerimanya.
+2. Bank apa yang digunakan.
+3. Tanggal pembayarannya.
+4. Metode pembayarannya.
+5. Nomor Cek/BG jika ada.
+6. UM mana saja yang dibayar.
+7. Berapa total uang yang dibayarkan.
+8. Status approval/checking payment.
+
+#8.2 Pengguna Utama
+
+Old Payment PUM biasanya digunakan oleh:
+
+1. Finance Staff.
+2. Finance Supervisor.
+3. Head Finance.
+4. Accounting atau user tertentu yang diberi hak checking.
+5. Webmaster atau admin untuk support.
+
+#8.3 Flow Membuat Payment PUM Lama
+
+1. Finance membuka menu Old Payment PUM.
+2. Sistem menampilkan daftar payment PUM lama.
+3. Finance klik Create Payment PUM.
+4. Sistem membuka form payment.
+5. Finance memilih Payment Method.
+6. Finance memilih Purpose atau Term.
+7. Finance mengisi Document Date.
+8. Finance memilih Paid To atau karyawan penerima.
+9. Sistem menampilkan daftar UM lama milik karyawan tersebut yang dapat dipilih.
+10. Finance memilih satu atau beberapa UM pada detail grid.
+11. Finance memilih Bank.
+12. Sistem mengisi currency dan rate berdasarkan bank.
+13. Jika metode pembayaran adalah Cek/BG, finance mengisi nomor cek/giro, paid date, dan due date.
+14. Sistem menghitung total amount dari UM yang dipilih.
+15. Finance mengisi description.
+16. Finance klik Save.
+17. Sistem memvalidasi field wajib, minimal satu detail dipilih, dan amount lebih dari 0.
+18. Jika valid, dokumen payment dibuat.
+19. Dokumen masuk ke status Need Finance Checking.
+
+#8.4 Field Header Old Payment PUM
+
+1. Payment Method
+   Metode pembayaran. Jika memilih CEK, field Cek/BG akan muncul dan wajib diisi.
+
+2. Purpose
+   Tujuan atau term pembayaran. Field ini dapat memunculkan due days sebagai informasi jangka waktu.
+
+3. Date
+   Tanggal dokumen payment. Untuk dokumen baru, tanggal harus berada dalam active period Old PUM.
+
+4. Due Days 1, 2, 3
+   Informasi jangka waktu yang berasal dari purpose atau term.
+
+5. No. Cek/BG
+   Nomor cek atau bilyet giro. Wajib jika metode pembayaran adalah Cek/BG.
+
+6. Paid Date
+   Tanggal cek/giro dibayarkan.
+
+7. Due Date
+   Tanggal jatuh tempo cek/giro.
+
+8. Paid To
+   Karyawan yang menerima uang muka.
+
+9. Bank
+   Rekening bank yang digunakan untuk mencairkan uang.
+
+10. Currency
+   Mata uang bank.
+
+11. Rate
+   Kurs atau nilai tukar. Untuk IDR umumnya 1. Untuk currency lain mengikuti rate bank atau konfigurasi.
+
+12. Amount
+   Total pembayaran. Dalam Old Payment PUM, amount dihitung dari detail UM yang dipilih.
+
+13. Status
+   Status payment saat ini.
+
+14. Description
+   Keterangan pembayaran.
+
+#8.5 Detail Grid Old Payment PUM
+
+Detail grid menampilkan daftar UM yang dapat dipilih untuk dibayar.
+
+Kolom penting:
+
+1. Selected
+   Checkbox untuk memilih UM yang akan dimasukkan ke payment.
+
+2. Date
+   Tanggal UM.
+
+3. No. UM
+   Nomor UM lama.
+
+4. Deskripsi
+   Keterangan UM.
+
+5. Amount
+   Nilai UM.
+
+6. Paid To
+   Nama karyawan penerima.
+
+Business rule detail:
+
+1. Minimal satu UM harus dipilih.
+2. Total amount harus lebih besar dari 0.
+3. UM yang sudah dipilih akan membentuk detail payment.
+4. Jika tidak ada UM yang bisa dipilih, kemungkinan semua UM sudah dibayar, employee salah, atau data old UM belum tersedia.
+
+#8.6 Validasi Cek/BG
+
+Jika payment method adalah CEK:
+
+1. Nomor Cek/BG wajib diisi.
+2. Nomor Cek/BG harus mengandung minimal satu angka.
+3. Paid Date wajib diisi.
+4. Due Date wajib diisi.
+5. Paid Date tidak boleh lebih besar dari Due Date.
+6. Due Date tidak boleh lebih kecil dari Paid Date.
+
+Jika user salah mengisi tanggal:
+
+1. Jika Due Date lebih awal dari Paid Date, sistem menolak.
+2. Jika Paid Date lebih akhir dari Due Date, sistem menolak.
+3. User harus memilih ulang tanggal yang benar.
+
+#8.7 Validasi Active Period
+
+Untuk membuat payment PUM lama, document date harus berada dalam periode aktif perusahaan.
+
+Jika muncul pesan seperti “Your company doesn't have active period”, artinya periode PUM belum tersedia untuk company tersebut. Ini bukan kesalahan input biasa. User harus menghubungi admin atau IT untuk pengecekan setup periode.
+
+#8.8 Status Old Payment PUM
+
+Status yang perlu dipahami:
+
+1. Need Finance Checking
+   Payment baru dibuat dan perlu dicek oleh finance. Pada status ini biasanya tombol Update, Checking, dan Void tersedia.
+
+2. Need Accounting Checking
+   Payment sudah melewati finance checking dan perlu dicek oleh accounting. Pada status ini biasanya Update dan Void masih tersedia sesuai hak akses.
+
+3. Need Posting
+   Payment siap masuk tahap posting. Pada tahap ini editing biasanya dibatasi.
+
+4. Complete atau Posted
+   Payment selesai atau sudah diposting. Dokumen final dan tidak boleh diedit sembarangan.
+
+5. Void
+   Payment dibatalkan dengan alasan. Dokumen tidak dilanjutkan.
+
+#8.9 Flow Update Old Payment PUM
+
+1. Finance membuka payment yang masih dalam status yang memperbolehkan update.
+2. Finance mengubah field yang masih boleh diubah, seperti description atau detail pilihan UM sesuai aturan sistem.
+3. Sistem memvalidasi mandatory field.
+4. Sistem memastikan detail masih memiliki minimal satu item.
+5. Finance klik Update.
+6. Sistem menampilkan konfirmasi modify.
+7. Jika berhasil, grid refresh dan status tetap mengikuti workflow.
+
+#8.10 Flow Checking Old Payment PUM
+
+1. Finance membuka payment dengan status Need Finance Checking.
+2. Finance memeriksa penerima, bank, currency, rate, amount, detail UM, dan Cek/BG jika ada.
+3. Jika semua benar, finance klik Checking.
+4. Sistem menampilkan konfirmasi checking.
+5. Jika dikonfirmasi, payment maju ke tahap berikutnya.
+6. Grid refresh.
+
+#8.11 Flow Void Old Payment PUM
+
+1. Finance membuka payment yang akan dibatalkan.
+2. Finance klik Void.
+3. Sistem meminta void reason.
+4. Finance mengisi alasan pembatalan.
+5. Sistem menolak jika alasan kosong.
+6. Sistem menampilkan konfirmasi final.
+7. Jika disetujui, status payment menjadi void.
+8. Dokumen tidak diproses lebih lanjut.
+
+Contoh alasan void yang baik:
+
+1. “UM sudah dibayar di dokumen PU lain.”
+2. “Salah memilih karyawan penerima.”
+3. “Salah memilih bank pembayaran.”
+4. “Nominal payment tidak sesuai data finance.”
+5. “Dokumen dibuat double.”
+
+
+9. Submodul Old User Realization
+
+#9.1 Fungsi
+
+Old User Realization digunakan oleh user untuk membuat realisasi dari UM lama yang sudah diterima. Realisasi ini adalah pertanggungjawaban dana. User harus menjelaskan uang muka dipakai untuk apa, ke vendor mana, menggunakan akun COA apa, berapa nominalnya, dan apakah ada pajak.
+
+#9.2 Kapan User Membuat Realization
+
+User membuat realization ketika:
+
+1. UM lama sudah dibayar atau diterima.
+2. Kegiatan atau pengeluaran sudah terjadi.
+3. User memiliki bukti transaksi.
+4. User perlu mempertanggungjawabkan penggunaan uang muka.
+5. Ada sisa uang yang perlu dikembalikan atau ada kekurangan yang perlu divalidasi.
+
+#9.3 Flow Membuat Old User Realization
+
+1. User membuka menu Old User Realization.
+2. Sistem menampilkan daftar UM lama yang bisa direalisasikan.
+3. User klik Realization pada UM yang dipilih.
+4. Sistem membuka form realisasi.
+5. Header otomatis menampilkan UM No, PU No, Employee, Due Date, Purpose, Currency, Rate, dan UM Amount.
+6. User mengisi Realization Date.
+7. User mengisi Ref No jika ada.
+8. User mengisi Description.
+9. User upload attachment jika ada bukti pendukung.
+10. User klik Add Detail untuk menambahkan rincian pengeluaran.
+11. User mengisi vendor, deskripsi item, division, department, COA, tax code, amount, dan PPH type jika ada PPH.
+12. Sistem menghitung PPN, PPH, total amount, allocation amount, base amount, dan DPP.
+13. User memeriksa apakah total realisasi sesuai dengan uang muka.
+14. User klik Create Realization.
+15. Sistem melakukan validasi form dan detail.
+16. Jika valid, sistem membuat RU.
+17. RU masuk ke workflow finance/tax untuk dicek lebih lanjut.
+
+#9.4 Field Header Old User Realization
+
+Bagian kiri:
+
+1. UM No
+   Nomor uang muka lama. Read-only.
+
+2. PU No
+   Nomor payment unit yang membayar UM. Read-only.
+
+3. Employee
+   Nama karyawan penerima UM. Read-only.
+
+4. Due Date
+   Batas waktu realisasi. Read-only.
+
+5. Realization Date
+   Tanggal realisasi. Wajib diisi.
+
+6. Ref No
+   Nomor referensi tambahan. Opsional.
+
+7. Description
+   Deskripsi realisasi. Wajib diisi. Sebaiknya menjelaskan kegiatan atau kebutuhan secara jelas.
+
+Bagian kanan:
+
+1. Purpose atau Term
+   Tujuan atau term PUM. Read-only.
+
+2. Currency
+   Mata uang UM. Read-only.
+
+3. Rate
+   Kurs UM. Read-only.
+
+4. UM Amount
+   Nilai uang muka yang diterima. Read-only.
+
+5. Allocation
+   Total uang yang dialokasikan dari detail realisasi. Auto-calculated.
+
+6. Base Amount
+   Total dasar pengeluaran sebelum pajak. Auto-calculated.
+
+7. Total DPP
+   Total dasar pengenaan pajak. Auto-calculated.
+
+8. Total PPN
+   Total PPN. Auto-calculated.
+
+9. Total PPH
+   Total PPH. Auto-calculated.
+
+10. Total Amount
+   Total akhir realisasi. Auto-calculated.
+
+11. File Attachment
+   Lampiran bukti. Format yang disarankan adalah PDF, JPG, PNG, atau JPEG. Ukuran maksimal 4MB.
+
+#9.5 Detail Grid Old User Realization
+
+Setiap baris detail mewakili satu transaksi penggunaan uang muka.
+
+Kolom penting:
+
+1. Vendor
+   Vendor atau pihak penerima pembayaran. Wajib diisi.
+
+2. Desc
+   Deskripsi item pengeluaran. Wajib diisi.
+
+3. Division
+   Divisi yang dibebankan. Wajib diisi.
+
+4. Department
+   Departemen yang dibebankan. Wajib diisi.
+
+5. COA Code
+   Akun pengeluaran. Wajib diisi.
+
+6. COA Description
+   Deskripsi akun. Terisi otomatis berdasarkan COA.
+
+7. Tax Code
+   Kode pajak. Wajib diisi.
+
+8. Amount
+   Nilai pengeluaran sebelum pajak. Wajib lebih besar dari 0.
+
+9. PPN
+   Nilai PPN. Dihitung otomatis dari tax code.
+
+10. PPH
+   Nilai PPH. Dihitung otomatis dari tax code.
+
+11. PPH Type
+   Jenis PPH. Wajib jika nilai PPH lebih besar dari 0.
+
+12. Total Amount
+   Total baris = amount + PPN - PPH.
+
+#9.6 Rumus Perhitungan Realization
+
+Untuk setiap detail:
+
+Base Amount = Amount
+PPN = Amount x persentase PPN
+PPH = Amount x persentase PPH
+Total Amount = Amount + PPN - PPH
+
+Untuk header:
+
+Total Base Amount = jumlah semua Amount
+Total DPP = jumlah amount yang menjadi dasar pajak
+Total PPN = jumlah semua PPN
+Total PPH = jumlah semua PPH
+Total Amount = jumlah semua Total Amount detail
+Allocation Amount = total nilai realisasi yang dialokasikan
+
+Contoh:
+
+Amount: Rp 1.000.000
+PPN 11%: Rp 110.000
+PPH 2%: Rp 20.000
+Total Amount: Rp 1.090.000
+
+#9.7 Validasi Old User Realization
+
+Sebelum realisasi bisa dibuat, sistem mengecek:
+
+1. Realization Date wajib diisi.
+2. Description wajib diisi.
+3. Detail grid tidak boleh kosong.
+4. Setiap detail wajib memiliki vendor.
+5. Setiap detail wajib memiliki deskripsi item.
+6. Division wajib diisi.
+7. Department wajib diisi.
+8. COA wajib diisi.
+9. Tax Code wajib diisi.
+10. Amount harus lebih besar dari 0.
+11. PPH Type wajib diisi jika nilai PPH lebih besar dari 0.
+12. Attachment harus sesuai format dan ukuran jika diunggah.
+
+Jika validasi gagal, user harus memperbaiki data, bukan langsung lapor IT. Jika data sudah benar tetapi sistem tetap gagal submit dengan pesan network atau server, baru diarahkan ke IT.
+
+#9.8 Skenario Sisa dan Kekurangan PUM
+
+Setelah RU dibuat, sistem dapat membandingkan UM Amount dengan Total Realization.
+
+1. Jika UM Amount sama dengan Total Realization:
+   Tidak ada sisa atau kekurangan. Realisasi seimbang.
+
+2. Jika UM Amount lebih besar dari Total Realization:
+   Ada sisa uang muka. Sisa harus dikembalikan ke perusahaan.
+
+3. Jika UM Amount lebih kecil dari Total Realization:
+   Ada kekurangan. Kekurangan harus dicek finance dan tidak otomatis dibayar tanpa validasi.
+
+AI chatbot harus selalu menjelaskan bahwa sisa/kekurangan adalah konsekuensi business process, bukan error sistem.
+
+
+10. Submodul Old Finance Realization
+
+#10.1 Fungsi
+
+Old Finance Realization digunakan finance untuk memeriksa dan memproses RU lama yang sudah dibuat oleh user atau tersedia dalam data lama. Modul ini merupakan gatekeeper sebelum RU masuk ke tax approval atau accounting.
+
+Finance dapat:
+
+1. Melihat daftar RU lama.
+2. Membuka detail RU.
+3. Mengupdate header dan detail RU.
+4. Memvalidasi vendor, COA, tax code, amount, PPN, PPH, dan PPH type.
+5. Melakukan checking.
+6. Melakukan posting.
+7. Melakukan void dengan alasan.
+8. Menindaklanjuti status unused atau return.
+
+#10.2 Flow Finance Review RU Lama
+
+1. Finance membuka Old Finance Realization.
+2. Sistem menampilkan daftar RU.
+3. Finance filter dokumen berdasarkan tanggal, PP No, RU No, PU No, UM No, description, amount, atau status.
+4. Finance klik Action pada RU yang ingin diperiksa.
+5. Sistem membuka form edit/review RU.
+6. Finance memeriksa header: RU No, UM No, PU No, employee, term, ref no, description, currency, rate, UM amount, total amount, DPP, PPN, PPH.
+7. Finance memeriksa detail: vendor, desc, division, department, COA, tax code, amount, PPN, PPH, PPH code, total amount.
+8. Jika data perlu diperbaiki, finance melakukan update.
+9. Jika data sudah benar, finance melakukan checking.
+10. Jika sudah siap posting, finance melakukan posting.
+11. Jika dokumen batal atau salah total, finance melakukan void dengan alasan.
+
+#10.3 Field Grid Old Finance Realization
+
+1. Date
+   Tanggal dokumen RU.
+
+2. PP No
+   Nomor pengajuan PUM lama atau referensi PPUM.
+
+3. RU No
+   Nomor realisasi.
+
+4. Description
+   Keterangan realisasi.
+
+5. Amount
+   Nilai alokasi atau total realisasi.
+
+6. PU No
+   Nomor payment unit.
+
+7. UM No
+   Nomor uang muka.
+
+8. Status
+   Status RU.
+
+9. Action
+   Tombol untuk membuka dokumen.
+
+#10.4 Status Old Finance Realization
+
+Status yang perlu dipahami:
+
+1. Need Finance Checking
+   RU baru atau RU yang perlu dicek finance. Biasanya tombol Update, Checking, dan Void tersedia.
+
+2. Need Checking Realization
+   RU menunggu proses checking realisasi. Finance perlu review detail sebelum lanjut.
+
+3. Need Tax Approval
+   RU mengandung pajak atau perlu validasi tax. Finance masih dapat update/void sesuai hak akses, tetapi approval pajak dilakukan oleh tax.
+
+4. Reject by Tax atau Rejected by Tax
+   RU ditolak oleh tax. Finance perlu memperbaiki data, tax code, PPH type, NPWP/vendor, atau detail pajak sebelum diajukan kembali.
+
+5. Need Check Detail
+   RU perlu pengecekan detail lanjutan. Finance dapat update/void, tetapi harus berhati-hati karena dokumen sudah melewati beberapa tahap.
+
+6. Need Posting Realization
+   RU sudah dicek dan siap diposting.
+
+7. Need Accounting Checking
+   RU masuk tahap accounting checking.
+
+8. Complete
+   RU selesai atau sudah diproses final.
+
+9. Unused
+   UM tidak digunakan.
+
+10. Unused/Return
+   UM tidak digunakan atau sisa UM perlu dikembalikan.
+
+11. Void
+   RU dibatalkan dan tidak diproses lebih lanjut.
+
+#10.5 Tombol dan Aksi Old Finance Realization
+
+#Update
+Dipakai untuk menyimpan perubahan header atau detail RU. Update digunakan ketika finance menemukan kesalahan data tetapi dokumen masih boleh diperbaiki.
+
+#Checking
+Dipakai untuk menyetujui hasil review finance. Checking menggerakkan dokumen ke tahap berikutnya.
+
+#Posting
+Dipakai untuk mem-finalisasi RU ke accounting. Setelah posting, dokumen tidak boleh diedit sembarangan.
+
+#Void
+Dipakai untuk membatalkan RU. Void reason wajib diisi.
+
+#10.6 Flow Update RU oleh Finance
+
+1. Finance membuka RU.
+2. Finance mengubah field yang perlu diperbaiki.
+3. Finance memastikan detail tidak kosong.
+4. Finance memastikan semua detail lengkap.
+5. Finance klik Update.
+6. Sistem validasi mandatory fields.
+7. Sistem menolak jika detail kosong.
+8. Jika berhasil, sistem menampilkan notifikasi.
+9. Jika ada sisa atau kekurangan PUM, sistem dapat memberikan informasi jumlah sisa/kekurangan.
+
+#10.7 Flow Checking RU oleh Finance
+
+1. Finance membuka RU dengan status Need Finance Checking atau Need Checking Realization.
+2. Finance memeriksa seluruh data.
+3. Finance klik Checking.
+4. Sistem menampilkan konfirmasi.
+5. Jika dikonfirmasi, status RU bergerak ke tahap berikutnya.
+6. Jika ada pajak, dokumen dapat masuk ke Need Tax Approval.
+7. Jika tidak ada pajak atau tax sudah clear, dokumen dapat lanjut ke Need Posting Realization atau tahap accounting.
+
+#10.8 Flow Posting RU
+
+1. Finance membuka RU yang sudah siap posting.
+2. Finance memastikan data final sudah benar.
+3. Finance klik Posting.
+4. Sistem menampilkan konfirmasi posting.
+5. Jika berhasil, RU masuk ke proses accounting.
+6. Status dapat menjadi Complete atau Need Accounting Checking sesuai flow perusahaan.
+7. Setelah posting, koreksi tidak boleh dilakukan sembarangan. Jika ada kesalahan, ikuti prosedur reversal atau adjustment accounting.
+
+#10.9 Flow Void RU
+
+1. Finance membuka RU yang akan dibatalkan.
+2. Finance klik Void.
+3. Sistem meminta void reason.
+4. Finance mengisi alasan pembatalan.
+5. Sistem menolak jika reason kosong.
+6. Sistem menampilkan konfirmasi final.
+7. Jika disetujui, RU menjadi void.
+8. Dokumen tidak dilanjutkan ke tax atau posting.
+
+Contoh alasan void yang baik:
+
+1. “Salah memilih UM.”
+2. “Realisasi dibuat double.”
+3. “Nominal detail tidak sesuai bukti dan perlu dibuat ulang.”
+4. “Dokumen batal karena kegiatan tidak jadi dilakukan.”
+5. “Vendor/COA salah dan dokumen sudah tidak layak dilanjutkan.”
+
+
+11. Alur Pajak dalam OLD PUM Realization
+
+OLD PUM Realization dapat mengandung pajak karena realisasi memuat transaksi aktual dengan vendor. Pajak yang umum muncul adalah PPN dan PPH.
+
+#11.1 Kapan RU Perlu Tax Approval
+
+RU perlu tax approval jika:
+
+1. Ada detail dengan tax code yang menghasilkan PPN.
+2. Ada detail dengan tax code yang menghasilkan PPH.
+3. Ada PPH Type yang perlu divalidasi.
+4. Ada faktur pajak atau bukti potong yang perlu dicatat.
+5. Tax department perlu memastikan nilai DPP, PPN, dan PPH benar.
+
+#11.2 Apa yang Dicek Tax
+
+Tax biasanya mengecek:
+
+1. Vendor valid.
+2. NPWP vendor benar.
+3. Tax code sesuai jenis transaksi.
+4. PPN dihitung benar.
+5. PPH dihitung benar.
+6. PPH Type sesuai.
+7. DPP tidak lebih besar dari nilai transaksi.
+8. Faktur pajak atau bukti potong tersedia jika diperlukan.
+9. Periode pajak sesuai tanggal transaksi.
+
+#11.3 Jika Tax Menolak RU
+
+Jika tax menolak RU:
+
+1. Status dapat menjadi Reject by Tax atau Rejected by Tax.
+2. Finance harus membuka RU dan membaca alasan penolakan.
+3. Finance memperbaiki detail yang salah.
+4. Perbaikan biasanya mencakup tax code, PPH type, vendor, NPWP, DPP, PPN, PPH, atau detail pendukung.
+5. Setelah diperbaiki, dokumen diajukan kembali ke proses tax/finance sesuai workflow.
+
+
+12. Validasi Umum OLD PUM
+
+#12.1 Validasi Old UM List
+
+1. Company code harus benar.
+2. User harus memiliki akses ke company tersebut.
+3. Filter tidak boleh terlalu sempit.
+4. Data lama harus tersedia di backend.
+
+#12.2 Validasi Old Payment PUM
+
+1. Payment method wajib diisi saat create.
+2. Purpose wajib diisi.
+3. Document date wajib diisi.
+4. Document date harus berada dalam active period.
+5. Paid To wajib dipilih.
+6. Bank wajib dipilih.
+7. Currency dan rate harus tersedia.
+8. Minimal satu UM harus dipilih di detail.
+9. Amount harus lebih besar dari 0.
+10. Jika Cek/BG, nomor Cek/BG wajib diisi dan harus mengandung angka.
+11. Jika Cek/BG, Paid Date wajib diisi.
+12. Jika Cek/BG, Due Date wajib diisi.
+13. Paid Date tidak boleh lebih lambat dari Due Date.
+14. Due Date tidak boleh lebih awal dari Paid Date.
+15. Description sebaiknya diisi dengan jelas.
+
+#12.3 Validasi Old User Realization
+
+1. Realization Date wajib diisi.
+2. Description wajib diisi.
+3. Detail tidak boleh kosong.
+4. Vendor wajib dipilih.
+5. Detail description wajib diisi.
+6. Division wajib diisi.
+7. Department wajib diisi.
+8. COA wajib diisi.
+9. Tax Code wajib diisi.
+10. Amount wajib lebih besar dari 0.
+11. PPH Type wajib diisi jika PPH lebih besar dari 0.
+12. Attachment harus sesuai format dan maksimal 4MB jika diunggah.
+
+#12.4 Validasi Old Finance Realization
+
+1. RU No harus valid.
+2. UM No dan PU No harus valid.
+3. Detail RU tidak boleh kosong.
+4. Vendor detail harus lengkap.
+5. Description detail harus lengkap.
+6. Division, Department, dan COA wajib ada.
+7. Tax Code wajib ada.
+8. Allocation Amount tidak boleh 0.
+9. PPH Type wajib jika PPH lebih besar dari 0.
+10. Void reason wajib jika void.
+11. Posting hanya boleh dilakukan ketika status sudah siap posting.
+12. Dokumen yang complete atau posted tidak boleh diedit sembarangan.
+
+
+13. Error Handling untuk User
+
+Bagian ini menjelaskan error yang bisa diselesaikan user dan error yang harus diarahkan ke IT.
+
+#13.1 Error: Data Old UM Tidak Muncul
+
+Kemungkinan penyebab:
+
+1. Company yang dipilih salah.
+2. Filter grid masih aktif.
+3. Data UM lama memang belum tersedia.
+4. User tidak punya akses role.
+5. API tidak berhasil mengambil data.
+
+Solusi user:
+
+1. Reset filter.
+2. Refresh halaman.
+3. Pastikan company yang dipilih benar.
+4. Coba cari dengan nomor UM sebagian.
+5. Jika tetap kosong, hubungi finance admin atau IT.
+
+Arahkan ke IT jika:
+
+1. Semua user tidak bisa melihat data.
+2. Muncul error status request atau server error.
+3. Data ada di database tetapi tidak muncul di JIFAS.
+
+#13.2 Error: Tidak Bisa Membuat Payment PUM
+
+Kemungkinan penyebab:
+
+1. Field wajib belum diisi.
+2. Belum memilih UM di detail grid.
+3. Amount masih 0.
+4. Tanggal di luar active period.
+5. Bank belum dipilih.
+6. Currency/rate tidak muncul.
+7. Payment method CEK tetapi nomor Cek/BG atau tanggal belum lengkap.
+
+Solusi user:
+
+1. Isi semua field wajib.
+2. Pilih minimal satu UM.
+3. Pastikan amount lebih besar dari 0.
+4. Pilih tanggal dalam active period.
+5. Pilih bank ulang agar currency/rate muncul.
+6. Jika menggunakan Cek/BG, isi nomor Cek/BG, paid date, dan due date.
+
+Arahkan ke IT jika:
+
+1. Active period tidak tersedia.
+2. Bank tidak muncul padahal master bank sudah ada.
+3. Currency rate tidak terbaca dari sistem.
+4. Save menghasilkan network/server error.
+5. Muncul error API atau token authorization.
+
+#13.3 Error: “Please select at least one item to continue!”
+
+Artinya user belum memilih UM pada detail payment.
+
+Solusi:
+
+1. Buka detail grid.
+2. Centang minimal satu UM pada kolom Selected.
+3. Pastikan amount otomatis terhitung.
+4. Klik Save lagi.
+
+Tidak perlu ke IT kecuali detail grid kosong padahal seharusnya ada UM yang bisa dibayar.
+
+#13.4 Error: “Amount must be greater than zero!”
+
+Artinya total payment masih 0 atau tidak terbaca.
+
+Solusi:
+
+1. Pilih UM di detail.
+2. Pastikan amount UM tidak 0.
+3. Pilih ulang employee jika detail tidak muncul.
+4. Refresh form jika amount tidak berubah.
+
+Arahkan ke IT jika amount detail ada tetapi header amount tetap 0.
+
+#13.5 Error: Cek/BG Date Tidak Valid
+
+Pesan yang mungkin muncul:
+
+1. Due Date cannot earlier than Paid Date.
+2. Paid Date cannot later than Due Date.
+
+Solusi:
+
+1. Paid Date harus lebih awal atau sama dengan Due Date.
+2. Due Date harus lebih akhir atau sama dengan Paid Date.
+3. Pilih ulang tanggal yang sesuai.
+
+Tidak perlu ke IT kecuali date picker rusak atau tidak bisa dipilih.
+
+#13.6 Error: Nomor Cek/BG Tidak Valid
+
+Jika nomor Cek/BG tidak mengandung angka, sistem menolak.
+
+Solusi:
+
+1. Isi nomor cek/giro sesuai dokumen bank.
+2. Pastikan mengandung minimal satu angka.
+3. Jangan isi hanya huruf atau simbol.
+
+Jika nomor cek dari bank memang berbeda format, finance perlu konfirmasi ke admin/IT.
+
+#13.7 Error: Tidak Bisa Create Realization
+
+Kemungkinan penyebab:
+
+1. Realization Date kosong.
+2. Description kosong.
+3. Detail belum ditambahkan.
+4. Vendor detail kosong.
+5. Description detail kosong.
+6. COA belum dipilih.
+7. Tax Code belum dipilih.
+8. PPH Type belum dipilih padahal ada PPH.
+9. Attachment tidak sesuai format atau terlalu besar.
+
+Solusi user:
+
+1. Lengkapi header.
+2. Tambahkan minimal satu detail.
+3. Isi seluruh detail wajib.
+4. Pilih PPH Type jika ada nilai PPH.
+5. Gunakan file PDF/JPG/PNG/JPEG maksimal 4MB.
+
+Arahkan ke IT jika:
+
+1. Vendor, division, department, COA, tax code, atau PPH type tidak muncul padahal master datanya ada.
+2. Sistem menampilkan “Network Error! Please contact your IT Administrator.”
+3. Submit gagal dengan server error.
+
+#13.8 Error: Tidak Bisa Update RU
+
+Kemungkinan penyebab:
+
+1. Status RU tidak mengizinkan update.
+2. Detail RU kosong.
+3. Field wajib detail belum lengkap.
+4. PPH Type belum diisi.
+5. User tidak punya role akses.
+
+Solusi user:
+
+1. Cek status dokumen.
+2. Lengkapi detail.
+3. Pastikan PPH Type sudah dipilih jika PPH ada.
+4. Minta user dengan role finance yang sesuai untuk memproses.
+
+Arahkan ke IT jika tombol update tidak muncul padahal status dan role seharusnya memperbolehkan.
+
+#13.9 Error: Tidak Bisa Checking RU
+
+Kemungkinan penyebab:
+
+1. Status bukan Need Finance Checking atau Need Checking Realization.
+2. Data detail belum valid.
+3. User tidak punya akses.
+4. Ada error server.
+
+Solusi user:
+
+1. Pastikan status dokumen benar.
+2. Update data terlebih dahulu jika ada detail salah.
+3. Refresh halaman dan coba lagi.
+
+Arahkan ke IT jika request checking gagal dengan pesan status request, server error, atau authorization error.
+
+#13.10 Error: Tidak Bisa Posting RU
+
+Kemungkinan penyebab:
+
+1. Dokumen belum sampai status Need Posting Realization.
+2. Masih perlu tax approval.
+3. Masih perlu accounting checking.
+4. User tidak punya akses posting.
+5. Ada error API posting.
+
+Solusi user:
+
+1. Cek status RU.
+2. Pastikan tax approval sudah selesai jika ada pajak.
+3. Pastikan finance checking selesai.
+4. Minta user role yang berwenang untuk posting.
+
+Arahkan ke IT jika status sudah benar tetapi posting gagal karena server/API.
+
+#13.11 Error: Void Reason Kosong
+
+Pesan: “Void reason must be filled.”
+
+Artinya user mencoba void tanpa alasan.
+
+Solusi:
+
+1. Isi alasan pembatalan.
+2. Gunakan alasan jelas dan audit-friendly.
+3. Klik Continue atau Yes lagi.
+
+Tidak perlu ke IT.
+
+#13.12 Error: Master Data Tidak Muncul
+
+Contoh master data:
+
+1. Employee Old PUM.
+2. Bank.
+3. Term/Purpose.
+4. Vendor.
+5. Tax Code.
+6. PPH Type.
+7. Division.
+8. Department.
+9. COA.
+
+Solusi user:
+
+1. Coba ketik keyword lebih spesifik.
+2. Pastikan company benar.
+3. Pastikan pilihan sebelumnya sudah benar, misalnya department tergantung division.
+4. Refresh halaman.
+
+Arahkan ke IT/admin master data jika:
+
+1. Data master memang belum ada.
+2. Data master inactive.
+3. Data muncul untuk user lain tetapi tidak untuk user ini.
+4. Dropdown error atau loading terus.
+
+
+14. Error yang Wajib Diarahkan ke IT
+
+AI chatbot harus mengarahkan user ke IT jika menemukan kondisi berikut:
+
+1. Grid loading terus dan tidak pernah menampilkan data.
+2. Muncul network error.
+3. Muncul request status 500, 404, 401, 403, atau error server lain.
+4. Token expired berulang walaupun user sudah login ulang.
+5. User punya role benar tetapi tombol action tidak muncul.
+6. Active period tidak tersedia untuk company.
+7. Bank/currency/rate tidak muncul dari master.
+8. Vendor/COA/tax/PPH type tidak muncul padahal master data sudah ada.
+9. Save berhasil tetapi grid tidak refresh dan dokumen tidak muncul.
+10. Amount header tidak sama dengan total detail padahal data detail benar.
+11. Dokumen status tidak berubah setelah checking/posting/void.
+12. File attachment tidak bisa diupload walaupun format dan ukuran benar.
+13. File attachment tidak bisa dibuka atau path file error.
+14. Data old UM hilang atau tidak sinkron antara UM, PU, dan RU.
+15. Posting gagal karena response server.
+16. Ada data double yang tidak bisa diperbaiki dari UI.
+
+Data yang perlu dikirim user ke IT:
+
+1. Screenshot error.
+2. Nama menu yang digunakan.
+3. Company code yang dipilih.
+4. Nomor UM.
+5. Nomor PU.
+6. Nomor RU.
+7. Status dokumen saat error.
+8. Waktu kejadian.
+9. Nama user login.
+10. Langkah yang dilakukan sebelum error.
+11. Browser yang digunakan.
+12. Jika ada, response error atau request status.
+
+
+15. Best Practice Penggunaan OLD PUM
+
+#15.1 Untuk User
+
+1. Segera buat realisasi setelah uang muka digunakan.
+2. Jangan menunggu sampai due date lewat.
+3. Siapkan bukti pengeluaran sebelum membuat RU.
+4. Gunakan deskripsi yang jelas untuk setiap detail.
+5. Pilih vendor sesuai bukti transaksi.
+6. Pilih COA sesuai jenis pengeluaran.
+7. Pilih tax code sesuai bukti pajak.
+8. Jika ada PPH, pilih PPH Type.
+9. Upload bukti dalam PDF jika memungkinkan.
+10. Jika ada sisa uang, koordinasikan pengembalian dengan finance.
+
+#15.2 Untuk Finance
+
+1. Periksa data UM, PU, dan RU sebelum checking.
+2. Pastikan payment dibuat untuk karyawan yang benar.
+3. Pastikan bank dan currency sudah sesuai.
+4. Pastikan Cek/BG valid jika digunakan.
+5. Jangan melakukan checking jika detail belum jelas.
+6. Jangan posting RU yang masih memiliki masalah pajak.
+7. Gunakan void hanya jika dokumen benar-benar tidak boleh dilanjutkan.
+8. Isi void reason dengan jelas.
+9. Periksa selisih UM Amount dan Total Realization.
+10. Pastikan dokumen lama selesai agar tidak menjadi outstanding.
+
+#15.3 Untuk Tax
+
+1. Periksa vendor dan NPWP.
+2. Periksa tax code dan PPH Type.
+3. Periksa DPP, PPN, dan PPH.
+4. Minta koreksi jika nilai pajak tidak sesuai.
+5. Jangan approve RU yang bukti pajaknya tidak jelas.
+
+#15.4 Untuk Accounting
+
+1. Pastikan RU sudah melewati finance checking.
+2. Pastikan tax approval selesai jika ada pajak.
+3. Pastikan posting dilakukan pada periode yang benar.
+4. Jika dokumen sudah posted dan salah, gunakan adjustment atau reversal sesuai prosedur accounting.
+
+
+16. Contoh Pertanyaan User dan Jawaban AI Chatbot
+
+#Q1: “Old UM saya tidak muncul.”
+
+Jawaban AI:
+Coba reset filter di grid, pastikan company yang dipilih sudah benar, lalu cari menggunakan sebagian nomor UM atau nama staff. Jika masih tidak muncul, kemungkinan data old UM belum tersedia, user tidak punya akses, atau ada kendala sistem. Kirim screenshot, nomor UM, company code, dan user login ke IT atau finance admin untuk pengecekan.
+
+#Q2: “Saya tidak bisa save Payment PUM.”
+
+Jawaban AI:
+Pastikan payment method, purpose, tanggal, paid to, bank, dan description sudah diisi. Pastikan juga minimal satu UM dicentang di detail dan amount lebih besar dari 0. Jika menggunakan Cek/BG, isi nomor Cek/BG, paid date, dan due date. Jika error menyebut active period tidak ada atau muncul network/server error, hubungi IT.
+
+#Q3: “Kenapa tombol Checking tidak muncul di Old Payment PUM?”
+
+Jawaban AI:
+Tombol Checking biasanya hanya muncul saat status dokumen masih Need Finance Checking dan user memiliki role yang berwenang. Jika status sudah berubah ke Need Accounting Checking, Need Posting, Complete, atau Void, tombol checking bisa tidak muncul. Jika status sudah benar tetapi tombol tetap tidak muncul, refresh halaman dan minta IT cek role serta authorization user.
+
+#Q4: “Nomor Cek/BG saya ditolak.”
+
+Jawaban AI:
+Nomor Cek/BG harus mengandung minimal satu angka. Pastikan nomor yang diinput sesuai dokumen bank dan bukan hanya huruf. Jika format dari bank memang khusus dan tetap ditolak, minta finance/admin atau IT cek aturan validasi nomor Cek/BG.
+
+#Q5: “Paid Date tidak bisa lebih besar dari Due Date.”
+
+Jawaban AI:
+Itu validasi normal. Paid Date adalah tanggal pembayaran, sedangkan Due Date adalah tanggal jatuh tempo. Paid Date harus sama dengan atau lebih awal dari Due Date. Pilih ulang tanggal agar urutannya benar.
+
+#Q6: “Saya mau buat realisasi Old PUM, harus isi apa saja?”
+
+Jawaban AI:
+Isi Realization Date, Description, lalu tambahkan detail pengeluaran. Setiap detail wajib berisi vendor, deskripsi, division, department, COA, tax code, dan amount. Jika transaksi memiliki PPH, PPH Type juga wajib diisi. Upload bukti jika ada, maksimal 4MB dengan format PDF, JPG, PNG, atau JPEG.
+
+#Q7: “PPH Type harus diisi padahal saya tidak tahu pilih yang mana.”
+
+Jawaban AI:
+PPH Type wajib diisi jika tax code menghasilkan nilai PPH. Jangan asal pilih. Cocokkan dengan jenis transaksi dan bukti pajak. Jika ragu, tanyakan ke tim Tax atau Finance. Jika dropdown PPH Type kosong padahal seharusnya ada, arahkan ke IT atau admin master data.
+
+#Q8: “Total realisasi lebih kecil dari UM.”
+
+Jawaban AI:
+Itu berarti ada sisa uang muka. Sisa harus dikembalikan atau diselesaikan sesuai arahan finance. Contohnya jika UM Rp 10.000.000 dan realisasi Rp 8.500.000, maka sisa Rp 1.500.000 perlu diproses sebagai pengembalian.
+
+#Q9: “Total realisasi lebih besar dari UM.”
+
+Jawaban AI:
+Itu berarti ada kekurangan dana. Kekurangan harus dicek oleh finance berdasarkan bukti transaksi. Jangan dianggap otomatis dibayar. Finance perlu memvalidasi apakah selisih tersebut valid dan apakah perlu proses pembayaran tambahan.
+
+#Q10: “Kenapa RU saya masuk Need Tax Approval?”
+
+Jawaban AI:
+RU masuk Need Tax Approval karena detail realisasi memiliki tax code yang menghasilkan PPN atau PPH, atau data pajak perlu divalidasi. Tim Tax harus mengecek DPP, PPN, PPH, vendor, NPWP, dan PPH Type sebelum dokumen bisa lanjut ke posting.
+
+#Q11: “Tax reject RU saya, harus apa?”
+
+Jawaban AI:
+Buka RU tersebut, lihat alasan reject dari Tax, lalu perbaiki bagian yang diminta. Biasanya yang perlu diperbaiki adalah tax code, PPH Type, vendor, NPWP, nilai DPP, PPN, PPH, atau bukti pajak. Setelah diperbaiki, dokumen bisa diproses ulang sesuai workflow.
+
+#Q12: “Saya tidak bisa posting RU.”
+
+Jawaban AI:
+Pastikan status RU sudah Need Posting Realization dan semua approval sebelumnya sudah selesai. Jika masih Need Tax Approval atau Need Finance Checking, posting belum bisa dilakukan. Jika status sudah benar tetapi posting gagal karena server error, kirim screenshot dan nomor RU ke IT.
+
+#Q13: “Void reason harus diisi?”
+
+Jawaban AI:
+Ya, void reason wajib diisi karena menjadi audit trail. Tulis alasan yang jelas, misalnya salah memilih UM, nominal tidak sesuai, dokumen double, atau kegiatan batal.
+
+#Q14: “Attachment tidak bisa upload.”
+
+Jawaban AI:
+Pastikan file berformat PDF, JPG, PNG, atau JPEG dan ukurannya maksimal 4MB. Jika format dan ukuran sudah benar tetapi tetap gagal, kemungkinan ada masalah upload service atau file path. Kirim screenshot error dan file name ke IT.
+
+
+17. Knowledge Rules Khusus untuk AI Chatbot
+
+AI chatbot JIFAS harus mengikuti aturan berikut saat menjawab pertanyaan tentang OLD PUM:
+
+1. Jelaskan OLD PUM sebagai modul legacy untuk menyelesaikan uang muka lama.
+2. Jangan menyamakan OLD PUM sepenuhnya dengan flow PUM baru, walaupun konsep UM, PU, RU tetap sama.
+3. Jika user bertanya tentang old data yang tidak muncul, cek company, filter, nomor dokumen, akses role, dan kemungkinan data belum tersedia.
+4. Jika user bertanya tentang payment, jelaskan bahwa payment memilih UM lama, bank, purpose, tanggal, dan metode pembayaran.
+5. Jika user memakai Cek/BG, tekankan nomor Cek/BG, paid date, dan due date harus valid.
+6. Jika user bertanya tentang realization, jelaskan bahwa RU adalah pertanggungjawaban penggunaan UM.
+7. Jika user bertanya tentang sisa uang, jelaskan sebagai sisa yang harus dikembalikan.
+8. Jika user bertanya tentang kekurangan, jelaskan bahwa kekurangan harus divalidasi finance.
+9. Jika PPH lebih besar dari 0, PPH Type wajib diisi.
+10. Jika muncul network error, request status error, authorization error, active period missing, master data missing, atau status tidak berubah, arahkan ke IT.
+11. Jika error hanya karena field kosong, amount 0, belum pilih UM, belum isi PPH Type, atau void reason kosong, arahkan user memperbaiki input.
+12. Jangan menyuruh user menghapus data dari database.
+13. Jangan menyarankan bypass approval.
+14. Jangan menyarankan edit dokumen yang sudah posted tanpa prosedur adjustment/reversal.
+15. Selalu minta user mengirim nomor UM, PU, RU, company code, screenshot, dan status dokumen saat eskalasi ke IT.
+
+
+18. Ringkasan Cepat OLD PUM
+
+OLD PUM adalah modul untuk menyelesaikan uang muka lama.
+
+Flow sederhananya:
+
+List Old UM
+-> Old Payment PUM
+-> Finance Checking Payment
+-> User Realization
+-> Finance Realization Checking
+-> Tax Approval jika ada pajak
+-> Posting
+-> Complete atau status final lain
+
+Validasi penting:
+
+1. Minimal satu UM harus dipilih saat membuat payment.
+2. Amount payment harus lebih besar dari 0.
+3. Payment date harus dalam active period.
+4. Cek/BG wajib punya nomor, paid date, dan due date.
+5. Due date tidak boleh lebih awal dari paid date.
+6. Realization wajib punya detail.
+7. Detail realization wajib punya vendor, desc, division, department, COA, tax code, dan amount.
+8. PPH Type wajib jika ada PPH.
+9. Void reason wajib saat membatalkan dokumen.
+10. Error sistem harus diarahkan ke IT.
+
+Kesimpulan:
+
+OLD PUM adalah modul penjaga penyelesaian uang muka lama. Tujuannya memastikan tidak ada UM lama yang menggantung, tidak ada pembayaran yang tidak jelas, tidak ada realisasi tanpa bukti, tidak ada pajak yang salah, dan semua transaksi akhirnya dapat dipertanggungjawabkan ke finance, tax, accounting, dan audit.

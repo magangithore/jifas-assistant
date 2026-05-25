@@ -167,16 +167,16 @@ namespace Jifas.Assistant.Services
                         continue;
 
                     // Generate embedding jika service tersedia
-                    string embeddingBase64 = null;
+                    string embeddingJson = null;
                     
                     if (_embeddingService != null)
                     {
                         try
                         {
-                            var embedding = await _embeddingService.GenerateEmbeddingAsync(cleanContent);
-                            if (embedding != null)
+                            var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(cleanContent);
+                            if (embedding != null && embedding.Length > 0)
                             {
-                                embeddingBase64 = Convert.ToBase64String(embedding);
+                                embeddingJson = Utilities.EmbeddingSerializer.Serialize(embedding);
                             }
                         }
                         catch (Exception ex)
@@ -192,7 +192,7 @@ namespace Jifas.Assistant.Services
                         Category = category,
                         Tags = ExtractTags(category, paragraph),
                         FilePath = filePath,
-                        EmbeddingBase64 = embeddingBase64,
+                        EmbeddingBase64 = embeddingJson,
                         EmbeddingDimensions = _configuration.GetValue<int>("Embedding:Dimensions"),
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,

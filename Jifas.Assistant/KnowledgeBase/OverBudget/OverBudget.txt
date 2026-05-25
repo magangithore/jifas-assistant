@@ -1,0 +1,1185 @@
+﻿JIFAS Knowledge Base - Modul Over Budget
+
+Dokumen ini dibuat sebagai knowledge base untuk AI Chatbot JIFAS agar memahami modul Over Budget dari sisi user, business process, flow approval, status dokumen, validasi, troubleshooting, dan eskalasi ke IT. Fokus dokumen ini bukan pada source code, tetapi pada logika sistem dan cara kerja modul dalam proses bisnis JIFAS.
+
+============================================================
+
+#1. Ringkasan Modul
+
+Modul Over Budget adalah modul yang digunakan untuk mengelola dokumen yang nilainya melebihi sisa budget yang tersedia pada COA, divisi, departemen, periode, atau company tertentu.
+
+Dalam JIFAS, dokumen yang bisa masuk ke jalur Over Budget terutama berasal dari:
+
+1. Invoice atau Pengajuan Dokumen vendor.
+2. PUM atau Pengajuan Uang Muka karyawan.
+
+Ketika suatu dokumen memakai budget lebih besar dari sisa budget yang tersedia, sistem tidak langsung membiarkan dokumen tersebut lanjut ke proses normal. Dokumen akan masuk ke jalur khusus Over Budget Approval. Jalur ini berfungsi untuk meminta persetujuan eksplisit dari pihak yang memiliki otoritas budget.
+
+Tujuan utama modul Over Budget:
+
+1. Mengontrol pengeluaran yang melebihi anggaran.
+2. Memastikan penggunaan budget di luar batas tetap disetujui oleh pejabat yang berwenang.
+3. Membuat audit trail atas setiap keputusan approve atau reject.
+4. Menghindari pembayaran invoice atau PUM tanpa kontrol budget.
+5. Membantu Finance dan Head Department memantau exception spending.
+6. Menjaga proses closing agar tidak ada dokumen over budget yang menggantung.
+
+Analoginya sederhana: modul Over Budget adalah gerbang khusus untuk transaksi yang melampaui rencana anggaran. Dokumen boleh lanjut hanya jika pihak berwenang sudah sadar, memahami risikonya, dan menyetujuinya.
+
+============================================================
+
+#2. Posisi Modul Over Budget dalam Big Picture JIFAS
+
+Modul Over Budget tidak berdiri sendiri. Modul ini menjadi titik kontrol di tengah flow Invoice dan PUM.
+
+##2.1 Posisi pada Flow Invoice
+
+Flow normal Invoice:
+
+User membuat Pengajuan Dokumen atau Invoice
+-> Head Approval
+-> Finance Approval
+-> Tax Approval bila ada pajak
+-> Invoice Posting
+-> Payment Invoice
+-> CashBank Payment
+-> Accounting Posting
+
+Jika ada item over budget:
+
+User membuat Pengajuan Dokumen atau Invoice
+-> Head Approval melihat status budget
+-> Jika over budget, dokumen masuk jalur Over Budget Approval
+-> Finance Head atau pihak authorized review dokumen
+-> Approve atau Reject
+-> Jika approve, dokumen lanjut ke Finance Approval atau tahap berikutnya
+-> Jika reject, dokumen dikembalikan atau berhenti sesuai status reject
+
+##2.2 Posisi pada Flow PUM
+
+Flow normal PUM:
+
+User membuat PPUM
+-> Head Approval
+-> Finance Approval
+-> Ready to Pay
+-> Payment PUM atau PU
+-> UM diterima karyawan
+-> Realisasi Uang Muka atau RU
+-> Finance Checking RU
+-> Tax Approval RU bila ada pajak
+-> Posting Accounting
+
+Jika ada item over budget:
+
+User membuat PPUM
+-> Head Approval melihat status budget
+-> Jika over budget, dokumen masuk jalur PUM Over Budget
+-> Finance Head atau pihak authorized review
+-> Approve atau Reject
+-> Jika approve, PPUM lanjut ke Finance Approval atau payment flow
+-> Jika reject, PPUM tidak bisa lanjut sampai diperbaiki atau diajukan ulang
+
+============================================================
+
+#3. Jenis Over Budget dalam Modul Ini
+
+Modul Over Budget memiliki dua area utama:
+
+1. Invoice Over Budget
+2. PUM Over Budget
+
+Selain itu ada tampilan Finance Approval Over Budget yang digunakan oleh tim Finance untuk final review terhadap invoice over budget yang sudah melewati tahap approval awal.
+
+##3.1 Invoice Over Budget
+
+Invoice Over Budget adalah kondisi ketika nilai invoice pada COA tertentu lebih besar dari remaining budget atau sisa budget yang tersedia.
+
+Contoh:
+
+Sisa budget COA 5101 untuk Department Operations bulan ini adalah Rp10.000.000.
+Invoice yang diajukan memakai COA tersebut sebesar Rp15.000.000.
+Selisih Rp5.000.000 menyebabkan dokumen masuk ke status over budget.
+
+Invoice Over Budget biasanya berisi data:
+
+- Tanggal dokumen
+- Nomor dokumen atau PD No
+- Category atau PD Type
+- Description
+- COA Code
+- Vendor
+- Applicant
+- Division
+- Approve By
+- Amount
+- Remaining Budget
+- PPN
+- PPH
+- Status approval
+- File pendukung
+
+##3.2 PUM Over Budget
+
+PUM Over Budget adalah kondisi ketika pengajuan uang muka karyawan menggunakan COA yang sisa budget-nya tidak cukup.
+
+Contoh:
+
+Sisa budget perjalanan dinas Department Sales adalah Rp3.000.000.
+Karyawan mengajukan PUM perjalanan dinas Rp5.000.000.
+Maka pengajuan masuk jalur PUM Over Budget.
+
+PUM Over Budget biasanya berisi data:
+
+- Tanggal dokumen
+- Nomor dokumen PUM
+- Category atau PUM Type
+- Description
+- COA Code
+- Receive By
+- Paid To
+- Division
+- Approve By
+- Amount
+- Remaining Budget
+- Status approval
+- File atau attachment pendukung
+
+##3.3 Finance Approval Over Budget
+
+Finance Approval Over Budget adalah area approval yang lebih fokus kepada invoice over budget yang sudah berada pada tahap review Finance. Di sini Finance memutuskan apakah invoice over budget boleh dilanjutkan atau harus ditolak.
+
+Area ini menampilkan invoice yang membutuhkan approval akhir dari Finance, dengan data seperti:
+
+- Doc Date
+- Doc No
+- Category
+- Applicant
+- COA Code
+- Vendor
+- Amount
+- Description
+- Status
+- Tombol Approval
+
+============================================================
+
+#4. Role dan Pengguna yang Terlibat
+
+Modul Over Budget umumnya digunakan oleh role berikut:
+
+1. Head of Department
+   - Melihat dokumen dari divisi atau departemennya yang over budget.
+   - Memutuskan apakah penggunaan budget tambahan dapat diterima.
+
+2. Finance Manager
+   - Memberi approval final atau review tambahan atas invoice dan PUM yang over budget.
+   - Memastikan exception spending masih wajar dan sesuai kebijakan perusahaan.
+
+3. Head of Finance
+   - Menangani approval tingkat lebih tinggi untuk dokumen dengan nilai besar atau risiko tinggi.
+   - Memantau pola penggunaan budget yang melebihi batas.
+
+4. Finance Staff
+   - Membantu review data, mengecek dokumen, dan memantau daftar pending.
+   - Biasanya tidak selalu menjadi decision maker final, tergantung role dan setting akses.
+
+5. Accounting Manager atau Accounting Team
+   - Memantau dampak over budget terhadap pencatatan akuntansi.
+   - Memastikan dokumen yang sudah approve dapat diposting dengan benar.
+
+6. Internal Audit
+   - Mengecek audit trail approval dan rejection.
+   - Memastikan setiap over budget memiliki alasan dan approval yang jelas.
+
+7. IT Administrator atau Webmaster
+   - Menangani error teknis, akses role, token/session, API, file attachment, grid loading, dan masalah sistem lain.
+
+============================================================
+
+#5. Prinsip Dasar Budget Control
+
+Budget Control di JIFAS bekerja dengan membandingkan nilai pengajuan terhadap budget yang tersedia.
+
+Komponen penting:
+
+1. Company Code
+   - Menentukan perusahaan mana yang sedang aktif.
+   - User hanya melihat data company sesuai aksesnya.
+
+2. Division dan Department
+   - Menentukan unit organisasi yang menggunakan budget.
+
+3. COA Code
+   - Menentukan akun budget yang digunakan.
+   - Contoh: biaya perjalanan, biaya maintenance, pembelian material, jasa vendor.
+
+4. Periode Budget
+   - Budget dihitung berdasarkan periode aktif, biasanya bulan dan tahun.
+
+5. Amount
+   - Nilai pengajuan atau invoice.
+
+6. Remaining Budget
+   - Sisa budget yang tersedia.
+
+7. Budget Status
+   - Menunjukkan apakah pengajuan masih dalam budget atau melebihi budget.
+
+Sebuah dokumen dianggap over budget ketika amount yang digunakan lebih besar dari remaining budget, atau ketika sistem mendeteksi status budget bermasalah seperti Cross Year, Cross Accumulation, atau status lain yang tidak OK.
+
+============================================================
+
+#6. Status Penting dalam Over Budget
+
+Status yang sering muncul:
+
+##Need Approval atau Need Aproval
+
+Artinya dokumen sedang menunggu approval over budget. Di beberapa bagian sistem status ini dapat muncul sebagai "Need Aproval" karena penamaan di sistem. AI chatbot harus memahami bahwa "Need Approval" dan "Need Aproval" merujuk ke kondisi yang sama, yaitu dokumen butuh approval.
+
+Tindakan user:
+
+- Approver membuka detail dokumen.
+- Review amount, remaining budget, COA, vendor atau penerima, dan file pendukung.
+- Pilih Approve atau Reject.
+
+##Approved
+
+Artinya dokumen over budget sudah disetujui. Dokumen dapat lanjut ke tahap berikutnya sesuai flow Invoice atau PUM.
+
+Tindakan user:
+
+- Tidak perlu approval over budget lagi.
+- Jika masih tertahan, cek tahap berikutnya seperti Finance Approval, Tax Approval, Posting, atau Payment.
+
+##Rejected
+
+Artinya dokumen over budget ditolak oleh approver.
+
+Tindakan user:
+
+- Requester harus membaca alasan reject.
+- Perbaiki pengajuan jika masih diperlukan.
+- Bisa mengajukan ulang sesuai kebijakan.
+
+##Normal atau status lain
+
+Artinya dokumen tidak sedang berada di kondisi approval aktif, atau statusnya sudah tidak memungkinkan untuk approve/reject dari modul ini.
+
+Tindakan user:
+
+- Cek status dokumen pada modul asalnya.
+- Jika tombol approve/reject tidak muncul, kemungkinan dokumen bukan lagi dalam status Need Approval.
+
+============================================================
+
+#7. Flow Besar Modul Over Budget
+
+Flow umum modul Over Budget:
+
+1. User membuat dokumen Invoice atau PUM.
+2. Sistem mengecek budget berdasarkan company, division, department, COA, periode, dan amount.
+3. Jika budget cukup, dokumen mengikuti workflow normal.
+4. Jika budget tidak cukup, sistem memberi status over budget.
+5. Dokumen masuk ke daftar Over Budget Approval.
+6. Approver membuka detail dokumen.
+7. Approver mengecek:
+   - Amount
+   - Remaining Budget
+   - COA Code
+   - Description
+   - Vendor atau penerima PUM
+   - Applicant
+   - Division
+   - Approve By
+   - PPN dan PPH untuk invoice
+   - File atau dokumen pendukung
+8. Approver memilih Approve atau Reject.
+9. Jika Approve:
+   - Sistem menyimpan keputusan approval.
+   - Dokumen lanjut ke tahap berikutnya.
+10. Jika Reject:
+   - Sistem meminta alasan rejection.
+   - Alasan disimpan untuk audit trail.
+   - Dokumen berhenti atau kembali ke requester sesuai flow modul asal.
+11. Grid over budget di-refresh.
+12. User dapat memproses dokumen berikutnya.
+
+============================================================
+
+#8. Invoice Over Budget - Business Process Lengkap
+
+##8.1 Kapan Invoice Masuk Over Budget
+
+Invoice masuk ke over budget ketika:
+
+1. Nilai invoice melebihi remaining budget COA.
+2. COA yang dipakai tidak memiliki cukup alokasi budget.
+3. Budget bulan berjalan sudah habis.
+4. Penggunaan budget kumulatif sudah melewati batas.
+5. Pengajuan berada di periode yang tidak sesuai budget aktif.
+6. Ada status budget khusus seperti Cross Year atau Cross Accumulation.
+
+##8.2 Data yang Harus Direview
+
+Approver harus mengecek:
+
+1. Date
+   - Pastikan tanggal dokumen sesuai periode.
+
+2. Document Number atau PD No
+   - Nomor unik dokumen yang sedang diapprove.
+
+3. Category
+   - Jenis invoice atau PD Type.
+
+4. COA Code
+   - Akun yang terkena over budget.
+
+5. Amount
+   - Nilai dokumen yang membutuhkan tambahan budget.
+
+6. Remaining Budget
+   - Sisa budget yang tersedia.
+   - Jika sangat kecil atau negatif, approver perlu lebih berhati-hati.
+
+7. PPN
+   - Pajak Pertambahan Nilai yang terkait invoice.
+
+8. PPH
+   - Pajak Penghasilan atau withholding tax.
+
+9. Vendor
+   - Pihak yang akan dibayar.
+
+10. Applicant
+   - Staff yang membuat pengajuan.
+
+11. Division
+   - Divisi yang menggunakan budget.
+
+12. Approve By
+   - Atasan atau pihak sebelumnya yang sudah approve.
+
+13. Description
+   - Alasan bisnis atau keterangan pengajuan.
+
+14. File
+   - Dokumen pendukung seperti invoice vendor, PO, BAST, SPK, faktur pajak, atau dokumen terkait lain.
+
+##8.3 Flow Invoice Over Budget Approval
+
+1. Approver membuka menu Over Budget.
+2. Pilih tab Invoice Over Budget.
+3. Sistem menampilkan daftar invoice over budget.
+4. Approver menggunakan filter jika data banyak.
+5. Approver klik tombol Approval pada dokumen yang ingin dicek.
+6. Popup detail terbuka.
+7. Tab Approval menampilkan data utama.
+8. Approver cek Amount dibandingkan Remaining Budget.
+9. Approver cek COA dan Description.
+10. Approver cek Vendor, Applicant, Division, dan Approve By.
+11. Approver cek PPN dan PPH.
+12. Approver buka tab File untuk melihat dokumen pendukung.
+13. Jika dokumen valid dan alasan over budget bisa diterima, approver klik Approve.
+14. Sistem menampilkan confirmation dialog.
+15. Approver mengonfirmasi.
+16. Sistem menyimpan approval.
+17. Dokumen lanjut ke tahap berikutnya.
+18. Jika dokumen tidak layak, approver klik Reject.
+19. Sistem meminta alasan reject.
+20. Approver mengisi alasan reject yang jelas.
+21. Sistem menyimpan rejection reason.
+22. Dokumen berubah status rejected.
+23. Grid refresh dan dokumen keluar dari daftar pending atau berubah status.
+
+##8.4 Keputusan Approve Invoice
+
+Invoice over budget boleh diapprove jika:
+
+1. Pengeluaran memang urgent atau wajib.
+2. Dokumen pendukung lengkap dan valid.
+3. Vendor benar dan sudah sesuai transaksi.
+4. COA yang dipakai sesuai jenis biaya.
+5. Amount wajar dibanding kebutuhan bisnis.
+6. Over budget sudah dipahami risikonya.
+7. Approver memiliki otoritas untuk menyetujui nilai tersebut.
+8. Tidak ada duplikasi dokumen.
+9. Tidak ada indikasi salah input amount atau salah COA.
+
+##8.5 Keputusan Reject Invoice
+
+Invoice over budget sebaiknya direject jika:
+
+1. COA salah.
+2. Amount tidak sesuai invoice atau dokumen pendukung.
+3. Vendor tidak sesuai.
+4. Dokumen pendukung tidak lengkap.
+5. Pengeluaran tidak urgent.
+6. Ada duplikasi pengajuan.
+7. Budget sudah terlalu jauh melebihi batas dan perlu persetujuan level lebih tinggi.
+8. Deskripsi tidak jelas.
+9. Nilai PPN atau PPH terlihat tidak wajar.
+10. Approver tidak memiliki authority untuk amount tersebut.
+
+Contoh alasan reject yang baik:
+
+- "COA yang digunakan tidak sesuai dengan jenis biaya. Mohon revisi COA."
+- "Remaining budget tidak cukup dan belum ada approval tambahan dari management."
+- "Dokumen pendukung invoice belum lengkap. Mohon upload PO dan BAST."
+- "Nominal pengajuan tidak sesuai dengan invoice vendor. Mohon dicek kembali."
+- "Pengajuan terindikasi duplikat dengan dokumen sebelumnya."
+
+============================================================
+
+#9. PUM Over Budget - Business Process Lengkap
+
+##9.1 Kapan PUM Masuk Over Budget
+
+PUM masuk ke over budget ketika nilai pengajuan uang muka melebihi sisa budget untuk COA yang dipilih.
+
+Penyebab umum:
+
+1. Budget perjalanan dinas atau operasional sudah hampir habis.
+2. Karyawan memilih COA yang tidak sesuai atau tidak punya budget cukup.
+3. Pengajuan dibuat untuk nominal lebih besar dari alokasi bulan berjalan.
+4. Penggunaan budget kumulatif department sudah tinggi.
+5. Pengajuan terjadi di periode yang budget-nya belum aktif atau sudah tutup.
+
+##9.2 Data yang Harus Direview
+
+Approver harus mengecek:
+
+1. Date
+   - Tanggal pengajuan PUM.
+
+2. Document Number
+   - Nomor dokumen PUM.
+
+3. Category atau PUM Type
+   - Jenis pengajuan uang muka.
+
+4. COA Code
+   - Akun budget yang digunakan.
+
+5. Amount
+   - Total uang muka yang diminta.
+
+6. Remaining Budget
+   - Sisa budget yang tersedia.
+
+7. Receive By
+   - Karyawan yang menerima uang muka.
+
+8. Paid To
+   - Staff atau pihak yang terkait dengan pengajuan.
+
+9. Division
+   - Divisi yang memakai budget.
+
+10. Approve By
+   - Atasan yang melakukan approval sebelumnya.
+
+11. Description
+   - Keperluan uang muka.
+
+12. File atau Attachment
+   - Dokumen pendukung seperti quotation, surat tugas, invoice proforma, atau dokumen lain.
+
+##9.3 Flow PUM Over Budget Approval
+
+1. Approver membuka menu Over Budget.
+2. Pilih tab PUM Over Budget.
+3. Sistem menampilkan daftar PUM yang over budget.
+4. Approver mencari dokumen berdasarkan tanggal, nomor dokumen, category, COA, amount, atau status.
+5. Approver klik tombol Approval pada baris dokumen.
+6. Form detail PUM terbuka.
+7. Approver review tab Approval.
+8. Approver cek amount dan remaining budget.
+9. Approver cek penerima PUM dan staff yang mengajukan.
+10. Approver cek division dan approve by.
+11. Approver cek description.
+12. Approver buka tab File.
+13. Jika file berupa gambar, sistem dapat menampilkan preview.
+14. Jika file berupa dokumen, user membuka file melalui link atau tombol file.
+15. Jika dokumen valid, klik Approve.
+16. Sistem meminta konfirmasi.
+17. Approver mengonfirmasi.
+18. Sistem menandai PUM sebagai approved secara budget.
+19. Jika tidak valid, klik Reject.
+20. Sistem meminta alasan reject.
+21. Approver mengisi alasan.
+22. Sistem menyimpan reason dan mengubah status.
+23. Grid refresh.
+
+##9.4 Keputusan Approve PUM
+
+PUM over budget boleh diapprove jika:
+
+1. Uang muka diperlukan untuk kegiatan bisnis yang valid.
+2. Dokumen pendukung jelas.
+3. Amount wajar.
+4. COA sesuai jenis biaya.
+5. Penerima PUM benar.
+6. Divisi dan department sesuai.
+7. Head sebelumnya sudah menyetujui dan alasan bisnis kuat.
+8. Approver memahami bahwa sisa budget tidak cukup.
+9. Tidak ada duplikasi PUM untuk kebutuhan yang sama.
+
+##9.5 Keputusan Reject PUM
+
+PUM over budget sebaiknya direject jika:
+
+1. Kebutuhan tidak urgent.
+2. Nominal terlalu besar dibanding kebutuhan.
+3. COA salah.
+4. Attachment tidak ada atau tidak valid.
+5. Pengajuan duplikat.
+6. Karyawan sudah memiliki outstanding PUM yang belum direalisasikan.
+7. Budget department sudah tidak memungkinkan.
+8. Perlu revisi nominal.
+
+Contoh alasan reject yang baik:
+
+- "Nominal PUM melebihi sisa budget dan belum ada justifikasi tambahan."
+- "COA yang dipilih tidak sesuai dengan kebutuhan pengajuan."
+- "Attachment pendukung belum lengkap. Mohon upload quotation atau dokumen pendukung."
+- "Pengajuan terlihat duplikat dengan PPUM sebelumnya."
+- "Penerima masih memiliki outstanding PUM yang belum direalisasikan."
+
+============================================================
+
+#10. Finance Approval Over Budget - Business Process
+
+Finance Approval Over Budget digunakan untuk review akhir terhadap invoice over budget oleh tim Finance.
+
+Flow:
+
+1. Finance membuka menu Finance Approval Over Budget.
+2. Sistem menampilkan daftar invoice over budget yang perlu tindakan Finance.
+3. Grid menampilkan Doc Date, Doc No, Category, Applicant, COA Code, Vendor, Amount, Description, Status, dan Action.
+4. Finance filter data jika perlu.
+5. Finance klik Approval.
+6. Form Invoice Approval Over Budget terbuka.
+7. Finance review data:
+   - Date
+   - COA Code
+   - Amount
+   - Remaining Budget
+   - PPN
+   - PPH
+   - Vendor
+   - Applicant
+   - Division
+   - Approved By
+   - Description
+8. Jika status masih Need Approval, tombol Approve dan Reject muncul.
+9. Finance klik Approve jika setuju.
+10. Sistem meminta konfirmasi.
+11. Sistem menyimpan action approve.
+12. Jika tidak setuju, Finance klik Reject.
+13. Sistem membuka form alasan reject.
+14. Finance wajib mengisi alasan.
+15. Sistem meminta konfirmasi akhir.
+16. Sistem menyimpan action reject dan alasan.
+17. Grid refresh.
+
+Catatan penting:
+
+- Finance tidak mengubah isi dokumen dari modul ini.
+- Field detail bersifat read-only.
+- Keputusan Finance dicatat sebagai audit trail.
+- Jika data tidak ada atau doc no kosong, sistem meminta user menghubungi IT Administrator.
+
+============================================================
+
+#11. Hubungan Over Budget dengan Modul Lain
+
+##11.1 Hubungan dengan Invoice
+
+Over Budget menerima invoice yang sudah dibuat di modul Invoice dan terdeteksi melebihi budget. Setelah approve, dokumen dapat melanjutkan flow invoice.
+
+Jika reject, requester atau tim terkait perlu melakukan perbaikan di modul Invoice.
+
+##11.2 Hubungan dengan PUM
+
+Over Budget menerima PPUM yang over budget. Setelah approve, PPUM dapat melanjutkan ke Finance Approval dan Payment PUM. Jika reject, requester perlu revisi atau membuat pengajuan baru sesuai kebijakan.
+
+##11.3 Hubungan dengan Accounting
+
+Over Budget mempengaruhi apakah dokumen boleh lanjut ke posting atau tidak. Dokumen yang belum melewati approval over budget tidak boleh diposting ke accounting.
+
+##11.4 Hubungan dengan CashBank
+
+Untuk invoice atau PUM yang akhirnya dibayar, proses payment akan masuk ke CashBank. Jika dokumen masih pending over budget, CashBank seharusnya belum memproses pembayaran.
+
+##11.5 Hubungan dengan Dashboard
+
+Dashboard dapat menunjukkan jumlah dokumen yang pending atau status approval tertentu. Jika user melihat angka pending over budget, user perlu membuka menu Over Budget untuk menyelesaikan approval.
+
+============================================================
+
+#12. Field dan Arti Bisnis
+
+##12.1 Date
+
+Tanggal dokumen dibuat atau tanggal dokumen transaksi. Penting untuk menentukan periode budget.
+
+##12.2 Document Number atau Doc No
+
+Nomor unik dokumen. Digunakan untuk tracking, komunikasi dengan Finance, dan laporan audit.
+
+##12.3 Category
+
+Jenis dokumen atau kategori pengajuan. Pada invoice biasanya berasal dari PD Type. Pada PUM biasanya berasal dari PUM Type.
+
+##12.4 COA Code
+
+Chart of Account yang digunakan oleh dokumen. COA menentukan budget mana yang dikonsumsi.
+
+##12.5 Amount
+
+Nilai dokumen yang diajukan. Inilah nilai yang dibandingkan dengan remaining budget.
+
+##12.6 Remaining Budget
+
+Sisa budget yang tersedia. Jika amount lebih besar dari remaining budget, dokumen menjadi over budget.
+
+##12.7 PPN
+
+Pajak Pertambahan Nilai pada invoice. Umumnya hanya muncul pada invoice over budget, bukan PUM over budget.
+
+##12.8 PPH
+
+Pajak Penghasilan atau withholding tax. Umumnya muncul pada invoice over budget.
+
+##12.9 Vendor
+
+Pihak vendor yang menerima pembayaran invoice.
+
+##12.10 Applicant
+
+User atau staff yang membuat dokumen.
+
+##12.11 Receive By
+
+Karyawan yang menerima dana PUM.
+
+##12.12 Paid To
+
+Pihak yang dibayarkan atau staff terkait pengajuan PUM.
+
+##12.13 Division
+
+Divisi yang menggunakan budget.
+
+##12.14 Approve By
+
+Nama atasan atau approver sebelumnya.
+
+##12.15 Description
+
+Keterangan penggunaan dana. Field ini sangat penting untuk memahami alasan bisnis.
+
+##12.16 Status
+
+Menunjukkan posisi dokumen dalam workflow approval.
+
+##12.17 File
+
+Lampiran dokumen pendukung. Untuk invoice dapat berisi PO, BAST, invoice vendor, faktur pajak, SPK. Untuk PUM dapat berisi quotation, surat tugas, invoice proforma, atau bukti kebutuhan.
+
+============================================================
+
+#13. Validasi Sistem
+
+Sebelum action approval atau rejection diproses, sistem melakukan validasi:
+
+1. Dokumen harus valid.
+2. Document number tidak boleh kosong.
+3. Record number harus tersedia untuk invoice tertentu.
+4. Status dokumen harus masih Need Approval.
+5. User harus memiliki token login yang valid.
+6. User harus memiliki role yang boleh approve.
+7. Untuk reject, alasan reject wajib diisi.
+8. Untuk PUM, COA code harus tersedia.
+9. File pendukung dapat ditampilkan jika path file tersedia.
+10. Setelah action berhasil, grid harus refresh.
+
+============================================================
+
+#14. Validasi Bisnis Sebelum Approve
+
+Approver sebaiknya melakukan checklist berikut:
+
+1. Apakah dokumen memang benar over budget?
+2. Apakah remaining budget yang ditampilkan sudah masuk akal?
+3. Apakah COA yang digunakan benar?
+4. Apakah division dan department sesuai?
+5. Apakah amount sesuai dokumen pendukung?
+6. Apakah vendor atau penerima benar?
+7. Apakah description cukup jelas?
+8. Apakah PPN dan PPH terlihat wajar?
+9. Apakah ada file pendukung?
+10. Apakah nilai over budget masih dalam batas authority approver?
+11. Apakah pengajuan ini urgent atau bisa ditunda?
+12. Apakah ada risiko duplikasi?
+13. Apakah ada outstanding PUM yang belum diselesaikan?
+14. Apakah transaksi harus menunggu approval level lebih tinggi?
+
+Jika checklist belum aman, sebaiknya reject dengan alasan jelas atau eskalasi ke atasan/Finance Head.
+
+============================================================
+
+#15. Error Handling untuk User
+
+##15.1 Grid Over Budget Kosong
+
+Kemungkinan penyebab:
+
+1. Memang tidak ada dokumen over budget yang pending.
+2. Filter terlalu ketat.
+3. User tidak punya akses company tersebut.
+4. Session sudah expired.
+5. API gagal mengambil data.
+
+Solusi user:
+
+1. Clear filter.
+2. Refresh halaman.
+3. Coba logout dan login ulang.
+4. Pastikan memilih company yang benar.
+5. Jika tetap kosong padahal seharusnya ada dokumen, hubungi IT.
+
+##15.2 Data Loading Terus
+
+Kemungkinan penyebab:
+
+1. Koneksi internet atau intranet bermasalah.
+2. API Over Budget sedang error.
+3. Token login expired.
+4. Browser cache bermasalah.
+
+Solusi user:
+
+1. Refresh halaman.
+2. Login ulang.
+3. Coba browser lain.
+4. Clear cache.
+5. Hubungi IT jika masih gagal.
+
+##15.3 Tombol Approval Tidak Muncul
+
+Kemungkinan penyebab:
+
+1. Status dokumen bukan Need Approval.
+2. User tidak punya role approval.
+3. Dokumen sudah diproses oleh user lain.
+4. Data grid belum refresh.
+
+Solusi user:
+
+1. Refresh grid.
+2. Cek status dokumen.
+3. Cek apakah user login dengan role yang benar.
+4. Jika merasa harus punya akses, hubungi IT/Admin untuk cek role mapping.
+
+##15.4 Tombol Approve atau Reject Tidak Muncul di Detail
+
+Kemungkinan penyebab:
+
+1. Dokumen sudah tidak dalam status Need Approval.
+2. Status value tidak sesuai.
+3. Role user tidak sesuai.
+4. Ada error tampilan.
+
+Solusi user:
+
+1. Tutup form dan buka ulang.
+2. Refresh halaman.
+3. Cek status dokumen di grid.
+4. Jika status masih Need Approval tapi tombol tidak muncul, lapor ke IT.
+
+##15.5 Tidak Bisa Approve
+
+Kemungkinan penyebab:
+
+1. Dokumen sudah diproses.
+2. Session expired.
+3. Record data tidak ditemukan.
+4. API status update gagal.
+5. User tidak memiliki authority.
+
+Solusi user:
+
+1. Refresh halaman.
+2. Cek apakah status masih Need Approval.
+3. Login ulang.
+4. Coba ulang sekali.
+5. Jika masih gagal, hubungi IT dengan screenshot error.
+
+##15.6 Tidak Bisa Reject
+
+Kemungkinan penyebab:
+
+1. Alasan reject belum diisi.
+2. Dokumen sudah diproses.
+3. Session expired.
+4. API gagal menyimpan rejection reason.
+
+Solusi user:
+
+1. Isi alasan reject dengan jelas.
+2. Jangan kosong atau hanya spasi.
+3. Refresh halaman dan coba lagi.
+4. Jika rejection reason tetap tidak tersimpan, hubungi IT.
+
+##15.7 File Tab Kosong
+
+Kemungkinan penyebab:
+
+1. Dokumen memang tidak memiliki attachment.
+2. File gagal diupload dari modul asal.
+3. File path bermasalah.
+4. User tidak punya akses membuka file.
+5. Server file tidak bisa diakses.
+
+Solusi user:
+
+1. Pastikan requester memang sudah upload file.
+2. Minta requester cek ulang di modul asal.
+3. Refresh form.
+4. Jika file seharusnya ada tapi kosong, hubungi IT.
+
+##15.8 Image Preview Tidak Muncul
+
+Kemungkinan penyebab:
+
+1. File gambar hilang dari server.
+2. URL/path file salah.
+3. Browser memblokir konten.
+4. Ekstensi file tidak dikenali.
+
+Solusi user:
+
+1. Coba buka file di tab baru.
+2. Coba browser lain.
+3. Hubungi IT jika file tidak bisa dibuka.
+
+##15.9 Export Excel Tidak Lengkap
+
+Kemungkinan penyebab:
+
+1. Data terlalu banyak.
+2. Filter belum sesuai.
+3. Export hanya mengambil data pada tampilan tertentu.
+4. Server timeout.
+
+Solusi user:
+
+1. Filter berdasarkan date range.
+2. Export per periode lebih kecil.
+3. Coba ulang.
+4. Hubungi IT jika export selalu gagal.
+
+============================================================
+
+#16. Error yang Harus Diarahkan ke IT
+
+AI chatbot harus mengarahkan user ke IT jika terjadi kondisi berikut:
+
+1. Grid tidak loading setelah refresh dan login ulang.
+2. Muncul pesan server error, API error, request failed, unauthorized, atau forbidden.
+3. User sudah punya role tetapi menu Over Budget tidak muncul.
+4. Dokumen seharusnya pending approval tetapi tidak muncul di grid.
+5. Status dokumen tidak berubah setelah approve atau reject.
+6. Tombol approval tidak muncul padahal status Need Approval.
+7. File attachment hilang atau tidak bisa dibuka.
+8. Image preview tidak tampil padahal file ada.
+9. Export Excel selalu gagal.
+10. Data amount, remaining budget, PPN, PPH, atau COA terlihat salah dari sistem.
+11. Muncul pesan "Data not exist! Please contact your IT administrator!"
+12. Sistem menampilkan error token atau session berkali-kali.
+13. Ada perbedaan data antara dashboard, Invoice/PUM, dan Over Budget.
+14. Approve/reject berhasil di layar tetapi status tidak berubah di modul asal.
+15. Dokumen muncul ganda atau duplikat di grid.
+
+============================================================
+
+#17. Data yang Harus Dikirim ke IT
+
+Saat user melapor ke IT, minta user menyiapkan:
+
+1. Nama user dan username login.
+2. Role user.
+3. Company code yang sedang digunakan.
+4. Menu yang dibuka, misalnya Over Budget > Invoice Over Budget.
+5. Nomor dokumen.
+6. COA Code.
+7. Tanggal dokumen.
+8. Status yang terlihat.
+9. Screenshot error.
+10. Waktu kejadian.
+11. Browser yang digunakan.
+12. Apakah sudah coba refresh atau login ulang.
+13. Jika terkait file, nama file atau bukti bahwa file sudah diupload.
+14. Jika terkait approval, jelaskan action yang dipilih: Approve atau Reject.
+15. Jika reject, isi alasan reject yang dicoba.
+
+Template laporan ke IT:
+
+Saya mengalami kendala di JIFAS modul Over Budget.
+Menu: [Invoice Over Budget / PUM Over Budget / Finance Approval Over Budget]
+Company: [kode company]
+Nomor dokumen: [nomor dokumen]
+COA: [kode COA]
+Status saat ini: [status]
+Action yang dilakukan: [Approve / Reject / buka file / export]
+Error yang muncul: [copy pesan error]
+Waktu kejadian: [tanggal jam]
+Screenshot: [lampirkan]
+
+============================================================
+
+#18. Best Practice Penggunaan Modul Over Budget
+
+1. Jangan approve hanya karena dokumen urgent. Tetap cek COA, amount, dan file.
+2. Selalu bandingkan amount dengan remaining budget.
+3. Pastikan reason reject jelas dan membantu requester memperbaiki dokumen.
+4. Jangan approve jika dokumen pendukung tidak lengkap.
+5. Jika amount besar, eskalasi ke Finance Head atau management.
+6. Gunakan filter untuk memproses dokumen secara periodik.
+7. Prioritaskan dokumen mendekati closing bulanan.
+8. Jangan biarkan dokumen over budget pending terlalu lama.
+9. Cek apakah pengajuan berulang dari user atau department yang sama.
+10. Untuk PUM, cek apakah penerima masih punya outstanding PUM.
+11. Untuk Invoice, cek apakah vendor dan invoice number tidak duplikat.
+12. Export data untuk audit jika diperlukan.
+13. Jika data budget terlihat tidak masuk akal, jangan approve dulu. Minta Finance/IT mengecek budget master.
+
+============================================================
+
+#19. Monthly Closing dan Year-End
+
+Dokumen over budget harus menjadi perhatian khusus saat closing.
+
+##19.1 Saat Monthly Closing
+
+Sebelum closing bulanan:
+
+1. Cek semua invoice over budget yang masih Need Approval.
+2. Cek semua PUM over budget yang masih Need Approval.
+3. Selesaikan approve atau reject sebelum periode ditutup.
+4. Pastikan tidak ada dokumen menggantung yang akan menghambat posting.
+5. Jika ada dokumen yang masih menunggu keputusan management, catat sebagai pending issue.
+6. Koordinasikan dengan Accounting jika dokumen perlu masuk periode berjalan.
+
+##19.2 Saat Year-End
+
+Sebelum tutup tahun:
+
+1. Review semua over budget approval dalam tahun berjalan.
+2. Pastikan dokumen yang sudah approved sudah lanjut ke proses berikutnya.
+3. Pastikan rejected document tidak menggantung tanpa tindak lanjut.
+4. Export report untuk audit.
+5. Siapkan daftar over budget terbesar untuk review management.
+6. Pastikan tidak ada dokumen lintas tahun yang belum jelas statusnya.
+
+============================================================
+
+#20. Contoh Skenario
+
+##Skenario 1: Invoice Vendor Over Budget
+
+User membuat invoice vendor Rp50.000.000 untuk COA Maintenance.
+Remaining budget hanya Rp35.000.000.
+Sistem menandai invoice sebagai over budget.
+Dokumen masuk ke Invoice Over Budget.
+Finance Head membuka detail, melihat vendor, applicant, amount, remaining budget, dan file pendukung.
+Jika alasan maintenance urgent dan dokumen lengkap, Finance Head approve.
+Jika tidak urgent atau dokumen tidak lengkap, Finance Head reject dengan alasan.
+
+##Skenario 2: PUM Perjalanan Dinas Over Budget
+
+Karyawan mengajukan PUM Rp7.000.000 untuk perjalanan dinas.
+Sisa budget perjalanan hanya Rp4.000.000.
+Sistem menandai PPUM sebagai over budget.
+Approver membuka PUM Over Budget.
+Approver cek receive by, paid to, COA, amount, remaining budget, dan attachment.
+Jika perjalanan dinas wajib dan disetujui management, approve.
+Jika tidak jelas, reject dengan alasan.
+
+##Skenario 3: File Pendukung Tidak Ada
+
+Approver membuka dokumen over budget tetapi tab File kosong.
+Jika dokumen memang membutuhkan bukti pendukung, approver tidak sebaiknya approve.
+Approver dapat reject dengan alasan "Dokumen pendukung belum dilampirkan".
+Jika requester merasa sudah upload, arahkan ke IT untuk cek file path atau upload record.
+
+##Skenario 4: Tombol Approve Tidak Muncul
+
+User membuka detail dokumen tetapi tombol Approve dan Reject tidak muncul.
+Kemungkinan dokumen sudah bukan status Need Approval, user tidak memiliki akses, atau ada error UI.
+AI chatbot menyarankan refresh dan cek status.
+Jika masih bermasalah, arahkan ke IT untuk cek role dan status data.
+
+============================================================
+
+#21. FAQ untuk AI Chatbot
+
+##Q1: Apa itu Over Budget di JIFAS?
+
+Over Budget adalah kondisi ketika nilai Invoice atau PUM melebihi sisa budget yang tersedia pada COA, division, department, dan periode tertentu. Dokumen harus mendapat approval khusus sebelum bisa lanjut.
+
+##Q2: Kenapa dokumen saya masuk Over Budget?
+
+Karena amount pengajuan lebih besar dari remaining budget, COA tidak punya budget cukup, budget bulan berjalan sudah habis, atau ada status budget khusus seperti cross year/cross accumulation.
+
+##Q3: Apa yang harus dicek sebelum approve Over Budget?
+
+Cek amount, remaining budget, COA, description, vendor atau penerima, applicant, division, approve by, PPN/PPH untuk invoice, dan file pendukung.
+
+##Q4: Kenapa tombol Approve tidak muncul?
+
+Biasanya karena status dokumen bukan Need Approval, user tidak punya role approval, dokumen sudah diproses user lain, atau ada error tampilan. Refresh dulu. Jika tetap, hubungi IT.
+
+##Q5: Apakah dokumen yang over budget bisa langsung dibayar?
+
+Tidak. Dokumen harus melewati Over Budget Approval terlebih dahulu. Setelah approved, baru bisa lanjut ke Finance Approval, Payment, CashBank, atau Posting sesuai flow.
+
+##Q6: Apa bedanya Invoice Over Budget dan PUM Over Budget?
+
+Invoice Over Budget terkait tagihan vendor yang melebihi budget. PUM Over Budget terkait pengajuan uang muka karyawan yang melebihi budget.
+
+##Q7: Kenapa harus isi alasan reject?
+
+Alasan reject wajib agar requester tahu apa yang harus diperbaiki dan agar audit trail jelas.
+
+##Q8: Apa arti Remaining Budget?
+
+Remaining Budget adalah sisa anggaran yang masih tersedia untuk COA tertentu pada periode, division, department, dan company yang digunakan.
+
+##Q9: File pendukung tidak muncul, harus bagaimana?
+
+Refresh form dan pastikan requester memang sudah upload file. Jika file seharusnya ada tapi tidak muncul, hubungi IT karena kemungkinan ada masalah file path atau akses file.
+
+##Q10: Data budget terlihat salah, apakah boleh tetap approve?
+
+Sebaiknya jangan approve dulu. Minta Finance atau IT mengecek budget master dan perhitungan remaining budget.
+
+============================================================
+
+#22. Knowledge Rules untuk AI Chatbot
+
+AI chatbot JIFAS harus memahami aturan berikut:
+
+1. Over Budget bukan error teknis. Over Budget adalah kondisi bisnis ketika amount melebihi budget.
+2. Dokumen over budget tidak boleh lanjut tanpa approval khusus.
+3. Approval over budget adalah keputusan bisnis dan budget control, bukan sekadar klik tombol.
+4. Untuk invoice, AI harus membedakan vendor, applicant, COA, PPN, PPH, dan file pendukung.
+5. Untuk PUM, AI harus membedakan receive by, paid to, amount, remaining budget, dan attachment.
+6. Jika user bertanya kenapa dokumen tidak bisa lanjut, cek kemungkinan status masih Need Approval di Over Budget.
+7. Jika user bertanya kenapa tombol approve tidak ada, jawab kemungkinan status bukan Need Approval atau role tidak sesuai.
+8. Jika user bertanya cara reject, jelaskan bahwa reason wajib diisi dan harus jelas.
+9. Jika user bertanya data tidak muncul, sarankan clear filter, refresh, login ulang, lalu eskalasi ke IT jika masih gagal.
+10. Jika user mengalami API error, token error, file error, atau grid loading error, arahkan ke IT.
+11. Jangan menyarankan user mengubah data langsung di database.
+12. Jangan menyarankan bypass approval.
+13. Jika over budget karena COA salah, arahkan user untuk revisi dokumen pada modul asal, bukan approve.
+14. Jika over budget karena budget master salah, arahkan ke Finance/IT untuk validasi budget.
+15. Jika mendekati closing, dokumen over budget harus segera diputuskan approve atau reject.
+
+============================================================
+
+#23. Jawaban Siap Pakai untuk Chatbot
+
+##Pertanyaan: "Kenapa invoice saya masuk over budget?"
+
+Invoice masuk over budget karena amount invoice pada COA yang dipilih melebihi remaining budget yang tersedia. Silakan cek COA, amount, remaining budget, dan periode budget. Jika COA salah, revisi invoice. Jika memang pengeluaran valid, tunggu approval dari pihak yang berwenang di menu Over Budget.
+
+##Pertanyaan: "Kenapa PUM saya belum lanjut ke finance?"
+
+Kemungkinan PPUM masih tertahan di Over Budget Approval karena nilai pengajuan melebihi sisa budget. Cek status dokumen. Jika status masih Need Approval, dokumen harus diapprove dulu oleh pihak yang memiliki authority budget.
+
+##Pertanyaan: "Saya tidak bisa approve over budget."
+
+Pastikan dokumen masih berstatus Need Approval dan akun Anda memiliki role approver. Coba refresh halaman dan login ulang. Jika tombol tetap tidak muncul atau muncul error saat approve, hubungi IT dengan nomor dokumen, company code, screenshot, dan waktu kejadian.
+
+##Pertanyaan: "Apa yang harus saya tulis di alasan reject?"
+
+Tuliskan alasan yang jelas dan membantu requester memperbaiki dokumen. Contoh: COA tidak sesuai, nominal melebihi budget tanpa justifikasi, dokumen pendukung belum lengkap, vendor tidak sesuai, atau pengajuan duplikat.
+
+##Pertanyaan: "File pendukung tidak muncul di tab File."
+
+Pastikan file memang sudah diupload dari modul asal. Coba refresh form atau buka ulang dokumen. Jika file tetap tidak muncul padahal sudah diupload, hubungi IT karena kemungkinan ada masalah path file, permission, atau data attachment.
+
+##Pertanyaan: "Data remaining budget salah."
+
+Jangan approve dulu. Remaining budget berasal dari budget allocation dan pemakaian budget yang tercatat di sistem. Minta Finance atau IT mengecek budget master, periode aktif, COA, division, department, dan dokumen yang sudah menggunakan budget tersebut.
+
+============================================================
+
+#24. Istilah Penting
+
+Over Budget: Kondisi ketika amount lebih besar dari budget tersedia.
+
+Remaining Budget: Sisa budget yang masih bisa digunakan.
+
+COA: Chart of Account, akun budget atau akun accounting.
+
+Invoice Over Budget: Invoice vendor yang nilainya melebihi budget.
+
+PUM Over Budget: Pengajuan uang muka karyawan yang nilainya melebihi budget.
+
+Approval: Persetujuan agar dokumen lanjut.
+
+Reject: Penolakan dokumen dengan alasan.
+
+Reject Note: Catatan alasan penolakan.
+
+Applicant: User yang membuat pengajuan.
+
+Receive By: Karyawan yang menerima uang muka.
+
+Paid To: Pihak yang dibayar atau terkait pembayaran.
+
+Vendor: Pihak supplier atau penerima pembayaran invoice.
+
+PPN: Pajak Pertambahan Nilai.
+
+PPH: Pajak Penghasilan atau withholding tax.
+
+PD Type: Kategori pengajuan dokumen invoice.
+
+PUM Type: Kategori pengajuan uang muka.
+
+Audit Trail: Riwayat proses dan keputusan dokumen.
+
+Need Approval: Status menunggu approval.
+
+Need Aproval: Variasi penulisan status di sistem yang artinya sama dengan Need Approval.
+
+============================================================
+
+#25. Kesimpulan
+
+Modul Over Budget adalah kontrol penting dalam JIFAS untuk memastikan setiap pengeluaran yang melebihi anggaran tidak langsung lanjut ke pembayaran atau posting. Modul ini menjaga disiplin budget, memperkuat audit trail, dan membantu Finance serta Management mengambil keputusan atas exception spending.
+
+Inti pemahaman untuk AI Chatbot:
+
+1. Over Budget adalah proses bisnis, bukan sekadar error.
+2. Dokumen over budget harus direview berdasarkan amount, remaining budget, COA, user, vendor/penerima, dan file pendukung.
+3. Approve berarti menyetujui penggunaan budget tambahan.
+4. Reject harus selalu disertai alasan jelas.
+5. Error teknis seperti grid tidak loading, file tidak muncul, token error, role tidak sesuai, atau status tidak berubah harus diarahkan ke IT.
+6. Modul ini terhubung langsung dengan Invoice, PUM, CashBank, Accounting, dan Dashboard.
+
+
+============================================================
+
+#26. Catatan Penyusunan Knowledge Base
+
+Dokumen ini disusun dari analisis modul Over Budget JIFAS yang mencakup Finance Head Approval, Invoice Over Budget, PUM Over Budget, dan Finance Approval Over Budget. Versi ini disiapkan agar mudah dipakai sebagai knowledge base RAG untuk AI Chatbot JIFAS.
+
+Generated at: 2026-05-13 04:25:40

@@ -42,6 +42,8 @@ namespace Jifas.Assistant.Services
         private readonly IConversationIntelligenceService _conversationIntelligence;
         private readonly IUserMemoryService _userMemory;
         private readonly IMonitoringService _monitoring;
+        private readonly IEmbeddingService _embeddingService;
+        private readonly ITicketService _ticketService;
 
         private const int MIN_KB_RESULTS_REQUIRED = 1;
         private const int MAX_REGENERATION_ATTEMPTS = 2;
@@ -59,12 +61,13 @@ namespace Jifas.Assistant.Services
             IConfiguration configuration,
             IInputValidator inputValidator,
             IChatHistoryService chatHistoryService,
-            // NEW: Consolidated enhanced services
             IQueryUnderstandingService queryUnderstanding,
             IResponseQualityService responseQuality,
             IConversationIntelligenceService conversationIntelligence,
             IUserMemoryService userMemory,
-            IMonitoringService monitoring)
+            IMonitoringService monitoring,
+            IEmbeddingService embeddingService,
+            ITicketService ticketService)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
@@ -78,13 +81,13 @@ namespace Jifas.Assistant.Services
             _configuration = configuration;
             _inputValidator = inputValidator ?? throw new ArgumentNullException(nameof(inputValidator));
             _chatHistoryService = chatHistoryService ?? throw new ArgumentNullException(nameof(chatHistoryService));
-            
-            // NEW: Consolidated enhanced services
             _queryUnderstanding = queryUnderstanding ?? throw new ArgumentNullException(nameof(queryUnderstanding));
             _responseQuality = responseQuality ?? throw new ArgumentNullException(nameof(responseQuality));
             _conversationIntelligence = conversationIntelligence ?? throw new ArgumentNullException(nameof(conversationIntelligence));
             _userMemory = userMemory ?? throw new ArgumentNullException(nameof(userMemory));
             _monitoring = monitoring ?? throw new ArgumentNullException(nameof(monitoring));
+            _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
+            _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
         }
 
         public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request)
@@ -150,7 +153,7 @@ namespace Jifas.Assistant.Services
                 response.PerformanceMetrics = metrics;
                 
                 // Save chat history asynchronously
-                _ = SaveChatHistoryAsync(response, validationResult.ErrorMessage ?? "", request);
+                await SaveChatHistoryAsync(response, validationResult.ErrorMessage ?? "", request);
                 
                 return response;
             }
@@ -159,12 +162,43 @@ namespace Jifas.Assistant.Services
 
             try
             {
+                // ?? CHECK ACTIVE TICKET FLOW (before anything else)
+                // If user is in a ticket creation dialog, route to ticket flow handler
+                if (_ticketService.IsInTicketFlow(response.SessionId))
+                {
+                    _logger.LogInformation($"[ChatService] User is in active ticket flow - routing to TicketService");
+                    var ticketDialogResult = await _ticketService.HandleTicketDialogAsync(
+                        response.SessionId, request?.UserId ?? "anonymous", userMessage);
+
+                    response.Message = ticketDialogResult.Message;
+                    response.Source = "Ticket Flow";
+                    response.IsFromKnowledgeBase = false;
+                    response.Success = true;
+                    response.Suggestions = ticketDialogResult.Suggestions ?? new List<string>();
+
+                    if (ticketDialogResult.Ticket != null)
+                    {
+                        response.Ticket = new TicketInfo
+                        {
+                            TicketNumber = ticketDialogResult.Ticket.TicketNumber,
+                            Status = ticketDialogResult.Ticket.Status,
+                            Message = ticketDialogResult.Ticket.Message
+                        };
+                    }
+
+                    totalStopwatch.Stop();
+                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    response.PerformanceMetrics = metrics;
+                    await SaveChatHistoryAsync(response, userMessage, request);
+                    return response;
+                }
+
                 // ?? CHECK CACHE
                 var cacheStopwatch = Stopwatch.StartNew();
                 var enableCache = _configuration.GetValue<bool>("Caching:EnableResponseCache");
                 if (enableCache && !string.IsNullOrWhiteSpace(userMessage))
                 {
-                    var cacheKey = $"Chat_Response_{HashHelper.ToShortStableHash(userMessage)}";
+                    var cacheKey = BuildResponseCacheKey(userMessage, request);
                     var cachedResponse = _cacheService.Get<ChatResponse>(cacheKey);
                     cacheStopwatch.Stop();
                     metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
@@ -173,6 +207,8 @@ namespace Jifas.Assistant.Services
                     {
                         cachedResponse.Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                         cachedResponse.SessionId = response.SessionId;
+                        cachedResponse.CorrelationId = correlationId;
+                        cachedResponse.PerformanceMetrics ??= new PerformanceMetrics();
                         cachedResponse.PerformanceMetrics.WasCacheLit = true;
                         cachedResponse.PerformanceMetrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                         _logger.LogInformation($"[ChatService] ?? Response cache HIT - Total: {cachedResponse.PerformanceMetrics.TotalMs}ms | {cachedResponse.PerformanceMetrics.GetSummary()}");
@@ -193,7 +229,7 @@ namespace Jifas.Assistant.Services
                     _logger.LogInformation($"[INTRO] {metrics.GetSummary()}");
                     
                     // Save chat history asynchronously
-                    _ = SaveChatHistoryAsync(response, "[JIFAS Introduction]", request);
+                    await SaveChatHistoryAsync(response, "[JIFAS Introduction]", request);
                     
                     return response;
                 }
@@ -221,7 +257,7 @@ namespace Jifas.Assistant.Services
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    _ = SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request);
                     return response;
                 }
 
@@ -236,7 +272,37 @@ namespace Jifas.Assistant.Services
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    _ = SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request);
+                    return response;
+                }
+
+                // ?? STEP 2A.5: TICKET REQUEST DETECTION
+                if (intentResult.Intent == IntentType.TicketRequest)
+                {
+                    _logger.LogInformation("[ChatService] Ticket request detected - starting ticket flow");
+                    var ticketDialogResult = await _ticketService.HandleTicketDialogAsync(
+                        response.SessionId, request?.UserId ?? "anonymous", userMessage);
+
+                    response.Message = ticketDialogResult.Message;
+                    response.Source = "Ticket Flow";
+                    response.IsFromKnowledgeBase = false;
+                    response.Success = true;
+                    response.Suggestions = ticketDialogResult.Suggestions ?? new List<string>();
+
+                    if (ticketDialogResult.Ticket != null)
+                    {
+                        response.Ticket = new TicketInfo
+                        {
+                            TicketNumber = ticketDialogResult.Ticket.TicketNumber,
+                            Status = ticketDialogResult.Ticket.Status,
+                            Message = ticketDialogResult.Ticket.Message
+                        };
+                    }
+
+                    totalStopwatch.Stop();
+                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    response.PerformanceMetrics = metrics;
+                    await SaveChatHistoryAsync(response, userMessage, request);
                     return response;
                 }
 
@@ -259,7 +325,7 @@ namespace Jifas.Assistant.Services
                     response.PerformanceMetrics = metrics;
                     _logger.LogInformation($"[OUT_OF_SCOPE] {metrics.GetSummary()}");
                     
-                    _ = SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request);
                     return response;
                 }
 
@@ -275,19 +341,45 @@ namespace Jifas.Assistant.Services
                     _logger.LogInformation("[ChatService] Detected follow-up question - using conversation context");
                 }
 
-                // ?? STEP 3: KNOWLEDGE BASE SEARCH (Enhanced with expanded query)
-                var kbSearchStopwatch = Stopwatch.StartNew();
-                
-                // Search with original query
-                var kbResults = await _knowledgeBaseService.SearchAsync(userMessage, topK: 5);
-                
-                // If results are weak, also search with expanded terms
-                if (kbResults == null || kbResults.Count < 2 || kbResults.Max(r => r.Score) < 0.6)
+                // Pass conversation turns to Ollama for true multi-turn context
+                var fullContext = await _conversationIntelligence.BuildContextAsync(response.SessionId);
+                if (fullContext?.RecentTurns?.Count > 0)
                 {
-                    var expandedResults = await _knowledgeBaseService.SearchAsync(expandedQuery.EnhancedSearchQuery, topK: 3);
+                    var turns = fullContext.RecentTurns
+                        .Select(t => (t.UserMessage, t.AssistantResponse))
+                        .ToList();
+                    _ollamaService.SetConversationHistory(turns);
+                }
+                else
+                {
+                    _ollamaService.SetConversationHistory(null);
+                }
+
+                // ?? STEP 3: KNOWLEDGE BASE SEARCH (Hybrid: keyword + semantic)
+                var kbSearchStopwatch = Stopwatch.StartNew();
+
+                // Generate query embedding for semantic search
+                float[] queryEmbedding = null;
+                try
+                {
+                    queryEmbedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(userMessage);
+                    if (queryEmbedding != null && queryEmbedding.Length > 0)
+                        _logger.LogInformation($"[ChatService] Generated query embedding: {queryEmbedding.Length} dimensions");
+                }
+                catch (Exception embEx)
+                {
+                    _logger.LogWarning($"[ChatService] Embedding generation failed, falling back to keyword-only: {embEx.Message}");
+                }
+
+                // Hybrid search: keyword + semantic embedding
+                var kbResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(userMessage, queryEmbedding, topK: 5);
+
+                // If results are weak, also search with expanded terms
+                if (kbResults == null || kbResults.Count < 2 || (kbResults.Count > 0 && kbResults.Max(r => r.Score) < 0.3))
+                {
+                    var expandedResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(expandedQuery.EnhancedSearchQuery, queryEmbedding, topK: 3);
                     if (expandedResults != null && expandedResults.Count > 0)
                     {
-                        // Merge results
                         kbResults = MergeKBResults(kbResults ?? new List<KnowledgeBaseResult>(), expandedResults);
                         _logger.LogInformation($"[ChatService] Enhanced search with query expansion - merged {expandedResults.Count} additional results");
                     }
@@ -340,12 +432,12 @@ namespace Jifas.Assistant.Services
                     if (validatedResults != null && validatedResults.Count > 0)
                     {
                         // We have some results - try to help with partial info
-                        fallbackMessage = await GenerateIntelligentPartialResponseAsync(userMessage, validatedResults, intentResult.Intent);
+                        fallbackMessage = await GenerateIntelligentPartialResponseAsync(userMessage, validatedResults, intentResult.Intent, userId: request?.UserId);
                     }
                     else
                     {
-                        // No results - generate helpful "I don't know" response
-                        fallbackMessage = await GenerateHelpfulNoMatchResponseAsync(userMessage, intentResult.Intent);
+                        // No results - use system knowledge to answer
+                        fallbackMessage = await GenerateHelpfulNoMatchResponseAsync(userMessage, intentResult.Intent, userId: request?.UserId);
                     }
                     
                     llmStopwatch.Stop();
@@ -369,7 +461,7 @@ namespace Jifas.Assistant.Services
                     
                     _logger.LogInformation($"[PARTIAL_RESPONSE] Confidence({confidenceScore:F2}) | {metrics.GetSummary()}");
                     
-                    _ = SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request);
                     return response;
                 }
 
@@ -407,8 +499,10 @@ namespace Jifas.Assistant.Services
                 _logger.LogInformation($"[ChatService] Response quality: {qualityResult.OverallScore:P0}, Grounding: {qualityResult.GroundingScore:P0}");
 
                  response.Message = aiResponse;
-                 response.Source = "Knowledge Base (100% dari KB)";
-                 response.IsFromKnowledgeBase = true;
+                 response.Source = validatedResults.Count > 0 
+                     ? $"Knowledge Base ({validatedResults.Count} hasil)"
+                     : "JIFAS System Knowledge";
+                 response.IsFromKnowledgeBase = validatedResults.Count > 0;
                  response.ConfidenceScore = confidenceScore;
                  response.KnowledgeBaseResults = validatedResults;
                  response.Success = true;
@@ -435,7 +529,7 @@ namespace Jifas.Assistant.Services
                          metrics.SuggestionsCached = true;
 
                          // Still record a monitoring entry so the dashboard shows this call
-                         _ = _monitoring.RecordAsync(new AiCallMetrics
+                         await _monitoring.RecordAsync(new AiCallMetrics
                          {
                              UserId              = request?.UserId,
                              SessionId           = request?.SessionId,
@@ -471,7 +565,7 @@ namespace Jifas.Assistant.Services
                 var cacheStopwatch2 = Stopwatch.StartNew();
                 if (enableCache && response.Success)
                 {
-                    var cacheKey = $"Chat_Response_{HashHelper.ToShortStableHash(userMessage)}";
+                    var cacheKey = BuildResponseCacheKey(userMessage, request);
                     var cacheDuration = _configuration.GetValue<int>("Caching:ResponseCacheDurationHours", 24);
                     _cacheService.Set(cacheKey, response, cacheDuration * 60);
                 }
@@ -492,18 +586,19 @@ namespace Jifas.Assistant.Services
                     $"Source: {response.Source}, Confidence: {response.ConfidenceScore:F2}", correlationId);
 
                 // Save chat history asynchronously
-                _ = SaveChatHistoryAsync(response, userMessage, request);
+                await SaveChatHistoryAsync(response, userMessage, request);
 
-                // Update long-term user memory (fire-and-forget)
+                // Update long-term user memory after a successful grounded response.
                 // Pass new fields: isFirstMessage, userCompCode, userEmpCode, userRole, currentModule
-                _ = _userMemory.UpdateMemoryAsync(
+                await _userMemory.UpdateMemoryAsync(
                     request?.UserId ?? "anonymous",
                     userMessage,
                     aiResponse,
                     intentResult.Intent,
                     confidenceScore,
                     currentModule: request?.Context?.ActiveModule,
-                    userRole: request?.UserRole);
+                    userRole: request?.UserRole,
+                    sessionId: response.SessionId);
 
                 _logger.LogDebug(
                     $"[ChatService] Memory update queued for user: {request?.UserId}, " +
@@ -541,7 +636,7 @@ namespace Jifas.Assistant.Services
                 _logger.LogPerformance("ChatProcessing_Error", metrics.TotalMs, correlationId);
                 
                 // Save chat history asynchronously
-                _ = SaveChatHistoryAsync(response, userMessage ?? "", request);
+                await SaveChatHistoryAsync(response, userMessage ?? "", request);
                 
                 return response;
             }
@@ -869,7 +964,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         }
 
         /// <summary>
-        /// Save chat history to database asynchronously (fire and forget)
+        /// Save chat history to database.
         /// </summary>
         private async Task SaveChatHistoryAsync(ChatResponse response, string userMessage, ChatRequest request)
         {
@@ -894,8 +989,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                     UsedDocumentIds = documentIds?.Count > 0 ? string.Join(",", documentIds) : null
                 };
 
-                // Save asynchronously (don't wait for it to complete)
-                _ = _chatHistoryService.SaveChatAsync(chatHistory);
+                await _chatHistoryService.SaveChatAsync(chatHistory);
             }
             catch (Exception ex)
             {
@@ -988,32 +1082,14 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         private async Task<string> GenerateIntelligentPartialResponseAsync(
             string userQuery, 
             List<KnowledgeBaseResult> partialResults,
-            IntentType intent)
+            IntentType intent,
+            string userId = null)
         {
             try
             {
-                var kbContext = string.Join("\n\n", partialResults.Take(3).Select(r => 
-                    $"[{r.Title}]\n{r.Content.Substring(0, Math.Min(r.Content.Length, 500))}"));
-
-                var prompt = $@"User bertanya tentang JIFAS dan saya menemukan informasi yang SEBAGIAN relevan.
-
-Pertanyaan: ""{userQuery}""
-Tipe Intent: {intent}
-
-Informasi yang ditemukan:
-{kbContext}
-
-INSTRUKSI:
-1. Gunakan informasi di atas untuk menjawab SEBAIK mungkin
-2. Jika informasi tidak 100% sesuai, jelaskan apa yang kamu temukan
-3. Jangan membuat informasi baru yang tidak ada di atas
-4. Jika ada bagian yang tidak bisa dijawab, katakan dengan jelas
-5. Berikan saran topik terkait yang mungkin membantu
-6. Natural dan helpful, bukan defensif
-
-Respons langsung:";
-
-                return await _ollamaService.CallOllamaApiAsync(prompt);
+                // Use the full AI pipeline with KB results so system prompt knowledge kicks in
+                var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
+                return await _ollamaService.GenerateResponseAsync(userQuery, partialResults, sessionContext: userMemoryContext);
             }
             catch (Exception ex)
             {
@@ -1025,30 +1101,17 @@ Respons langsung:";
         /// <summary>
         /// Generate helpful "I don't know" response
         /// </summary>
-        private async Task<string> GenerateHelpfulNoMatchResponseAsync(string userQuery, IntentType intent)
+        private async Task<string> GenerateHelpfulNoMatchResponseAsync(string userQuery, IntentType intent, string userId = null)
         {
             try
             {
-                var prompt = $@"User bertanya tentang sesuatu yang TIDAK ada di Knowledge Base JIFAS.
-
-Pertanyaan: ""{userQuery}""
-Tipe Intent: {intent}
-
-Buatlah respons yang:
-1. JUJUR bahwa informasi tidak ditemukan
-2. TIDAK menyalahkan user
-3. Berikan alternatif yang KONSTRUKTIF:
-   - Mungkin kata kunci yang berbeda
-   - Mungkin topik yang lebih spesifik
-   - Atau hubungi IT Help Desk
-4. Natural dan empatis
-5. Singkat (2-3 kalimat)
-
-JANGAN pernah mengarang informasi!
-
-Respons langsung:";
-
-                return await _ollamaService.CallOllamaApiAsync(prompt);
+                // Even with no KB results, use GenerateResponseAsync so the rich system prompt
+                // can answer from its built-in JIFAS knowledge
+                var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
+                return await _ollamaService.GenerateResponseAsync(
+                    userQuery, 
+                    new List<KnowledgeBaseResult>(), 
+                    sessionContext: userMemoryContext);
             }
             catch
             {
@@ -1282,6 +1345,24 @@ Respons langsung:";
             if (string.IsNullOrEmpty(text)) return "";
             if (text.Length <= maxLength) return text;
             return text.Substring(0, maxLength) + "...";
+        }
+
+        private static string BuildResponseCacheKey(string message, ChatRequest request)
+        {
+            var scope = string.Join("|", new[]
+            {
+                message?.Trim().ToLowerInvariant() ?? string.Empty,
+                request?.UserId ?? "anonymous",
+                request?.UserRole ?? string.Empty,
+                request?.UserCompCode ?? string.Empty,
+                request?.Language ?? "id",
+                request?.Context?.ActiveModule ?? request?.CurrentModule ?? string.Empty,
+                request?.Context?.CurrentPage ?? string.Empty,
+                request?.Context?.DocumentType ?? string.Empty,
+                request?.Context?.DocumentStatus ?? string.Empty
+            });
+
+            return $"Chat_Response_{HashHelper.ToShortStableHash(scope)}";
         }
 
         #endregion

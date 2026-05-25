@@ -145,5 +145,22 @@ namespace Jifas.Assistant.Services
                 throw;
             }
         }
+
+        /// <summary>
+        /// Generate embedding as float[] for direct use in semantic search
+        /// </summary>
+        public async Task<float[]> GenerateEmbeddingAsFloatArrayAsync(string text)
+        {
+            try
+            {
+                var bytes = await GenerateEmbeddingAsync(text);
+                return bytes?.ToFloatArray() ?? Array.Empty<float>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error generating float embedding: {ex.Message}");
+                return Array.Empty<float>();
+            }
+        }
     }
 }

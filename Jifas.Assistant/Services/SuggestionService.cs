@@ -40,17 +40,36 @@ namespace Jifas.Assistant.Services
             _logger = logger;
         }
 
+        // Max time we're willing to wait for AI-generated suggestions before falling back
+        private static readonly TimeSpan SuggestionTimeout = TimeSpan.FromSeconds(8);
+
         public async Task<List<string>> GenerateSuggestionsAsync(string userQuery, string response)
         {
+            // Always attempt fast static suggestions first so we have a fallback ready
+            var fallback = GetFallbackSuggestions(userQuery + " " + response);
+
             try
             {
-                _logger.LogDebug("[SuggestionService] Generating AI suggestions for: {0}", userQuery);
-                var suggestions = await _ollamaService.GenerateSuggestionsAsync(userQuery, response);
+                _logger.LogDebug("[SuggestionService] Generating AI suggestions (timeout={0}s) for: {1}",
+                    SuggestionTimeout.TotalSeconds, userQuery);
 
-                if (suggestions != null && suggestions.Count > 0)
+                // Race the AI call against a timeout — never block the response for suggestions
+                using var cts = new System.Threading.CancellationTokenSource(SuggestionTimeout);
+                var aiTask = _ollamaService.GenerateSuggestionsAsync(userQuery, response);
+                var completedTask = await Task.WhenAny(aiTask, Task.Delay(SuggestionTimeout, cts.Token));
+
+                if (completedTask == aiTask && !aiTask.IsFaulted && !aiTask.IsCanceled)
                 {
-                    _logger.LogInformation("[SuggestionService] AI generated {0} suggestions", suggestions.Count);
-                    return suggestions.Take(3).ToList();
+                    var suggestions = await aiTask;
+                    if (suggestions != null && suggestions.Count > 0)
+                    {
+                        _logger.LogInformation("[SuggestionService] AI generated {0} suggestions", suggestions.Count);
+                        return suggestions.Take(3).ToList();
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("[SuggestionService] AI suggestions timed out, using fallback");
                 }
             }
             catch (Exception ex)
@@ -58,8 +77,7 @@ namespace Jifas.Assistant.Services
                 _logger.LogWarning("[SuggestionService] AI suggestions unavailable, using fallback: {0}", ex.Message);
             }
 
-            // Fallback: topic-based static suggestions
-            return GetFallbackSuggestions(userQuery + " " + response);
+            return fallback;
         }
 
         private List<string> GetFallbackSuggestions(string combined)

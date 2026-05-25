@@ -10,15 +10,15 @@ namespace Jifas.Assistant.Utilities
     {
         // Message validation
         public const int MIN_MESSAGE_LENGTH = 1;
-        public const int MAX_MESSAGE_LENGTH = 500;
+        public const int MAX_MESSAGE_LENGTH = 2000;
         
         // Session validation
         public const int MIN_SESSION_ID_LENGTH = 1;
-        public const int MAX_SESSION_ID_LENGTH = 50;
+        public const int MAX_SESSION_ID_LENGTH = 256;
         
         // User ID validation
         public const int MIN_USER_ID_LENGTH = 1;
-        public const int MAX_USER_ID_LENGTH = 100;
+        public const int MAX_USER_ID_LENGTH = 256;
         
         // Suggestion validation
         public const int MIN_SUGGESTION_LENGTH = 5;
@@ -27,7 +27,7 @@ namespace Jifas.Assistant.Utilities
         
         // Query validation
         public const int MIN_QUERY_LENGTH = 1;
-        public const int MAX_QUERY_LENGTH = 500;
+        public const int MAX_QUERY_LENGTH = 2000;
         
         // Search result validation
         public const int MAX_TOP_K_RESULTS = 10;

@@ -1,0 +1,1042 @@
+﻿ JIFAS Knowledge Base - Modul SPK
+ Surat Perintah Kerja / Work Order Contract Management
+
+Dokumen ini disusun untuk kebutuhan knowledge base AI chatbot JIFAS. Fokus penjelasan adalah business process, alur kerja, logika penggunaan, validasi, status, istilah, dan penanganan masalah dari sudut pandang user. Dokumen ini tidak menjelaskan coding secara teknis, tetapi menerjemahkan fungsi sistem menjadi pemahaman bisnis yang mudah dipahami oleh user Finance, Accounting, dan pihak terkait.
+
+---
+
+ 1. Gambaran Umum Modul SPK
+
+Modul SPK adalah modul JIFAS yang digunakan untuk membuat, mengelola, dan mengonfirmasi Surat Perintah Kerja atau kontrak kerja dengan vendor. SPK menjadi dasar legal dan administrasi sebelum perusahaan melakukan transaksi pembelian jasa, pekerjaan, proyek, atau kontrak tertentu kepada pihak ketiga.
+
+Dalam konteks proses keuangan JIFAS, SPK berfungsi sebagai dokumen dasar sebelum tagihan atau invoice dari vendor diproses. Artinya, ketika vendor mengirim tagihan, invoice tersebut seharusnya memiliki dasar pekerjaan yang jelas, salah satunya berupa SPK yang sudah dibuat dan dikonfirmasi di sistem.
+
+SPK membantu perusahaan memastikan bahwa pembayaran kepada vendor tidak dilakukan tanpa dasar kontrak, nilai pekerjaan, termin pembayaran, vendor, mata uang, dan jadwal jatuh tempo yang jelas.
+
+Analogi sederhana: SPK adalah “surat perintah resmi” yang menyatakan bahwa perusahaan menyetujui suatu pekerjaan kepada vendor dengan nilai dan termin tertentu. Invoice vendor nantinya seharusnya mengacu pada SPK tersebut.
+
+---
+
+ 2. Tujuan Bisnis Modul SPK
+
+Tujuan utama modul SPK adalah:
+
+1. Mencatat kontrak atau surat perintah kerja kepada vendor secara terstruktur.
+2. Menentukan vendor yang menerima pekerjaan atau kontrak.
+3. Menentukan nilai total SPK.
+4. Menentukan mata uang dan kurs transaksi.
+5. Membagi nilai SPK ke dalam beberapa termin pembayaran.
+6. Menentukan tanggal jatuh tempo setiap termin.
+7. Mengunci SPK setelah dikonfirmasi agar tidak sembarangan diubah.
+8. Menjadi dasar referensi bagi invoice vendor.
+9. Mendukung audit trail atas kontrak, vendor, nilai, dan termin.
+10. Mengurangi risiko pembayaran tanpa dokumen dasar.
+
+---
+
+ 3. Posisi SPK dalam Business Process JIFAS
+
+SPK berada sebelum invoice vendor diproses.
+
+Alur besarnya:
+
+Kebutuhan pekerjaan atau jasa
+→ Vendor dipilih
+→ SPK dibuat di sistem
+→ Nilai dan termin SPK ditentukan
+→ SPK dikonfirmasi
+→ Vendor melaksanakan pekerjaan
+→ Vendor mengirim invoice
+→ Invoice dibuat di modul Invoice
+→ Invoice mengacu pada SPK
+→ Head, Finance, Tax, dan Accounting melakukan approval
+→ Payment diproses
+→ Accounting posting
+
+Dalam alur JIFAS, SPK bukan pembayaran. SPK adalah dasar kontrak atau komitmen. Pembayaran tetap dilakukan melalui modul Invoice dan Payment setelah dokumen tagihan diproses.
+
+---
+
+ 4. User yang Menggunakan Modul SPK
+
+Modul SPK dapat digunakan oleh user yang memiliki role dan akses sesuai konfigurasi perusahaan. Umumnya melibatkan:
+
+- Staff Finance
+- Staff Accounting
+- Procurement atau admin terkait kontrak
+- Head atau supervisor terkait
+- User dengan akses administratif
+- Internal Audit untuk monitoring dan pengecekan
+
+Jika user tidak dapat melihat atau membuka modul SPK, kemungkinan penyebabnya adalah hak akses menu belum diberikan. Untuk kasus tersebut, user harus menghubungi IT atau administrator JIFAS.
+
+---
+
+ 5. Istilah Penting dalam Modul SPK
+
+ SPK
+Surat Perintah Kerja. Dokumen resmi yang berisi instruksi atau kontrak pekerjaan kepada vendor.
+
+ Vendor
+Pihak ketiga atau supplier yang menerima pekerjaan dan nantinya dapat menagihkan invoice kepada perusahaan.
+
+ SPK Date
+Tanggal dokumen SPK dibuat atau tanggal kontrak dimulai dalam sistem.
+
+ SPK Number
+Nomor dokumen SPK yang menjadi identitas unik. Nomor ini terbentuk dari komponen nomor urut, company SPK, division SPK, bulan, dan tahun.
+
+ SPK Company
+Kode perusahaan yang digunakan sebagai bagian dari identitas SPK.
+
+ SPK Division
+Kode divisi yang digunakan sebagai bagian dari identitas SPK.
+
+ Month Year
+Periode bulan dan tahun SPK. Dalam tampilan sistem, bulan dapat ditulis dalam angka Romawi, misalnya I/2026, II/2026, III/2026.
+
+ Currency
+Mata uang SPK, misalnya IDR atau mata uang asing.
+
+ Foreign Rate
+Kurs mata uang terhadap IDR. Untuk IDR, rate bernilai 1. Untuk mata uang asing, sistem mengambil rate berdasarkan tanggal SPK.
+
+ Amount
+Nilai total SPK.
+
+ Term
+Termin pembayaran atau pembagian nilai SPK. Satu SPK dapat memiliki satu atau beberapa termin.
+
+ Term Total
+Jumlah total seluruh termin. Nilai ini harus sama dengan nilai total SPK.
+
+ Term Type
+Jenis termin. Dalam sistem dapat berupa persentase atau nominal langsung.
+
+ Percentage Term
+Termin berbasis persentase. Jika tipe termin berbasis persen, nilai termin dihitung dari persentase terhadap total amount SPK.
+
+ Amount Term
+Termin berbasis nominal. Jika tipe termin berbasis amount, nilai yang diinput dianggap sebagai nominal langsung sesuai mata uang SPK.
+
+ Due Date
+Tanggal jatuh tempo termin. Due date tidak boleh lebih awal dari tanggal SPK.
+
+ Confirm
+Tindakan final untuk mengunci SPK. Setelah SPK dikonfirmasi, data SPK tidak dapat dimodifikasi lagi oleh user.
+
+ Delete SPK
+Tindakan membatalkan atau menghapus SPK yang belum dikonfirmasi.
+
+---
+
+ 6. Struktur Halaman Modul SPK
+
+Halaman utama modul SPK berisi daftar SPK dalam bentuk grid/tabel.
+
+Kolom utama yang ditampilkan:
+
+1. SPK  
+   Menampilkan nomor dokumen SPK.
+
+2. Date  
+   Menampilkan tanggal SPK.
+
+3. Description  
+   Menampilkan keterangan atau deskripsi SPK.
+
+4. Currency  
+   Menampilkan mata uang SPK.
+
+5. Amount  
+   Menampilkan nilai total SPK.
+
+6. Vendor  
+   Menampilkan nama vendor.
+
+7. Status  
+   Menampilkan status dokumen SPK.
+
+8. Action  
+   Tombol untuk membuka detail SPK.
+
+Fitur pada grid:
+
+- Create SPK
+- Search/filter per kolom
+- Sorting data
+- Pagination
+- Export to Excel
+- Resize atau pengaturan tampilan grid
+- Action untuk melihat atau mengubah detail SPK
+
+Default data biasanya diurutkan berdasarkan tanggal terbaru.
+
+---
+
+ 7. Status Dokumen SPK
+
+Status SPK berperan penting karena menentukan apakah dokumen masih bisa diubah atau sudah final.
+
+ New / Belum Confirm
+SPK masih dapat dibuat, diubah, ditambah termin, dihapus termin, diupdate, dikonfirmasi, atau dihapus. Status ini menunjukkan SPK belum menjadi dokumen final.
+
+ Confirmed / Confirm
+SPK sudah dikonfirmasi. SPK menjadi final dan tidak dapat diedit lagi. Field header dan detail termin akan menjadi read-only. Tombol Save, Update, Delete, dan Confirm tidak lagi tersedia untuk perubahan.
+
+ Deleted / Removed
+SPK dibatalkan atau dihapus sebelum confirm. Dokumen ini tidak lagi digunakan sebagai dasar proses berikutnya.
+
+Catatan penting: Dalam logic sistem, status yang mengandung kata Confirm akan dianggap sebagai status final. Jika status sudah Confirmed, user hanya dapat melakukan preview.
+
+---
+
+ 8. Flow Utama Modul SPK
+
+ Flow 1 - Membuat SPK Baru
+
+Tahapan:
+
+1. User membuka modul SPK.
+2. User klik tombol Create SPK.
+3. Sistem membuka form Create SPK.
+4. User mengisi tanggal SPK.
+5. Sistem otomatis membentuk periode bulan dan tahun dari tanggal SPK.
+6. User memilih SPK Company.
+7. User memilih SPK Division.
+8. User memilih Vendor.
+9. User memilih Currency.
+10. Sistem mengambil currency rate berdasarkan tanggal dan mata uang.
+11. User mengisi Amount atau nilai total SPK.
+12. User mengisi Description jika diperlukan.
+13. User menambahkan detail term atau termin pembayaran.
+14. User memilih type termin.
+15. User mengisi nilai termin, bisa dalam persentase atau nominal.
+16. Sistem menghitung amount termin.
+17. User mengisi due date termin.
+18. Sistem menghitung Term Total.
+19. User memastikan Term Total sama dengan Amount SPK.
+20. User klik Save.
+21. Sistem melakukan validasi.
+22. Jika valid, sistem menyimpan SPK.
+23. SPK muncul di daftar utama.
+
+---
+
+ Flow 2 - Mengubah SPK yang Belum Confirm
+
+Tahapan:
+
+1. User membuka daftar SPK.
+2. User mencari dokumen SPK yang ingin diubah.
+3. User klik Action.
+4. Sistem membuka detail SPK.
+5. Jika status belum Confirmed, sistem menampilkan tombol Delete SPK, Update, dan Confirm.
+6. User dapat mengubah tanggal SPK, vendor, currency, amount, description, dan detail termin.
+7. User dapat menambah termin baru.
+8. User dapat menghapus termin.
+9. User dapat mengubah nilai atau due date termin.
+10. User klik Update.
+11. Sistem memvalidasi ulang semua data.
+12. Jika valid, sistem menyimpan perubahan.
+13. Grid utama direfresh.
+
+---
+
+ Flow 3 - Confirm SPK
+
+Confirm adalah tahap finalisasi dokumen SPK.
+
+Tahapan:
+
+1. User membuka dokumen SPK yang belum Confirmed.
+2. User memeriksa header SPK.
+3. User memeriksa vendor, amount, currency, dan description.
+4. User memeriksa semua detail termin.
+5. User memastikan total termin sama dengan total SPK.
+6. User memastikan jika semua termin berbasis persentase, total persentasenya 100%.
+7. User klik Confirm.
+8. Sistem menampilkan konfirmasi bahwa setelah confirm, SPK tidak dapat diubah lagi.
+9. User menyetujui konfirmasi.
+10. Sistem menyimpan status Confirmed.
+11. SPK menjadi dokumen final.
+12. Field dan detail termin menjadi read-only.
+13. SPK dapat digunakan sebagai referensi proses invoice.
+
+Catatan penting untuk AI chatbot: Jika user bertanya “kenapa SPK saya tidak bisa diedit?”, jawaban pertama yang harus dicek adalah apakah SPK sudah Confirmed. Jika sudah Confirmed, itu normal karena SPK sudah dikunci.
+
+---
+
+ Flow 4 - Delete SPK
+
+Delete SPK digunakan untuk membatalkan SPK yang belum dikonfirmasi.
+
+Tahapan:
+
+1. User membuka detail SPK yang belum Confirmed.
+2. User klik Delete SPK.
+3. Sistem meminta konfirmasi.
+4. User menyetujui delete.
+5. Sistem mengirim action delete.
+6. Jika berhasil, SPK tidak lagi aktif sebagai dokumen yang dapat dipakai.
+7. Grid utama direfresh.
+
+Catatan:
+SPK yang sudah Confirmed tidak dapat dihapus melalui flow normal user. Jika ada kesalahan pada SPK yang sudah Confirmed, user harus eskalasi ke Finance Head atau IT sesuai kebijakan perusahaan.
+
+---
+
+ 9. Detail Field Header SPK
+
+ SPK Date
+Tanggal dokumen SPK. Wajib diisi. Tanggal ini menentukan periode bulan dan tahun SPK.
+
+Rule:
+- Tidak boleh kosong.
+- Menjadi dasar pengambilan rate currency.
+- Menjadi dasar minimum due date termin.
+
+ SPK Company
+Kode perusahaan untuk pembentukan nomor SPK. Wajib dipilih saat create.
+
+Rule:
+- Hanya dapat dipilih saat pembuatan SPK baru.
+- Pada dokumen lama, field ini tidak dapat diubah.
+- Jika list company kosong, kemungkinan data master atau API bermasalah.
+
+ SPK Division
+Kode divisi untuk pembentukan nomor SPK. Wajib dipilih saat create.
+
+Rule:
+- Hanya dapat dipilih saat pembuatan SPK baru.
+- Pada dokumen lama, field ini tidak dapat diubah.
+- Digunakan sebagai bagian identitas dokumen SPK.
+
+ SPK Month Year
+Periode bulan dan tahun dari SPK. Terisi otomatis dari SPK Date. Format bulan dapat menggunakan angka Romawi.
+
+Contoh:
+- Januari 2026 menjadi I/2026
+- Februari 2026 menjadi II/2026
+- Maret 2026 menjadi III/2026
+
+ Vendor
+Vendor penerima pekerjaan atau kontrak. Wajib dipilih.
+
+Rule:
+- Vendor diambil dari master vendor Cash Out.
+- Vendor harus aktif dan terdaftar di master.
+- Jika vendor tidak muncul, user perlu memastikan vendor sudah dibuat/aktif di master data.
+- Jika vendor tetap tidak muncul setelah pencarian, arahkan ke IT atau master data administrator.
+
+ Currency
+Mata uang nilai SPK. Wajib dipilih.
+
+Rule:
+- Jika IDR, foreign rate bernilai 1.
+- Jika non-IDR, sistem mengambil rate berdasarkan currency dan tanggal SPK.
+- Jika rate gagal diambil, user akan mendapat pesan seperti “Failed to get currency rate”.
+
+ Amount
+Nilai total SPK. Wajib diisi.
+
+Rule:
+- Harus lebih dari 0.
+- Menjadi dasar perhitungan termin.
+- Total amount detail termin harus sama dengan amount header.
+- Jika amount berubah, user harus memeriksa ulang seluruh detail termin.
+
+ Foreign Rate
+Kurs mata uang. Otomatis berdasarkan currency dan tanggal SPK.
+
+Rule:
+- IDR = 1.
+- Non-IDR mengambil rate dari master currency rate.
+- Jika rate kosong atau 0 untuk mata uang asing, user harus menghubungi Finance/Admin/IT untuk cek master rate.
+
+ Description
+Keterangan SPK. Opsional, tetapi sangat disarankan diisi.
+
+Best practice:
+- Isi dengan deskripsi pekerjaan atau kontrak.
+- Gunakan kalimat jelas agar mudah ditelusuri oleh Finance, Accounting, dan Audit.
+- Maksimal 255 karakter.
+
+ Term Total
+Total nilai dari semua termin. Otomatis dihitung dari detail term.
+
+Rule:
+- Harus sama dengan Amount.
+- Jika berbeda, SPK tidak dapat disimpan, diupdate, atau dikonfirmasi.
+
+---
+
+ 10. Detail Field Termin SPK
+
+Setiap SPK harus memiliki minimal satu termin.
+
+ Type
+Jenis termin pembayaran. Wajib dipilih.
+
+Ada dua pola utama:
+1. Termin berbasis persentase.
+2. Termin berbasis nominal langsung.
+
+Dalam sistem, tipe yang diawali huruf P diperlakukan sebagai persentase. Tipe lainnya diperlakukan sebagai nominal amount.
+
+ Value
+Nilai termin yang diinput user.
+
+Jika termin berbasis persentase:
+- Value dianggap sebagai persen.
+- Amount termin = Value / 100 x Amount SPK.
+- Simbol akan menjadi %.
+
+Jika termin berbasis nominal:
+- Value dianggap sebagai nominal.
+- Amount termin = Value.
+- Simbol mengikuti currency SPK, misalnya IDR, USD, SGD.
+
+ Symbol
+Penanda jenis value.
+
+- % untuk termin berbasis persentase.
+- Currency code untuk termin berbasis nominal.
+
+ Amount
+Nilai termin hasil perhitungan.
+
+Rule:
+- Untuk percentage term, amount dihitung otomatis dari persentase terhadap total SPK.
+- Untuk amount term, amount mengikuti nilai yang diinput.
+- Field amount termin tidak diedit langsung oleh user.
+
+ Due Date
+Tanggal jatuh tempo termin.
+
+Rule:
+- Wajib diisi.
+- Tidak boleh lebih awal dari SPK Date.
+- Saat menambah term baru, due date default mengikuti SPK Date.
+- Due date digunakan untuk perencanaan pembayaran dan monitoring tagihan vendor.
+
+---
+
+ 11. Logika Perhitungan Termin
+
+ Termin Berbasis Persentase
+
+Rumus:
+
+Amount Termin = Persentase Termin / 100 x Total Amount SPK
+
+Contoh:
+- Total SPK = Rp100.000.000
+- Termin 1 = 30%
+- Termin 2 = 70%
+
+Maka:
+- Termin 1 = Rp30.000.000
+- Termin 2 = Rp70.000.000
+- Term Total = Rp100.000.000
+
+Rule penting:
+Jika semua termin adalah tipe persentase, total persentase harus tepat 100%. Jika total persentase bukan 100%, proses Save, Update, dan Confirm ditolak.
+
+ Termin Berbasis Nominal
+
+Rumus:
+
+Amount Termin = Nominal yang diinput
+
+Contoh:
+- Total SPK = Rp100.000.000
+- Termin 1 = Rp40.000.000
+- Termin 2 = Rp60.000.000
+
+Maka:
+- Term Total = Rp100.000.000
+
+Rule penting:
+Total amount seluruh termin harus sama dengan Amount header SPK.
+
+ Termin Campuran
+
+Jika sistem memperbolehkan kombinasi termin persentase dan nominal, rule utama tetap:
+- Total amount semua termin harus sama dengan Amount header.
+- Validasi 100% hanya wajib jika seluruh detail adalah tipe persentase.
+
+Namun untuk best practice, sebaiknya hindari mencampur persentase dan nominal dalam satu SPK kecuali memang sesuai kebijakan Finance.
+
+---
+
+ 12. Validasi Utama Modul SPK
+
+ Validasi 1 - Mandatory Field
+SPK tidak dapat diproses jika field wajib belum diisi.
+
+Field wajib:
+- SPK Date
+- SPK Company
+- SPK Division
+- Vendor
+- Currency
+- Amount
+- Minimal satu detail term
+- Term Type
+- Term Value
+- Due Date
+
+Pesan yang mungkin muncul:
+“Please fill all mandatory fields before!”
+
+Tindakan user:
+- Cek semua field dengan tanda wajib.
+- Pastikan dropdown tidak masih kosong.
+- Pastikan detail term sudah ditambahkan.
+
+---
+
+ Validasi 2 - Total Term harus sama dengan Amount Header
+
+Sistem mengecek apakah total seluruh amount termin sama dengan nilai Amount SPK.
+
+Pesan yang mungkin muncul:
+“Total amount detail exceeds total amount header. Cannot continue to process!”
+
+Makna bisnis:
+Nilai kontrak tidak boleh berbeda dengan total jadwal termin. Jika total termin lebih kecil atau lebih besar dari amount SPK, maka jadwal pembayaran tidak valid.
+
+Tindakan user:
+- Cek nilai Amount di header.
+- Cek semua detail termin.
+- Sesuaikan persentase atau nominal termin.
+- Pastikan Term Total sama persis dengan Amount.
+
+Catatan:
+Walaupun pesan menyebut “exceeds”, secara logic sistem mengharuskan total detail sama dengan amount header, bukan hanya tidak melebihi.
+
+---
+
+ Validasi 3 - Total Persentase Harus 100%
+
+Jika seluruh termin menggunakan tipe percentage, total value percentage harus 100%.
+
+Pesan yang mungkin muncul:
+“Total percentage detail must be 100%. Cannot continue to process!”
+
+Makna bisnis:
+Jika termin dibagi secara persentase, pembagian kontrak harus menutup 100% nilai kontrak.
+
+Tindakan user:
+- Cek semua value termin.
+- Pastikan total persentase = 100.
+- Contoh valid: 30% + 70%.
+- Contoh tidak valid: 30% + 60% = 90%.
+- Contoh tidak valid: 50% + 60% = 110%.
+
+---
+
+ Validasi 4 - Currency Rate
+
+Jika currency bukan IDR, sistem harus mendapatkan foreign rate.
+
+Pesan yang mungkin muncul:
+“Failed to get currency rate.”
+
+Tindakan user:
+- Pastikan currency sudah benar.
+- Pastikan tanggal SPK sudah diisi.
+- Coba pilih ulang currency atau tanggal.
+- Jika tetap gagal, hubungi IT atau admin master currency rate.
+
+---
+
+ Validasi 5 - Due Date
+
+Due date termin tidak boleh lebih awal dari SPK Date.
+
+Makna bisnis:
+Termin pembayaran tidak boleh jatuh tempo sebelum tanggal kontrak/SPK dibuat.
+
+Tindakan user:
+- Ubah due date menjadi sama atau setelah tanggal SPK.
+
+---
+
+ Validasi 6 - Confirm Lock
+
+Setelah SPK dikonfirmasi, dokumen tidak bisa diubah lagi.
+
+Pesan konfirmasi:
+“After CONFIRM this SPK, you cannot modify in the further.”
+
+Makna bisnis:
+Confirm dianggap sebagai final approval terhadap kontrak dan jadwal termin. Setelah final, perubahan harus melalui kebijakan khusus, bukan edit biasa.
+
+Tindakan user:
+- Pastikan semua data benar sebelum confirm.
+- Jangan confirm jika masih ada ketidakpastian nilai, vendor, atau termin.
+- Jika sudah terlanjur confirm dan ada kesalahan, eskalasi ke Finance Head atau IT.
+
+---
+
+ 13. Button dan Aksi dalam Modul SPK
+
+ Create SPK
+Membuka form SPK baru.
+
+Digunakan saat:
+- User ingin membuat kontrak/SPK baru untuk vendor.
+
+ Save
+Menyimpan SPK baru.
+
+Syarat:
+- Semua field wajib terisi.
+- Detail termin minimal satu baris.
+- Total term sama dengan amount header.
+- Jika termin persentase semua, total persentase = 100.
+
+ Cancel
+Membatalkan pembuatan SPK baru. Data yang belum disimpan akan hilang.
+
+ Action
+Membuka detail SPK dari grid.
+
+Digunakan untuk:
+- Preview SPK.
+- Update SPK yang belum confirm.
+- Delete SPK yang belum confirm.
+- Confirm SPK yang belum final.
+
+ Update
+Menyimpan perubahan SPK yang belum confirm.
+
+Syarat:
+- Sama seperti Save.
+- SPK belum Confirmed.
+
+ Delete SPK
+Menghapus/membatalkan SPK yang belum confirm.
+
+Syarat:
+- SPK belum Confirmed.
+- User harus menyetujui konfirmasi.
+
+ Confirm
+Mengunci SPK menjadi final.
+
+Syarat:
+- Semua validasi terpenuhi.
+- SPK belum Confirmed.
+- User menyetujui konsekuensi bahwa SPK tidak dapat dimodifikasi lagi.
+
+ Excel Export
+Mengekspor daftar SPK ke Excel.
+
+Digunakan untuk:
+- Laporan internal.
+- Audit.
+- Rekap SPK vendor.
+- Monitoring kontrak.
+
+---
+
+ 14. Flow End-to-End SPK ke Invoice dan Payment
+
+Berikut flow business process yang perlu dipahami AI chatbot:
+
+1. Perusahaan memiliki kebutuhan pekerjaan/jasa.
+2. Vendor dipilih untuk mengerjakan pekerjaan tersebut.
+3. Staff membuat SPK di JIFAS.
+4. Staff mengisi nilai kontrak dan termin pembayaran.
+5. Staff menyimpan SPK.
+6. Staff atau pihak berwenang mengonfirmasi SPK.
+7. Setelah SPK Confirmed, dokumen menjadi dasar kontrak final.
+8. Vendor mengerjakan pekerjaan.
+9. Vendor mengirim invoice sesuai termin atau sesuai pekerjaan.
+10. User membuat invoice di modul Invoice.
+11. Nomor SPK dapat dijadikan referensi invoice, terutama untuk tagihan kontraktor.
+12. Invoice melewati Head Approval, Over Budget jika ada, Finance Approval, Tax Approval, dan Posting.
+13. Setelah invoice siap bayar, Payment Invoice dibuat.
+14. Pembayaran dilakukan melalui Payment dan CashBank.
+15. Transaksi akhirnya diposting ke Accounting.
+
+AI chatbot harus memahami bahwa SPK bukan modul pembayaran, melainkan modul kontrak/komitmen yang menjadi dasar proses invoice dan pembayaran.
+
+---
+
+ 15. Hubungan SPK dengan Modul Lain
+
+ Hubungan dengan Invoice
+SPK menjadi referensi atau dasar tagihan vendor, terutama untuk tipe tagihan kontraktor atau pekerjaan/jasa. Invoice yang terkait SPK membantu Finance memastikan tagihan memiliki dasar kontrak.
+
+ Hubungan dengan Payment
+Payment tidak dibuat langsung dari SPK. Payment dibuat setelah invoice yang berkaitan dengan SPK diproses dan siap bayar.
+
+ Hubungan dengan CashBank
+Setelah payment diproses, CashBank mencatat pergerakan uang keluar. SPK tetap sebagai dokumen dasar kontrak, bukan transaksi bank.
+
+ Hubungan dengan Accounting
+SPK sendiri tidak selalu langsung menjadi jurnal. Accounting akan mencatat transaksi saat invoice, payment, atau posting dilakukan. Namun SPK penting untuk audit dan validasi dasar transaksi.
+
+ Hubungan dengan Budget
+SPK dapat menjadi komitmen awal terhadap rencana pengeluaran vendor. Walaupun budget control detail biasanya muncul di invoice/PUM/payment, SPK membantu memetakan nilai kontrak yang berpotensi menjadi pengeluaran.
+
+ Hubungan dengan Vendor Master
+SPK hanya dapat dibuat untuk vendor yang tersedia di master vendor. Jika vendor tidak muncul, masalah ada pada master vendor atau hak akses vendor.
+
+ Hubungan dengan Currency Master
+Currency dan rate diambil dari master currency. Jika currency rate tidak tersedia, SPK non-IDR dapat bermasalah saat disimpan atau dikonfirmasi.
+
+---
+
+ 16. Business Rules Penting
+
+1. SPK harus memiliki vendor.
+2. SPK harus memiliki mata uang.
+3. SPK harus memiliki nilai total.
+4. SPK harus memiliki minimal satu termin.
+5. Total seluruh termin harus sama dengan total SPK.
+6. Jika seluruh termin berupa persentase, total persentase harus 100%.
+7. Due date termin tidak boleh lebih awal dari tanggal SPK.
+8. Currency rate harus tersedia untuk transaksi non-IDR.
+9. SPK yang sudah Confirmed tidak dapat dimodifikasi.
+10. SPK yang sudah Confirmed tidak dapat dihapus melalui flow biasa.
+11. SPK yang belum Confirmed masih dapat diupdate atau delete.
+12. Vendor harus berasal dari master vendor aktif.
+13. SPK Company dan SPK Division menjadi bagian dari identitas nomor SPK.
+14. Description sebaiknya diisi untuk audit trail.
+15. Confirm harus dilakukan hanya setelah semua data dipastikan benar.
+
+---
+
+ 17. Best Practice Penggunaan Modul SPK
+
+ Sebelum Membuat SPK
+- Pastikan vendor sudah terdaftar di master vendor.
+- Pastikan nilai kontrak sudah final.
+- Pastikan currency dan kurs sesuai.
+- Pastikan pembagian termin sudah disepakati.
+- Pastikan tanggal jatuh tempo termin sesuai kontrak.
+- Pastikan deskripsi cukup jelas.
+
+ Saat Mengisi Termin
+- Gunakan satu metode pembagian yang konsisten, persentase atau nominal.
+- Jika menggunakan persentase, pastikan total 100%.
+- Jika menggunakan nominal, pastikan total sama dengan amount header.
+- Hindari membuat due date sebelum tanggal SPK.
+- Cek ulang Term Total sebelum Save atau Confirm.
+
+ Sebelum Confirm
+- Cek vendor.
+- Cek amount.
+- Cek currency.
+- Cek rate.
+- Cek description.
+- Cek semua due date termin.
+- Cek total term.
+- Pastikan tidak ada typo pada data penting.
+- Jangan confirm jika masih menunggu persetujuan internal atau kontrak belum final.
+
+ Setelah Confirm
+- Gunakan SPK sebagai referensi saat membuat invoice vendor.
+- Jangan meminta perubahan langsung di sistem tanpa prosedur.
+- Jika ada kesalahan, eskalasi ke pihak terkait.
+
+---
+
+ 18. Error Handling untuk User
+
+ Masalah 1 - SPK tidak bisa disimpan
+
+Kemungkinan penyebab:
+- Field wajib belum diisi.
+- Belum ada detail termin.
+- Total termin tidak sama dengan amount.
+- Total persentase tidak 100%.
+- Currency rate belum tersedia.
+- Session login expired.
+- API bermasalah.
+
+Solusi user:
+1. Cek semua field wajib.
+2. Pastikan detail term sudah ada.
+3. Pastikan Term Total sama dengan Amount.
+4. Jika pakai percentage, pastikan total 100%.
+5. Pilih ulang tanggal dan currency.
+6. Refresh halaman dan coba lagi.
+7. Jika masih gagal, hubungi IT.
+
+---
+
+ Masalah 2 - Vendor tidak muncul
+
+Kemungkinan penyebab:
+- Vendor belum ada di master.
+- Vendor tidak aktif.
+- Vendor tidak termasuk tipe Cash Out.
+- User salah company.
+- API master vendor bermasalah.
+
+Solusi user:
+1. Coba cari dengan kode vendor atau nama vendor.
+2. Pastikan company yang dipilih benar.
+3. Tanyakan ke tim master data apakah vendor sudah aktif.
+4. Jika vendor sudah aktif tetapi tetap tidak muncul, hubungi IT.
+
+---
+
+ Masalah 3 - Currency rate gagal terambil
+
+Kemungkinan penyebab:
+- Currency bukan IDR tetapi rate belum disetup untuk tanggal tersebut.
+- Tanggal SPK belum dipilih.
+- Master currency rate belum lengkap.
+- API currency bermasalah.
+
+Solusi user:
+1. Pastikan tanggal SPK sudah diisi.
+2. Pilih ulang currency.
+3. Jika non-IDR, pastikan rate tanggal tersebut ada di master.
+4. Hubungi Finance/Admin atau IT jika rate tetap gagal.
+
+---
+
+ Masalah 4 - Total amount detail exceeds total amount header
+
+Makna:
+Total termin tidak sama dengan nilai SPK.
+
+Solusi user:
+1. Cek nilai Amount di header.
+2. Cek setiap amount termin.
+3. Jika termin percentage, cek total persentase.
+4. Sesuaikan value sampai Term Total sama dengan Amount.
+
+---
+
+ Masalah 5 - Total percentage detail must be 100%
+
+Makna:
+Semua termin menggunakan percentage, tetapi total persentase bukan 100%.
+
+Solusi user:
+1. Hitung total persentase semua termin.
+2. Ubah value sampai tepat 100%.
+3. Contoh: 40 + 30 + 30 = 100.
+
+---
+
+ Masalah 6 - Tidak bisa edit SPK
+
+Kemungkinan penyebab:
+- SPK sudah Confirmed.
+- User hanya punya akses view.
+- Session/token expired.
+- Data sedang terkunci oleh status final.
+
+Solusi user:
+1. Cek status SPK.
+2. Jika sudah Confirmed, itu normal. SPK tidak bisa diedit.
+3. Jika belum Confirmed tetapi tetap tidak bisa edit, refresh halaman.
+4. Jika masih bermasalah, hubungi IT.
+
+---
+
+ Masalah 7 - Tidak bisa delete SPK
+
+Kemungkinan penyebab:
+- SPK sudah Confirmed.
+- SPK sudah dipakai sebagai referensi invoice.
+- User tidak punya akses delete.
+- API gagal memproses delete.
+
+Solusi user:
+1. Cek status SPK.
+2. Jika sudah Confirmed, delete tidak tersedia.
+3. Jika SPK sudah dipakai invoice, koordinasikan dengan Finance/Accounting.
+4. Jika error sistem, hubungi IT.
+
+---
+
+ Masalah 8 - Due date tidak bisa dipilih
+
+Kemungkinan penyebab:
+- Due date lebih awal dari SPK date.
+- Date picker membatasi tanggal minimum.
+- SPK sudah Confirmed sehingga detail disabled.
+
+Solusi user:
+1. Pilih due date sama atau setelah tanggal SPK.
+2. Jika SPK Confirmed, due date tidak bisa diubah.
+3. Jika date picker error, refresh halaman atau hubungi IT.
+
+---
+
+ Masalah 9 - Grid SPK kosong
+
+Kemungkinan penyebab:
+- Tidak ada data SPK untuk company tersebut.
+- Filter terlalu spesifik.
+- User salah selected company.
+- User tidak punya akses.
+- API list SPK bermasalah.
+
+Solusi user:
+1. Clear filter grid.
+2. Pastikan selected company benar.
+3. Refresh halaman.
+4. Coba export jika perlu cek data.
+5. Jika tetap kosong padahal seharusnya ada data, hubungi IT.
+
+---
+
+ 19. Error yang Wajib Diarahkan ke IT
+
+AI chatbot harus mengarahkan user ke IT jika terjadi kondisi berikut:
+
+1. Muncul error API, server error, status 500, atau error database.
+2. Pesan error teknis seperti responseJSON.message yang tidak bisa dipahami user.
+3. Grid tidak loading padahal jaringan normal.
+4. Vendor sudah aktif di master tetapi tetap tidak muncul.
+5. Currency rate sudah ada di master tetapi tetap gagal diambil.
+6. SPK tidak bisa disimpan padahal semua validasi user sudah benar.
+7. SPK tidak bisa confirm padahal total term dan percentage sudah benar.
+8. SPK yang belum Confirmed tiba-tiba read-only.
+9. Data SPK hilang dari grid tanpa alasan.
+10. Nomor SPK double atau format nomor SPK salah.
+11. User tidak punya akses padahal seharusnya role sudah diberikan.
+12. Tombol Create, Save, Update, Delete, atau Confirm tidak muncul padahal status seharusnya memungkinkan.
+13. Setelah Save/Update/Confirm, data tidak refresh atau status tidak berubah.
+14. Ada perbedaan data antara SPK di grid dan detail form.
+15. SPK sudah Confirmed tetapi ada kebutuhan koreksi data database.
+
+Data yang perlu dikirim ke IT:
+- Username user.
+- Company code.
+- Nomor SPK.
+- Vendor.
+- Tanggal SPK.
+- Currency.
+- Amount.
+- Screenshot error.
+- Waktu kejadian.
+- Browser yang digunakan.
+- Langkah yang dilakukan sebelum error.
+- Status SPK saat error.
+- Apakah error terjadi saat Save, Update, Delete, Confirm, atau Load grid.
+
+---
+
+ 20. Troubleshooting Singkat untuk AI Chatbot
+
+ User bertanya: “Kenapa SPK saya tidak bisa diedit?”
+Jawaban:
+Cek status SPK terlebih dahulu. Jika statusnya Confirmed atau mengandung Confirm, SPK memang sudah dikunci dan tidak bisa dimodifikasi. Jika belum Confirmed tapi tetap tidak bisa diedit, coba refresh halaman. Jika masih sama, hubungi IT dengan nomor SPK dan screenshot.
+
+ User bertanya: “Kenapa SPK tidak bisa disave?”
+Jawaban:
+Pastikan semua field wajib sudah terisi, minimal ada satu termin, total Term Total sama dengan Amount SPK, dan jika termin menggunakan persentase totalnya harus 100%. Jika memakai currency non-IDR, pastikan rate tersedia.
+
+ User bertanya: “Kenapa muncul total percentage harus 100%?”
+Jawaban:
+Karena semua termin yang dipilih berbasis persentase, maka total percentage harus tepat 100%. Contohnya 30% + 70% atau 50% + 25% + 25%.
+
+ User bertanya: “Kenapa term total beda dengan amount?”
+Jawaban:
+Term Total adalah jumlah semua termin. Nilainya harus sama dengan Amount SPK. Periksa value di setiap termin, terutama jika ada kombinasi persentase dan nominal.
+
+ User bertanya: “Kenapa currency rate gagal?”
+Jawaban:
+Rate diambil berdasarkan currency dan tanggal SPK. Pastikan tanggal sudah diisi dan currency benar. Jika non-IDR dan rate tetap gagal, kemungkinan master currency rate belum tersedia atau API bermasalah. Hubungi IT atau admin master currency.
+
+ User bertanya: “Vendor saya tidak ada di dropdown.”
+Jawaban:
+Vendor harus aktif di master vendor dan termasuk vendor Cash Out. Coba cari dengan kode atau nama vendor. Jika tetap tidak ada, hubungi master data atau IT.
+
+ User bertanya: “Apa bedanya Save dan Confirm?”
+Jawaban:
+Save menyimpan SPK tetapi masih bisa diedit. Confirm mengunci SPK menjadi final sehingga tidak bisa dimodifikasi lagi.
+
+ User bertanya: “SPK sudah confirm tapi ternyata salah, gimana?”
+Jawaban:
+SPK Confirmed tidak bisa diedit melalui flow normal. Koordinasikan dengan Finance Head atau IT untuk penanganan sesuai kebijakan, misalnya pembatalan khusus atau pembuatan SPK baru.
+
+---
+
+ 21. Contoh Q&A untuk AI Chatbot
+
+ Q1: SPK itu untuk apa?
+SPK digunakan untuk mencatat Surat Perintah Kerja atau kontrak dengan vendor. Di JIFAS, SPK menjadi dasar pekerjaan atau kontrak sebelum vendor mengirim invoice dan sebelum pembayaran diproses.
+
+ Q2: Apakah SPK langsung membuat pembayaran?
+Tidak. SPK bukan dokumen pembayaran. SPK hanya dasar kontrak. Pembayaran tetap diproses melalui Invoice, Payment, CashBank, dan Accounting.
+
+ Q3: Kenapa harus isi termin?
+Karena nilai SPK perlu dibagi ke dalam jadwal pembayaran. Termin menunjukkan berapa nilai yang akan dibayarkan dan kapan jatuh temponya.
+
+ Q4: Apakah satu SPK bisa punya beberapa termin?
+Bisa. SPK dapat memiliki beberapa termin, misalnya DP 30%, progress 50%, dan pelunasan 20%.
+
+ Q5: Kenapa total term harus sama dengan amount?
+Karena total nilai kontrak harus sama dengan total jadwal pembayaran. Jika tidak sama, sistem tidak tahu nilai mana yang valid sebagai dasar kontrak.
+
+ Q6: Apa arti termin type percentage?
+Termin type percentage berarti nilai termin dihitung berdasarkan persentase dari total nilai SPK.
+
+ Q7: Apa arti termin type amount?
+Termin type amount berarti nilai termin langsung diisi sebagai nominal mata uang.
+
+ Q8: Kenapa due date tidak boleh sebelum SPK date?
+Karena termin pembayaran tidak boleh jatuh tempo sebelum kontrak/SPK dibuat.
+
+ Q9: Kapan SPK harus dikonfirmasi?
+SPK harus dikonfirmasi setelah vendor, amount, currency, description, termin, dan due date sudah benar dan siap menjadi dokumen final.
+
+ Q10: Setelah confirm, apakah SPK masih bisa diubah?
+Tidak. Setelah confirm, SPK dikunci dan tidak dapat diubah melalui flow normal.
+
+ Q11: Kenapa tombol Update tidak muncul?
+Kemungkinan SPK sudah Confirmed atau user tidak memiliki akses update. Jika status belum Confirmed tetapi tombol tetap tidak muncul, hubungi IT.
+
+ Q12: Kenapa SPK vendor tidak muncul di invoice?
+Kemungkinan SPK belum Confirmed, vendor tidak sama, company berbeda, atau ada issue mapping data. Jika secara data harusnya muncul tetapi tidak tampil, hubungi IT.
+
+ Q13: Apakah SPK perlu dibuat untuk semua invoice?
+Tidak selalu. SPK biasanya diperlukan untuk invoice yang memiliki dasar kontrak/pekerjaan, terutama contractor atau pekerjaan jasa tertentu. Untuk supplier biasa, kebutuhan SPK tergantung kebijakan perusahaan.
+
+ Q14: Kalau nilai invoice berbeda dengan SPK gimana?
+User perlu cek apakah invoice tersebut sesuai termin, ada pekerjaan tambahan, atau perlu SPK revisi. Jangan lanjutkan pembayaran jika dasar kontrak tidak jelas. Koordinasikan dengan Finance/Accounting.
+
+ Q15: Kalau SPK sudah dibuat tapi tidak jadi dipakai?
+Jika belum Confirmed, SPK dapat dihapus. Jika sudah Confirmed, harus eskalasi sesuai kebijakan perusahaan.
+
+---
+
+ 22. Knowledge Rules untuk AI Chatbot
+
+AI chatbot JIFAS harus memahami aturan berikut saat menjawab pertanyaan tentang SPK:
+
+1. Jangan menjelaskan teknis coding kepada user umum.
+2. Jelaskan SPK sebagai dokumen kontrak atau surat perintah kerja.
+3. Tekankan bahwa SPK bukan pembayaran.
+4. Tekankan bahwa pembayaran tetap lewat Invoice dan Payment.
+5. Jika user tidak bisa edit, cek status Confirmed.
+6. Jika user tidak bisa save, cek mandatory field, total term, percentage 100%, dan currency rate.
+7. Jika user bertanya tentang term, jelaskan perbedaan percentage dan amount.
+8. Jika user bertanya tentang vendor tidak muncul, arahkan cek master vendor dan eskalasi IT jika perlu.
+9. Jika user bertanya tentang currency rate, jelaskan rate berdasarkan tanggal dan currency.
+10. Jika error teknis muncul, arahkan ke IT.
+11. Jika SPK sudah Confirmed dan salah, jangan menyarankan edit manual. Arahkan ke Finance Head atau IT.
+12. Jika user ingin membuat invoice dari SPK, jelaskan bahwa SPK harus menjadi referensi invoice dan invoice akan mengikuti approval workflow.
+13. Jika total term tidak sama dengan amount, minta user menyesuaikan detail term.
+14. Jika all percentage term, total harus 100%.
+15. Untuk masalah akses menu, tombol, atau role, arahkan ke IT/admin JIFAS.
+
+---
+
+ 23. Ringkasan Singkat Modul SPK
+
+SPK adalah modul untuk mencatat kontrak atau Surat Perintah Kerja kepada vendor. User membuat SPK dengan mengisi tanggal, vendor, company, division, currency, amount, description, dan detail termin. Setiap termin memiliki tipe, nilai, amount, dan due date. Total seluruh termin harus sama dengan nilai SPK. Jika semua termin berbasis persentase, total persentasenya harus 100%. SPK yang masih belum confirm dapat diubah atau dihapus. Setelah SPK dikonfirmasi, dokumen menjadi final dan tidak bisa dimodifikasi lagi. SPK menjadi dasar referensi untuk invoice vendor, tetapi bukan dokumen pembayaran. Jika terjadi error teknis, data tidak muncul, rate gagal, vendor tidak tersedia, atau tombol tidak sesuai status, user harus menghubungi IT dengan nomor SPK, company, screenshot, dan waktu kejadian.

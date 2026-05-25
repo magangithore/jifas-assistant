@@ -1,0 +1,1619 @@
+﻿JIFAS KNOWLEDGE BASE - MODUL INVOICE
+#Versi RAG-Friendly untuk AI Chatbot JIFAS
+
+Dokumen ini dibuat untuk membantu AI chatbot JIFAS memahami modul Invoice dari sisi pengguna, alur bisnis, proses approval, validasi, status dokumen, relasi antar modul, serta penanganan error. Fokus dokumen ini bukan menjelaskan coding, tetapi menjelaskan logika kerja sistem dan business process agar AI dapat menjawab pertanyaan user dengan tepat.
+
+---
+
+1. Ringkasan Modul Invoice
+
+Modul Invoice adalah modul JIFAS yang digunakan untuk mengelola tagihan dari vendor, supplier, kontraktor, atau kebutuhan internal perusahaan. Di dalam sistem, invoice biasanya dimulai dari Pengajuan Dokumen atau PD. PD adalah dokumen awal yang dibuat user untuk mencatat permintaan proses tagihan sebelum menjadi invoice yang siap dibayar.
+
+Modul Invoice adalah salah satu jalur utama uang keluar perusahaan. Modul ini memastikan bahwa setiap tagihan yang masuk tidak langsung dibayar begitu saja, tetapi harus melewati pemeriksaan berlapis: user membuat pengajuan, atasan menyetujui, finance memeriksa, pajak mengecek PPN dan PPH, finance melakukan checking akhir, lalu invoice masuk ke tahap payment.
+
+Secara sederhana:
+
+Vendor mengirim tagihan kepada perusahaan. User membuat PD di JIFAS. Head melakukan review dan approval. Jika ada over budget, dokumen masuk ke approval over budget. Finance memeriksa kelengkapan, vendor, COA, nominal, budget, dokumen pendukung, dan detail invoice. Tax memeriksa pajak. Setelah semua benar, invoice siap untuk proses payment dan accounting.
+
+---
+
+2. Tujuan Bisnis Modul Invoice
+
+Modul Invoice dibuat untuk:
+
+1. Mencatat tagihan vendor secara terstruktur.
+2. Memastikan tagihan memiliki dasar dokumen yang jelas seperti PO, BAST, Kwitansi, Faktur Pajak, atau SPK.
+3. Mengontrol biaya berdasarkan budget per COA, divisi, departemen, bulan, dan tahun.
+4. Memastikan perhitungan pajak seperti PPN, PPH, dan PPN N0 sudah benar sebelum invoice diproses.
+5. Memastikan setiap tagihan disetujui oleh pihak yang berwenang.
+6. Menyediakan audit trail untuk siapa yang membuat, menyetujui, mengoreksi, menolak, atau membatalkan dokumen.
+7. Mengurangi risiko pembayaran ganda, salah vendor, salah COA, salah pajak, atau pembayaran tanpa dokumen pendukung.
+8. Menghubungkan invoice ke proses payment, cashbank, dan accounting.
+
+---
+
+3. Istilah Penting di Modul Invoice
+
+#Invoice
+Invoice adalah tagihan dari vendor atau pihak terkait kepada perusahaan. Di JIFAS, invoice biasanya berasal dari PD yang sudah melewati approval.
+
+#PD atau Pengajuan Dokumen
+PD adalah dokumen awal yang dibuat user untuk mengajukan tagihan. PD berisi informasi vendor, jenis tagihan, deskripsi, dokumen referensi, COA, divisi, departemen, amount, tax, dan dokumen pendukung.
+
+#IV Number
+Nomor invoice internal JIFAS yang muncul setelah dokumen masuk ke tahap invoice processing atau posting.
+
+#PV Number
+Payment Voucher atau nomor voucher pembayaran. PV biasanya muncul ketika invoice sudah masuk proses pembayaran.
+
+#Vendor
+Pihak penerima pembayaran, misalnya supplier, kontraktor, atau perusahaan penyedia jasa.
+
+#Bill Type
+Jenis tagihan yang menentukan aturan dokumen dan validasi. Umumnya terdiri dari:
+
+- Kontraktor
+- Supplier
+- Internal
+
+#PD Type
+Kategori pengajuan dokumen. PD Type menentukan jenis dokumen pendukung yang harus di-upload dan jenis proses yang akan dijalankan.
+
+#COA atau Chart of Account
+Kode akun akuntansi yang menentukan biaya tersebut masuk ke akun apa. COA digunakan untuk budget control dan posting ke accounting.
+
+#DPP atau Tax Base
+Dasar Pengenaan Pajak. Ini adalah nilai sebelum PPN atau PPH dihitung.
+
+#PPN
+Pajak Pertambahan Nilai. Pada invoice, PPN biasanya menambah nilai tagihan.
+
+#PPH
+Pajak Penghasilan atau withholding tax. Pada invoice, PPH biasanya menjadi potongan yang harus dicatat sesuai jenis PPH.
+
+#PPN N0
+Jenis PPN khusus untuk kondisi tertentu. Di Tax Approval ada tab khusus untuk PPN N0.
+
+#Currency Rate
+Kurs mata uang. Jika invoice menggunakan IDR, rate biasanya 1. Jika menggunakan USD atau mata uang lain, rate harus diisi atau diambil dari master rate.
+
+#Over Budget
+Kondisi ketika nilai pengajuan melebihi sisa budget pada COA, divisi, departemen, periode, atau tahun tertentu.
+
+#Cross Year atau CY
+Kondisi budget yang terkait lintas tahun atau periode yang tidak normal. Ini harus diperhatikan khusus oleh user, finance, dan approver.
+
+#CA atau Accumulation
+Kondisi budget berdasarkan akumulasi pemakaian budget yang sudah melewati batas. Biasanya ditandai merah dan membutuhkan perhatian khusus.
+
+#Incomplete Document
+Dokumen pendukung belum lengkap atau belum diverifikasi, tetapi ada menu khusus untuk mengizinkan approval berdasarkan keputusan bisnis.
+
+#Tax Correction
+Fitur koreksi nilai pajak, biasanya untuk rounding PPN atau PPH, atau memperbaiki PPH Type.
+
+#Void
+Pembatalan invoice. Void harus selalu menggunakan alasan agar ada audit trail.
+
+---
+
+4. Gambaran Besar Flow Invoice
+
+Flow utama modul Invoice:
+
+1. User membuat Pengajuan Dokumen atau PD.
+2. User mengisi header: tanggal, bill type, PD type, currency, vendor, NPWP, dokumen referensi, deskripsi.
+3. User mengisi detail: divisi, departemen, COA, base amount, tax type, PPN, PPH, PPH type, budget status.
+4. User mengupload dokumen pendukung sesuai PD Type.
+5. Sistem memvalidasi mandatory field, detail, currency rate, budget, tax, dan dokumen.
+6. PD masuk ke status Need Head Approval.
+7. Head review vendor, amount, budget, file, dan dokumen pendukung.
+8. Jika disetujui dan tidak over budget, PD lanjut ke Finance Approval.
+9. Jika over budget, PD lanjut ke Over Budget Approval.
+10. Jika ditolak, status menjadi Reject dan requester harus memperbaiki atau membatalkan.
+11. Finance melakukan checking, correction, dan verification dokumen.
+12. Jika ada pajak, dokumen lanjut ke Tax Approval.
+13. Tax melakukan review PPN, PPH, PPN N0, NPWP, faktur pajak, bukti potong, dan tax correction jika perlu.
+14. Finance melakukan invoice posting checking.
+15. Invoice menjadi Ready To Pay atau masuk ke tahap payment.
+16. Payment diproses di modul Payment dan CashBank.
+17. Transaksi diposting ke Accounting.
+
+---
+
+5. Flow Singkat Status Dokumen
+
+Alur status umum:
+
+Draft atau New
+→ PD Need Head Approval
+→ PD Need Over Budget Approval jika ada over budget
+→ PD Need Finance Approval
+→ IV Need Tax Approval jika ada pajak
+→ IV Need Finance Checking
+→ IV Need Accounting Checking
+→ Need Posting atau Ready To Pay
+→ Payment Process
+→ Posted atau Complete
+
+Alur penolakan:
+
+PD Need Head Approval
+→ PD Reject by Head
+→ Requester memperbaiki atau submit ulang
+
+PD Need Over Budget Approval
+→ PD Reject by Over Budget
+→ Requester memperbaiki amount, COA, atau budget allocation
+
+PD Need Finance Approval
+→ PD Reject by Finance
+→ Requester memperbaiki berdasarkan catatan finance
+
+IV Need Tax Approval
+→ Reject by Tax
+→ Finance atau requester memperbaiki tax detail
+
+Invoice Posting
+→ Void jika dokumen dibatalkan dengan alasan
+
+---
+
+6. Modul Invoice Create atau Pengajuan Invoice
+
+#Fungsi
+
+Invoice Create digunakan oleh user untuk membuat PD baru. Ini adalah titik awal proses invoice.
+
+#Siapa yang Menggunakan
+
+- Staff atau user divisi yang mengajukan tagihan.
+- User yang menerima invoice dari vendor.
+- User yang bertanggung jawab atas dokumen pendukung seperti PO, BAST, kwitansi, SPK, atau faktur pajak.
+
+#Data yang Diisi User
+
+Header utama:
+
+- Applicant atau pemohon. Biasanya otomatis dari login.
+- Approve By atau atasan. Biasanya otomatis dari struktur karyawan.
+- Division dan Department. Biasanya otomatis dari user login.
+- Date atau tanggal dokumen.
+- Bill Type: Kontraktor, Supplier, atau Internal.
+- PD Type.
+- Currency.
+- Rate.
+- Vendor.
+- NPWP.
+- WP Address.
+- Form Receipt atau BAST.
+- PO No.
+- Receipt No atau Kwt No.
+- SPK No, khusus untuk Bill Type Kontraktor.
+- Description.
+
+Detail invoice:
+
+- Division.
+- Department.
+- Request Type atau jenis permintaan.
+- COA.
+- Base Amount.
+- Tax Type.
+- PPN Percent dan PPN Amount.
+- PPH Percent dan PPH Amount.
+- PPH Type jika ada PPH.
+- Total Amount.
+- Remaining Budget.
+- Budget Status.
+- Need Budget Approval.
+
+Dokumen pendukung:
+
+- Jenis dokumen sesuai PD Type.
+- Code dokumen.
+- Upload file.
+- Nomor dokumen.
+- Keterangan.
+
+#Flow Pembuatan PD
+
+1. User membuka menu Invoice.
+2. User klik Create Invoice.
+3. Sistem membuka form PD.
+4. Sistem otomatis mengisi applicant, approver, division, dan department dari session user.
+5. User memilih tanggal dokumen.
+6. User memilih Bill Type.
+7. User memilih PD Type.
+8. User memilih currency.
+9. Jika currency IDR, rate otomatis 1 dan tidak perlu diubah.
+10. Jika currency bukan IDR, user memastikan rate sudah terisi benar.
+11. User memilih vendor.
+12. Sistem mengisi NPWP dan alamat WP dari master vendor jika tersedia.
+13. User mengisi dokumen referensi seperti BAST, PO, Kwitansi, dan SPK bila diperlukan.
+14. User mengisi deskripsi yang jelas.
+15. User klik Add Request untuk menambah detail.
+16. User memilih divisi dan departemen.
+17. User memilih request type atau COA.
+18. User mengisi base amount.
+19. User memilih tax type.
+20. Sistem menghitung PPN, PPH, total amount, dan budget status.
+21. Jika PPH muncul, user wajib memilih PPH Type.
+22. User memastikan semua detail sudah benar.
+23. User masuk ke tab PD Type atau dokumen pendukung.
+24. User upload file yang diminta oleh sistem.
+25. User klik Save.
+26. Sistem melakukan validasi.
+27. Jika valid, PD disimpan dan masuk ke workflow approval.
+
+#Tipe Tagihan
+
+##Kontraktor
+
+Digunakan untuk tagihan kontraktor atau pekerjaan berdasarkan SPK. SPK No biasanya wajib. Dokumen pendukung dapat mencakup SPK, BAST, Invoice, Faktur Pajak, atau dokumen pekerjaan lain.
+
+##Supplier
+
+Digunakan untuk tagihan vendor atas pembelian barang atau jasa. Fokus dokumen biasanya pada invoice, PO, BAST, kwitansi, dan faktur pajak.
+
+##Internal
+
+Digunakan untuk transaksi internal perusahaan atau antar bagian sesuai kebijakan. Validasi pajak dan dokumen dapat berbeda tergantung PD Type.
+
+---
+
+7. Perhitungan Amount, PPN, PPH, dan Local Amount
+
+#Base Amount
+
+Base Amount adalah nilai dasar sebelum pajak.
+
+#PPN
+
+PPN dihitung dari Base Amount dikali persentase PPN.
+
+Contoh:
+
+Base Amount 1.000.000 dengan PPN 11 persen.
+PPN = 110.000.
+
+#PPH
+
+PPH dihitung dari Base Amount dikali persentase PPH sesuai PPH Type.
+
+Contoh:
+
+Base Amount 1.000.000 dengan PPH 2 persen.
+PPH = 20.000.
+
+#Total Row Amount
+
+Total row biasanya dihitung dari Base Amount ditambah PPN. PPH tetap dicatat sebagai pajak potong dan dipakai untuk proses pajak atau payment sesuai logic sistem.
+
+#Total DPP
+
+Total DPP adalah total base amount yang terkena pajak.
+
+#Total Base Amount
+
+Total seluruh base amount dari detail.
+
+#Foreign Amount
+
+Nilai total dalam mata uang dokumen.
+
+#Local Amount
+
+Nilai total dalam IDR. Jika currency bukan IDR, sistem mengalikan foreign amount dengan rate.
+
+#Catatan Penting untuk AI
+
+Jika user bertanya kenapa nilai total berbeda, AI harus cek kemungkinan berikut:
+
+- Ada PPN yang menambah nilai.
+- Ada PPH yang dipotong atau dicatat terpisah.
+- Currency rate bukan 1.
+- Ada beberapa line detail.
+- Ada tax type yang berbeda per line.
+- Ada tax correction.
+- Ada rounding PPN atau PPH.
+
+---
+
+8. Validasi Saat Membuat Invoice
+
+Sebelum PD bisa disimpan, sistem memeriksa:
+
+1. Vendor wajib dipilih.
+2. Date wajib diisi.
+3. PD Type wajib dipilih.
+4. Currency wajib dipilih.
+5. Currency rate wajib diisi dan tidak boleh 0.
+6. Bill Type wajib dipilih.
+7. PO No wajib diisi jika menjadi requirement.
+8. Form Receipt atau BAST wajib diisi jika menjadi requirement.
+9. Receipt No atau Kwt No wajib diisi jika menjadi requirement.
+10. SPK No wajib diisi untuk tagihan kontraktor.
+11. Description wajib diisi.
+12. Detail invoice minimal harus ada 1 baris.
+13. Base Amount setiap baris wajib diisi dan harus lebih besar dari 0.
+14. COA harus dipilih.
+15. Tax Type harus dipilih.
+16. PPH Type wajib diisi jika PPH percent atau PPH amount lebih besar dari 0.
+17. File dokumen pendukung harus sesuai requirement PD Type.
+18. Ukuran file mengikuti batas sistem. Pada modul ini terdapat informasi maksimum file upload 4MB pada area dokumen.
+19. Budget status harus diperhatikan. Jika status over budget atau cross year, dokumen dapat masuk ke jalur approval khusus.
+
+---
+
+9. Head Approval
+
+#Fungsi
+
+Head Approval digunakan oleh Department Head atau pejabat pemimpin untuk review pengajuan invoice dari staff. Head bertugas memastikan bahwa tagihan memang sesuai kebutuhan divisi atau departemen, nominal masuk akal, dokumen pendukung tersedia, vendor sesuai, dan budget tidak bermasalah.
+
+#Siapa yang Menggunakan
+
+- Department Head.
+- Division Head.
+- Pejabat yang berwenang sebagai approver.
+
+#Data yang Direview Head
+
+- Nomor PD.
+- Pemohon.
+- Tanggal dokumen.
+- Deskripsi.
+- Vendor.
+- Foreign amount.
+- Local amount.
+- Status.
+- Detail budget per line.
+- COA dan nama COA.
+- Division dan Department.
+- Remaining budget.
+- Status budget.
+- Dokumen pendukung.
+
+#Flow Head Approval
+
+1. Head login ke JIFAS.
+2. Head membuka menu Head Approval.
+3. Sistem menampilkan daftar PD dengan status Need Head Approval.
+4. Head mencari dokumen berdasarkan tanggal, nomor dokumen, vendor, amount, atau status.
+5. Head membuka detail dokumen.
+6. Sistem menampilkan tab Approval dan File.
+7. Head review request detail.
+8. Head review budget information.
+9. Jika perlu, Head membuka detail budget untuk melihat current, month, accumulation, dan year usage.
+10. Head membuka tab File untuk melihat dokumen pendukung.
+11. Jika semua sesuai, Head klik Approve.
+12. Jika ada over budget, Head harus menyetujui checkbox bahwa ia memahami issue budget sebelum approve.
+13. Jika ada masalah, Head klik Reject dan wajib mengisi alasan.
+14. Jika approve, dokumen lanjut ke Finance Approval atau Over Budget Approval.
+15. Jika reject, status menjadi PD Reject by Head dan requester harus memperbaiki.
+
+#Over Budget di Head Approval
+
+Jika ada line detail dengan budget status tidak OK, sistem menampilkan warning. Tombol Approve dapat disabled sampai Head mencentang persetujuan over budget. Ini memastikan Head sadar bahwa dokumen tersebut melebihi budget atau punya issue lintas periode.
+
+Head tidak boleh asal approve over budget. Head perlu mempertimbangkan:
+
+- Apakah biaya memang urgent.
+- Apakah ada approval budget tambahan.
+- Apakah COA yang dipilih sudah benar.
+- Apakah amount bisa dikurangi atau dipindahkan ke COA lain.
+- Apakah transaksi masuk periode yang tepat.
+
+#Reject oleh Head
+
+Jika Head menolak, alasan wajib jelas. Contoh alasan yang baik:
+
+- Dokumen BAST belum lengkap.
+- Amount tidak sesuai dengan PO.
+- Vendor tidak sesuai.
+- Budget sudah tidak tersedia.
+- Deskripsi belum jelas.
+- Tagihan perlu direvisi oleh requester.
+
+---
+
+10. Over Budget Approval untuk Invoice
+
+#Fungsi
+
+Over Budget Approval adalah approval khusus ketika detail invoice melebihi budget. Approval ini biasanya dilakukan oleh Finance Head atau pihak yang memiliki kewenangan khusus terhadap penggunaan budget.
+
+#Kapan Masuk Over Budget Approval
+
+Invoice masuk ke jalur over budget jika:
+
+- Amount melebihi remaining budget pada COA.
+- Budget accumulation sudah melewati batas.
+- Periode atau tahun budget bermasalah.
+- Sistem menandai status budget sebagai Over, CY, CA, atau status sejenis.
+
+#Data yang Dilihat Approver Over Budget
+
+- PD No.
+- Tanggal dokumen.
+- COA Code.
+- Amount.
+- Remaining Budget.
+- PPN.
+- PPH.
+- Vendor.
+- Applicant.
+- Division.
+- Approve By.
+- Description.
+- File pendukung.
+
+#Flow Over Budget Approval
+
+1. Finance Head membuka menu Finance Head Approval.
+2. Sistem menampilkan tab Invoice Over Budget dan PUM Over Budget.
+3. Finance Head memilih Invoice Over Budget.
+4. Sistem menampilkan daftar dokumen dengan status need approval over budget.
+5. Finance Head membuka detail dokumen.
+6. Finance Head review amount, remaining budget, COA, vendor, pemohon, dan dokumen pendukung.
+7. Jika disetujui, Finance Head klik Approve.
+8. Sistem menyimpan approval over budget dan dokumen lanjut ke tahap berikutnya.
+9. Jika ditolak, Finance Head klik Reject.
+10. Sistem meminta alasan rejection.
+11. Jika alasan kosong, sistem meminta user mengisi alasan terlebih dahulu.
+12. Jika reject berhasil, dokumen kembali untuk diperbaiki.
+
+#Prinsip Bisnis Over Budget
+
+Over budget bukan sekadar error teknis. Over budget adalah kondisi bisnis yang harus diputuskan oleh pihak berwenang. AI tidak boleh menyarankan user untuk mengakali budget. AI harus menyarankan user untuk:
+
+- Mengecek COA.
+- Mengecek divisi dan departemen.
+- Mengecek periode.
+- Mengecek amount.
+- Menghubungi atasan atau Finance Head jika memang perlu approval.
+
+---
+
+11. Finance Approval
+
+#Fungsi
+
+Finance Approval adalah tahap verifikasi oleh finance terhadap PD yang sudah disetujui Head atau sudah melewati approval budget. Finance memastikan dokumen, vendor, amount, tax, budget, COA, dan detail sudah sesuai sebelum invoice diproses lebih lanjut.
+
+#Siapa yang Menggunakan
+
+- Finance Staff.
+- Finance Manager.
+- Finance Supervisor.
+- Accounting atau audit sebagai reviewer.
+
+#Bagian Utama Finance Approval
+
+Di menu Finance Approval terdapat dua bagian besar:
+
+1. PD Approval.
+2. Invoice List atau Invoice Posting.
+
+PD Approval digunakan untuk memeriksa PD dari sisi finance. Invoice Posting digunakan untuk memeriksa invoice yang sudah masuk tahap IV dan siap checking/posting.
+
+#Flow Finance PD Approval
+
+1. Finance membuka menu Finance Approval.
+2. Sistem menampilkan daftar PD yang perlu tindakan finance.
+3. Finance memilih PD.
+4. Form Approve PD dibuka.
+5. Sistem menampilkan informasi header: PD No, date, PD type, bill type, currency, rate, vendor, NPWP, WP address, applicant, division, department, approve by, DPP, total amount, PO, BAST, kwitansi, SPK, dan description.
+6. Sistem menampilkan detail COA, amount, tax, PPH, PPN, dan budget status.
+7. Finance membuka tab Document Verification.
+8. Finance memeriksa dokumen yang required.
+9. Jika dokumen sudah valid, Finance melakukan verification.
+10. Jika ada kesalahan detail, Finance dapat menggunakan Correction.
+11. Setelah koreksi, Finance klik Save Correction.
+12. Jika semua valid, dokumen lanjut ke tahap berikutnya.
+
+#Finance Correction
+
+Finance Correction digunakan ketika finance menemukan kesalahan pada PD, misalnya:
+
+- COA salah.
+- Amount salah.
+- Tax type salah.
+- PPH Type belum tepat.
+- Detail perlu ditambah atau dikurangi.
+- Budget status perlu disesuaikan dengan COA atau amount yang benar.
+
+Finance Correction harus digunakan dengan hati-hati karena memengaruhi nilai invoice dan alur approval. Setiap koreksi harus bisa dijelaskan secara bisnis.
+
+#Aturan Correction
+
+- Correction mengaktifkan mode edit.
+- Detail bisa diubah sesuai field yang diizinkan.
+- Sistem menghitung ulang PPN, PPH, total amount, dan budget.
+- Jika ada item CY atau over budget yang tidak bisa diproses, sistem dapat menolak save correction.
+- Setelah save, sistem refresh data dan status.
+
+#Document Verification oleh Finance
+
+Finance wajib memastikan dokumen pendukung sesuai requirement. Dokumen pendukung dapat berupa:
+
+- Invoice vendor.
+- Faktur Pajak.
+- PO.
+- BAST.
+- SPK.
+- Kwitansi.
+- Copy PO.
+- Dokumen lain sesuai PD Type.
+
+Jika dokumen belum lengkap, dokumen dapat masuk ke Incomplete Document process atau dikembalikan untuk dilengkapi.
+
+---
+
+12. Approval Incomplete Document
+
+#Fungsi
+
+Approval Incomplete Document digunakan untuk mengelola PD atau invoice yang memiliki dokumen pendukung belum lengkap atau belum terverifikasi. Modul ini memungkinkan approver mengambil keputusan bisnis: apakah dokumen tetap boleh lanjut meskipun ada dokumen yang incomplete, atau harus ditahan sampai lengkap.
+
+#Kapan Digunakan
+
+Digunakan ketika:
+
+- Ada dokumen required yang belum lengkap.
+- Ada file yang belum di-check.
+- Ada nomor dokumen yang belum tersedia.
+- Ada dokumen fisik yang masih menyusul.
+- Finance atau management memutuskan bahwa proses tetap perlu lanjut karena urgent.
+
+#Data yang Dilihat
+
+- Date.
+- Document Number atau PD No.
+- Description.
+- Amount.
+- Status.
+- Document Type.
+- Code.
+- Document No.
+- Information.
+- File.
+- Status checkbox dokumen.
+
+#Flow Approval Incomplete Document
+
+1. User membuka menu Approval Incomplete Document.
+2. Sistem menampilkan daftar PD yang memiliki dokumen incomplete.
+3. User memilih salah satu dokumen.
+4. Sistem membuka detail incomplete document.
+5. User melihat dokumen mana yang sudah checked dan mana yang belum.
+6. User membaca information field untuk mengetahui penyebab incomplete.
+7. User mempertimbangkan risiko approval.
+8. Jika disetujui, user klik Approve.
+9. Sistem meminta konfirmasi dengan nomor PD.
+10. Jika dikonfirmasi, status PD diperbarui dan dokumen lanjut ke workflow berikutnya.
+11. Jika gagal, status tidak berubah dan user dapat retry atau menghubungi IT.
+
+#Prinsip Bisnis Incomplete Document
+
+Approval incomplete bukan berarti dokumen tidak penting. Approval ini adalah pengecualian yang harus punya dasar bisnis. AI harus menjelaskan kepada user bahwa dokumen incomplete sebaiknya tetap dilengkapi untuk audit, meskipun proses disetujui untuk lanjut.
+
+#Kapan Harus Ke IT
+
+- Daftar incomplete document tidak muncul padahal seharusnya ada.
+- Detail dokumen tidak terbuka.
+- File attachment tidak bisa dibuka.
+- Checkbox status dokumen tidak sesuai data.
+- Setelah approve, dokumen masih muncul di daftar.
+- Error API atau authorization muncul.
+
+---
+
+13. Tax Approval
+
+#Fungsi
+
+Tax Approval digunakan untuk memeriksa, menyetujui, menolak, atau mengoreksi pajak pada invoice. Modul ini penting karena invoice tidak boleh diproses ke tahap selanjutnya jika pajak tidak valid.
+
+#Siapa yang Menggunakan
+
+- Tax Staff.
+- Accounting Staff.
+- Tax Compliance Officer.
+- Finance atau Corporate Accounting yang membutuhkan review pajak.
+
+#Jenis Pajak yang Dikelola
+
+1. PPN.
+2. PPH.
+3. PPN N0 atau PPN khusus.
+
+#Data yang Direview Tax
+
+- Date.
+- IV No atau nomor invoice.
+- Category.
+- Description.
+- Currency.
+- DPP.
+- PPN.
+- PPH.
+- Total Amount.
+- Paid To atau vendor.
+- NPWP.
+- WP Address.
+- Detail COA dan tax type.
+- Remaining budget dan status budget.
+- Dokumen pendukung.
+- Faktur Pajak.
+- Bukti Potong.
+
+#Flow Tax Approval
+
+1. Tax membuka menu Tax Approval.
+2. Sistem menampilkan invoice dengan status Need Tax Approval.
+3. Tax memilih invoice.
+4. Sistem membuka form approval pajak.
+5. Sistem menampilkan tab Approval, PPN, PPN N0, PPH, dan File sesuai pajak yang ada.
+6. Tax memeriksa header invoice.
+7. Tax memeriksa detail per line: COA, DPP, tax type, PPN, PPH, PPH Type, total amount.
+8. Tax memeriksa file pendukung.
+9. Tax membuka tab PPN untuk memeriksa Faktur Pajak.
+10. Tax membuka tab PPH untuk memeriksa bukti potong dan PPH Type.
+11. Jika ada PPN N0, Tax memeriksa tab PPN N0.
+12. Jika nilai pajak perlu koreksi, Tax memakai Tax Correction.
+13. Jika semua benar, Tax klik Approve.
+14. Jika ada masalah, Tax klik Reject dan wajib mengisi alasan.
+15. Setelah approve, invoice lanjut ke tahap finance checking atau posting.
+16. Setelah reject, invoice kembali untuk perbaikan.
+
+#PPN Tab
+
+Tab PPN digunakan untuk memeriksa:
+
+- DPP PPN.
+- PPN Amount.
+- Nama Wajib Pajak.
+- NPWP.
+- WP Address.
+- Tax Invoice Number.
+- Tax Invoice Date.
+- DPP per faktur.
+- PPN per faktur.
+- Tahun dan bulan pajak.
+
+Aturan penting:
+
+- Total DPP detail PPN tidak boleh melebihi DPP header.
+- Total PPN detail tidak boleh melebihi PPN header.
+- Nomor faktur harus jelas dan tidak boleh sembarangan.
+- NPWP dan nama WP harus sesuai vendor.
+
+#PPH Tab
+
+Tab PPH digunakan untuk memeriksa:
+
+- DPP PPH.
+- PPH Amount.
+- Nama Wajib Pajak.
+- NPWP.
+- WP Address.
+- Form Code.
+- Tax Invoice atau nomor bukti potong.
+- Tax Invoice Date.
+- DPP per bukti potong.
+- PPH per bukti potong.
+- Tahun dan periode.
+
+Aturan penting:
+
+- Total DPP detail PPH tidak boleh melebihi DPP header.
+- Total PPH detail tidak boleh melebihi PPH header.
+- Jika ada PPH, PPH Type harus diisi.
+- PPH Type harus sesuai jenis transaksi.
+
+#PPN N0 Tab
+
+PPN N0 adalah PPN khusus. Jika invoice memiliki tax code terkait PPN N0, sistem menampilkan tab PPN N0. User harus memeriksa DPP, PPN, NPWP, WP address, dan detail faktur seperti PPN regular.
+
+#Tax Correction
+
+Tax Correction digunakan untuk koreksi nilai pajak, terutama rounding PPN atau PPH.
+
+Flow Tax Correction:
+
+1. Tax klik Tax Correction.
+2. Sistem membuka popup Tax Value Correction.
+3. Sistem menampilkan detail line yang memiliki tax code bukan NT.
+4. User memilih rounding UP atau DOWN untuk PPN atau PPH.
+5. Sistem menghitung correction value.
+6. User memastikan PPH Type benar.
+7. User klik Save.
+8. Sistem memvalidasi PPH Type.
+9. Sistem menyimpan koreksi.
+10. Header dan detail pajak di-refresh.
+
+#Reject oleh Tax
+
+Reject harus disertai alasan. Contoh alasan yang baik:
+
+- NPWP vendor tidak sesuai.
+- Nomor faktur pajak belum diisi.
+- Faktur Pajak tidak sesuai nilai DPP.
+- PPH Type belum benar.
+- PPN/PPH detail melebihi header.
+- Dokumen pajak belum lengkap.
+
+---
+
+14. Invoice Posting dan Finance Checking
+
+#Fungsi
+
+Invoice Posting adalah tahap untuk memeriksa invoice internal sebelum masuk ke tahap payment atau accounting posting. Pada tahap ini, finance dapat melakukan update, checking, atau void tergantung status invoice.
+
+#Data yang Dilihat
+
+- Date.
+- PD No.
+- IV No.
+- PV No.
+- Category.
+- Description.
+- Currency.
+- Amount.
+- Vendor.
+- Status.
+- COA breakdown.
+- DPP amount.
+- Tax type.
+- PPN.
+- PPH.
+- PPH Type.
+- Remaining budget.
+- Status budget.
+
+#Status yang Muncul di Invoice Posting
+
+- Need Finance Checking.
+- Need Accounting Checking.
+- Need Tax Approval.
+- Outstanding PPH.
+- Ready To Pay.
+- Need Posting.
+- Posted.
+- Need Reverse.
+- Void.
+
+#Flow Invoice Posting
+
+1. Finance membuka tab Invoice List atau Invoice Posting.
+2. Sistem menampilkan daftar invoice yang perlu checking atau posting.
+3. Finance mencari invoice berdasarkan tanggal, PD No, IV No, category, vendor, atau status.
+4. Finance membuka detail invoice.
+5. Sistem menampilkan header dan detail invoice.
+6. Finance review vendor, currency, rate, amount, tax, COA, dan status.
+7. Jika status Need Finance Checking, finance dapat update detail dan melakukan checking.
+8. Jika status Need Accounting Checking, finance biasanya hanya melakukan update terbatas atau view.
+9. Jika status Need Tax Approval atau Outstanding PPH, finance menunggu proses pajak atau melakukan update sesuai izin.
+10. Jika status Ready To Pay, Posted, atau Need Posting, invoice lebih bersifat read-only.
+11. Jika ada kesalahan yang mengharuskan pembatalan, user dapat Void dengan alasan.
+
+#Update Invoice
+
+Update dapat dilakukan jika status masih memungkinkan. Update biasanya mencakup:
+
+- COA.
+- Amount detail.
+- Tax Type.
+- PPH Type.
+- Description.
+- Currency rate jika relevan.
+
+Sistem akan menghitung ulang PPN, PPH, total amount, dan budget.
+
+#Checking Invoice
+
+Checking adalah konfirmasi bahwa finance sudah memeriksa invoice dan invoice boleh lanjut ke tahap berikutnya. Sebelum checking, sistem memvalidasi bahwa:
+
+- Currency rate sudah diisi.
+- Detail minimal ada 1 line.
+- COA sudah terisi.
+- Amount lebih dari 0.
+- Tax Code sudah dipilih.
+- PPH Type sudah diisi jika ada PPH.
+
+#Void Invoice
+
+Void digunakan untuk membatalkan invoice. Void wajib menggunakan alasan.
+
+Alasan void yang baik:
+
+- Invoice salah vendor.
+- Invoice duplicate.
+- Amount salah dan tidak bisa dikoreksi di status saat ini.
+- Dokumen dibatalkan oleh vendor.
+- Invoice tidak jadi diproses.
+- Tagihan sudah diganti dengan dokumen baru.
+
+AI harus mengingat: jangan menyarankan user menghapus invoice secara langsung. Untuk dokumen yang sudah masuk workflow, gunakan void, correction, atau reversal sesuai status.
+
+---
+
+15. Hubungan Invoice dengan Modul Lain
+
+#Invoice ke Home Dashboard
+
+Dashboard menampilkan jumlah dokumen invoice berdasarkan status. User dapat melihat dokumen yang pending, need approval, reject, atau ready process.
+
+#Invoice ke Budget
+
+Saat user memilih COA dan amount, sistem mengecek budget. Jika budget tidak cukup, invoice masuk ke over budget approval.
+
+#Invoice ke Tax
+
+Invoice dengan PPN, PPH, atau PPN N0 masuk ke Tax Approval. Pajak harus valid sebelum invoice masuk payment atau accounting.
+
+#Invoice ke Payment
+
+Invoice yang sudah approved dan ready to pay akan digunakan sebagai dasar payment invoice.
+
+#Invoice ke CashBank
+
+Setelah payment diproses, cashbank mencatat uang keluar dari bank perusahaan.
+
+#Invoice ke Accounting
+
+Invoice yang sudah selesai diproses akan berdampak ke jurnal dan posting accounting.
+
+#Invoice ke Master Data
+
+Invoice bergantung pada master data:
+
+- Vendor master.
+- COA master.
+- Division master.
+- Department master.
+- Tax master.
+- PPH master.
+- Currency master.
+- PD Type master.
+- Employee atau approver master.
+
+Jika master data tidak lengkap, invoice bisa gagal dibuat, dropdown kosong, atau tax/budget tidak sesuai.
+
+---
+
+16. Validasi Umum di Modul Invoice
+
+#Mandatory Field
+
+Field penting tidak boleh kosong. Jika kosong, sistem akan menolak save, update, checking, approve, atau reject.
+
+#Detail Minimal 1 Baris
+
+PD atau invoice tidak boleh disimpan tanpa detail. Setiap tagihan harus memiliki minimal satu line COA.
+
+#Amount Harus Lebih dari 0
+
+Base amount atau total amount harus lebih besar dari 0. Nilai 0 tidak dapat diproses karena tidak ada nilai transaksi.
+
+#Currency Rate Tidak Boleh 0
+
+Jika currency rate kosong atau 0, sistem tidak bisa menghitung local amount. User harus memilih currency ulang atau mengisi rate sesuai aturan finance.
+
+#PPH Type Wajib Jika Ada PPH
+
+Jika PPH percentage atau PPH amount lebih besar dari 0, PPH Type wajib dipilih.
+
+#Total Pajak Detail Tidak Boleh Melebihi Header
+
+Pada Tax Approval, total DPP, PPN, atau PPH di detail tidak boleh lebih besar dari total header.
+
+#Reject Reason Wajib
+
+Head, Finance, Tax, atau Finance Head yang menolak dokumen wajib mengisi alasan.
+
+#Void Reason Wajib
+
+Void harus menyimpan alasan pembatalan untuk audit trail.
+
+#File Upload Harus Sesuai Batas
+
+Jika file terlalu besar atau format tidak sesuai, upload bisa gagal. Kompres file atau gunakan format yang diperbolehkan.
+
+---
+
+17. Status Dokumen dan Arti untuk User
+
+#PD Need Head Approval
+
+PD sudah dibuat oleh user dan menunggu approval atasan.
+
+Yang harus dilakukan:
+
+- Head harus review dan approve atau reject.
+- Requester menunggu.
+
+#PD Reject by Head
+
+Atasan menolak PD.
+
+Yang harus dilakukan:
+
+- Requester membaca alasan rejection.
+- Requester memperbaiki dokumen.
+- Requester submit ulang jika diperlukan.
+
+#PD Need Over Budget Approval
+
+PD memiliki item over budget dan perlu approval khusus.
+
+Yang harus dilakukan:
+
+- Finance Head atau approver budget review dokumen.
+- Requester menunggu atau menyiapkan justifikasi.
+
+#PD Reject by Over Budget
+
+Approval budget ditolak.
+
+Yang harus dilakukan:
+
+- Requester memperbaiki amount, COA, atau budget allocation.
+- Jika tetap diperlukan, requester diskusi dengan Head atau Finance.
+
+#PD Need Finance Approval
+
+PD sudah melewati Head atau budget approval dan menunggu finance.
+
+Yang harus dilakukan:
+
+- Finance review detail dan dokumen.
+
+#PD Reject by Finance
+
+Finance menolak atau meminta koreksi.
+
+Yang harus dilakukan:
+
+- Requester membaca alasan.
+- Requester memperbaiki sesuai catatan finance.
+
+#IV Need Tax Approval
+
+Invoice masuk ke tahap pajak.
+
+Yang harus dilakukan:
+
+- Tax memeriksa PPN, PPH, PPN N0, NPWP, faktur pajak, dan bukti potong.
+
+#Reject by Tax
+
+Tax menolak invoice karena pajak atau dokumen pajak tidak sesuai.
+
+Yang harus dilakukan:
+
+- Perbaiki tax type, PPH Type, NPWP, faktur pajak, bukti potong, atau nilai pajak.
+
+#IV Need Finance Checking
+
+Invoice perlu checking finance sebelum lanjut.
+
+Yang harus dilakukan:
+
+- Finance review akhir dan klik checking jika valid.
+
+#IV Need Accounting Checking
+
+Invoice perlu pemeriksaan accounting.
+
+Yang harus dilakukan:
+
+- Accounting memeriksa posting/accounting treatment.
+
+#Outstanding PPH
+
+Masih ada issue atau kebutuhan penyelesaian PPH.
+
+Yang harus dilakukan:
+
+- Tax atau finance memeriksa PPH Type, bukti potong, atau outstanding tax treatment.
+
+#Ready To Pay
+
+Invoice sudah siap dibayar.
+
+Yang harus dilakukan:
+
+- Masuk ke proses Payment Invoice.
+
+#Need Posting
+
+Invoice perlu diposting ke accounting.
+
+Yang harus dilakukan:
+
+- Accounting atau finance melakukan proses posting sesuai role.
+
+#Posted
+
+Invoice sudah masuk pembukuan.
+
+Yang harus dilakukan:
+
+- Tidak boleh diedit biasa. Jika salah, gunakan correction, void, atau reverse sesuai aturan.
+
+#Need Reverse
+
+Dokumen membutuhkan jurnal reversal atau pembalikan.
+
+Yang harus dilakukan:
+
+- Accounting menangani reversal.
+
+#Void
+
+Dokumen dibatalkan.
+
+Yang harus dilakukan:
+
+- Tidak diproses lanjut kecuali ada proses audit atau reversal terkait.
+
+---
+
+18. Error Handling untuk User
+
+#Grid Invoice Tidak Loading
+
+Kemungkinan penyebab:
+
+- Koneksi internet bermasalah.
+- Session login expired.
+- API tidak merespons.
+- User tidak memiliki role menu tersebut.
+- Company code belum terbaca.
+
+Yang dapat dilakukan user:
+
+1. Refresh halaman.
+2. Login ulang.
+3. Coba filter tanggal yang lebih kecil.
+4. Cek koneksi.
+5. Jika masih gagal, hubungi IT.
+
+#Form Tidak Terbuka Saat Klik Action
+
+Kemungkinan penyebab:
+
+- Browser memblokir popup.
+- JavaScript error.
+- Session expired.
+- Data dokumen tidak lengkap.
+
+Yang dapat dilakukan:
+
+1. Refresh halaman.
+2. Coba browser Chrome atau Edge.
+3. Clear cache.
+4. Login ulang.
+5. Jika tetap, hubungi IT dengan nomor dokumen dan screenshot.
+
+#Dropdown Vendor, COA, Tax, PPH, Currency Kosong
+
+Kemungkinan penyebab:
+
+- Master data belum tersedia.
+- Filter company code tidak cocok.
+- Divisi atau departemen belum dipilih.
+- API master data error.
+- User tidak punya akses ke data tersebut.
+
+Yang dapat dilakukan:
+
+1. Pastikan field sebelumnya sudah dipilih.
+2. Refresh form.
+3. Coba ketik nama atau kode secara lengkap.
+4. Jika tetap kosong, hubungi IT atau Master Data Admin.
+
+#Currency Rate Tidak Muncul
+
+Kemungkinan penyebab:
+
+- Rate belum dibuat di master currency.
+- Currency tidak aktif.
+- API rate error.
+- Tanggal rate tidak tersedia.
+
+Yang dapat dilakukan:
+
+1. Pilih ulang currency.
+2. Pastikan tanggal dokumen benar.
+3. Hubungi Finance/Admin untuk update rate.
+4. Jika rate master ada tapi tetap tidak muncul, hubungi IT.
+
+#Tidak Bisa Save Invoice
+
+Kemungkinan penyebab:
+
+- Vendor belum dipilih.
+- Currency rate kosong.
+- Detail belum ada.
+- Base amount kosong.
+- Tax type belum dipilih.
+- PPH Type kosong padahal ada PPH.
+- Bill Type belum dipilih.
+- Required document belum lengkap.
+- File upload gagal.
+
+Yang harus dilakukan:
+
+1. Baca error message.
+2. Lengkapi field yang diminta.
+3. Cek detail grid satu per satu.
+4. Pastikan total dan rate sudah benar.
+5. Save ulang.
+6. Jika error berupa sistem/API, hubungi IT.
+
+#Tidak Bisa Approve
+
+Kemungkinan penyebab:
+
+- User bukan approver yang berwenang.
+- Status dokumen bukan status yang bisa diapprove.
+- Ada over budget yang belum di-acknowledge.
+- Dokumen pendukung belum diverifikasi.
+- Session expired.
+
+Yang harus dilakukan:
+
+1. Pastikan status dokumen sesuai.
+2. Pastikan role user benar.
+3. Jika over budget, centang acknowledgement jika memang setuju.
+4. Jika role tidak sesuai, hubungi IT/Admin.
+
+#Tidak Bisa Reject
+
+Kemungkinan penyebab:
+
+- Reason kosong.
+- Status tidak bisa direject.
+- User tidak punya akses.
+- Session expired.
+
+Yang harus dilakukan:
+
+1. Isi alasan reject dengan jelas.
+2. Coba ulang.
+3. Jika tetap gagal, hubungi IT.
+
+#Tidak Bisa Upload Dokumen
+
+Kemungkinan penyebab:
+
+- File terlalu besar.
+- Format tidak didukung.
+- Nama file terlalu panjang atau mengandung karakter aneh.
+- Koneksi terputus.
+- Storage server/path file bermasalah.
+
+Yang harus dilakukan:
+
+1. Kompres file.
+2. Gunakan PDF, JPG, PNG, atau format yang diperbolehkan.
+3. Ganti nama file menjadi sederhana tanpa simbol aneh.
+4. Upload ulang.
+5. Jika tetap gagal, hubungi IT.
+
+#Dokumen Tidak Muncul Setelah Save
+
+Kemungkinan penyebab:
+
+- Filter grid masih aktif.
+- Status sudah berubah sehingga pindah menu.
+- Save gagal tetapi user tidak melihat error.
+- Data belum refresh.
+
+Yang harus dilakukan:
+
+1. Refresh grid.
+2. Hapus filter.
+3. Cari berdasarkan nomor PD.
+4. Cek menu approval sesuai status.
+5. Jika tetap tidak ada, hubungi IT.
+
+#Amount Tidak Menghitung Otomatis
+
+Kemungkinan penyebab:
+
+- Field belum kehilangan fokus.
+- Numeric textbox tidak terbaca.
+- Tax type belum dipilih.
+- Script error.
+
+Yang harus dilakukan:
+
+1. Pindah ke field lain setelah input amount.
+2. Pilih tax type ulang.
+3. Refresh form jika perlu.
+4. Jika sering terjadi, laporkan ke IT.
+
+#Tax Correction Tidak Bisa Save
+
+Kemungkinan penyebab:
+
+- Ada PPH Type kosong.
+- Correction value belum valid.
+- API correction value gagal.
+- Detail tax tidak sesuai header.
+
+Yang harus dilakukan:
+
+1. Isi PPH Type untuk semua item yang memiliki PPH.
+2. Pastikan detail PPN/PPH tidak melebihi header.
+3. Coba ulang.
+4. Jika muncul error cannot get suggested value, hubungi IT.
+
+#Void Tidak Berhasil
+
+Kemungkinan penyebab:
+
+- Reason void kosong.
+- Status dokumen tidak bisa void.
+- Role tidak punya izin.
+- Dokumen sudah masuk proses lain.
+
+Yang harus dilakukan:
+
+1. Cek status invoice.
+2. Isi alasan void.
+3. Jika invoice sudah posted, tanyakan ke accounting apakah perlu reversal.
+4. Jika error teknis, hubungi IT.
+
+---
+
+19. Error yang Harus Diarahkan ke IT
+
+AI chatbot harus mengarahkan user ke IT jika masalah termasuk:
+
+1. Halaman tidak bisa dibuka.
+2. Grid loading terus menerus.
+3. Session sering logout sendiri.
+4. Tombol Action tidak merespons.
+5. Popup tidak muncul.
+6. Dropdown master data kosong padahal data seharusnya ada.
+7. Vendor tidak muncul padahal sudah ada di master.
+8. COA tidak muncul padahal divisi/departemen sudah benar.
+9. Currency rate tidak muncul padahal sudah tersedia.
+10. File tidak bisa upload meski ukuran dan format benar.
+11. File tidak bisa dibuka atau link rusak.
+12. Data yang muncul berbeda dengan company user.
+13. User tidak bisa approve padahal role seharusnya bisa.
+14. Status dokumen tidak berubah setelah approve/reject/update.
+15. Dokumen hilang dari semua grid tanpa status jelas.
+16. Tax correction API error.
+17. Error 401 Unauthorized.
+18. Error 403 Forbidden.
+19. Error 404 data tidak ditemukan padahal nomor dokumen valid.
+20. Error 500 Internal Server Error.
+21. Data amount atau pajak tidak menghitung meski input sudah benar.
+22. Dokumen duplikat karena save berulang.
+23. Export Excel gagal.
+24. Browser freeze saat membuka detail.
+
+---
+
+20. Data yang Harus Dikirim User ke IT
+
+Jika user perlu eskalasi ke IT, AI harus minta user menyiapkan:
+
+1. Nama user.
+2. Username login JIFAS.
+3. Company code.
+4. Role user jika tahu.
+5. Menu yang dibuka.
+6. Nomor PD.
+7. Nomor IV jika ada.
+8. Nomor PV jika ada.
+9. Tanggal dokumen.
+10. Vendor.
+11. Status terakhir dokumen.
+12. Screenshot error.
+13. Waktu kejadian.
+14. Browser yang digunakan.
+15. Langkah yang dilakukan sebelum error.
+16. Apakah sudah refresh atau login ulang.
+17. File yang gagal di-upload jika masalah upload.
+18. Error message lengkap jika ada.
+
+Contoh format laporan ke IT:
+
+Saya mengalami error di modul Invoice JIFAS. Menu: Tax Approval. Nomor IV: IV-xxxx. Company: KI. Status: Need Tax Approval. Saat klik Approve muncul error 500. Screenshot terlampir. Kejadian pada 13 Mei 2026 sekitar 10.30 WIB. Saya sudah refresh dan login ulang tetapi masih sama.
+
+---
+
+21. Best Practice untuk User
+
+#Saat Membuat Invoice
+
+- Pastikan vendor benar.
+- Pastikan PO, BAST, kwitansi, SPK sesuai dokumen asli.
+- Gunakan deskripsi yang jelas.
+- Pilih COA sesuai jenis biaya.
+- Jangan asal memilih COA hanya supaya budget cukup.
+- Perhatikan PPN dan PPH.
+- Pilih PPH Type jika ada PPH.
+- Upload dokumen pendukung dengan nama file yang jelas.
+- Jangan klik Save berkali-kali saat loading.
+
+#Saat Head Approval
+
+- Review vendor, amount, description, dan dokumen pendukung.
+- Cek budget status.
+- Jika over budget, minta justifikasi dari requester.
+- Jika reject, tulis alasan yang bisa ditindaklanjuti.
+
+#Saat Finance Approval
+
+- Cross-check invoice dengan PO, BAST, kwitansi, dan faktur pajak.
+- Pastikan vendor sesuai master.
+- Pastikan COA benar.
+- Pastikan tax type dan PPH type benar.
+- Gunakan correction jika memang perlu.
+- Jangan approve jika dokumen pendukung tidak jelas.
+
+#Saat Tax Approval
+
+- Cek NPWP, nama WP, dan alamat WP.
+- Cek DPP, PPN, PPH.
+- Cek faktur pajak dan bukti potong.
+- Pastikan detail pajak tidak melebihi header.
+- Gunakan tax correction untuk rounding atau pembetulan yang sah.
+
+#Saat Invoice Posting
+
+- Pastikan status sudah sesuai.
+- Cek currency rate.
+- Cek final amount.
+- Cek PPH outstanding.
+- Void hanya jika memang perlu dan tulis alasan jelas.
+
+---
+
+22. Contoh Pertanyaan User dan Jawaban AI
+
+#Pertanyaan: Saya mau buat invoice, harus isi apa saja?
+
+Jawaban AI:
+Untuk membuat invoice di JIFAS, masuk ke menu Invoice lalu klik Create Invoice. Isi tanggal, bill type, PD type, currency, vendor, dokumen referensi seperti PO/BAST/Kwitansi/SPK jika diperlukan, lalu isi detail COA, amount, tax type, dan PPH Type jika ada PPH. Setelah itu upload dokumen pendukung sesuai PD Type dan klik Save. Pastikan detail minimal ada 1 baris dan currency rate tidak kosong.
+
+#Pertanyaan: Kenapa invoice saya masuk over budget?
+
+Jawaban AI:
+Invoice masuk over budget karena nilai pada salah satu detail COA melebihi sisa budget, akumulasi budget sudah melewati batas, atau periode budget tidak sesuai. Cek kembali COA, divisi, departemen, periode, dan amount. Jika memang biaya tetap harus diproses, dokumen perlu approval over budget dari pihak yang berwenang.
+
+#Pertanyaan: Kenapa tombol approve tidak bisa diklik?
+
+Jawaban AI:
+Kemungkinan status dokumen belum sesuai, user tidak memiliki role approver, ada over budget yang belum di-acknowledge, atau dokumen pendukung belum diverifikasi. Cek status dokumen dan role user. Jika seharusnya bisa approve tapi tombol tetap tidak aktif, laporkan ke IT dengan nomor PD/IV dan screenshot.
+
+#Pertanyaan: Saya reject invoice, kenapa tidak bisa lanjut?
+
+Jawaban AI:
+Saat reject, sistem mewajibkan alasan rejection. Isi alasan dengan jelas, misalnya dokumen belum lengkap, amount tidak sesuai PO, atau pajak belum benar. Jika alasan sudah diisi tetapi tetap gagal, kemungkinan ada masalah session atau API dan perlu dicek IT.
+
+#Pertanyaan: Kenapa PPH Type harus diisi?
+
+Jawaban AI:
+PPH Type wajib diisi jika invoice memiliki PPH. PPH Type menentukan jenis pajak penghasilan yang digunakan, misalnya PPH 23 atau jenis lainnya. Tanpa PPH Type, tax dan accounting tidak bisa memproses pajak dengan benar.
+
+#Pertanyaan: Kenapa faktur pajak tidak bisa disimpan?
+
+Jawaban AI:
+Kemungkinan total DPP atau PPN pada detail faktur melebihi total header, nomor faktur belum diisi, tanggal faktur tidak benar, atau data NPWP belum sesuai. Cek kembali tab PPN dan pastikan nilai detail tidak lebih besar dari nilai header.
+
+#Pertanyaan: Apa itu Approval Incomplete Document?
+
+Jawaban AI:
+Approval Incomplete Document adalah proses approval khusus untuk PD yang dokumen pendukungnya belum lengkap atau belum terverifikasi. Approver dapat melihat dokumen mana yang belum lengkap dan memutuskan apakah dokumen tetap boleh lanjut berdasarkan keputusan bisnis. Walaupun disetujui, dokumen pendukung tetap sebaiknya dilengkapi untuk audit.
+
+#Pertanyaan: Invoice sudah posted tapi ternyata salah, apa yang harus dilakukan?
+
+Jawaban AI:
+Invoice yang sudah posted tidak boleh diedit langsung. Jika salah, cek dengan Finance atau Accounting apakah perlu correction, void, atau reversal. Untuk dokumen posted, perubahan harus tetap memiliki audit trail.
+
+#Pertanyaan: Kenapa dokumen saya tidak muncul di menu Head Approval?
+
+Jawaban AI:
+Kemungkinan dokumen belum berstatus PD Need Head Approval, sudah pindah ke status berikutnya, masih terkena filter grid, atau user Head bukan approver dokumen tersebut. Hapus filter, cari berdasarkan nomor PD, dan cek status dokumen. Jika tetap tidak ditemukan, hubungi IT.
+
+#Pertanyaan: Kenapa dropdown COA kosong?
+
+Jawaban AI:
+COA biasanya tergantung company, division, department, periode, dan budget. Pastikan divisi dan departemen sudah dipilih, tanggal dokumen benar, dan user memiliki akses company yang sesuai. Jika tetap kosong, kemungkinan master COA atau budget belum tersedia dan perlu dicek IT/Master Data Admin.
+
+---
+
+23. Instruksi Khusus untuk AI Chatbot
+
+AI chatbot harus memahami bahwa modul Invoice adalah proses bisnis yang panjang dan saling terhubung dengan Head Approval, Over Budget Approval, Finance Approval, Tax Approval, Payment, CashBank, dan Accounting.
+
+Ketika user bertanya soal invoice, AI harus terlebih dahulu mencari konteks:
+
+1. Apakah user sedang membuat invoice baru?
+2. Apakah user sedang menunggu approval?
+3. Approval berada di Head, Finance, Tax, Over Budget, atau Accounting?
+4. Apakah dokumen berstatus reject?
+5. Apakah ada over budget?
+6. Apakah ada tax issue?
+7. Apakah ada incomplete document?
+8. Apakah user mengalami error teknis?
+9. Apakah user hanya butuh penjelasan status?
+10. Apakah user butuh arahan ke IT?
+
+AI tidak boleh langsung menyuruh user menghubungi IT untuk semua masalah. Untuk masalah validasi user, AI harus memberi langkah perbaikan. Untuk masalah sistem, role, API, data tidak muncul, session, upload rusak, atau status tidak berubah, AI harus mengarahkan ke IT dengan data lengkap.
+
+---
+
+24. Checklist Jawaban AI Berdasarkan Status
+
+#Jika Status PD Need Head Approval
+
+Jawab bahwa dokumen menunggu approval atasan. Sarankan user menghubungi approver jika urgent.
+
+#Jika Status PD Reject by Head
+
+Jawab bahwa dokumen ditolak Head. User harus cek alasan rejection, perbaiki dokumen, lalu submit ulang.
+
+#Jika Status PD Need Over Budget Approval
+
+Jawab bahwa ada issue over budget. Dokumen menunggu approval budget khusus.
+
+#Jika Status PD Reject by Over Budget
+
+Jawab bahwa penggunaan budget tambahan ditolak. User harus cek COA, amount, atau diskusi dengan Head/Finance.
+
+#Jika Status PD Need Finance Approval
+
+Jawab bahwa dokumen menunggu finance review. Finance akan cek detail, dokumen, budget, vendor, dan pajak.
+
+#Jika Status PD Reject by Finance
+
+Jawab bahwa finance meminta koreksi. User harus baca alasan dan revisi sesuai catatan.
+
+#Jika Status IV Need Tax Approval
+
+Jawab bahwa invoice menunggu review pajak. Tax akan memeriksa PPN, PPH, NPWP, faktur pajak, dan bukti potong.
+
+#Jika Status Reject by Tax
+
+Jawab bahwa ada masalah pajak. User harus cek tax type, PPH Type, NPWP, faktur pajak, atau nilai DPP/PPN/PPH.
+
+#Jika Status IV Need Finance Checking
+
+Jawab bahwa invoice menunggu finance checking akhir.
+
+#Jika Status IV Need Accounting Checking
+
+Jawab bahwa invoice menunggu pemeriksaan accounting.
+
+#Jika Status Ready To Pay
+
+Jawab bahwa invoice sudah siap masuk payment.
+
+#Jika Status Posted
+
+Jawab bahwa dokumen sudah final/posting. Jika ada salah, perlu correction, void, atau reversal sesuai aturan.
+
+---
+
+25. Ringkasan Kesimpulan Modul Invoice
+
+Modul Invoice adalah gatekeeper utama pengeluaran perusahaan sebelum uang dibayar ke vendor. Proses ini memastikan tagihan memiliki dasar dokumen, disetujui atasan, tidak melanggar budget, benar secara pajak, benar secara finance, dan siap diproses ke payment serta accounting.
+
+Hal terpenting yang harus dipahami AI:
+
+1. Invoice dimulai dari PD.
+2. Setiap PD harus punya vendor, kategori, detail COA, amount, pajak, dan dokumen pendukung.
+3. Head Approval memastikan kebutuhan dan budget disetujui atasan.
+4. Over Budget Approval menangani budget yang melebihi batas.
+5. Finance Approval memastikan dokumen, amount, vendor, COA, dan detail valid.
+6. Incomplete Document Approval adalah pengecualian untuk dokumen pendukung yang belum lengkap.
+7. Tax Approval memastikan PPN, PPH, PPN N0, NPWP, faktur pajak, dan bukti potong benar.
+8. Invoice Posting memastikan invoice siap payment atau posting accounting.
+9. Error validasi harus dibantu dengan langkah perbaikan.
+10. Error sistem, role, API, data tidak muncul, atau status tidak berubah harus diarahkan ke IT.
+
+---
+
+26. Daftar Quick Reference
+
+#Menu Terkait Invoice
+
+- Invoice Create atau User Invoice.
+- Head Approval.
+- Finance Approval.
+- Finance Head Approval atau Over Budget Approval.
+- Tax Approval.
+- Approval Incomplete Document.
+- Invoice Posting.
+- Payment Invoice.
+- CashBank Payment.
+- Accounting Posting.
+
+#Role yang Umum Terlibat
+
+- User atau requester.
+- Head atau Department Head.
+- Finance Staff.
+- Finance Manager.
+- Finance Head.
+- Tax Staff.
+- Accounting Staff.
+- IT Support.
+- Master Data Admin.
+
+#Field Penting
+
+- PD No.
+- IV No.
+- PV No.
+- Vendor.
+- Bill Type.
+- PD Type.
+- Currency.
+- Rate.
+- PO No.
+- BAST/Form Receipt.
+- Kwitansi/Receipt No.
+- SPK No.
+- Description.
+- Division.
+- Department.
+- COA.
+- Base Amount.
+- Tax Type.
+- PPN.
+- PPH.
+- PPH Type.
+- Total Amount.
+- Remaining Budget.
+- Status Budget.
+- Reject Reason.
+- Void Reason.
+
+#Tombol Penting
+
+- Create Invoice.
+- Add Request.
+- Save.
+- Approve.
+- Reject.
+- Correction.
+- Save Correction.
+- Verify.
+- Tax Correction.
+- Update.
+- Checking.
+- Void.
+- Export Excel.
+
+#Dokumen Pendukung Umum
+
+- Invoice Vendor.
+- Faktur Pajak.
+- PO.
+- Copy PO.
+- BAST.
+- Kwitansi.
+- SPK.
+- Bukti pendukung lain sesuai PD Type.
+
+---
+
+27. Prompt Context untuk RAG
+
+Gunakan dokumen ini sebagai knowledge base utama untuk menjawab pertanyaan user terkait modul Invoice JIFAS. Jika user bertanya tentang status, gunakan bagian status. Jika user bertanya tentang cara membuat invoice, gunakan bagian create invoice. Jika user bertanya tentang approval, identifikasi dulu apakah approval berada di Head, Over Budget, Finance, Tax, Incomplete Document, atau Invoice Posting. Jika user menyebut error, bedakan antara error validasi user dan error teknis yang harus ke IT.
+
+AI harus menjawab dengan bahasa yang mudah dipahami user operasional, bukan bahasa developer. AI boleh menyebut istilah teknis seperti API, token, atau role hanya jika masalah memang mengarah ke IT atau akses sistem.

@@ -1,0 +1,665 @@
+﻿# JIFAS Knowledge Base — Account Module
+
+# JIFAS Authentication & User Access Management
+
+---
+
+# Gambaran Umum Modul Account
+
+Modul Account adalah gerbang utama akses ke sistem JIFAS. Semua pengguna wajib melewati modul ini sebelum dapat menggunakan fitur finance, accounting, invoice, payment, PUM, ataupun reporting.
+
+Fungsi utama modul ini adalah:
+
+- Memastikan hanya user yang memiliki akses resmi yang dapat masuk ke sistem
+- Menghubungkan autentikasi dengan akun perusahaan
+- Menjaga keamanan akses ke data keuangan perusahaan
+- Mengelola proses login, logout, reset password, verifikasi keamanan, dan otorisasi user
+- Mengontrol sesi login pengguna
+- Menangani validasi identitas pengguna sebelum akses diberikan
+
+Dalam business process JIFAS, modul Account termasuk bagian dari:
+
+- Security Layer
+- Authentication Layer
+- Authorization Layer
+- Session Management Layer
+
+---
+
+# Tujuan Bisnis Modul Account
+
+Secara bisnis, modul ini dibuat untuk memastikan:
+
+1. Tidak semua orang dapat mengakses data keuangan perusahaan
+2. Setiap aktivitas di JIFAS dapat dilacak berdasarkan user login
+3. Hak akses setiap user dibatasi sesuai jabatan dan perusahaan
+4. Data antar perusahaan dalam grup Jababeka tetap terisolasi
+5. Risiko penyalahgunaan sistem dapat dikurangi
+6. Aktivitas approval memiliki jejak audit yang jelas
+
+---
+
+# Komponen Utama Modul Account
+
+# 1. Login
+
+## Fungsi
+
+Digunakan agar user dapat masuk ke sistem JIFAS menggunakan akun perusahaan.
+
+## Informasi yang dimasukkan user
+
+- Username
+- Password
+- Remember Me (opsional)
+
+## Business Process Login
+
+User membuka halaman login
+→ User memasukkan username dan password
+→ Sistem mengirim data login ke authentication service
+→ Sistem memvalidasi identitas user
+→ Jika berhasil:
+
+- Session dibuat
+- Token authentication dibuat
+- Hak akses user dimuat
+- User diarahkan ke dashboard
+  → Jika gagal:
+- User tetap di halaman login
+- Error ditampilkan
+
+---
+
+# Validasi Login
+
+Sistem melakukan beberapa pengecekan:
+
+# Validasi Username
+
+Sistem memastikan:
+
+- Username terdaftar
+- User aktif
+- User memiliki hak akses
+
+Jika tidak valid:
+
+- Login ditolak
+
+# Validasi Password
+
+Sistem memastikan password sesuai dengan akun user.
+
+Jika salah:
+
+- Login gagal
+- Error authentication muncul
+
+# Validasi Role
+
+Setelah login berhasil, sistem membaca role user.
+
+Contoh:
+
+- USER:KI
+- FINA:KI
+- ACCT:RC
+- WMTR:RC
+
+Role menentukan:
+
+- Menu yang muncul
+- Approval yang bisa dilakukan
+- Data perusahaan yang bisa diakses
+- Action yang diperbolehkan
+
+---
+
+# Remember Me
+
+# Fungsi
+
+Fitur untuk menyimpan sesi login user agar tidak perlu login ulang setiap membuka browser.
+
+# Cara Kerja
+
+Jika checkbox Remember Me dipilih:
+
+- Session authentication disimpan lebih lama
+- Browser menyimpan cookie login
+- User tetap dianggap login dalam periode tertentu
+
+Jika tidak dipilih:
+
+- Session akan habis lebih cepat
+- User harus login ulang
+
+---
+
+# Session Security
+
+# Local Storage Cleanup
+
+Saat halaman login dibuka:
+
+- Sistem membersihkan local storage browser
+
+Tujuannya:
+
+- Menghapus cache session lama
+- Menghindari konflik user sebelumnya
+- Mengurangi risiko data bocor antar pengguna komputer bersama
+
+Ini penting karena banyak user JIFAS menggunakan komputer kantor bersama.
+
+---
+
+# Error Login yang Umum
+
+# Username atau Password Salah
+
+## Gejala
+
+User tidak bisa masuk ke sistem.
+
+## Penyebab
+
+- Salah mengetik username
+- Salah password
+- Caps Lock aktif
+- Akun belum aktif
+
+## Penanganan
+
+- User mencoba ulang
+- Jika tetap gagal → hubungi IT
+
+---
+
+# Akun Tidak Memiliki Hak Akses
+
+## Gejala
+
+Login berhasil tetapi menu kosong atau akses ditolak.
+
+## Penyebab
+
+- Role belum diberikan
+- Mapping menu belum dibuat
+- User salah perusahaan
+
+## Penanganan
+
+Harus ditangani oleh:
+
+- IT Administrator
+- System Administrator JIFAS
+
+---
+
+# Session Expired
+
+## Gejala
+
+User tiba-tiba logout.
+
+## Penyebab
+
+- Session timeout
+- Browser idle terlalu lama
+- Token expired
+
+## Penanganan
+
+- Login ulang
+
+Jika terlalu sering:
+
+- Laporkan ke IT
+
+---
+
+# Forgot Password
+
+# Fungsi
+
+Digunakan ketika user lupa password.
+
+---
+
+# Business Process Forgot Password
+
+User memilih "Forgot Password"
+→ User memasukkan email
+→ Sistem mengirim email reset password
+→ User membuka link reset
+→ User membuat password baru
+→ Password diperbarui
+→ User login ulang
+
+---
+
+# Validasi Forgot Password
+
+Sistem memastikan:
+
+- Email terdaftar
+- Link reset valid
+- Token reset belum expired
+
+Jika gagal:
+
+- Reset ditolak
+
+---
+
+# Error Forgot Password
+
+# Email Tidak Terdaftar
+
+## Gejala
+
+Email reset tidak terkirim.
+
+## Penyebab
+
+- Email salah
+- Email belum didaftarkan
+
+## Penanganan
+
+Hubungi IT untuk pengecekan akun.
+
+---
+
+# Email Reset Tidak Masuk
+
+## Penyebab
+
+- Masuk spam
+- Mail server delay
+- Email internal bermasalah
+
+## Penanganan
+
+- Cek spam
+- Tunggu beberapa menit
+- Hubungi IT jika tetap tidak masuk
+
+---
+
+# Reset Password
+
+# Fungsi
+
+Digunakan untuk mengganti password menggunakan link verifikasi.
+
+---
+
+# Business Process Reset Password
+
+User membuka link reset
+→ User memasukkan:
+
+- Email
+- Password baru
+- Confirm password
+  → Sistem memvalidasi token reset
+  → Password diperbarui
+  → User login kembali
+
+---
+
+# Validasi Password Baru
+
+Password harus memenuhi aturan keamanan tertentu, misalnya:
+
+- Minimal karakter tertentu
+- Tidak boleh kosong
+- Confirm password harus sama
+
+---
+
+# Error Reset Password
+
+# Link Expired
+
+## Penyebab
+
+- Link terlalu lama digunakan
+- Token reset kadaluarsa
+
+## Penanganan
+
+User harus melakukan forgot password ulang.
+
+---
+
+# Password Confirmation Tidak Sama
+
+## Gejala
+
+Reset gagal.
+
+## Penyebab
+
+- Password dan confirm password berbeda
+
+## Penanganan
+
+User harus mengisi ulang.
+
+---
+
+# Email Confirmation
+
+# Fungsi
+
+Memastikan email user valid dan benar-benar dimiliki user tersebut.
+
+---
+
+# Business Process Email Confirmation
+
+User registrasi
+→ Sistem mengirim email verifikasi
+→ User klik link verifikasi
+→ Sistem mengaktifkan email
+→ User dapat login
+
+---
+
+# Two Factor Authentication (2FA)
+
+# Fungsi
+
+Lapisan keamanan tambahan selain password.
+
+---
+
+# Business Process 2FA
+
+User login
+→ Username/password valid
+→ Sistem meminta kode verifikasi
+→ User memilih metode verifikasi
+→ Sistem mengirim kode
+→ User memasukkan kode
+→ Jika valid → login berhasil
+
+---
+
+# Verify Code
+
+# Fungsi
+
+Memastikan kode keamanan yang dimasukkan user benar.
+
+---
+
+# Remember Browser
+
+Jika dipilih:
+
+- Browser dianggap trusted device
+- Tidak perlu verifikasi ulang setiap login
+
+---
+
+# Error Two Factor Authentication
+
+# Verification Code Salah
+
+## Penyebab
+
+- Kode salah
+- Kode expired
+
+## Penanganan
+
+- Minta kode baru
+- Login ulang
+
+---
+
+# External Login
+
+# Fungsi
+
+Memungkinkan login menggunakan layanan eksternal.
+
+Contoh:
+
+- Microsoft
+- Google
+- OAuth provider perusahaan
+
+---
+
+# Business Process External Login
+
+User memilih provider login
+→ Sistem redirect ke provider
+→ User login di provider
+→ Provider mengirim hasil autentikasi
+→ Sistem membuat session JIFAS
+
+---
+
+# Login Failure
+
+# Fungsi
+
+Halaman ketika external authentication gagal.
+
+---
+
+# Penyebab Login Failure
+
+- Provider authentication gagal
+- Akun tidak valid
+- Token provider expired
+- Koneksi authentication bermasalah
+
+---
+
+# Register User
+
+# Fungsi
+
+Mendaftarkan akun baru.
+
+Catatan:
+Pada implementasi perusahaan besar seperti JIFAS, fitur register biasanya:
+
+- Dibatasi
+- Hanya untuk admin
+- Tidak digunakan publik
+
+Karena akun biasanya dikelola IT perusahaan.
+
+---
+
+# Hubungan Modul Account dengan Modul Lain
+
+Modul Account terhubung ke seluruh sistem JIFAS:
+
+| Modul           | Fungsi Koneksi                       |
+| --------------- | ------------------------------------ |
+| Invoice         | Menentukan approval berdasarkan user |
+| Payment         | Validasi finance authority           |
+| Accounting      | Hak posting jurnal                   |
+| CashBank        | Hak approval transaksi bank          |
+| PUM             | Approval uang muka                   |
+| Over Budget     | Validasi approval management         |
+| Finance Console | Validasi akses budgeting             |
+| AI Assistant    | Personalisasi jawaban user           |
+
+---
+
+# Konsep Authorization di JIFAS
+
+Setelah login berhasil:
+
+Sistem membaca:
+
+- Role
+- Company Code
+- Menu Access
+- Approval Authority
+
+Kemudian menentukan:
+
+- Menu yang tampil
+- Data yang boleh dilihat
+- Approval yang boleh dilakukan
+- Transaksi yang bisa diproses
+
+---
+
+# Konsep Multi Company Access
+
+User hanya dapat melihat data perusahaan tertentu.
+
+Contoh:
+
+FINA:KI
+→ hanya akses perusahaan KI
+
+ACCT:RC
+→ hanya akses perusahaan RC
+
+Ini penting untuk menjaga:
+
+- Kerahasiaan data
+- Pemisahan laporan keuangan
+- Kepatuhan audit
+
+---
+
+# Audit & Tracking
+
+Setiap login dan aktivitas user dapat ditelusuri.
+
+Tujuan:
+
+- Audit internal
+- Keamanan sistem
+- Investigasi aktivitas user
+- Compliance perusahaan
+
+---
+
+# Penanganan Masalah oleh IT
+
+Berikut kondisi yang wajib ditangani IT:
+
+| Masalah                  | Penanganan                |
+| ------------------------ | ------------------------- |
+| User tidak bisa login    | Reset password / cek AD   |
+| Menu tidak muncul        | Cek role mapping          |
+| Access denied            | Cek authorization         |
+| Session sering logout    | Cek token/session         |
+| Email reset gagal        | Cek mail service          |
+| 2FA gagal                | Cek provider verification |
+| User salah akses company | Cek company mapping       |
+| Login lambat             | Cek API authentication    |
+| External login gagal     | Cek OAuth/provider        |
+
+---
+
+# Istilah Penting Modul Account
+
+| Istilah        | Arti                             |
+| -------------- | -------------------------------- |
+| Authentication | Proses verifikasi identitas user |
+| Authorization  | Penentuan hak akses              |
+| Session        | Status login aktif user          |
+| Token          | Identitas digital login          |
+| Cookie         | Penyimpanan session browser      |
+| 2FA            | Two Factor Authentication        |
+| Role           | Peran user                       |
+| Company Code   | Kode perusahaan                  |
+| Access Control | Pengaturan hak akses             |
+| External Login | Login menggunakan provider lain  |
+
+---
+
+# Contoh Pertanyaan yang Harus Dipahami AI Chatbot
+
+# Login
+
+User:
+"Saya tidak bisa login"
+
+AI harus memahami kemungkinan:
+
+- Password salah
+- Username salah
+- Role belum ada
+- Session expired
+- Akun inactive
+- Server authentication bermasalah
+
+---
+
+# Forgot Password
+
+User:
+"Saya tidak menerima email reset password"
+
+AI harus memahami:
+
+- Cek spam
+- Email internal delay
+- Email belum terdaftar
+- Hubungi IT jika tetap gagal
+
+---
+
+# Access Denied
+
+User:
+"Saya tidak bisa buka menu payment"
+
+AI harus memahami:
+
+- Role user mungkin tidak memiliki akses
+- Menu authorization belum dimapping
+- Harus dicek oleh IT/Admin
+
+---
+
+# Session Logout
+
+User:
+"JIFAS sering logout sendiri"
+
+AI harus memahami:
+
+- Session timeout
+- Token expired
+- Browser issue
+- Network issue
+- Perlu pengecekan IT jika berulang
+
+---
+
+# Kesimpulan
+
+Modul Account adalah fondasi keamanan JIFAS yang bertugas:
+
+- Memverifikasi identitas user
+- Mengontrol hak akses
+- Menjaga keamanan data keuangan
+- Mengatur session login
+- Menghubungkan user dengan role dan company
+- Menjadi pintu utama seluruh business process JIFAS
+
+Tanpa modul ini:
+
+- Approval tidak dapat divalidasi
+- Audit tidak dapat dilakukan
+- Data perusahaan tidak aman
+- Kontrol keuangan tidak berjalan dengan benar

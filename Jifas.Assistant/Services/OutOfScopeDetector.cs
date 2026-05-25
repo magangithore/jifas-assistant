@@ -56,7 +56,10 @@ namespace Jifas.Assistant.Services
             "head approval", "finance approval", "tax approval", "settle", "realisasi",
             // Context/navigation questions — user is on a JIFAS page
             "halaman ini", "halaman apa", "page ini", "di sini", "sedang di",
-            "menu ini", "modul ini", "fitur ini", "fungsi halaman", "apa yang bisa"
+            "menu ini", "modul ini", "fitur ini", "fungsi halaman", "apa yang bisa",
+            // History/transaction queries — always JIFAS context
+            "history transaksi", "riwayat transaksi", "history pembayaran", "riwayat pembayaran",
+            "history invoice", "riwayat invoice", "history pum", "riwayat pum"
         };
 
         public OutOfScopeDetector(IOllamaService ollamaService, ILoggerService logger)

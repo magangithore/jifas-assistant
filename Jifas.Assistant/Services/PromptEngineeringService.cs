@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -203,22 +203,27 @@ JAWABAN:";
 
                 var sb = new StringBuilder();
 
-                // Core identity — compact but rich
-                sb.AppendLine("Kamu adalah JIFAS AI Assistant, AI Persona Agent untuk sistem JIFAS (Jababeka Integrated Finance Accounting System) PT Jababeka Tbk.");
-                sb.AppendLine("Kamu seperti rekan kerja senior yang sangat paham JIFAS — helpful, jujur, dan langsung ke inti.");
+                // Core identity - compact but rich
+                sb.AppendLine("Kamu adalah JIFAS AI Assistant, AI Persona Agent untuk sistem JIFAS PT Jababeka Tbk.");
+                sb.AppendLine("Kamu seperti rekan kerja senior yang sangat paham JIFAS - helpful, jujur, dan langsung ke inti jawaban.");
                 sb.AppendLine();
 
-                // Domain knowledge reminder (key concepts)
+                // Domain knowledge reminder - aligned with full KB (65 docs, 7235 chunks)
                 sb.AppendLine("DOMAIN PENGETAHUANMU (JIFAS):");
-                sb.AppendLine("- Invoice: alur Create?Finance Approval?Head Approval?Tax?Post; status Draft/Submitted/Checking/Approved/Posted");
-                sb.AppendLine("- PUM: Pengajuan Uang Muka perjalanan dinas; alur Pengajuan?Approval?Distribusi?Realisasi?Settlement");
-                sb.AppendLine("- Receiving: RV (Receive Voucher) penerimaan barang/jasa; ReceiveTax butuh NPWP+alamat WP lengkap");
-                sb.AppendLine("- Payment: Invoice Payment dan PUM Payment; alur Finance?Head?Post; metode: Transfer/BG/Cek/Giro");
-                sb.AppendLine("- Accounting: GL jurnal, AP hutang vendor, AR piutang customer, Acc Period buka/tutup bulan, Posting bulk");
-                sb.AppendLine("- Budget: Budget Card, Committed, Realization, Over Budget ? butuh approval khusus");
-                sb.AppendLine("- Report: Cashflow, Inquiry AP/AR/CB/PUM, Saldo Buku Bank, Deposito, Realisasi PUM");
-                sb.AppendLine("- Master: Company, Employee, Vendor, COA, Department, Division, Account Period, Roles");
-                sb.AppendLine("- Login: username Windows tanpa @jababeka.com; password = password Windows");
+                sb.AppendLine("- Invoice: alur Create->Finance Checking->Head Approval->Tax Approval->Posting; status Draft/Need Finance Checking/Need Head Approval/Need Tax Approval/Need Posting/Posted");
+                sb.AppendLine("- PUM: alur Pengajuan->Finance Approval->Head Approval->Distribusi->Realisasi->Settlement; OLD PUM=historis");
+                sb.AppendLine("- Receiving: RV penerimaan barang/jasa; ReceiveTax butuh NPWP+alamat WP lengkap; Unidentified RV=vendor belum dikenali");
+                sb.AppendLine("- Payment: Invoice Payment + PUM Payment; alur Finance->Head->Post; metode Transfer/BG/Cek/Giro; List BG=daftar Bank Garansi");
+                sb.AppendLine("- CashBank: penerimaan dan pengeluaran kas/bank; sub-modul Receive, Payment, PaymentTax, ReceiveTax");
+                sb.AppendLine("- Accounting: GL jurnal manual, AP hutang vendor, AR piutang customer, Acc Period buka/tutup bulan, Bulk Posting");
+                sb.AppendLine("- ConsolAcc: Consolidation Accounting untuk laporan multi-perusahaan/cabang dalam group");
+                sb.AppendLine("- Budget+Over Budget: Budget Card, Committed, Realization; Over Budget butuh approval khusus atau revisi budget");
+                sb.AppendLine("- Report: Daily Cashflow, Inquiry AP/AR/CB/PUM, Saldo Buku Bank, Deposito Aktif, Realisasi PUM, Budget Card/Committed/Payment/Realization/Receive");
+                sb.AppendLine("- SPK: Surat Perintah Kerja/kontrak; status Draft->Confirmed; terhubung ke Invoice/Payment");
+                sb.AppendLine("- Master: Company, Employee, Vendor, COA, Dept, Division, Account Period, Report Setup, Roles, Budget");
+                sb.AppendLine("- Login: username Windows TANPA @jababeka.com; password = password Windows domain");
+                sb.AppendLine("- Status global: Draft/Need Head Approval/Need Finance Checking/Need Tax Approval/Need Posting/Ready To Pay/Paid/Posted/Complete/Rejected/Void/Confirmed/Need Reverse");
+                sb.AppendLine("- Eskalasi: IT=login/akses/error teknis | Finance=approval/payment/budget | Accounting=COA/jurnal/posting | Tax=PPN/PPH/NPWP");
                 sb.AppendLine();
 
                 // Dynamic context from KB results
@@ -237,7 +242,7 @@ JAWABAN:";
                 {
                     case "HowTo":
                         sb.AppendLine("? Berikan langkah-langkah BERNOMOR yang jelas, konkret, dan bisa langsung dilakukan.");
-                        if (hasSteps) sb.AppendLine("? KB punya panduan langkah-langkah — gunakan sepenuhnya.");
+                        if (hasSteps) sb.AppendLine("? KB punya panduan langkah-langkah ï¿½ gunakan sepenuhnya.");
                         break;
                     case "Troubleshooting":
                         sb.AppendLine("? Identifikasi root cause terlebih dahulu, lalu berikan solusi yang actionable.");
@@ -259,7 +264,7 @@ JAWABAN:";
                 }
                 sb.AppendLine();
 
-                // Precision rules — non-negotiable
+                // Precision rules ï¿½ non-negotiable
                 sb.AppendLine("ATURAN WAJIB:");
                 sb.AppendLine("? Confidence TINGGI: jawab lengkap dan percaya diri dari KB");
                 sb.AppendLine("? Confidence SEDANG: jawab dengan info yang ada, tambahkan catatan jika kurang");
@@ -563,60 +568,38 @@ JAWABAN:";
         {
             var fallbackBuilder = new StringBuilder();
 
-            fallbackBuilder.AppendLine(@"Kamu adalah JIFAS AI Assistant. Jawab pertanyaan user berdasarkan Knowledge Base JIFAS.
-
-SITUASI: Pertanyaan ini memiliki kecocokan TERBATAS dengan Knowledge Base. 
-Gunakan informasi yang PALING MENDEKATI dan bantu user sebisa mungkin.
-
-INSTRUKSI PENTING:
-1. Cari dan gunakan informasi yang PALING RELEVAN dari KB
-2. Jika KB tidak punya jawaban langsung, gunakan konteks TERDEKAT yang relevan
-3. KATAKAN DENGAN JELAS jika informasi yang diminta TIDAK TERSEDIA di KB
-4. JANGAN membuat atau mengarang informasi baru
-5. Berikan alternatif atau pertanyaan terkait yang MUNGKIN lebih sesuai
-6. Sarankan topik JIFAS lain yang MUNGKIN relevan
-
-KNOWLEDGE BASE YANG TERSEDIA:");
-
-            if (kbResults.Count == 0)
+            if (kbResults == null || kbResults.Count == 0)
             {
-                fallbackBuilder.AppendLine("(Tidak ada hasil pencarian yang relevan)");
+                // No KB results: rely entirely on the rich system instruction JIFAS knowledge
+                fallbackBuilder.AppendLine($"PERTANYAAN USER: \"{userQuery}\"");
                 fallbackBuilder.AppendLine();
-                fallbackBuilder.AppendLine("SARAN TOPIK JIFAS YANG TERSEDIA:");
-                fallbackBuilder.AppendLine("- Master Data (setup perusahaan, divisi, departemen, vendor, COA, budget)");
-                fallbackBuilder.AppendLine("- Invoice (pengajuan pembayaran berdasarkan invoice vendor)");
-                fallbackBuilder.AppendLine("- PUM (pengajuan uang muka/advance)");
-                fallbackBuilder.AppendLine("- Receiving (penerimaan barang/jasa)");
-                fallbackBuilder.AppendLine("- Payment (proses pembayaran berbagai jenis)");
-                fallbackBuilder.AppendLine("- Accounting (jurnal, laporan keuangan, posting)");
-                fallbackBuilder.AppendLine("- Troubleshooting (cara mengatasi masalah umum)");
+                fallbackBuilder.AppendLine("Jawab pertanyaan ini menggunakan pengetahuan domain JIFAS yang kamu miliki sebagai JIFAS AI Expert.");
+                fallbackBuilder.AppendLine("Berikan jawaban yang terstruktur, spesifik, dan actionable.");
+                fallbackBuilder.AppendLine("Jika benar-benar tidak ada informasi relevan, sarankan topik terkait atau eskalasi ke tim yang tepat.");
+                fallbackBuilder.AppendLine();
+                fallbackBuilder.AppendLine("JAWABAN:");
             }
             else
             {
+                fallbackBuilder.AppendLine("Kamu adalah JIFAS AI Assistant. Jawab pertanyaan berikut berdasarkan Knowledge Base dan domain knowledge JIFAS kamu.");
+                fallbackBuilder.AppendLine("Gunakan informasi di bawah sebagai referensi utama, dan lengkapi dengan pengetahuan JIFAS kamu jika diperlukan.");
+                fallbackBuilder.AppendLine();
+                fallbackBuilder.AppendLine("KNOWLEDGE BASE:");
+
                 foreach (var result in kbResults.OrderByDescending(r => r.Score).Take(3))
                 {
-                    var relevanceLevel = result.Score >= 0.7 ? "CUKUP RELEVAN" : "AGAK RELEVAN";
-                    fallbackBuilder.AppendLine($"\n• {result.Title} ({relevanceLevel}: {(result.Score * 100):F1}%)");
-                    fallbackBuilder.AppendLine($"  Kategori: {result.Category}");
-                    var preview = result.Content.Length > 200 
-                        ? result.Content.Substring(0, 200) + "..." 
-                        : result.Content;
-                    fallbackBuilder.AppendLine($"  Preview: {preview}");
+                    var relevance = result.Score >= 0.7 ? "RELEVAN" : result.Score >= 0.5 ? "CUKUP RELEVAN" : "AGAK RELEVAN";
+                    fallbackBuilder.AppendLine($"[{result.Title}] ({relevance}: {(result.Score * 100):F1}%)");
+                    fallbackBuilder.AppendLine($"Kategori: {result.Category}");
+                    var content = result.Content?.Length > 500 ? result.Content.Substring(0, 500) + "..." : (result.Content ?? "");
+                    fallbackBuilder.AppendLine(content);
+                    fallbackBuilder.AppendLine();
                 }
+
+                fallbackBuilder.AppendLine($"PERTANYAAN USER: \"{userQuery}\"");
+                fallbackBuilder.AppendLine();
+                fallbackBuilder.AppendLine("JAWABAN:");
             }
-
-            fallbackBuilder.AppendLine($@"
-
-PERTANYAAN USER: ""{userQuery}""
-
-RESPONS YANG DIHARAPKAN:
-- Jika bisa menjawab dengan informasi dari KB: Berikan jawaban yang jelas dan terstruktur
-- Jika TIDAK bisa menjawab: Katakan terang-terangan ""Maaf, informasi ini tidak tersedia di Knowledge Base JIFAS""
-- Selalu sarankan alternatif topik terkait yang MUNGKIN membantu
-
-JANGAN LUPA: Jawab dalam Bahasa Indonesia yang profesional dan ramah.
-
-RESPONS:");
 
             return fallbackBuilder.ToString();
         }
@@ -715,21 +698,21 @@ Silakan jelaskan lebih detail agar saya dapat memberikan jawaban yang tepat.";
         {
             var hasKbContent = kbResults.Count > 0;
             var confidenceNote = hasKbContent
-                ? $"KB tersedia ({kbResults.Count} dokumen relevan) — gunakan penuh."
-                : "KB tidak punya jawaban spesifik — jujur bahwa info terbatas.";
+                ? $"KB tersedia ({kbResults.Count} dokumen relevan) ï¿½ gunakan penuh."
+                : "KB tidak punya jawaban spesifik ï¿½ jujur bahwa info terbatas.";
 
             return queryType switch
             {
                 "HowTo" =>
-$@"INSTRUKSI — PERTANYAAN 'CARA/LANGKAH' ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN 'CARA/LANGKAH' ({confidenceNote})
 - Berikan langkah bernomor yang jelas dan actionable
 - Gunakan nama tombol/menu JIFAS yang sebenarnya (Save, Submit, Approve, Post, Void, dll)
 - Sebutkan path menu jika diketahui dari KB
 - Tambahkan catatan/tip penting di akhir jika ada
-- Jangan skip langkah — user mungkin pemula dengan JIFAS",
+- Jangan skip langkah ï¿½ user mungkin pemula dengan JIFAS",
 
                 "Troubleshooting" =>
-$@"INSTRUKSI — PERTANYAAN MASALAH/ERROR ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN MASALAH/ERROR ({confidenceNote})
 - Identifikasi dulu kemungkinan penyebab masalah
 - Berikan solusi urut dari paling mudah ke kompleks
 - Jelaskan expected result setelah setiap solusi
@@ -737,7 +720,7 @@ $@"INSTRUKSI — PERTANYAAN MASALAH/ERROR ({confidenceNote})
 - Jangan berasumsi user sudah familiar dengan sistem",
 
                 "Explanation" =>
-$@"INSTRUKSI — PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
 - Mulai dengan definisi singkat di kalimat pertama
 - Jelaskan peran/fungsinya di sistem JIFAS
 - Hubungkan dengan modul lain jika relevan
@@ -745,28 +728,28 @@ $@"INSTRUKSI — PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
 - Berikan contoh konkret dari konteks bisnis JIFAS",
 
                 "Navigation" =>
-$@"INSTRUKSI — PERTANYAAN NAVIGASI/LOKASI MENU ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN NAVIGASI/LOKASI MENU ({confidenceNote})
 - Berikan path menu: Modul ? Sub-menu ? Halaman
 - Sebutkan URL relatif jika diketahui
 - Deskripsikan tampilan/ciri halaman agar mudah dikenali
 - Jika ada prasyarat (login, role, permission), sebutkan",
 
                 "Authorization" =>
-$@"INSTRUKSI — PERTANYAAN ROLE/HAK AKSES ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN ROLE/HAK AKSES ({confidenceNote})
 - Jelaskan role yang diperlukan: WMTR (IT), USER (umum), USRL (PUM dept-level)
 - Tunjukkan cara request akses jika user tidak punya permission
 - Jelaskan perbedaan antar role jika relevan
 - Eskalasi akses: minta ke admin sistem atau IT Help Desk",
 
                 "Technical" =>
-$@"INSTRUKSI — PERTANYAAN TEKNIS/FIELD ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN TEKNIS/FIELD ({confidenceNote})
 - Jelaskan field/komponen dengan detail: nama, tipe, validasi, format
 - Berikan contoh input yang valid
 - Hubungkan dengan field/modul terkait
 - Jelaskan konsekuensi jika field tidak diisi atau salah format",
 
                 _ =>
-$@"INSTRUKSI — PERTANYAAN UMUM ({confidenceNote})
+$@"INSTRUKSI ï¿½ PERTANYAAN UMUM ({confidenceNote})
 - Pahami intent user dan jawab yang paling relevan
 - Strukturkan jawaban dengan jelas menggunakan bullet atau numbering
 - Spesifik tentang fitur/proses JIFAS, hindari jawaban abstrak"

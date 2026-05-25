@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Jifas.Assistant.Utilities;
 
 namespace Jifas.Assistant.Services
 {
@@ -22,6 +23,7 @@ namespace Jifas.Assistant.Services
         Configuration,      // "Cara setting...", "Setup..."
         Greeting,           // "Halo", "Selamat pagi"
         Gratitude,          // "Terima kasih", "Thanks"
+        TicketRequest,      // "Buat tiket", "Lapor masalah", "Create ticket"
         OutOfScope,         // Not JIFAS-related
         Unclear,            // Ambiguous query
         General             // General JIFAS question
@@ -125,55 +127,66 @@ namespace Jifas.Assistant.Services
         private static readonly Dictionary<string, List<string>> JifasSynonyms = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
         {
             // Invoice & Payment
-            { "invoice", new List<string> { "tagihan", "faktur", "inv", "billing" } },
-            { "payment", new List<string> { "pembayaran", "bayar", "transfer", "pmt" } },
-            { "approve", new List<string> { "approval", "setuju", "acc", "otorisasi", "approve" } },
+            { "invoice", new List<string> { "tagihan", "faktur", "inv", "billing", "invoice payment" } },
+            { "payment", new List<string> { "pembayaran", "bayar", "transfer", "pmt", "pay" } },
+            { "approve", new List<string> { "approval", "setuju", "acc", "otorisasi", "approve", "head approval", "finance checking" } },
             { "reject", new List<string> { "tolak", "batal", "cancel", "void" } },
-            
+
             // Budget
-            { "budget", new List<string> { "anggaran", "dana", "alokasi" } },
-            { "overbudget", new List<string> { "over budget", "melebihi anggaran", "lebih budget" } },
-            
+            { "budget", new List<string> { "anggaran", "dana", "alokasi", "budget card" } },
+            { "overbudget", new List<string> { "over budget", "melebihi anggaran", "lebih budget", "committed", "realization" } },
+
             // PUM
-            { "pum", new List<string> { "uang muka", "advance", "kasbon", "pinjaman" } },
-            { "reimburse", new List<string> { "reimbursement", "penggantian", "klaim" } },
-            
-            // Receiving
-            { "receiving", new List<string> { "penerimaan", "terima barang", "rv", "goods receipt" } },
-            { "rv", new List<string> { "receiving", "receipt", "penerimaan" } },
-            
+            { "pum", new List<string> { "uang muka", "advance", "kasbon", "perjalanan dinas", "realisasi pum", "old pum", "distribusi" } },
+            { "reimburse", new List<string> { "reimbursement", "penggantian", "klaim", "settlement" } },
+
+            // Receiving & CashBank
+            { "receiving", new List<string> { "penerimaan", "terima barang", "rv", "receive voucher", "goods receipt", "unidentified rv" } },
+            { "rv", new List<string> { "receiving", "receipt", "penerimaan", "receive voucher" } },
+            { "cashbank", new List<string> { "cash bank", "kas bank", "petty cash", "receivetax", "paymenttax" } },
+
+            // SPK
+            { "spk", new List<string> { "surat perintah kerja", "kontrak", "contract", "perjanjian kerja" } },
+
+            // Tax
+            { "tax", new List<string> { "pajak", "ppn", "pph", "npwp", "faktur pajak", "bukti potong", "tax approval" } },
+            { "taxapproval", new List<string> { "tax approval", "persetujuan pajak", "review pajak" } },
+
+            // Consolidation
+            { "consolacc", new List<string> { "consolidation accounting", "konsolidasi", "laporan konsolidasi" } },
+
             // Master Data
-            { "vendor", new List<string> { "supplier", "pemasok", "rekanan" } },
-            { "coa", new List<string> { "chart of account", "akun", "account" } },
-            { "company", new List<string> { "perusahaan", "entitas" } },
+            { "vendor", new List<string> { "supplier", "pemasok", "rekanan", "tenant" } },
+            { "coa", new List<string> { "chart of account", "akun", "account", "kode akun" } },
+            { "company", new List<string> { "perusahaan", "entitas", "unit bisnis" } },
             { "division", new List<string> { "divisi", "bagian" } },
             { "department", new List<string> { "departemen", "dept", "unit" } },
-            
+
             // Accounting
-            { "posting", new List<string> { "post", "jurnal", "entry" } },
+            { "posting", new List<string> { "post", "jurnal", "entry", "bulk posting" } },
             { "gl", new List<string> { "general ledger", "buku besar", "ledger" } },
             { "ar", new List<string> { "account receivable", "piutang" } },
             { "ap", new List<string> { "account payable", "hutang", "payable" } },
-            
+
             // Actions
-            { "buat", new List<string> { "create", "tambah", "input", "bikin", "membuat" } },
-            { "edit", new List<string> { "ubah", "update", "modify", "ganti" } },
+            { "buat", new List<string> { "create", "tambah", "input", "bikin", "membuat", "add" } },
+            { "edit", new List<string> { "ubah", "update", "modify", "ganti", "change" } },
             { "hapus", new List<string> { "delete", "remove", "buang" } },
-            { "lihat", new List<string> { "view", "tampilkan", "cek", "check" } },
-            { "cari", new List<string> { "search", "find", "filter" } },
-            
+            { "lihat", new List<string> { "view", "tampilkan", "cek", "check", "see" } },
+            { "cari", new List<string> { "search", "find", "filter", "lookup" } },
+
             // Status
-            { "pending", new List<string> { "menunggu", "belum diproses", "waiting" } },
-            { "done", new List<string> { "selesai", "completed", "finish" } },
-            { "draft", new List<string> { "draf", "belum submit" } },
-            
+            { "pending", new List<string> { "menunggu", "belum diproses", "waiting", "need approval" } },
+            { "done", new List<string> { "selesai", "completed", "finish", "posted", "paid" } },
+            { "draft", new List<string> { "draf", "belum submit", "belum diajukan" } },
+
             // Troubleshooting
-            { "error", new List<string> { "masalah", "gagal", "tidak bisa", "problem", "issue" } },
-            { "tidak bisa", new List<string> { "gagal", "error", "cannot", "can't" } },
-            
+            { "error", new List<string> { "masalah", "gagal", "tidak bisa", "problem", "issue", "bug" } },
+            { "tidak bisa", new List<string> { "gagal", "error", "cannot", "can't", "tidak berhasil" } },
+
             // Common question words
-            { "cara", new List<string> { "bagaimana", "how", "langkah", "step", "prosedur" } },
-            { "apa", new List<string> { "what", "definisi", "pengertian", "arti" } }
+            { "cara", new List<string> { "bagaimana", "how", "langkah", "step", "prosedur", "tutorial" } },
+            { "apa", new List<string> { "what", "definisi", "pengertian", "arti", "maksud" } }
         };
 
         // Indonesian stopwords
@@ -237,23 +250,70 @@ namespace Jifas.Assistant.Services
             { 
                 @"\bterima\s*kasih\b", @"\bthanks\b", @"\bthank\s*you\b", @"\bmakasih\b",
                 @"\bthx\b", @"\btq\b"
+            }},
+            { IntentType.TicketRequest, new List<string>
+            {
+                @"\bbuat(?:kan)?\s+tiket?\b", @"\bcreate\s+ticket\b", @"\bbikin\s+tiket?\b",
+                @"\blapor(?:kan)?\s+(?:masalah|issue|error|problem)\b",
+                @"\breport\s+(?:issue|problem|bug)\b",
+                @"\bopen\s+ticket\b", @"\bsubmit\s+ticket\b",
+                @"\bmau\s+(?:buat|bikin)\s+tiket?\b", @"\btolong\s+buat(?:kan)?\s+tiket?\b",
+                @"\bescalate\b", @"\beskalasi\b"
             }}
         };
 
-        // JIFAS scope keywords
+        // JIFAS scope keywords - comprehensive coverage of all modules
         private static readonly HashSet<string> JifasKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "jifas", "invoice", "payment", "pum", "receiving", "rv", "budget",
-            "vendor", "supplier", "coa", "chart of account", "gl", "general ledger",
-            "ar", "ap", "posting", "jurnal", "journal", "accounting",
-            "master data", "finance", "accounting", "approval", "workflow",
-            "report", "laporan", "dashboard", "monitoring",
-            "approve", "reject", "submit", "draft", "void", "cancel",
-            "create invoice", "buat invoice", "bayar", "transfer", "bg", "bilyet giro",
-            "overbudget", "over budget", "cross month", "cross year",
-            "petty cash", "kasbon", "uang muka", "advance",
-            "authority", "otorisasi", "role", "permission", "akses",
-            "head", "manager", "director", "finance checker"
+            // Core system
+            "jifas", "jababeka", "integrated", "finance", "accounting",
+            // Invoice module
+            "invoice", "tagihan", "faktur", "inv", "billing",
+            // Payment module
+            "payment", "pembayaran", "bayar", "transfer", "bg", "bilyet giro", "giro", "cek",
+            // PUM module
+            "pum", "uang muka", "advance", "kasbon", "perjalanan dinas", "realisasi", "settlement",
+            "distribusi", "old pum",
+            // Receiving module
+            "receiving", "rv", "receive voucher", "penerimaan", "goods receipt", "unidentified",
+            // CashBank module
+            "cashbank", "cash bank", "kas", "bank", "petty cash", "receivetax", "paymenttax",
+            // Budget module
+            "budget", "anggaran", "dana", "overbudget", "over budget", "committed", "realization",
+            "budget card",
+            // SPK module
+            "spk", "surat perintah kerja", "kontrak", "contract",
+            // Accounting module
+            "gl", "general ledger", "buku besar", "jurnal", "journal", "posting", "bulk posting",
+            "ar", "ap", "account receivable", "account payable", "piutang", "hutang",
+            "acc period", "account period", "cross month", "cross year",
+            // Consolidation
+            "consolacc", "consolidation", "konsolidasi",
+            // Tax
+            "tax", "pajak", "ppn", "pph", "npwp", "faktur pajak", "bukti potong",
+            "taxapproval", "tax approval",
+            // Master data
+            "vendor", "supplier", "pemasok", "rekanan",
+            "coa", "chart of account", "akun",
+            "company", "perusahaan", "entitas",
+            "employee", "karyawan", "pegawai",
+            "division", "divisi", "department", "departemen",
+            "master", "master data",
+            // Approval workflow
+            "approval", "approve", "approver", "head approval", "finance checking",
+            "reject", "tolak", "void", "reverse", "submit", "draft",
+            // Status
+            "status", "need head approval", "need finance checking", "need tax approval",
+            "need posting", "ready to pay", "posted", "paid", "complete", "confirmed",
+            // Report
+            "report", "laporan", "cashflow", "daily cashflow", "inquiry",
+            "saldo", "deposito", "realisasi", "commited realization",
+            // Access
+            "login", "akses", "role", "permission", "authority", "otorisasi",
+            "user", "wmtr", "fina", "usrl",
+            // Actions
+            "create", "buat", "edit", "update", "hapus", "delete", "lihat", "view",
+            "search", "cari", "filter", "export", "print", "cetak"
         };
 
         // Out of scope indicators
@@ -326,7 +386,7 @@ namespace Jifas.Assistant.Services
                     return new ExpandedQuery { OriginalQuery = originalQuery };
 
                 // Check cache
-                var cacheKey = $"QueryExpand_{originalQuery.GetHashCode()}";
+                var cacheKey = $"QueryExpand_{HashHelper.ToShortStableHash(originalQuery)}";
                 var cached = _cacheService.Get<ExpandedQuery>(cacheKey);
                 if (cached != null) return cached;
 
@@ -546,6 +606,12 @@ namespace Jifas.Assistant.Services
             {
                 if (Regex.IsMatch(query, pattern, RegexOptions.IgnoreCase))
                     return new IntentResult { Intent = IntentType.Gratitude, Confidence = 0.95, Reason = "Gratitude pattern" };
+            }
+
+            foreach (var pattern in IntentPatterns[IntentType.TicketRequest])
+            {
+                if (Regex.IsMatch(query, pattern, RegexOptions.IgnoreCase))
+                    return new IntentResult { Intent = IntentType.TicketRequest, Confidence = 0.95, Reason = "Ticket request pattern" };
             }
 
             return null;

@@ -253,11 +253,18 @@ namespace Jifas.Assistant.Services
 
         public double CalculateGroundingScore(string response, List<KnowledgeBaseResult> kbSources)
         {
-            if (kbSources == null || kbSources.Count == 0) return 0.3;
             if (string.IsNullOrWhiteSpace(response)) return 0;
 
-            var responseLower = response.ToLower();
-            var responseWords = ExtractSignificantWords(responseLower);
+            var rLower = response.ToLower();
+
+            // If no KB sources, score based on JIFAS domain indicators in the response
+            if (kbSources == null || kbSources.Count == 0)
+            {
+                var jifasTerms = QualityIndicators.Count(i => rLower.Contains(i));
+                return Math.Min(0.3 + (jifasTerms * 0.05), 0.7);
+            }
+
+            var responseWords = ExtractSignificantWords(rLower);
             var kbContent = string.Join(" ", kbSources.Select(s => s.Content.ToLower()));
             var kbWords = ExtractSignificantWords(kbContent);
 
@@ -272,7 +279,7 @@ namespace Jifas.Assistant.Services
             var qualityBonus = 0.0;
             foreach (var indicator in QualityIndicators)
             {
-                if (responseLower.Contains(indicator) && kbContent.Contains(indicator))
+                if (rLower.Contains(indicator) && kbContent.Contains(indicator))
                     qualityBonus += 0.05;
             }
 
@@ -439,9 +446,11 @@ namespace Jifas.Assistant.Services
             {
                 if (kbResults == null || kbResults.Count == 0)
                 {
-                    result.CalculatedConfidence = 0;
-                    result.MeetsThreshold = false;
-                    result.Reason = "No KB results";
+                    // No KB results, but AI has system knowledge - give a moderate base confidence
+                    // so the system still generates a response from its domain knowledge
+                    result.CalculatedConfidence = 0.35;
+                    result.MeetsThreshold = false; // Will use fallback path but still calls AI
+                    result.Reason = "No KB results - using system knowledge";
                     return result;
                 }
 

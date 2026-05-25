@@ -42,6 +42,12 @@ namespace Jifas.Assistant.Services
         /// Must be called before GenerateResponseAsync / GenerateSuggestionsAsync.
         /// </summary>
         void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat");
+
+        /// <summary>
+        /// Set recent conversation turns so Ollama can maintain true multi-turn context.
+        /// Each tuple is (userMessage, assistantResponse) ordered oldest-first.
+        /// </summary>
+        void SetConversationHistory(List<(string user, string assistant)>? turns);
     }
 
     public class KnowledgeBaseResult

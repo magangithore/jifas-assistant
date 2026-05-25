@@ -28,18 +28,18 @@ namespace jifas_assistant.DAL.Models
         /// Modul JIFAS yang paling sering ditanya (JSON array string)
         /// Contoh: ["Invoice","Payment","PUM"]
         /// </summary>
-        public string FavoriteModules { get; set; }
+        public string? FavoriteModules { get; set; }
 
         /// <summary>
         /// Topik/kategori KB yang sering diakses (JSON array string)
         /// </summary>
-        public string FrequentTopics { get; set; }
+        public string? FrequentTopics { get; set; }
 
         /// <summary>
         /// Pertanyaan-pertanyaan terakhir (JSON array string, maks 20 item)
         /// Dipakai untuk deteksi pola dan personalisasi saran
         /// </summary>
-        public string RecentQuestions { get; set; }
+        public string? RecentQuestions { get; set; }
 
         // ─── Karakteristik User ───────────────────────────────────────────────
 
@@ -61,14 +61,14 @@ namespace jifas_assistant.DAL.Models
         /// Contoh: "Finance", "Accounting", "Procurement"
         /// </summary>
         [MaxLength(100)]
-        public string DetectedDepartment { get; set; }
+        public string? DetectedDepartment { get; set; }
 
         /// <summary>
         /// Role JIFAS yang terdeteksi dari pola pertanyaan
         /// Contoh: "Pemohon Invoice", "Finance Checker", "Head Approval"
         /// </summary>
         [MaxLength(100)]
-        public string DetectedRole { get; set; }
+        public string? DetectedRole { get; set; }
 
         // ─── Statistik ────────────────────────────────────────────────────────
 

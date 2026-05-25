@@ -1,18 +1,33 @@
 using System;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Jifas.Assistant;
 using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
-using Jifas.Assistant.Middleware;
 using Jifas.Assistant.Hubs;
 using jifas_assistant.DAL.Models;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Kestrel for long-running AI requests (Ollama can take 60-180s)
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    // Overall request timeout: 5 minutes (Ollama main + suggestions combined)
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(5);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(5);
+});
 
 // ========================================
 // ADD SERVICES TO CONTAINER
@@ -52,6 +67,9 @@ builder.Services.AddSingleton(sp => new AppSettings(builder.Configuration));
 builder.Services.AddDbContext<JIFAS_AssistantContext>(options =>
 {
     var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
+    if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
+
     options.UseSqlServer(connectionString);
 });
 
@@ -62,6 +80,52 @@ builder.Services.AddControllers()
         options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
         options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
     });
+
+// 4. Authentication & Authorization
+var jwtEnabled = builder.Configuration.GetValue<bool>("Jwt:Enabled");
+var jwtAuthority = builder.Configuration["Jwt:Authority"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+var jwtSigningKey = builder.Configuration["Jwt:SigningKey"];
+
+if (jwtEnabled)
+{
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = builder.Configuration.GetValue<bool>("Jwt:RequireHttpsMetadata");
+            options.Authority = !string.IsNullOrWhiteSpace(jwtAuthority) ? jwtAuthority : null;
+            options.Audience = jwtAudience;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = builder.Configuration.GetValue<bool>("Jwt:ValidateIssuer", true),
+                ValidateAudience = builder.Configuration.GetValue<bool>("Jwt:ValidateAudience", true),
+                ValidateLifetime = builder.Configuration.GetValue<bool>("Jwt:ValidateLifetime", true),
+                ValidateIssuerSigningKey = true,
+                ValidAudience = jwtAudience,
+                ClockSkew = TimeSpan.FromSeconds(builder.Configuration.GetValue<int>("Jwt:ClockSkewSeconds", 30))
+            };
+
+            if (!string.IsNullOrWhiteSpace(jwtAuthority))
+                options.TokenValidationParameters.ValidIssuer = jwtAuthority;
+
+            if (!string.IsNullOrWhiteSpace(jwtSigningKey))
+                options.TokenValidationParameters.IssuerSigningKey =
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey));
+        });
+}
+else
+{
+    builder.Services.AddAuthentication();
+}
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IAuthorizationHandler, AdminAccessAuthorizationHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("KnowledgeBaseAdmin", policy =>
+        policy.AddRequirements(new AdminAccessRequirement()));
+});
 
 // 5. Add Swagger/OpenAPI Documentation
 builder.Services.AddSwaggerGen(c =>
@@ -77,11 +141,31 @@ builder.Services.AddSwaggerGen(c =>
 // 6. Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("ConfiguredCors", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        var allowedOrigins = builder.Configuration
+            .GetSection("Cors:AllowedOrigins")
+            .Get<string[]>()?
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .ToArray() ?? Array.Empty<string>();
+
+        if (allowedOrigins.Length == 0)
+        {
+            // Dev: allow any origin but still support credentials (needed for SignalR)
+            // Use SetIsOriginAllowed instead of AllowAnyOrigin to allow AllowCredentials
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // Production: explicit origins + credentials for SignalR
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -107,18 +191,29 @@ builder.Services.AddScoped<IPromptEngineeringService, PromptEngineeringService>(
 builder.Services.AddHttpClient<OllamaAIService>().Services
     .AddScoped<IOllamaService, OllamaAIService>();
 
-// Embedding Service - Ollama qwen3-embedding:4b
-builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
+// Embedding Service - Ollama qwen3-embedding:4b (typed HttpClient registration)
+builder.Services.AddHttpClient<OllamaEmbeddingService>().Services
+    .AddScoped<IEmbeddingService, OllamaEmbeddingService>();
 
 // Knowledge Base Services
 builder.Services.AddScoped<IKnowledgeBaseLoaderService, KnowledgeBaseLoaderService>();
 builder.Services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
 builder.Services.AddScoped<IChatHistoryService, ChatHistoryService>();
-builder.Services.AddScoped<ITicketService, TicketService>();
+
+// Ticket Service - Jira integration with typed HttpClient + SSL bypass for corporate network
+builder.Services.AddHttpClient<TicketService>(client =>
+{
+    // Use Atlassian API gateway (required for Jira Cloud v3 with CloudId)
+    client.BaseAddress = new Uri("https://api.atlassian.com");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    // Bypass corporate SSL inspection (same as Playwright jiraClient.js)
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+}).Services.AddScoped<ITicketService, TicketService>();
+
 builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
-builder.Services.AddScoped<IConversationService, ConversationService>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
 builder.Services.AddScoped<IKnowledgeBaseContextService, KnowledgeBaseContextService>();
 
@@ -139,8 +234,8 @@ builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 // ChatService - MUST be registered AFTER all its dependencies
 builder.Services.AddScoped<IChatService, ChatService>();
 
-// ========== Optional Services ==========
-builder.Services.AddSingleton<ICommonQueryCacheService, CommonQueryCacheService>();
+// Embedding cache warmup - pre-loads all chunk embeddings on startup (eliminates cold-start latency)
+builder.Services.AddHostedService<EmbeddingWarmupService>();
 
 // 9. Add Health Checks
 builder.Services.AddHealthChecks()
@@ -197,8 +292,7 @@ using (var scope = app.Services.CreateScope())
 // CONFIGURE HTTP REQUEST PIPELINE
 // ========================================
 
-// 0. JWT AUTHENTICATION MIDDLEWARE (Load from appsettings.json - NO hardcoded secrets)
-app.UseJwtAuthentication();
+app.UseAuthentication();
 
 // 0.5 REQUEST LOGGING & CORRELATION MIDDLEWARE (ONLY in Production)
 if (!app.Environment.IsDevelopment())
@@ -220,7 +314,7 @@ else
 }
 
 // 2. CORS (MUST be before StaticFiles)
-app.UseCors("AllowAll");
+app.UseCors("ConfiguredCors");
 
 // 3. Static Files (BEFORE Swagger so bundled files can be served)
 app.UseStaticFiles();

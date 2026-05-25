@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using Jifas.Assistant.Services;
+using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
 
 namespace Jifas.Assistant.Controllers
@@ -107,6 +108,7 @@ namespace Jifas.Assistant.Controllers
         /// <summary>
         /// Add a new knowledge base document
         /// </summary>
+        [Authorize(Policy = "KnowledgeBaseAdmin")]
         [HttpPost("documents")]
         public async Task<IActionResult> AddDocument([FromBody] KBDocumentRequest request)
         {
@@ -155,6 +157,7 @@ namespace Jifas.Assistant.Controllers
         /// <summary>
         /// Update an existing document
         /// </summary>
+        [Authorize(Policy = "KnowledgeBaseAdmin")]
         [HttpPut("documents/{id:int}")]
         public async Task<IActionResult> UpdateDocument(int id, [FromBody] KBDocumentRequest request)
         {
@@ -202,6 +205,7 @@ namespace Jifas.Assistant.Controllers
         /// <summary>
         /// Delete (deactivate) a document
         /// </summary>
+        [Authorize(Policy = "KnowledgeBaseAdmin")]
         [HttpDelete("documents/{id:int}")]
         public async Task<IActionResult> DeleteDocument(int id)
         {
@@ -317,11 +321,11 @@ namespace Jifas.Assistant.Controllers
                 {
                     try
                     {
-                        var embedding = await _embeddingService.GenerateEmbeddingAsync(chunk.Content);
+                        var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk.Content);
                         
                         if (embedding != null && embedding.Length > 0)
                         {
-                            chunk.Embedding = JsonConvert.SerializeObject(embedding);
+                            chunk.Embedding = EmbeddingSerializer.Serialize(embedding);
                             chunk.EmbeddingDimensions = embedding.Length;
                             successCount++;
                             System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: {embedding.Length}-dim embedding");
@@ -397,6 +401,7 @@ namespace Jifas.Assistant.Controllers
         /// <summary>
         /// Generate embeddings for chunks with NULL embeddings
         /// </summary>
+        [Authorize(Policy = "KnowledgeBaseAdmin")]
         [HttpPost("generate-embeddings")]
         public async Task<IActionResult> GenerateEmbeddings()
         {
@@ -426,11 +431,11 @@ namespace Jifas.Assistant.Controllers
                 {
                     try
                     {
-                        var embedding = await _embeddingService.GenerateEmbeddingAsync(chunk.Content);
+                        var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk.Content);
 
                         if (embedding != null && embedding.Length > 0)
                         {
-                            chunk.Embedding = JsonConvert.SerializeObject(embedding);
+                            chunk.Embedding = EmbeddingSerializer.Serialize(embedding);
                             chunk.EmbeddingDimensions = embedding.Length;
                             chunk.UpdatedAt = DateTime.Now;
                             successCount++;

@@ -1,0 +1,1645 @@
+﻿JIFAS Knowledge Base - Modul Receiving / IK
+
+Dokumen ini dibuat sebagai knowledge base untuk AI Chatbot JIFAS agar memahami modul Receiving atau yang sering disebut IK dari sisi user, business process, flow dokumen, validasi, status, pajak, troubleshooting, dan eskalasi ke IT. Fokus dokumen ini bukan source code, tetapi logika proses bisnis dan cara kerja modul dalam operasional JIFAS.
+
+
+
+#1. Ringkasan Modul
+
+Modul Receiving adalah modul yang menangani pencatatan dokumen penerimaan dalam JIFAS. Dalam konteks JIFAS, Receiving dapat berhubungan dengan beberapa jenis proses:
+
+1. Invoice IK atau Invoice Keputusan.
+2. Receiving Voucher atau RV.
+3. Receive of Sales atau Sales Receive.
+4. Approval of Unidentified RV.
+5. Tax Approval untuk IK dan RV.
+6. Invoice Slip atau Faktur Pajak.
+
+Modul ini berfungsi sebagai penghubung antara dokumen penerimaan, penerimaan uang, pajak, finance checking, accounting checking, dan posting ke General Ledger.
+
+Secara sederhana:
+
+- IK digunakan untuk mencatat dokumen invoice atau tagihan yang diterima dari pihak supplier, tenant, atau pihak ketiga.
+- RV digunakan untuk mencatat penerimaan uang atau receiving voucher, baik yang terkait dengan IK maupun yang berdiri sendiri.
+- Sales Receive digunakan untuk mencatat uang masuk dari customer atau debtor.
+- Unidentified RV digunakan untuk uang masuk yang belum jelas customer atau invoice referensinya.
+- Tax Approval digunakan untuk memastikan PPN, PPH, NPWP, faktur pajak, dan bukti potong sudah benar sebelum dokumen lanjut ke accounting.
+
+Modul Receiving adalah salah satu titik penting sebelum dokumen masuk ke proses Accounting dan Payment. Jika data receiving salah, maka efeknya bisa masuk ke pajak, laporan cash flow, AR/AP, hingga laporan keuangan.
+
+
+
+#2. Tujuan Bisnis Modul Receiving
+
+Tujuan utama modul Receiving adalah:
+
+1. Mencatat penerimaan dokumen invoice dari pihak ketiga.
+2. Mencatat penerimaan uang dari customer atau debtor.
+3. Mencocokkan uang masuk dengan invoice, tagihan, customer, atau dokumen referensi.
+4. Memastikan dokumen penerimaan memiliki data bank, customer/vendor, amount, currency, pajak, dan COA yang benar.
+5. Menjaga agar penerimaan tidak langsung masuk ke accounting tanpa validasi Finance dan Tax.
+6. Mengelola dokumen yang belum jelas identitas customernya melalui Unidentified RV.
+7. Mendukung audit trail untuk setiap dokumen penerimaan.
+8. Memastikan data pajak PPN dan PPH dapat dipakai untuk pelaporan pajak dan audit.
+9. Menghasilkan data yang siap diposting ke General Ledger.
+
+Analoginya: modul Receiving adalah loket pencatatan semua dokumen penerimaan, baik penerimaan tagihan, penerimaan uang, maupun penerimaan yang masih belum jelas identitasnya. Sebelum uang atau dokumen dianggap sah, sistem memastikan datanya jelas, lengkap, terverifikasi, dan siap dibukukan.
+
+
+
+#3. Istilah Penting dalam Modul Receiving
+
+##3.1 IK
+
+IK dalam modul ini merujuk pada dokumen Invoice IK atau Invoice Keputusan. Dokumen ini digunakan untuk mencatat invoice atau dokumen penerimaan dari supplier, tenant, atau pihak eksternal yang melibatkan detail COA, pajak, dan lampiran dokumen.
+
+IK biasanya berisi:
+
+- Tanggal dokumen.
+- Billing No.
+- Ref No.
+- Tenant atau supplier.
+- NPWP.
+- Alamat NPWP.
+- Applicant.
+- Division.
+- Approved By.
+- Currency.
+- Rate.
+- Base Amount.
+- DPP.
+- PPN.
+- PPH.
+- Total Amount.
+- Detail COA.
+- Lampiran dokumen.
+
+##3.2 RV
+
+RV adalah Receiving Voucher. RV digunakan untuk mencatat penerimaan uang atau receiving entry. RV bisa terkait dengan dokumen IK, atau bisa berdiri sendiri sebagai RV Non-IK.
+
+##3.3 RV IK
+
+RV IK adalah RV yang dibuat berdasarkan dokumen IK. Data utama dari IK biasanya ditarik otomatis ke RV, sehingga user tidak perlu menginput semua data dari awal.
+
+##3.4 RV Non-IK
+
+RV Non-IK adalah dokumen receiving yang berdiri sendiri, tidak memiliki parent dokumen IK. Biasanya digunakan untuk penerimaan umum, penerimaan bank, transfer masuk, deposit, refund, atau penerimaan lain yang tidak berasal dari IK.
+
+##3.5 Sales Receive
+
+Sales Receive adalah dokumen penerimaan uang dari pelanggan atau debtor. Dokumen ini digunakan untuk mencatat uang yang masuk ke bank perusahaan dan mengalokasikannya ke invoice, customer, deposit, atau akun penerimaan tertentu.
+
+##3.6 Unidentified RV
+
+Unidentified RV adalah RV yang terjadi ketika uang sudah masuk ke bank, tetapi sistem atau user belum bisa memastikan siapa customer/debtor yang membayar atau invoice mana yang harus dialokasikan. Dokumen ini harus diidentifikasi dan disetujui terlebih dahulu sebelum masuk ke normal RV workflow.
+
+##3.7 VA atau Virtual Account
+
+Virtual Account adalah nomor rekening virtual yang dapat membantu sistem mengidentifikasi customer secara otomatis. Jika nomor VA valid, data customer bisa terisi otomatis. Jika tidak valid, user harus melakukan input dan verifikasi manual.
+
+##3.8 DPP
+
+DPP adalah Dasar Pengenaan Pajak, yaitu nilai dasar transaksi yang digunakan untuk menghitung PPN dan/atau PPH.
+
+##3.9 PPN
+
+PPN adalah Pajak Pertambahan Nilai. Dalam receiving, PPN bisa muncul pada invoice IK atau pada dokumen penerimaan yang memiliki unsur pajak.
+
+##3.10 PPH
+
+PPH adalah Pajak Penghasilan atau withholding tax. Jika dokumen memiliki PPH, user wajib memilih PPH Type yang sesuai.
+
+##3.11 Invoice Slip atau Faktur Pajak
+
+Invoice Slip adalah data faktur pajak masukan yang biasanya digunakan oleh Tax Department untuk pelaporan pajak, input SPT, audit trail, dan rekonsiliasi pajak.
+
+
+
+#4. Big Picture Flow Modul Receiving
+
+##4.1 Flow IK
+
+User membuat Invoice IK
+-> Finance melakukan checking
+-> Jika ada pajak, dokumen masuk ke Tax Approval
+-> Tax melakukan review PPN, PPH, NPWP, dan faktur pajak
+-> Jika approved, dokumen lanjut ke accounting checking atau posting
+-> Dokumen menjadi Ready To Pay atau Paid sesuai proses lanjutan
+-> Data masuk ke accounting dan laporan
+
+##4.2 Flow RV IK
+
+Dokumen IK sudah dibuat dan siap diproses
+-> User membuat RV IK dari dokumen IK
+-> Data IK ditarik otomatis ke RV
+-> User melengkapi data bank, amount, reference, dan detail penerimaan
+-> Finance checking
+-> Tax approval bila ada pajak
+-> Accounting checking atau posting
+-> Status menjadi Ready To Pay, Paid, atau Posted
+
+##4.3 Flow RV Non-IK
+
+Uang atau penerimaan terjadi tanpa dokumen IK
+-> User membuat RV Non-IK
+-> User input manual bank, debtor/customer, currency, amount, description, dan detail alokasi
+-> Sistem menghitung pajak bila ada
+-> Finance checking
+-> Tax approval bila ada pajak
+-> Accounting checking atau posting
+-> Dokumen selesai dan masuk laporan
+
+##4.4 Flow Sales Receive
+
+Customer membayar invoice atau melakukan deposit
+-> Uang masuk ke bank perusahaan
+-> Staff Finance membuat Sales Receive / RV
+-> User memilih bank, customer, amount, purpose, dan alokasi
+-> Jika menggunakan VA, sistem mencoba menarik data otomatis
+-> User mengalokasikan uang ke invoice, AR, deposit, atau akun lain
+-> Finance checking
+-> Tax approval bila ada komponen pajak
+-> Accounting checking atau posting
+-> Dokumen selesai
+
+##4.5 Flow Unidentified RV
+
+Uang masuk ke bank
+-> Customer atau invoice tidak teridentifikasi
+-> Sistem atau user membuat Unidentified RV
+-> Status menjadi Need Approval
+-> Finance melakukan investigasi customer/invoice
+-> Jika customer berhasil diidentifikasi, user approve
+-> Dokumen masuk ke normal RV workflow
+-> Jika tidak valid atau tidak bisa dipastikan, dokumen tidak boleh diapprove dan harus dieskalasi
+
+
+
+#5. Modul Invoice IK
+
+##5.1 Fungsi Invoice IK
+
+Invoice IK digunakan untuk membuat atau mengubah dokumen invoice penerimaan yang berisi informasi pihak terkait, pajak, COA, amount, dan lampiran. Dokumen ini penting karena menjadi dasar proses pajak, accounting, dan receiving lanjutan.
+
+Invoice IK digunakan ketika perusahaan menerima invoice atau dokumen tagihan dari supplier, tenant, atau pihak eksternal yang perlu dicatat ke JIFAS.
+
+##5.2 Kapan Membuat Invoice IK
+
+Invoice IK dibuat ketika:
+
+1. Ada invoice atau billing dari pihak ketiga.
+2. Ada penerimaan barang/jasa yang harus dicatat.
+3. Ada dokumen pajak seperti faktur pajak atau PPH.
+4. Transaksi perlu dialokasikan ke COA, division, dan department.
+5. Data perlu masuk ke workflow Finance, Tax, dan Accounting.
+
+##5.3 Data Header Invoice IK
+
+Field utama pada header Invoice IK:
+
+1. Date
+   - Tanggal dokumen.
+   - Wajib diisi.
+   - Menjadi dasar periode dan rate.
+
+2. Billing No
+   - Nomor billing atau nomor tagihan dari pihak ketiga.
+   - Digunakan sebagai referensi.
+
+3. Ref No
+   - Nomor referensi tambahan.
+   - Opsional tetapi disarankan untuk audit trail.
+
+4. Tenant atau Supplier
+   - Pihak yang terkait dengan dokumen.
+   - Wajib dipilih.
+   - Data NPWP dan alamat biasanya otomatis mengikuti master.
+
+5. NPWP
+   - Nomor pajak pihak terkait.
+   - Terisi dari master tenant/vendor.
+   - Harus benar untuk proses pajak.
+
+6. WP Address
+   - Alamat Wajib Pajak.
+   - Terisi dari master.
+   - Perlu cocok dengan data NPWP.
+
+7. Applicant
+   - User/karyawan pembuat dokumen.
+   - Biasanya otomatis dari login.
+
+8. Division
+   - Divisi user atau divisi transaksi.
+   - Otomatis dari user atau dipilih sesuai kebutuhan.
+
+9. Approved By
+   - Atasan atau pihak approval.
+   - Digunakan untuk tracking workflow.
+
+10. Source App
+    - Aplikasi sumber dokumen.
+    - Biasanya otomatis sesuai company atau konfigurasi.
+
+11. Currency
+    - Mata uang transaksi.
+    - Default biasanya IDR.
+
+12. Rate
+    - Kurs jika currency bukan IDR.
+    - Untuk IDR rate umumnya 1.
+    - Jika foreign currency, rate wajib valid.
+
+13. Amount
+    - Total amount dokumen.
+    - Otomatis dari detail.
+
+14. Base Amount
+    - Total nilai sebelum pajak.
+    - Otomatis dari detail.
+
+15. DPP
+    - Dasar pengenaan pajak.
+    - Otomatis dari detail yang kena pajak.
+
+16. Description
+    - Keterangan dokumen.
+    - Wajib dibuat jelas.
+
+##5.4 Detail Invoice IK
+
+Setiap detail IK menggambarkan alokasi transaksi ke division, department, COA, dan pajak.
+
+Field detail IK:
+
+1. Division
+   - Divisi pemilik transaksi.
+   - Wajib diisi.
+
+2. Department
+   - Department yang menerima beban/penerimaan.
+   - Cascade dari division.
+
+3. Request Type / Jenis Permintaan
+   - Kategori transaksi yang mengarah ke COA.
+   - Dipilih dari dropdown.
+
+4. COA
+   - Chart of Account.
+   - Biasanya otomatis dari jenis permintaan.
+
+5. Base Amount
+   - Nilai transaksi sebelum pajak.
+   - Harus lebih besar dari 0.
+
+6. Tax Type
+   - Jenis pajak.
+   - Wajib dipilih.
+   - Contoh: PPN, NT atau No Tax, N0, dan lainnya.
+
+7. PPN Percent dan PPN Amount
+   - Persentase dan nilai PPN.
+   - Dihitung otomatis dari tax type.
+
+8. PPH Percent dan PPH Amount
+   - Persentase dan nilai PPH.
+   - Dihitung otomatis jika tax code memiliki PPH.
+
+9. PPH Type
+   - Wajib diisi jika PPH ada.
+   - Tidak boleh kosong jika PPH amount lebih dari 0.
+
+10. Total Amount
+    - Total baris detail.
+    - Dihitung otomatis.
+
+##5.5 Lampiran Invoice IK
+
+Lampiran digunakan sebagai dokumen pendukung untuk audit dan approval.
+
+Contoh lampiran:
+
+- Invoice asli.
+- PO.
+- Bukti penerimaan barang/jasa.
+- BAST.
+- Faktur pajak.
+- Dokumen lain yang diwajibkan company.
+
+Rule lampiran:
+
+- Format umum: PDF, JPG, PNG.
+- Ukuran file biasanya maksimal 2 MB per file.
+- Nama file sebaiknya jelas.
+- Lampiran harus sesuai dengan nomor dokumen yang diinput.
+
+##5.6 Flow Create Invoice IK
+
+1. User membuka menu Receiving / IK.
+2. User klik Create Invoice IK.
+3. Sistem membuka form kosong.
+4. User mengisi header dokumen.
+5. User memilih tenant/supplier.
+6. Sistem mengisi NPWP dan WP Address.
+7. User memilih currency dan memastikan rate.
+8. User mengisi description.
+9. User menambahkan detail IK.
+10. User memilih division, department, request type, COA, base amount, tax code, dan PPH Type jika perlu.
+11. Sistem menghitung Base Amount, DPP, PPN, PPH, dan Total Amount.
+12. User mengupload lampiran.
+13. User klik Create.
+14. Sistem melakukan validasi.
+15. Jika valid, dokumen tersimpan dan masuk workflow Finance Checking.
+16. Jika tidak valid, sistem menampilkan pesan error untuk diperbaiki.
+
+##5.7 Flow Edit Invoice IK
+
+1. User membuka daftar IK.
+2. User mencari dokumen berdasarkan tanggal, nomor, tenant, atau status.
+3. User klik Action.
+4. Form edit terbuka.
+5. Field yang bisa diubah tergantung status dokumen.
+6. Jika status masih Need Finance Checking, beberapa field masih bisa diupdate.
+7. Jika status sudah Ready To Pay, Paid, Error, Posted, atau final, form lebih banyak read-only.
+8. User melakukan update jika diizinkan.
+9. Sistem validasi ulang.
+10. Jika valid, data tersimpan.
+11. Jika tidak valid, user harus memperbaiki data atau meminta bantuan IT jika error teknis.
+
+##5.8 Status Invoice IK
+
+Status umum Invoice IK:
+
+1. Need Finance Checking
+   - Dokumen baru dibuat.
+   - Menunggu review Finance.
+   - Finance dapat update, checking, atau void.
+
+2. Need Tax Approval
+   - Dokumen sudah dicek Finance.
+   - Menunggu persetujuan pajak.
+   - Tax akan cek PPN, PPH, NPWP, dan faktur.
+
+3. Need Posting
+   - Dokumen siap masuk proses posting.
+   - Data sudah melewati checking.
+
+4. Need Accounting Checking
+   - Menunggu validasi accounting.
+   - Accounting cek COA, jurnal, dan akurasi data.
+
+5. Need Check Detail
+   - Ada detail yang perlu dicek ulang.
+   - Biasanya terjadi karena mismatch atau validasi tertentu.
+
+6. Ready To Pay
+   - Dokumen sudah siap untuk pembayaran/proses lanjutan.
+   - Tidak boleh sembarang diedit.
+
+7. Paid
+   - Dokumen sudah dibayar.
+   - Final untuk user biasa.
+
+8. Void
+   - Dokumen dibatalkan.
+   - Tidak digunakan dalam proses lanjutan.
+
+9. Error
+   - Ada masalah proses.
+   - Harus dicek IT jika bukan kesalahan input.
+
+10. Removed
+    - Dokumen dihapus secara sistem/soft delete.
+    - Tidak digunakan lagi.
+
+##5.9 Validasi Invoice IK
+
+Validasi penting:
+
+1. Field wajib harus terisi.
+2. Tenant/supplier harus dipilih.
+3. Jika currency bukan IDR, rate wajib diisi dan tidak boleh 0.
+4. Minimal satu detail harus ada.
+5. Base Amount detail harus lebih dari 0.
+6. Tax Type harus dipilih di setiap detail.
+7. Jika PPH amount lebih dari 0, PPH Type wajib dipilih.
+8. Total Amount header harus sama dengan total detail.
+9. Lampiran wajib harus lengkap jika policy mewajibkan.
+10. Dokumen final tidak boleh diedit langsung.
+
+##5.10 Error Invoice IK dan Solusi
+
+1. Please fill required field before
+   - Artinya ada field wajib yang kosong.
+   - Solusi: cek semua field bertanda wajib, termasuk tenant, date, description, detail, tax code.
+
+2. Cannot continue to save. Please fill currency rate
+   - Artinya rate belum diisi atau 0.
+   - Solusi: isi rate. Untuk IDR gunakan 1, untuk foreign currency gunakan kurs valid.
+
+3. DPP amount cannot be zero
+   - Artinya detail tidak memiliki nilai dasar pajak atau amount.
+   - Solusi: isi Base Amount detail dengan angka lebih dari 0.
+
+4. Tax code must be selected
+   - Artinya detail belum memilih tax type.
+   - Solusi: pilih tax code yang sesuai.
+
+5. PPH code must be selected
+   - Artinya ada PPH tapi PPH Type kosong.
+   - Solusi: pilih PPH Type yang sesuai.
+
+6. Input amount must be equal with total base amount detail
+   - Artinya total di header tidak cocok dengan total detail.
+   - Solusi: cek ulang semua baris detail dan total header.
+
+7. Dokumen tidak bisa diedit
+   - Jika status sudah final, ini normal.
+   - Jika status belum final tapi tidak bisa edit, refresh dan cek role. Jika tetap error, hubungi IT.
+
+
+
+#6. Modul Receiving Voucher / RV
+
+##6.1 Fungsi RV
+
+RV atau Receiving Voucher digunakan untuk mencatat penerimaan yang masuk ke sistem, baik terkait dokumen IK maupun penerimaan mandiri.
+
+RV membantu Finance dan Accounting memastikan:
+
+- Uang/penerimaan tercatat.
+- Bank dan currency benar.
+- Customer atau debtor jelas.
+- Amount cocok dengan alokasi.
+- Data bisa diverifikasi oleh Finance, Tax, dan Accounting.
+
+##6.2 Jenis RV
+
+###RV IK
+
+RV IK digunakan ketika dokumen receiving berhubungan dengan Invoice IK. Data dari IK ditarik sebagai dasar RV.
+
+Cocok digunakan jika:
+
+- Sudah ada dokumen IK.
+- RV dibuat berdasarkan IK yang valid.
+- Nilai, vendor/tenant, pajak, dan detail berasal dari IK.
+
+###RV Non-IK
+
+RV Non-IK digunakan ketika penerimaan tidak berasal dari dokumen IK.
+
+Cocok digunakan untuk:
+
+- Penerimaan kas umum.
+- Transfer bank masuk.
+- Penerimaan internal.
+- Refund.
+- Deposit.
+- Penerimaan lain yang tidak ada invoice IK.
+
+##6.3 Data Utama RV
+
+Field utama RV:
+
+1. Document Date
+   - Tanggal penerimaan.
+   - Wajib diisi.
+
+2. RV Type
+   - IK atau Non-IK.
+
+3. Doc No
+   - Nomor dokumen RV.
+   - Auto-generated.
+
+4. Description
+   - Keterangan penerimaan.
+   - Wajib jelas.
+
+5. Bank Name
+   - Bank yang menerima atau terkait transaksi.
+   - Wajib dipilih.
+
+6. Currency
+   - Mata uang.
+   - Mengikuti bank atau dipilih sesuai transaksi.
+
+7. Rate
+   - Kurs jika non-IDR.
+
+8. Amount
+   - Total penerimaan.
+   - Harus sama dengan total detail atau alokasi.
+
+9. Debtor/Customer
+   - Pihak yang membayar atau terkait dengan penerimaan.
+
+10. Cek/BG No
+    - Jika penerimaan terkait cek/BG.
+
+11. Ref No
+    - Nomor referensi tambahan.
+
+##6.4 Flow Create RV IK
+
+1. User klik Create Receive IK.
+2. Sistem meminta user memilih dokumen IK yang ingin dibuatkan RV.
+3. Sistem menarik data dari IK.
+4. User melengkapi informasi bank, tanggal, amount, reference, dan description.
+5. User cek detail pajak dan amount.
+6. User klik Save.
+7. Sistem validasi total dan field wajib.
+8. Jika valid, RV IK dibuat.
+9. Status masuk ke Need Finance Checking.
+
+##6.5 Flow Create RV Non-IK
+
+1. User klik Create Receive Non IK atau Create New Receive.
+2. Sistem membuka form kosong.
+3. User mengisi tanggal dokumen.
+4. User memilih debtor/customer.
+5. User memilih bank.
+6. User memastikan currency dan rate.
+7. User mengisi total amount.
+8. User mengisi description dan reference.
+9. User menambah detail alokasi.
+10. Detail diisi dengan division, department, receive type/COA, amount, tax code, dan PPH Type jika perlu.
+11. Sistem menghitung DPP, PPN, PPH, dan total detail.
+12. User memastikan total detail sama dengan amount header.
+13. User klik Save.
+14. Dokumen masuk status Need Finance Checking.
+
+##6.6 Flow Edit RV
+
+1. User membuka daftar RV.
+2. User mencari dokumen.
+3. User klik Action.
+4. Sistem membuka form edit.
+5. Jika status masih Need Finance Checking, user dapat melakukan update sesuai izin.
+6. Jika sudah masuk status lanjut, field lebih terbatas.
+7. Jika status final, user hanya bisa melihat dokumen atau melakukan void sesuai role.
+8. Jika update dilakukan, sistem validasi kembali.
+9. Jika update valid, dokumen disimpan.
+
+##6.7 Status RV
+
+Status umum RV:
+
+1. Need Finance Checking
+   - Dokumen baru dan menunggu review Finance.
+
+2. Need Tax Approval
+   - Finance sudah checking.
+   - Menunggu Tax Department.
+
+3. Need Accounting Checking
+   - Menunggu Accounting review.
+
+4. Need Posting
+   - Siap diposting ke GL.
+
+5. Ready To Pay
+   - Siap untuk proses lanjutan.
+
+6. Paid
+   - Sudah selesai dibayar/diproses.
+
+7. Void
+   - Dibatalkan.
+
+8. Removed
+   - Tidak berlaku lagi.
+
+9. Error
+   - Ada masalah proses yang perlu dicek.
+
+##6.8 Validasi RV
+
+Validasi RV:
+
+1. Tanggal wajib diisi.
+2. Bank wajib dipilih.
+3. Customer/debtor wajib jelas.
+4. Currency wajib ada.
+5. Jika foreign currency, rate wajib valid.
+6. Amount tidak boleh 0.
+7. Description wajib jelas.
+8. Minimal satu detail atau alokasi harus ada.
+9. Total detail/alokasi harus sama dengan total amount header.
+10. Jika menggunakan VA, nomor VA harus valid.
+11. Jika ada pajak, tax code dan PPH Type harus sesuai.
+12. Jika dokumen terkait IK, IK harus valid dan statusnya memungkinkan.
+
+##6.9 Pembatasan Company Tertentu
+
+Pada company tertentu, seperti BP, tombol Create Receive atau Create Receive IK bisa disabled. Hal ini merupakan policy perusahaan. Jika user perlu membuat RV tetapi tombol disabled, user tidak boleh memaksa. Arahkan ke Finance Head, manager, atau IT untuk konfirmasi role dan policy company.
+
+
+
+#7. Modul Sales Receive
+
+##7.1 Fungsi Sales Receive
+
+Sales Receive adalah bagian dari Receiving yang mencatat uang masuk dari customer/debtor. Proses ini penting untuk AR, cash flow, bank reconciliation, dan accounting posting.
+
+Sales Receive digunakan ketika:
+
+- Customer membayar invoice.
+- Customer melakukan partial payment.
+- Customer melakukan overpayment.
+- Customer membayar deposit.
+- Uang masuk ke bank perlu dicatat dan dialokasikan.
+
+##7.2 Data Utama Sales Receive
+
+Data utama Sales Receive:
+
+1. Document Date.
+2. RV No.
+3. Description.
+4. Bank Name.
+5. Currency.
+6. Amount.
+7. Customer Code.
+8. Customer Name.
+9. Status.
+10. Purpose.
+11. Bank Receipt Number.
+12. Virtual Account Number jika ada.
+13. Kavling Number jika terkait properti.
+14. Business Category.
+15. Bank Charge jika ada.
+16. Deposit Amount jika menggunakan customer deposit.
+17. Unknown Allocation jika ada selisih.
+
+##7.3 Flow Create Sales Receive
+
+1. Customer membayar invoice atau melakukan deposit.
+2. Uang masuk ke rekening bank perusahaan.
+3. Staff Finance membuka menu Sales Receive.
+4. User klik Create New Receive.
+5. User mengisi Document Date.
+6. User memilih Bank.
+7. Sistem mengisi currency dan rate.
+8. Jika menggunakan Virtual Account, user centang VA dan input nomor VA.
+9. User klik Get Data untuk menarik data customer.
+10. Jika tidak menggunakan VA, user cari customer secara manual.
+11. User mengisi total bank receive.
+12. User mengisi bank charge jika ada.
+13. User memilih purpose.
+14. User mengisi bank receipt number atau nomor cek/BG jika ada.
+15. User mengisi description.
+16. Jika terkait kavling, user input nomor kavling dan cek BAST.
+17. User mengalokasikan penerimaan ke invoice, AR, deposit, atau detail alokasi.
+18. Jika ada selisih, user memilih Unknown Allocation.
+19. User klik Save.
+20. Sistem validasi total penerimaan dan alokasi.
+21. Jika valid, dokumen masuk Need Finance Checking.
+
+##7.4 Mode Alokasi Sales Receive
+
+###Mode Invoice / AR
+
+Digunakan ketika uang diterima untuk membayar invoice atau AR yang sudah ada.
+
+Cara kerja:
+
+1. User pilih customer.
+2. Sistem menampilkan invoice/AR customer.
+3. User memilih invoice yang dibayar.
+4. User mengisi amount alokasi.
+5. Total alokasi harus sama dengan uang yang diterima, dikurangi/ditambah bank charge, deposit, atau unknown allocation sesuai rule.
+
+###Mode Non-Invoice / Custom Allocation
+
+Digunakan ketika uang tidak terkait invoice tertentu.
+
+Detail diisi manual dengan:
+
+- Division.
+- Department.
+- Receive Type.
+- Base Amount.
+- Tax Code.
+- PPH Type jika ada PPH.
+- PPN dan PPH otomatis.
+
+##7.5 Virtual Account Flow
+
+1. User centang Virtual Account.
+2. User mengisi nomor VA.
+3. User klik Get Data.
+4. Sistem mencari data customer berdasarkan VA.
+5. Jika ditemukan, data customer dan informasi penerimaan terisi otomatis.
+6. Jika tidak ditemukan, user harus input manual atau menghubungi Finance/IT.
+
+Jika VA invalid:
+
+- Cek nomor VA.
+- Pastikan tidak ada salah ketik.
+- Jika tetap invalid, hubungi Treasury/Bank atau IT.
+- Jangan lanjut dengan data customer yang belum pasti.
+
+##7.6 Cek BAST atau Kavling
+
+Untuk penerimaan yang terkait properti/kavling, user dapat menggunakan fitur Cek BAST.
+
+Fungsi:
+
+- Memastikan customer sesuai dengan nomor kavling.
+- Mencegah salah alokasi pembayaran ke customer atau unit yang salah.
+- Jika sistem menandai merah, berarti data tidak match dan harus diverifikasi ulang.
+
+##7.7 Unknown Allocation
+
+Unknown Allocation digunakan jika total uang masuk tidak langsung match dengan invoice/detail.
+
+Contoh kondisi:
+
+- Ada selisih bank charge.
+- Ada rounding kecil.
+- Ada overpayment.
+- Ada dana yang belum jelas akan dialokasikan ke mana.
+
+User harus memilih akun atau pos alokasi yang sesuai. Jangan membiarkan selisih tanpa penjelasan.
+
+##7.8 Revisi Dokumen
+
+Jika ada dokumen lama yang perlu diperbaiki tanpa menghapus histori, gunakan fitur Revision Of.
+
+Flow:
+
+1. User centang Revision Of.
+2. User mencari dokumen lama.
+3. Sistem menghubungkan dokumen baru dengan dokumen lama.
+4. Dokumen baru dibuat sebagai revisi.
+5. Audit trail tetap terjaga.
+
+Gunakan Revision Of untuk koreksi yang masih bisa ditangani sebagai revisi. Jika dokumen sudah salah total atau tidak valid, gunakan void sesuai policy.
+
+##7.9 Error Sales Receive dan Solusi
+
+1. Total Bank Receive tidak match dengan Total Allocation
+   - Artinya uang yang diterima belum sama dengan total alokasi.
+   - Solusi: cek invoice allocation, detail manual, bank charge, deposit, dan unknown allocation.
+
+2. Virtual Account tidak ditemukan
+   - Artinya nomor VA tidak valid atau tidak terdaftar.
+   - Solusi: cek nomor VA, tanyakan ke Treasury/Bank, atau input manual jika customer sudah pasti.
+
+3. Customer tidak ditemukan
+   - Artinya customer belum ada di master data.
+   - Solusi: cari dari Find Customer. Jika belum ada, hubungi Master Data/IT.
+
+4. Customer tidak match dengan BAST
+   - Artinya customer/kavling tidak cocok.
+   - Solusi: jangan lanjut sebelum data dikonfirmasi.
+
+5. Invoice detail grid kosong
+   - Bisa karena customer belum dipilih, tidak ada outstanding AR, VA belum get data, atau API error.
+   - Solusi: cek customer, klik Get Data/Cek BAST, reset filter. Jika tetap kosong, hubungi IT.
+
+6. Tax calculation tidak tepat
+   - Solusi: cek tax code dan PPH Type. Jika rate master salah, hubungi Tax/Admin/IT.
+
+
+
+#8. Approval of Unidentified RV
+
+##8.1 Fungsi Unidentified RV
+
+Approval of Unidentified RV digunakan untuk menangani uang masuk yang belum jelas customer, debtor, atau invoice-nya.
+
+Kondisi ini terjadi ketika:
+
+1. Customer transfer tanpa keterangan.
+2. Virtual Account error atau tidak bisa mapping.
+3. Pihak ketiga membayar invoice milik customer lain.
+4. Customer melakukan deposit tanpa invoice.
+5. Nominal masuk tidak cocok dengan invoice yang ada.
+6. Data bank statement tidak cukup untuk identifikasi otomatis.
+
+##8.2 Tujuan Unidentified RV
+
+Tujuan modul ini:
+
+1. Mencegah uang masuk langsung diposting ke customer yang salah.
+2. Memberi ruang investigasi manual.
+3. Menjaga audit trail atas proses identifikasi.
+4. Memastikan customer dan invoice benar sebelum masuk normal RV workflow.
+5. Menghindari kesalahan AR dan laporan kas.
+
+##8.3 Status Unidentified RV
+
+1. Need Approval
+   - Dokumen masih menunggu identifikasi dan approval.
+
+2. Approved
+   - Customer/invoice sudah diidentifikasi dan disetujui.
+
+3. Rejected
+   - Dokumen ditolak atau tidak valid.
+
+##8.4 Data yang Ditampilkan
+
+Grid Unidentified RV menampilkan:
+
+1. Doc No.
+2. Doc Date.
+3. Bank.
+4. Description.
+5. Amount.
+6. Status.
+7. Action Approve.
+
+Data detail yang dapat membantu identifikasi:
+
+- Bank Code.
+- VA Code.
+- Customer Code.
+- Customer Name.
+- Kavling Reference.
+- Description.
+- Total Receive Amount.
+- Base Amount.
+- Allocation Code.
+- Allocation Amount.
+- Category Code.
+- Action Status.
+
+##8.5 Flow Approval Unidentified RV
+
+1. Uang masuk ke bank.
+2. Sistem tidak bisa mengidentifikasi customer/invoice.
+3. Dokumen dibuat sebagai Unidentified RV.
+4. Status menjadi Need Approval.
+5. Finance membuka menu Approval of Unidentified RV.
+6. Finance melihat daftar dokumen pending.
+7. Finance melakukan investigasi.
+8. Finance cek bank statement, VA, customer service, sales, AR aging, dan database customer.
+9. Jika customer dan invoice berhasil dikonfirmasi, user klik Approve.
+10. Sistem meminta konfirmasi approval.
+11. Jika user konfirmasi, sistem update dokumen.
+12. Dokumen keluar dari queue unidentified dan masuk normal RV workflow.
+13. Jika data belum valid, dokumen tidak boleh diapprove.
+14. Jika terlalu lama atau tidak jelas, eskalasi ke Finance Manager/IT.
+
+##8.6 Checklist Sebelum Approve Unidentified RV
+
+Sebelum klik Approve, pastikan:
+
+1. Nama customer sudah terverifikasi.
+2. Customer code sudah benar.
+3. Amount cocok dengan bank statement.
+4. Invoice reference sudah diketahui jika pembayaran untuk invoice.
+5. Jika partial payment, nominal partial sudah jelas.
+6. Jika overpayment, alasan overpayment sudah diketahui.
+7. Jika deposit, tujuan deposit sudah jelas.
+8. Jika pihak ketiga membayar, relasi pembayar dan customer sudah tercatat.
+9. Data tidak mencurigakan.
+10. Approval dari atasan sudah diperoleh jika nominal besar atau kasus tidak biasa.
+
+##8.7 Sumber Informasi untuk Identifikasi
+
+Sumber data:
+
+1. Bank statement.
+2. Bank notification.
+3. Virtual Account system.
+4. Customer Service.
+5. Sales team.
+6. Database master customer/debtor.
+7. AR aging report.
+8. Payment record.
+9. Email atau WhatsApp konfirmasi customer.
+10. Dokumen PO/kontrak/customer invoice.
+
+##8.8 Edge Case Unidentified RV
+
+###Pembayaran dari Pihak Ketiga
+
+Jika customer A membayar invoice customer B:
+
+- Verifikasi siapa pengirim dan invoice siapa yang dibayar.
+- Catat relasi pembayaran.
+- Jangan approve jika hanya berdasarkan asumsi.
+
+###Partial Payment
+
+Jika invoice Rp100 juta tetapi masuk Rp50 juta:
+
+- Konfirmasi bahwa pembayaran memang sebagian.
+- Alokasikan sebagai partial payment.
+- Sisa invoice tetap outstanding.
+
+###Overpayment
+
+Jika invoice Rp100 juta tetapi masuk Rp105 juta:
+
+- Konfirmasi apakah ada invoice lain, biaya tambahan, atau overpay sengaja.
+- Overpayment bisa diarahkan ke deposit/customer credit sesuai policy.
+
+###Advance Deposit
+
+Jika customer deposit sebelum invoice:
+
+- Catat sebagai deposit.
+- Pastikan tujuan deposit dan customer jelas.
+- Nanti deposit dapat digunakan untuk offset invoice.
+
+###Dokumen Pending Terlalu Lama
+
+Jika dokumen lebih dari 30 hari masih unidentified:
+
+- Jangan dibiarkan.
+- Eskalasi ke Finance Manager.
+- Jika ada indikasi system mismatch, hubungi IT.
+
+##8.9 Error Unidentified RV
+
+1. Tombol Approve disabled
+   - Status bukan Need Approval atau user tidak punya akses.
+   - Solusi: cek status dan role.
+
+2. Unauthorized
+   - User tidak punya permission.
+   - Solusi: hubungi IT untuk cek role dan akses menu.
+
+3. Database error setelah approve
+   - Ada masalah backend/database.
+   - Solusi: screenshot error, catat doc no, hubungi IT.
+
+4. Grid tidak refresh
+   - Browser cache atau API delay.
+   - Solusi: refresh page, klik refresh grid, clear cache jika perlu.
+
+5. Doc No not found
+   - Dokumen sudah tidak ada atau ada inconsistency database.
+   - Solusi: hubungi IT/database admin.
+
+
+
+#9. Tax Approval untuk IK dan RV
+
+##9.1 Fungsi Tax Approval
+
+Tax Approval adalah proses persetujuan pajak untuk dokumen IK dan RV. Modul ini memastikan PPN, PPH, NPWP, WP Name, WP Address, faktur pajak, dan bukti potong sudah benar sebelum dokumen lanjut ke accounting.
+
+Tax Approval penting karena kesalahan pajak dapat berdampak pada:
+
+- Laporan keuangan.
+- Pelaporan SPT.
+- Audit pajak.
+- Rekonsiliasi vendor/customer.
+- Risiko compliance perusahaan.
+
+##9.2 Tab Tax Approval
+
+Umumnya terdapat tiga area:
+
+1. Invoice / IK
+   - Approval pajak untuk dokumen IK.
+
+2. Receiving / RV
+   - Approval pajak untuk dokumen RV atau Sales Receive.
+
+3. Invoice Slip / Faktur Pajak
+   - Upload dan kelola data faktur pajak masukan.
+
+##9.3 Flow Tax Approval IK/RV
+
+1. Dokumen IK/RV dibuat.
+2. Finance melakukan checking awal.
+3. Jika dokumen memiliki pajak, status masuk Need Tax Approval.
+4. Tax Staff membuka menu Tax Approval.
+5. Tax memilih tab IK atau RV.
+6. Tax membuka dokumen dengan tombol Approval.
+7. Tax review tab Approval.
+8. Tax review detail PPN jika ada.
+9. Tax review detail PPH jika ada.
+10. Tax review PPN N0 jika ada.
+11. Jika ada selisih kecil, Tax dapat melakukan Tax Correction.
+12. Jika data benar, Tax klik Approve.
+13. Jika data salah, Tax klik Reject dan isi alasan.
+14. Jika approved, dokumen lanjut ke accounting.
+15. Jika rejected, dokumen kembali ke pembuat/Finance untuk diperbaiki.
+
+##9.4 Data pada Tab Approval
+
+Bagian kiri:
+
+- Date.
+- Debtor/Vendor.
+- Billing No.
+- Description.
+- No Cek/BG untuk RV jika ada.
+- Ref No.
+- Status.
+
+Bagian kanan:
+
+- Bank untuk RV.
+- Currency.
+- Base Amount.
+- Total DPP.
+- Total PPN.
+- Total PPH.
+- Total Amount.
+
+Grid detail:
+
+- Division.
+- Department.
+- Description.
+- COA Code.
+- Amount.
+- Tax Code.
+- PPN Amount.
+- PPH Amount.
+- Total Amount.
+
+##9.5 Tab PPN
+
+Tab PPN digunakan untuk memeriksa faktur pajak dan nilai PPN.
+
+Data yang harus dicek:
+
+1. DPP/Tax Base.
+2. PPN amount.
+3. WP Name.
+4. NPWP.
+5. WP Address.
+6. Tax Invoice Number.
+7. Tax Invoice Date.
+8. DPP per faktur.
+9. PPN per faktur.
+10. Year.
+11. Period.
+
+Rule PPN:
+
+- Total DPP detail tidak boleh lebih besar dari DPP header.
+- Total PPN detail tidak boleh lebih besar dari PPN header.
+- NPWP harus valid.
+- WP Name dan WP Address harus lengkap.
+- Nomor faktur pajak harus jelas.
+
+##9.6 Tab PPH
+
+Tab PPH digunakan untuk memeriksa bukti potong atau data withholding tax.
+
+Data yang harus dicek:
+
+1. DPP/Tax Base.
+2. PPH amount.
+3. WP Name.
+4. NPWP.
+5. WP Address.
+6. Form Code.
+7. Tax Invoice / Bukti Potong.
+8. Tax Receiving Date.
+9. DPP detail.
+10. PPH detail.
+11. Year.
+12. Period.
+
+Rule PPH:
+
+- Jika ada PPH, PPH Type wajib ada.
+- Total DPP detail tidak boleh lebih besar dari DPP header.
+- Total PPH detail tidak boleh lebih besar dari PPH header.
+- Form Code harus sesuai.
+- NPWP harus valid.
+
+##9.7 PPN N0
+
+PPN N0 adalah kondisi PPN khusus. Jika dokumen memiliki PPN N0, sistem menampilkan tab terpisah.
+
+AI chatbot harus memahami bahwa PPN N0 bukan PPN reguler. Jika user bertanya kenapa ada tab PPN N0, jawab bahwa tab tersebut digunakan untuk transaksi dengan perlakuan PPN khusus sesuai konfigurasi pajak perusahaan.
+
+##9.8 Tax Correction
+
+Tax Correction digunakan jika ada selisih kecil atau kebutuhan rounding pada PPN/PPH.
+
+Flow Tax Correction:
+
+1. Tax membuka dokumen IK/RV.
+2. Tax klik Tax Correction.
+3. Sistem membuka grid correction.
+4. User melihat Tax Code, DPP, PPN existing, PPH existing, round option, correction value, dan PPH Type.
+5. User memilih rounding UP/DOWN untuk PPN atau PPH.
+6. Sistem menghitung correction value.
+7. User memastikan PPH Type terisi jika ada PPH.
+8. User klik Save.
+9. Sistem menyimpan koreksi.
+10. Data PPN/PPH di dokumen terupdate.
+11. Tax dapat approve atau reject setelah koreksi.
+
+Gunakan Tax Correction hanya untuk perbedaan minor seperti rounding. Jika tax rate salah besar, NPWP salah, WP data tidak valid, atau selisih besar, dokumen sebaiknya ditolak dan diperbaiki dari sumbernya.
+
+##9.9 Invoice Slip / Faktur Pajak
+
+Invoice Slip digunakan untuk mengelola data faktur pajak masukan.
+
+Fungsi:
+
+- Upload data faktur pajak dari Excel.
+- Melihat daftar faktur pajak.
+- Melihat detail faktur.
+- Menghapus faktur jika masih diperbolehkan.
+- Export data faktur pajak ke Excel.
+
+Data faktur pajak:
+
+- Reference Number.
+- Customer NPWP.
+- Customer Name.
+- Tax Invoice Number.
+- Tax Invoice Date.
+- DPP.
+- DPP Nilai Lain.
+- PPN.
+
+Flow upload:
+
+1. Tax membuka tab Invoice Slip.
+2. User klik Upload Faktur.
+3. User memilih file Excel .xlsx.
+4. Sistem membaca file dan menampilkan preview.
+5. User review preview.
+6. User submit.
+7. Data masuk ke database.
+8. Grid refresh.
+
+Rule upload:
+
+- File harus .xlsx.
+- Format kolom harus sesuai template.
+- Hindari merged cells.
+- Jangan upload file dengan struktur berubah.
+
+##9.10 Error Tax Approval
+
+1. Approve button disabled
+   - Status bukan Need Approval.
+   - Jika sudah approved/rejected/posted, ini normal.
+
+2. NPWP not valid
+   - Format NPWP salah.
+   - Perbaiki di master atau dokumen sumber.
+
+3. Total DPP detail cannot greater than header
+   - Detail PPN/PPH melebihi header.
+   - Perbaiki detail.
+
+4. Total PPN detail cannot greater than header
+   - Nilai PPN detail melebihi header.
+   - Perbaiki faktur pajak.
+
+5. Total PPH detail cannot greater than header
+   - Nilai PPH detail melebihi header.
+   - Perbaiki bukti potong.
+
+6. PPH Type is mandatory
+   - Ada PPH tapi tipe kosong.
+   - Pilih PPH Type.
+
+7. Upload file failed
+   - Format bukan .xlsx atau template salah.
+   - Gunakan template yang benar.
+
+8. Form keluar tanpa tersimpan
+   - Bisa akibat validation atau JavaScript/API error.
+   - Coba ulang. Jika tetap terjadi, hubungi IT dengan screenshot.
+
+
+
+#10. Status dan Warna Indikator
+
+##10.1 Warna Status
+
+1. Hijau
+   - Status mengandung kata Need.
+   - Artinya ada action yang harus dilakukan.
+   - Contoh: Need Finance Checking, Need Tax Approval, Need Accounting Checking, Need Posting.
+
+2. Hitam
+   - Status normal, sedang berjalan, atau final selesai.
+   - Contoh: Approved, Ready To Pay, Paid, Posted.
+
+3. Merah
+   - Status batal, reject, error, removed.
+   - Contoh: Void, Rejected, Removed, Error.
+
+##10.2 Status Penting
+
+1. Need Finance Checking
+   - Dokumen menunggu validasi Finance.
+
+2. Need Tax Approval
+   - Dokumen menunggu validasi pajak.
+
+3. Need Accounting Checking
+   - Dokumen menunggu validasi Accounting.
+
+4. Need Posting
+   - Dokumen siap diposting.
+
+5. Ready To Pay
+   - Dokumen siap dibayar atau diproses lanjutan.
+
+6. Paid
+   - Dokumen sudah dibayar/selesai.
+
+7. Posted
+   - Dokumen sudah masuk General Ledger.
+
+8. Approved
+   - Tahap approval tertentu sudah disetujui.
+
+9. Rejected
+   - Dokumen ditolak.
+
+10. Void
+    - Dokumen dibatalkan.
+
+11. Removed
+    - Dokumen dihapus/soft deleted.
+
+12. Error
+    - Ada masalah proses.
+
+
+
+#11. Business Process End-to-End Receiving
+
+##11.1 Business Process IK to Payment
+
+1. Supplier/tenant mengirim invoice atau billing.
+2. User membuat Invoice IK.
+3. Detail COA, tax, dan lampiran dilengkapi.
+4. Finance melakukan checking.
+5. Tax melakukan approval jika ada PPN/PPH.
+6. Accounting melakukan checking/posting.
+7. Dokumen menjadi Ready To Pay.
+8. Dokumen dapat masuk ke modul Payment atau proses lanjutan.
+
+##11.2 Business Process Sales Receive to Accounting
+
+1. Customer membayar invoice.
+2. Uang masuk bank.
+3. Finance membuat Sales Receive / RV.
+4. Uang dialokasikan ke invoice, deposit, atau account tertentu.
+5. Finance checking.
+6. Tax approval jika ada pajak.
+7. Accounting checking/posting.
+8. Penerimaan tercatat di ledger dan laporan keuangan.
+
+##11.3 Business Process Unidentified to Normal RV
+
+1. Uang masuk tetapi customer tidak jelas.
+2. Sistem membuat Unidentified RV.
+3. Finance investigasi.
+4. Jika customer jelas, dokumen diapprove.
+5. Dokumen masuk normal RV workflow.
+6. Jika customer tetap tidak jelas, eskalasi.
+
+
+
+#12. Validasi Umum Modul Receiving
+
+Checklist validasi umum:
+
+1. Tanggal dokumen sudah benar.
+2. Company code sesuai login user.
+3. Bank aktif dan benar.
+4. Currency dan rate valid.
+5. Customer/vendor/tenant benar dan aktif.
+6. NPWP dan WP Address sesuai.
+7. Amount tidak 0.
+8. Detail minimal satu baris.
+9. Total header sama dengan total detail.
+10. Tax code terisi.
+11. PPH Type terisi jika ada PPH.
+12. Lampiran tersedia jika diwajibkan.
+13. Deskripsi jelas.
+14. Dokumen referensi tidak kosong untuk transaksi penting.
+15. Status dokumen memungkinkan action yang akan dilakukan.
+16. User memiliki role yang sesuai.
+
+
+
+#13. Error Handling: User vs IT
+
+##13.1 Error yang Bisa Diselesaikan User
+
+1. Field wajib kosong.
+2. Amount detail masih 0.
+3. Tax code belum dipilih.
+4. PPH Type belum dipilih.
+5. Total header dan detail tidak sama.
+6. VA salah input.
+7. Customer belum dipilih.
+8. Description terlalu kosong/tidak jelas.
+9. File upload salah format.
+10. Allocation belum balance.
+
+##13.2 Error yang Harus Diarahkan ke IT
+
+AI chatbot harus menyarankan user menghubungi IT jika terjadi:
+
+1. Unauthorized padahal role seharusnya punya akses.
+2. Grid tidak loading terus menerus.
+3. API/server error.
+4. Database error.
+5. Doc No not found padahal dokumen ada.
+6. Tombol action tidak muncul padahal status dan role benar.
+7. Form tidak terbuka setelah klik Action.
+8. Data salah tertarik dari master.
+9. Customer/vendor/bank tidak muncul padahal ada di master.
+10. Rate tidak muncul padahal master rate tersedia.
+11. File path/attachment tidak bisa dibuka.
+12. Grid tidak refresh setelah save/approve.
+13. Error message teknis seperti Request Status, Internal Server Error, 500, 401, 403, atau responseText.
+14. Dokumen stuck di status tertentu tanpa alasan jelas.
+15. Perhitungan pajak otomatis salah karena master tax diduga salah.
+
+##13.3 Data yang Harus Dikirim ke IT
+
+Saat user melapor ke IT, minta user menyertakan:
+
+1. Nama modul: Receiving / IK / RV / Sales Receive / Tax Approval / Unidentified RV.
+2. Nomor dokumen: IK No, RV No, Doc No, Billing No, atau Ref No.
+3. Company code.
+4. User login.
+5. Role user.
+6. Status dokumen.
+7. Screenshot error.
+8. Waktu kejadian.
+9. Langkah yang dilakukan sebelum error.
+10. Browser yang digunakan.
+11. Jika ada, isi error message lengkap.
+
+
+
+#14. Troubleshooting Umum
+
+##14.1 Tidak Bisa Save Dokumen
+
+Kemungkinan penyebab:
+
+- Field wajib kosong.
+- Detail belum ada.
+- Amount 0.
+- Total tidak balance.
+- Currency rate kosong.
+- Tax code kosong.
+- PPH Type kosong.
+- Attachment wajib belum diupload.
+
+Solusi:
+
+- Cek semua field wajib.
+- Cek total header vs total detail.
+- Cek detail pajak.
+- Cek lampiran.
+- Jika semua benar tapi tetap gagal, hubungi IT.
+
+##14.2 Data Customer Tidak Muncul
+
+Kemungkinan penyebab:
+
+- Customer belum ada di master.
+- Filter terlalu spesifik.
+- Company code berbeda.
+- API master customer error.
+
+Solusi:
+
+- Reset filter.
+- Cari dengan kata kunci lain.
+- Konfirmasi ke Master Data.
+- Jika customer ada tapi tidak muncul, hubungi IT.
+
+##14.3 Total Receive Tidak Sama dengan Allocation
+
+Solusi:
+
+- Cek semua invoice yang dipilih.
+- Cek amount alokasi per invoice.
+- Cek bank charge.
+- Cek deposit yang digunakan.
+- Gunakan Unknown Allocation jika memang ada selisih yang sah.
+
+##14.4 Tidak Bisa Void
+
+Kemungkinan:
+
+- User tidak punya role.
+- Status dokumen tidak memperbolehkan void.
+- Dokumen sudah final/posted.
+- Ada dependency dengan dokumen lain.
+
+Solusi:
+
+- Cek status.
+- Isi alasan void.
+- Jika tombol tidak muncul padahal seharusnya bisa, hubungi IT.
+
+##14.5 File Tidak Bisa Dibuka
+
+Kemungkinan:
+
+- File path rusak.
+- File tidak ada di server.
+- Permission folder bermasalah.
+- Browser memblokir download.
+
+Solusi:
+
+- Coba browser lain.
+- Refresh.
+- Jika masih gagal, hubungi IT dengan nama file dan nomor dokumen.
+
+##14.6 Tax Correction Gagal
+
+Kemungkinan:
+
+- PPH Type kosong.
+- Tax code tidak valid.
+- API correction value gagal.
+- Data detail tidak lengkap.
+
+Solusi:
+
+- Isi PPH Type.
+- Cek tax code.
+- Coba ulang.
+- Jika muncul error teknis, hubungi IT.
+
+
+
+#15. Best Practice Penggunaan Receiving
+
+1. Selalu gunakan deskripsi yang jelas.
+2. Jangan approve Unidentified RV sebelum customer benar-benar diketahui.
+3. Selalu cocokkan amount dengan bank statement.
+4. Gunakan VA jika tersedia.
+5. Untuk penerimaan invoice, alokasikan ke invoice yang benar.
+6. Untuk selisih, gunakan unknown allocation hanya jika alasan jelas.
+7. Jangan mengubah rate foreign currency tanpa koordinasi Finance.
+8. Jangan gunakan Tax Correction untuk kesalahan besar; reject dokumen agar diperbaiki dari sumber.
+9. Pastikan NPWP dan WP Address cocok sebelum Tax Approval.
+10. Simpan lampiran yang jelas untuk audit.
+11. Jika dokumen sudah final, jangan minta edit manual; gunakan void/revision sesuai policy.
+12. Prioritaskan approval dokumen dengan nominal besar dan yang sudah lama pending.
+13. Export data secara berkala untuk rekonsiliasi.
+14. Jika ada error teknis, jangan coba berulang-ulang terlalu banyak; catat error dan hubungi IT.
+
+
+
+#16. Contoh Pertanyaan User dan Jawaban AI Chatbot
+
+##Q1: Saya tidak bisa save Invoice IK, muncul error PPH code must be selected.
+
+Jawaban AI:
+Error tersebut berarti ada detail transaksi yang memiliki nilai PPH, tetapi jenis PPH belum dipilih. Buka detail IK, cari baris yang memiliki PPH amount lebih dari 0, lalu pilih PPH Type yang sesuai. Setelah itu coba save kembali. Jika PPH Type tidak muncul di dropdown padahal seharusnya ada, hubungi IT atau admin master pajak.
+
+##Q2: Kenapa tombol Approve Unidentified RV saya abu-abu?
+
+Jawaban AI:
+Biasanya tombol Approve disabled karena status dokumen bukan Need Approval, dokumen sudah Approved/Rejected, atau user tidak memiliki permission approval. Cek kolom status terlebih dahulu. Jika status sudah Need Approval tetapi tombol tetap disabled, hubungi IT untuk pengecekan role dan akses menu.
+
+##Q3: Total Bank Receive tidak match dengan Total Allocation. Maksudnya apa?
+
+Jawaban AI:
+Artinya jumlah uang yang diterima di bank belum sama dengan jumlah yang dialokasikan ke invoice/detail penerimaan. Cek kembali allocation di setiap invoice atau detail, bank charge, deposit, dan unknown allocation. Dokumen baru bisa disimpan jika total penerimaan dan alokasi sudah balance.
+
+##Q4: Virtual Account tidak ditemukan, harus bagaimana?
+
+Jawaban AI:
+Cek lagi nomor VA yang diinput. Jika masih tidak ditemukan, kemungkinan nomor VA tidak aktif, salah mapping, atau belum ada di master. Jangan lanjut memakai customer yang belum pasti. Konfirmasi ke Treasury/Bank atau hubungi IT jika data VA seharusnya sudah ada.
+
+##Q5: Kalau customer bayar invoice sebagian, bisa dibuat RV?
+
+Jawaban AI:
+Bisa. Buat Sales Receive sesuai nominal yang masuk, lalu alokasikan sebagian ke invoice terkait. Sisa invoice akan tetap outstanding dan bisa dibayar pada RV berikutnya.
+
+##Q6: Kalau ada overpayment dari customer bagaimana?
+
+Jawaban AI:
+Jangan langsung dianggap salah. Verifikasi dulu apakah ada invoice lain, biaya tambahan, atau memang deposit. Jika benar overpayment, biasanya selisih dapat dialokasikan ke deposit/customer credit atau akun sesuai kebijakan Finance.
+
+##Q7: Setelah dokumen RV sudah final, bisa diedit?
+
+Jawaban AI:
+Umumnya tidak bisa. Dokumen final seperti Paid, Posted, Void, atau Removed tidak boleh diedit langsung. Jika ada kesalahan, gunakan proses void atau revision sesuai policy, lalu buat dokumen baru yang benar.
+
+##Q8: Tax Approval minta NPWP valid, tapi NPWP sudah benar menurut user.
+
+Jawaban AI:
+Minta user cek format NPWP dan data master. NPWP harus sesuai format dan terdaftar di master data. Jika NPWP benar tetapi sistem tetap menolak, kemungkinan ada issue master data atau validasi sistem. Hubungi IT atau admin master data dengan nomor dokumen dan screenshot error.
+
+##Q9: File lampiran tidak bisa dibuka.
+
+Jawaban AI:
+Coba refresh halaman atau gunakan browser lain. Jika tetap tidak bisa, kemungkinan file path atau permission server bermasalah. Laporkan ke IT dengan nomor dokumen dan nama file yang tidak bisa dibuka.
+
+##Q10: Apa beda IK, RV IK, dan RV Non-IK?
+
+Jawaban AI:
+IK adalah dokumen invoice/penerimaan dari pihak ketiga. RV IK adalah receiving voucher yang dibuat berdasarkan dokumen IK. RV Non-IK adalah receiving voucher yang berdiri sendiri dan tidak terkait dokumen IK, biasanya untuk penerimaan kas umum, deposit, refund, atau transfer masuk.
+
+
+
+#17. Knowledge Rules untuk AI Chatbot
+
+Agar AI chatbot menjawab dengan benar, gunakan rules berikut:
+
+1. Jika user menyebut IK, pahami konteksnya sebagai Invoice IK di modul Receiving.
+2. Jika user menyebut RV, tanyakan atau infer apakah yang dimaksud RV IK, RV Non-IK, Sales Receive, atau Unidentified RV.
+3. Jika user menyebut uang masuk tapi customer tidak jelas, arahkan ke Approval of Unidentified RV.
+4. Jika user menyebut VA, hubungkan dengan Virtual Account pada Sales Receive.
+5. Jika user menyebut total tidak balance, cek konteksnya: total amount vs detail, bank receive vs allocation, atau DPP/PPN/PPH detail vs header.
+6. Jika user menyebut PPH Type kosong, jelaskan bahwa PPH Type wajib jika ada PPH amount.
+7. Jika user menyebut NPWP error, arahkan cek format, master data, WP Name, dan WP Address.
+8. Jika user menyebut dokumen tidak bisa diedit, cek status dokumen. Jika final, jelaskan tidak bisa diedit langsung.
+9. Jika user menyebut tombol tidak muncul, cek status dan role. Jika tidak sesuai, arahkan ke IT.
+10. Jika user menyebut API, 401, 403, 500, database error, doc not found, atau grid tidak loading, arahkan ke IT.
+11. Jangan menyarankan edit database manual kepada user.
+12. Jangan menyarankan bypass approval.
+13. Untuk dokumen yang sudah final, arahkan ke void/revision sesuai policy.
+14. Untuk Unidentified RV, jangan menyarankan approve sebelum customer/invoice terverifikasi.
+15. Untuk Tax Correction, hanya sarankan untuk selisih minor atau rounding. Untuk kesalahan besar, sarankan reject dan perbaiki dokumen sumber.
+
+
+
+#18. Ringkasan Singkat untuk Retrieval AI
+
+Modul Receiving / IK di JIFAS mencakup Invoice IK, RV, Sales Receive, Unidentified RV, Tax Approval, dan Invoice Slip. IK digunakan untuk mencatat invoice atau dokumen penerimaan dari supplier/tenant/pihak ketiga dengan detail COA dan pajak. RV adalah Receiving Voucher untuk mencatat penerimaan, bisa RV IK yang terkait IK atau RV Non-IK yang berdiri sendiri. Sales Receive mencatat uang masuk dari customer dan mengalokasikannya ke invoice, deposit, atau akun lain. Unidentified RV digunakan ketika uang sudah masuk tetapi customer/invoice belum jelas, sehingga perlu investigasi dan approval. Tax Approval memastikan PPN, PPH, NPWP, WP Name, WP Address, faktur pajak, dan bukti potong sudah benar sebelum dokumen lanjut ke accounting. Error input seperti field kosong, total tidak balance, tax code kosong, PPH Type kosong, atau rate kosong bisa diperbaiki user. Error teknis seperti unauthorized, database error, grid tidak loading, action button tidak muncul, doc no not found, file path rusak, atau API error harus diarahkan ke IT.
+
+
+
+#19. Escalation Matrix
+
+##19.1 Arahkan ke Finance
+
+Jika masalah berkaitan dengan:
+
+- Amount tidak cocok dengan bank statement.
+- Customer perlu dikonfirmasi.
+- Unknown allocation.
+- Overpayment.
+- Partial payment.
+- Rate foreign currency perlu approval.
+- Dokumen lama perlu void/revision.
+
+##19.2 Arahkan ke Tax
+
+Jika masalah berkaitan dengan:
+
+- PPN.
+- PPH.
+- PPH Type.
+- NPWP.
+- WP Name.
+- WP Address.
+- Faktur pajak.
+- Bukti potong.
+- Tax correction.
+
+##19.3 Arahkan ke Accounting
+
+Jika masalah berkaitan dengan:
+
+- COA.
+- Posting.
+- General Ledger.
+- Jurnal.
+- Dokumen sudah posted.
+- Reversal.
+- Laporan keuangan.
+
+##19.4 Arahkan ke IT
+
+Jika masalah berkaitan dengan:
+
+- Error sistem.
+- API error.
+- Role/permission.
+- Tombol/menu tidak muncul.
+- Grid kosong padahal data ada.
+- File tidak bisa dibuka.
+- Master data tidak muncul.
+- Dokumen stuck karena system error.
+- Database error.
+
+
+
+#20. Penutup
+
+Modul Receiving / IK merupakan modul penting dalam JIFAS karena menjadi pintu pencatatan dokumen penerimaan dan uang masuk. Modul ini harus menjaga data tetap balance, jelas, terverifikasi, dan sesuai pajak sebelum masuk ke Accounting. AI chatbot harus dapat membedakan antara IK, RV IK, RV Non-IK, Sales Receive, Unidentified RV, Tax Approval, dan Invoice Slip. AI juga harus dapat membantu user menyelesaikan error input umum, tetapi harus mengarahkan error teknis dan akses sistem kepada IT.
+
+Dokumen ini disusun untuk dipakai sebagai knowledge base chatbot agar jawaban yang diberikan tidak hanya menjelaskan tombol, tetapi juga memahami business process, flow, validasi, pajak, accounting impact, dan escalation path.

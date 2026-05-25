@@ -1,0 +1,2057 @@
+﻿JIFAS Knowledge Base - Consolidation Accounting Module
+
+Dokumen ini dibuat untuk menjadi knowledge base AI chatbot JIFAS pada area Consolidation Accounting. Fokus dokumen ini adalah pemahaman proses bisnis, alur kerja pengguna, istilah finance-accounting, validasi, status dokumen, error handling, dan kapan masalah harus dieskalasikan ke IT.
+
+Dokumen ini bukan dokumentasi coding. Isi dibuat agar AI chatbot dapat menjawab pertanyaan user dengan bahasa yang mudah dipahami, tetapi tetap mengerti logika bisnis consolidation accounting di JIFAS.
+
+
+1. Gambaran Umum Consolidation Accounting
+
+Consolidation Accounting adalah proses menggabungkan data akuntansi dari beberapa perusahaan atau unit dalam grup menjadi satu laporan keuangan konsolidasi.
+
+Di JIFAS, consolidation accounting digunakan untuk:
+
+1. Mengumpulkan Trial Balance dari beberapa perusahaan.
+2. Mengunggah Trial Balance dari perusahaan yang datanya perlu dimasukkan secara manual.
+3. Menghitung Trial Balance per perusahaan untuk periode tertentu.
+4. Mengajukan, menyetujui, mengunci, dan mengonsolidasi Trial Balance.
+5. Membuat jurnal eliminasi untuk menghapus transaksi antar perusahaan dalam grup.
+6. Membentuk Consolidated Trial Balance.
+7. Menghasilkan laporan konsolidasi seperti Balance Sheet, Profit and Loss, Equity, dan rincian working paper.
+
+Analogi sederhananya:
+
+Consolidation Accounting adalah proses membuat laporan besar grup perusahaan dari laporan kecil masing-masing perusahaan, lalu membersihkan transaksi internal antar perusahaan agar laporan akhir hanya mencerminkan posisi grup terhadap pihak luar.
+
+Contoh:
+
+Perusahaan A menjual jasa ke Perusahaan B yang masih satu grup. Di laporan masing-masing perusahaan, transaksi itu valid. Tetapi dalam laporan grup, transaksi itu tidak boleh dihitung sebagai pendapatan eksternal karena hanya terjadi antar perusahaan satu grup. Maka transaksi tersebut perlu dieliminasi melalui Elimination Journal.
+
+
+2. Tujuan Bisnis Modul Consolidation Accounting
+
+Modul ini bertujuan untuk:
+
+1. Menghasilkan laporan keuangan konsolidasi grup yang akurat.
+2. Menggabungkan data dari beberapa perusahaan dengan format yang seragam.
+3. Memastikan Trial Balance setiap perusahaan sudah final sebelum dikonsolidasi.
+4. Mengontrol proses submit, approval, consolidation, dan lock agar data tidak berubah sembarangan.
+5. Mencatat elimination journal untuk transaksi antar perusahaan.
+6. Menyediakan audit trail untuk setiap proses consolidation.
+7. Membantu manajemen melihat posisi keuangan grup secara menyeluruh.
+
+
+3. Modul dan Sub-Proses dalam Consolidation Accounting
+
+Berdasarkan modul yang diberikan, area Consolidation Accounting terdiri dari beberapa bagian besar:
+
+1. Upload TB Consol
+2. Caje/Paje Journal untuk consolidation upload
+3. Trial Balance
+4. Consolidated Trial Balance
+5. Elimination Journal
+6. Consolidated Balance Sheet
+7. Consolidated Profit and Loss
+8. Equity Report
+9. Rincian Working Paper:
+   - Intangible Assets
+   - Investment Property
+   - Right of Use
+
+Setiap bagian saling terhubung. Upload TB dan Trial Balance menjadi sumber data. Elimination Journal menjadi koreksi konsolidasi. Consolidated Trial Balance menjadi dasar laporan konsolidasi. Balance Sheet, Profit and Loss, Equity, dan working paper menjadi output laporan.
+
+
+4. Big Picture Flow Consolidation Accounting
+
+Alur besar proses consolidation accounting di JIFAS:
+
+1. Siapkan data transaksi dan jurnal dari masing-masing perusahaan.
+2. Generate atau upload Trial Balance per perusahaan dan periode.
+3. Review Trial Balance, pastikan debit dan credit balance.
+4. Submit Trial Balance.
+5. Approve Trial Balance.
+6. Jika diperlukan, buat adjustment atau Caje/Paje Journal.
+7. Buat Elimination Journal untuk transaksi antar perusahaan.
+8. Consolidate Trial Balance.
+9. Review Consolidated Trial Balance.
+10. Generate laporan konsolidasi:
+    - Balance Sheet
+    - Profit and Loss
+    - Equity
+    - Working Paper details
+11. Jika data sudah benar, Lock Trial Balance atau proses consolidation agar periode tidak berubah.
+12. Gunakan output laporan untuk management reporting dan audit.
+
+Flow sederhana:
+
+Data perusahaan per unit
+-> Trial Balance per company
+-> Submit TB
+-> Approve TB
+-> Elimination Journal
+-> Consolidated Trial Balance
+-> Consolidated Financial Reports
+-> Review final
+-> Lock period
+
+
+5. Istilah Penting dalam Consolidation Accounting
+
+#5.1 Trial Balance
+
+Trial Balance adalah daftar saldo seluruh akun dalam satu perusahaan untuk satu periode. Trial Balance menunjukkan saldo awal, mutasi, dan saldo akhir akun.
+
+Dalam consolidation, Trial Balance menjadi bahan utama untuk digabungkan ke laporan grup.
+
+#5.2 Consolidated Trial Balance
+
+Consolidated Trial Balance adalah Trial Balance gabungan dari beberapa perusahaan dalam grup setelah memperhitungkan data dari masing-masing perusahaan dan elimination journal.
+
+#5.3 Elimination Journal
+
+Elimination Journal adalah jurnal yang dibuat untuk menghapus dampak transaksi antar perusahaan dalam satu grup.
+
+Contoh yang perlu dieliminasi:
+
+- Piutang antar perusahaan
+- Hutang antar perusahaan
+- Pendapatan antar perusahaan
+- Beban antar perusahaan
+- Pinjaman antar perusahaan
+- Dividen antar perusahaan
+- Investasi parent ke subsidiary
+- Profit internal yang belum terealisasi
+
+#5.4 Intercompany Transaction
+
+Intercompany transaction adalah transaksi antara dua perusahaan yang masih berada dalam satu grup.
+
+Dalam laporan individu, transaksi ini dicatat. Dalam laporan konsolidasi, transaksi internal harus dieliminasi agar tidak menggandakan pendapatan, beban, aset, atau kewajiban.
+
+#5.5 Parent Company
+
+Parent company adalah perusahaan induk yang menjadi pusat konsolidasi.
+
+#5.6 Subsidiary atau Child Company
+
+Subsidiary adalah perusahaan anak atau unit yang datanya digabungkan ke dalam konsolidasi.
+
+#5.7 Beginning Balance
+
+Saldo awal akun pada awal periode.
+
+#5.8 Mutasi Debit dan Mutasi Credit
+
+Mutasi adalah pergerakan transaksi selama periode berjalan.
+
+Mutasi Debit adalah total transaksi debit selama periode.
+Mutasi Credit adalah total transaksi kredit selama periode.
+
+#5.9 Ending Balance
+
+Saldo akhir akun setelah saldo awal ditambah atau dikurangi mutasi periode berjalan.
+
+#5.10 Balance Before Elimination
+
+Saldo gabungan sebelum jurnal eliminasi diterapkan.
+
+#5.11 Elimination Debit dan Elimination Credit
+
+Nilai jurnal eliminasi yang mengurangi atau menyesuaikan saldo dalam laporan konsolidasi.
+
+#5.12 Final Balance
+
+Saldo akhir setelah saldo sebelum eliminasi dikoreksi dengan elimination journal.
+
+#5.13 Lock
+
+Lock adalah proses mengunci data Trial Balance atau consolidation agar tidak berubah lagi setelah dianggap final.
+
+#5.14 Submit
+
+Submit adalah proses mengajukan data Trial Balance untuk diperiksa atau disetujui.
+
+#5.15 Approve
+
+Approve adalah proses menyetujui Trial Balance atau data consolidation setelah diperiksa.
+
+#5.16 Compute
+
+Compute adalah proses menghitung Trial Balance dari sumber data sistem atau dari file upload.
+
+#5.17 Consolidate
+
+Consolidate adalah proses menggabungkan data Trial Balance beberapa perusahaan menjadi data konsolidasi.
+
+
+6. Role yang Terlibat
+
+#6.1 Accounting Staff
+
+Tugas utama:
+
+- Menyiapkan Trial Balance.
+- Upload TB jika diperlukan.
+- Membuat jurnal Caje/Paje jika ada adjustment.
+- Membantu menyiapkan data elimination journal.
+- Mengecek apakah akun dan nominal sudah sesuai.
+
+#6.2 Accounting Supervisor atau Manager
+
+Tugas utama:
+
+- Review Trial Balance.
+- Menyetujui atau menolak data yang belum benar.
+- Mengecek balancing debit dan credit.
+- Mengecek kelengkapan elimination journal.
+- Memastikan laporan konsolidasi masuk akal.
+
+#6.3 Finance atau Consolidation Team
+
+Tugas utama:
+
+- Mengawasi data antar perusahaan.
+- Mengecek intercompany transaction.
+- Memastikan consolidation berjalan sesuai periode.
+- Review laporan final untuk manajemen.
+
+#6.4 Tax Team
+
+Terkadang terlibat jika elimination atau adjustment berkaitan dengan pajak, PPN, PPH, atau transaksi antar perusahaan yang memengaruhi laporan pajak.
+
+#6.5 IT Support
+
+Tugas utama:
+
+- Menangani error sistem.
+- Memeriksa upload yang gagal karena format, template, atau API.
+- Memeriksa data tidak muncul padahal sudah diproses.
+- Memeriksa akses user, token/session, role, dan company mapping.
+- Memeriksa error saat compute, submit, approve, consolidate, lock, export, atau download template.
+
+
+7. Upload TB Consol
+
+#7.1 Apa Itu Upload TB Consol
+
+Upload TB Consol adalah fitur untuk mengunggah Trial Balance perusahaan ke sistem consolidation JIFAS menggunakan file Excel atau spreadsheet template.
+
+Fitur ini digunakan ketika data Trial Balance perlu dimasukkan secara manual atau berasal dari sumber eksternal.
+
+#7.2 Kapan Upload TB Digunakan
+
+Upload TB digunakan ketika:
+
+1. Perusahaan belum memiliki data Trial Balance yang bisa langsung dihitung dari sistem.
+2. Data berasal dari sistem lain.
+3. Data consolidation perlu diimport dari Excel.
+4. Accounting ingin memasukkan saldo awal, mutasi, saldo akhir, dan adjustment dalam format template.
+5. Ada perusahaan atau entitas yang tidak masuk langsung dalam proses transaksi utama JIFAS tetapi perlu dikonsolidasikan.
+
+#7.3 Data yang Harus Disiapkan Sebelum Upload
+
+Sebelum upload, user harus menyiapkan:
+
+1. Company atau perusahaan yang akan diupload.
+2. Period atau periode Trial Balance.
+3. File template TB yang benar.
+4. COA code.
+5. Object code jika digunakan.
+6. Object description jika digunakan.
+7. Beginning balance debit dan credit.
+8. Mutasi debit dan credit.
+9. Ending balance debit dan credit.
+10. Adjustment debit dan credit jika ada.
+11. Ending adjusted debit dan credit jika ada.
+
+#7.4 Struktur Data Upload TB
+
+Data yang dibaca dari file upload meliputi:
+
+- Company
+- Period
+- COA code
+- Object code
+- Object description
+- Beginning Balance Debit
+- Beginning Balance Credit
+- Mutasi Debit
+- Mutasi Credit
+- Ending Debit
+- Ending Credit
+- Adjustment Debit
+- Adjustment Credit
+- Ending Adjustment Debit
+- Ending Adjustment Credit
+
+AI chatbot harus memahami bahwa upload TB bukan sekadar upload file, tetapi proses memasukkan saldo accounting yang akan dipakai untuk consolidation.
+
+#7.5 Flow Upload TB
+
+1. User membuka menu Upload TB Consol.
+2. User memilih periode pencarian untuk melihat daftar TB yang sudah pernah diupload.
+3. Sistem menampilkan daftar upload berdasarkan period, company, dan status.
+4. User dapat memilih Upload TB.
+5. Sistem membuka form upload.
+6. User memilih company.
+7. User memilih period.
+8. User membuka atau mengisi file template di spreadsheet upload.
+9. User klik Save.
+10. Sistem membaca isi spreadsheet.
+11. Sistem membentuk data Trial Balance dari baris Excel.
+12. Sistem mengirim data ke server.
+13. Sistem menyimpan atau memperbarui data TB.
+14. Jika berhasil, user mendapat pesan sukses upload atau update.
+15. Jika gagal, user mendapat pesan error.
+
+#7.6 Download Template TB
+
+Menu ini juga menyediakan Download TB Template.
+
+Flow Download Template:
+
+1. User klik Download TB Template.
+2. Sistem meminta user memilih company.
+3. User memilih company.
+4. Sistem menghasilkan template Excel sesuai company tersebut.
+5. File template didownload dengan nama sesuai company.
+6. User mengisi template dengan data TB yang benar.
+7. File tersebut digunakan untuk upload TB.
+
+Template harus digunakan agar format kolom sesuai. Jika user memakai file bebas atau kolom tidak sesuai, sistem bisa gagal membaca data.
+
+#7.7 Validasi Upload TB
+
+Sebelum Save, sistem dan user harus memastikan:
+
+1. Company sudah dipilih.
+2. Period sudah dipilih.
+3. File atau grid upload tidak kosong.
+4. Kolom penting terisi.
+5. COA code valid.
+6. Nilai debit dan credit berbentuk angka.
+7. Tidak ada baris penting yang kosong.
+8. Beginning balance, mutasi, ending balance, dan adjustment masuk akal.
+9. Total debit dan credit harus balance secara accounting.
+10. File menggunakan template yang benar.
+
+#7.8 Error Umum Upload TB dan Penanganannya
+
+##Error: Please select the company for uploaded TB
+
+Penyebab:
+Company belum dipilih.
+
+Solusi user:
+Pilih company terlebih dahulu, lalu save ulang.
+
+Jika dropdown company tidak muncul, loading terus, atau kosong padahal user punya akses, arahkan ke IT.
+
+##Error: Please select the period for uploaded TB
+
+Penyebab:
+Periode belum dipilih.
+
+Solusi user:
+Pilih periode upload.
+
+Jika date picker tidak bisa dibuka atau period tidak tersimpan, arahkan ke IT.
+
+##Error: Cannot save an empty grid
+
+Penyebab:
+File kosong, spreadsheet belum terisi, atau sistem tidak berhasil membaca isi file.
+
+Solusi user:
+Gunakan template yang benar dan pastikan ada data baris Trial Balance.
+
+Arahkan ke IT jika file sudah benar tetapi tetap terbaca kosong.
+
+##Error upload gagal setelah klik Save
+
+Kemungkinan penyebab:
+
+- Format template salah.
+- Kolom tidak sesuai.
+- Ada COA yang tidak dikenal.
+- Ada angka dengan format tidak terbaca.
+- Session user expired.
+- API upload bermasalah.
+- Data period sudah terkunci.
+
+Solusi user:
+
+1. Cek template.
+2. Cek company dan period.
+3. Cek apakah ada baris kosong di tengah data.
+4. Cek format angka.
+5. Coba upload ulang.
+
+Jika masih gagal, arahkan ke IT dengan menyertakan file upload, company, period, screenshot error, dan waktu kejadian.
+
+#7.9 Error yang Harus ke IT untuk Upload TB
+
+Arahkan ke IT jika:
+
+1. Download template gagal.
+2. Upload file gagal padahal template benar.
+3. Data upload berhasil tetapi tidak muncul di list.
+4. Status tidak berubah setelah upload.
+5. Company dropdown kosong padahal user punya akses.
+6. Period tidak bisa dipilih.
+7. Sistem menampilkan error API, server error, unauthorized, forbidden, atau token expired.
+8. Upload menyebabkan duplicate data yang tidak bisa dihapus user.
+9. Periode sudah lock tetapi sistem masih mengizinkan upload.
+10. Data angka berubah setelah upload.
+
+
+8. Caje/Paje Journal dalam Consolidation Upload
+
+#8.1 Apa Itu Caje/Paje Journal
+
+Caje/Paje Journal adalah jurnal kas atau adjustment journal yang dibuat di area consolidation upload. Fitur ini membantu user membuat jurnal manual yang berkaitan dengan proses upload atau penyesuaian data consolidation.
+
+Dalam konteks consolidation, Caje/Paje dapat digunakan untuk mencatat adjustment yang diperlukan sebelum atau selama proses Trial Balance consolidation.
+
+#8.2 Kapan Digunakan
+
+Caje/Paje digunakan ketika:
+
+1. Ada jurnal manual yang perlu dimasukkan untuk mendukung consolidation.
+2. Ada correction sebelum Trial Balance final.
+3. Ada adjustment cash atau journal yang perlu dicatat agar data balance.
+4. Ada kebutuhan mencatat jurnal dengan GL type tertentu.
+5. Ada transaksi yang tidak masuk melalui modul lain tetapi perlu masuk ke Trial Balance.
+
+#8.3 Field Header Caje/Paje
+
+Field utama:
+
+1. Journal Type
+   - Wajib diisi.
+   - Menentukan jenis jurnal yang dibuat.
+
+2. Date
+   - Wajib diisi.
+   - Tanggal jurnal.
+   - Umumnya mengikuti periode aktif atau tahun berjalan.
+
+3. Amount
+   - Otomatis dihitung dari total debit.
+   - Tidak diisi manual.
+
+4. Ref Num
+   - Nomor referensi tambahan.
+   - Opsional.
+
+5. Ref Doc
+   - Nomor dokumen referensi.
+   - Opsional tetapi disarankan diisi jika ada dokumen pendukung.
+
+6. Description
+   - Wajib diisi.
+   - Menjelaskan tujuan jurnal.
+   - Harus cukup jelas untuk audit.
+
+7. Total Debit
+   - Otomatis dihitung dari baris detail.
+
+8. Total Credit
+   - Otomatis dihitung dari baris detail.
+
+#8.4 Field Detail Caje/Paje
+
+Setiap baris detail berisi:
+
+1. Division
+2. Department
+3. COA
+4. COA Description
+5. Object Code
+6. Object Description
+7. Debit
+8. Credit
+
+Aturan detail:
+
+- Minimal harus ada satu baris.
+- Setiap baris harus memilih divisi, departemen, dan COA yang sesuai.
+- Description detail mengikuti description header saat baris dibuat, tetapi bisa disesuaikan.
+- Total Debit harus sama dengan Total Credit.
+- Amount header harus lebih besar dari nol.
+
+#8.5 Flow Membuat Caje/Paje Journal
+
+1. User klik Create Caje/Paje.
+2. Sistem membuka form jurnal.
+3. User memilih Journal Type.
+4. User memilih Date.
+5. User mengisi Ref Num jika ada.
+6. User mengisi Ref Doc jika ada.
+7. User mengisi Description.
+8. User menambahkan detail jurnal.
+9. User memilih Division.
+10. User memilih Department.
+11. User memilih COA.
+12. User memilih Object Code jika diperlukan.
+13. User mengisi Debit atau Credit.
+14. Sistem menghitung Total Debit dan Total Credit.
+15. Jika total belum balance, angka ditandai tidak valid.
+16. User memastikan debit sama dengan credit.
+17. User klik Save.
+18. Sistem meminta konfirmasi.
+19. Sistem menyimpan jurnal.
+20. Jika berhasil, daftar data akan direfresh.
+
+#8.6 Validasi Caje/Paje Journal
+
+Sistem harus memastikan:
+
+1. Date tidak kosong.
+2. Description tidak kosong.
+3. Detail minimal satu baris.
+4. Total Debit sama dengan Total Credit.
+5. Amount lebih besar dari nol.
+6. Tidak ada debit atau credit negatif.
+7. COA yang dipilih valid.
+8. Divisi dan departemen sesuai company.
+
+#8.7 Error Umum Caje/Paje dan Penanganannya
+
+##Error: Description must be filled
+
+Penyebab:
+Description kosong.
+
+Solusi:
+Isi description yang jelas sebelum menambah detail atau save.
+
+##Error: Date must be filled
+
+Penyebab:
+Tanggal belum dipilih.
+
+Solusi:
+Pilih tanggal jurnal.
+
+##Error: Total Debit and Credit must be equal
+
+Penyebab:
+Total debit tidak sama dengan total credit.
+
+Solusi:
+Periksa semua baris detail, pastikan total debit sama persis dengan total credit.
+
+##Error: Total amount must be greater than zero
+
+Penyebab:
+Nominal total masih nol.
+
+Solusi:
+Isi debit atau credit dengan nilai yang benar.
+
+##Error detail grid tidak bisa tambah baris
+
+Penyebab umum:
+Description belum diisi, grid error, browser/session bermasalah.
+
+Solusi user:
+Isi description, refresh form, buka ulang menu.
+
+Jika tetap error, arahkan ke IT.
+
+#8.8 Error Caje/Paje yang Harus ke IT
+
+Arahkan ke IT jika:
+
+1. Grid detail tidak muncul.
+2. Dropdown division, department, COA, atau object code kosong padahal data master ada.
+3. Total debit/credit tidak terhitung padahal angka sudah diisi.
+4. Save gagal tanpa pesan bisnis yang jelas.
+5. Jurnal sudah sukses tetapi tidak muncul di daftar.
+6. Ada error server/API.
+7. User mendapat unauthorized atau access denied.
+8. Data jurnal berubah setelah disimpan.
+
+
+9. Trial Balance Module
+
+#9.1 Apa Itu Trial Balance di Consolidation
+
+Trial Balance di menu consolidation adalah data saldo akun per company dan per period yang akan digunakan sebagai bahan konsolidasi.
+
+Trial Balance ini dapat dibuat dengan dua cara:
+
+1. Compute langsung dari data sistem.
+2. Compute dari file upload.
+
+#9.2 Tujuan Trial Balance Module
+
+Modul Trial Balance digunakan untuk:
+
+- Membuat Trial Balance per company.
+- Menghitung saldo beginning, mutasi, dan ending.
+- Mengupload file Trial Balance jika diperlukan.
+- Submit Trial Balance untuk review.
+- Approve Trial Balance.
+- Menjalankan consolidation.
+- Lock Trial Balance agar data final.
+
+#9.3 Data Utama Trial Balance
+
+Data utama yang terlihat di list:
+
+1. Company Code
+2. Period
+3. Status
+4. Action
+
+Detail Trial Balance menampilkan:
+
+1. COA Code
+2. Description
+3. Beginning Debit
+4. Beginning Credit
+5. Mutasi Debit
+6. Mutasi Credit
+7. Ending Debit
+8. Ending Credit
+
+#9.4 Flow Trial Balance Lengkap
+
+##Step 1: Create atau buka data Trial Balance
+
+User memilih company dan period.
+
+##Step 2: Compute Trial Balance
+
+Jika user tidak upload file:
+
+- Sistem menghitung Trial Balance dari data transaksi yang sudah ada.
+
+Jika user upload file:
+
+- Sistem membaca file dan menghitung Trial Balance berdasarkan file tersebut.
+
+##Step 3: Review hasil detail
+
+User memeriksa:
+
+- Semua akun muncul.
+- Beginning balance masuk akal.
+- Mutasi debit dan credit sesuai periode.
+- Ending balance sesuai.
+- Debit dan credit balance.
+- Tidak ada akun yang kosong atau aneh.
+
+##Step 4: Submit Trial Balance
+
+Jika data sudah benar, user klik Submit Trial Balance.
+
+Submit berarti data diajukan untuk proses approval atau tahap berikutnya.
+
+##Step 5: Approve Trial Balance
+
+Approver mengecek data Trial Balance.
+
+Jika benar, klik Approve Trial Balance.
+
+Jika tidak benar, user harus memperbaiki sumber data, upload ulang, atau membuat adjustment.
+
+##Step 6: Consolidate Trial Balance
+
+Setelah TB company sudah benar, user dapat menjalankan Consolidate Trial Balance untuk menggabungkan data ke level konsolidasi.
+
+##Step 7: Lock Trial Balance
+
+Jika data sudah final, user klik Lock Trial Balance.
+
+Lock berarti data tidak boleh diubah lagi tanpa prosedur khusus.
+
+#9.5 Makna Tombol di Trial Balance
+
+##Compute Trial Balance
+
+Menghitung Trial Balance untuk company dan period.
+
+Gunakan ketika data transaksi sudah siap atau file upload sudah dilampirkan.
+
+##Submit Trial Balance
+
+Mengajukan Trial Balance untuk tahap approval.
+
+Gunakan setelah hasil compute dicek dan dianggap benar.
+
+##Approve Trial Balance
+
+Menyetujui Trial Balance.
+
+Hanya boleh dilakukan oleh user yang berwenang.
+
+##Consolidate Trial Balance
+
+Menggabungkan Trial Balance ke proses konsolidasi.
+
+Gunakan setelah Trial Balance siap dan approved.
+
+##Lock Trial Balance
+
+Mengunci Trial Balance agar tidak berubah.
+
+Gunakan setelah data sudah final.
+
+#9.6 Status Trial Balance
+
+Status dapat berbeda sesuai workflow. AI harus memahami makna status secara umum:
+
+1. New atau Draft
+   - Data baru dibuat atau belum diproses penuh.
+
+2. Computed
+   - Data sudah dihitung.
+
+3. Submitted
+   - Data sudah diajukan untuk approval.
+
+4. Approved
+   - Data sudah disetujui.
+
+5. Consolidated
+   - Data sudah masuk proses konsolidasi.
+
+6. Locked
+   - Data sudah final dan tidak boleh diubah.
+
+7. Deleted atau Removed
+   - Data dihapus atau tidak aktif.
+
+Jika status actual di sistem memakai istilah berbeda, chatbot tetap harus mengarahkan user berdasarkan makna prosesnya.
+
+#9.7 Validasi Sebelum Submit Trial Balance
+
+Sebelum submit, user harus memastikan:
+
+1. Company benar.
+2. Period benar.
+3. Semua akun penting muncul.
+4. Total debit dan credit balance.
+5. Mutasi masuk periode yang benar.
+6. Ending balance masuk akal.
+7. Tidak ada akun dengan nilai ekstrem tanpa penjelasan.
+8. Tidak ada duplicate upload untuk company dan period yang sama.
+9. Jika ada intercompany transaction, sudah ditandai untuk elimination.
+10. Jika ada adjustment, sudah dibuat dengan jurnal yang benar.
+
+#9.8 Error Umum Trial Balance dan Penanganannya
+
+##Error: Compute gagal
+
+Kemungkinan penyebab:
+
+- Data transaksi periode belum lengkap.
+- Ada jurnal belum posted.
+- Company atau period salah.
+- File upload tidak valid.
+- API compute bermasalah.
+- Session expired.
+
+Solusi user:
+
+1. Cek company dan period.
+2. Pastikan jurnal periode sudah posted.
+3. Jika pakai file, cek template.
+4. Coba compute ulang.
+
+Jika tetap gagal, arahkan ke IT dengan company, period, metode compute, file jika ada, dan screenshot error.
+
+##Error: Trial Balance tidak balance
+
+Penyebab bisnis:
+
+- Ada jurnal tidak balance.
+- Ada data upload salah.
+- Ada mutasi tidak lengkap.
+- Ada adjustment belum masuk.
+
+Solusi user:
+
+1. Periksa total debit dan credit.
+2. Periksa akun yang nilainya tidak wajar.
+3. Cek jurnal sumber.
+4. Perbaiki melalui adjustment atau upload ulang.
+5. Jangan submit sampai balance.
+
+Arahkan ke IT jika angka sudah benar secara manual tetapi sistem tetap menampilkan tidak balance.
+
+##Error: Submit gagal
+
+Kemungkinan penyebab:
+
+- Data belum compute.
+- Status tidak sesuai untuk submit.
+- User tidak punya role.
+- Periode sudah locked.
+- API error.
+
+Solusi user:
+
+Cek status dokumen dan pastikan compute sudah dilakukan.
+
+Arahkan ke IT jika terkait akses, status tidak berubah, atau error server.
+
+##Error: Approve gagal
+
+Kemungkinan penyebab:
+
+- User tidak punya authority approve.
+- Data belum submitted.
+- Data sudah approved sebelumnya.
+- Ada validation error.
+
+Solusi:
+
+Cek status dan role user. Jika role seharusnya benar tetapi tetap gagal, arahkan ke IT.
+
+##Error: Consolidate gagal
+
+Kemungkinan penyebab:
+
+- Belum semua company approved.
+- Ada data TB belum lengkap.
+- Ada elimination journal tidak balance.
+- Ada period mismatch.
+- Ada data company yang belum upload.
+- API consolidation error.
+
+Solusi user:
+
+1. Cek semua company dalam grup sudah approved.
+2. Cek elimination journal sudah balance.
+3. Cek period semua data sama.
+4. Coba consolidate ulang.
+
+Jika tetap gagal, arahkan ke IT atau consolidation admin.
+
+##Error: Lock gagal
+
+Kemungkinan penyebab:
+
+- Data belum approved atau consolidated.
+- Masih ada pending adjustment.
+- Role user tidak cukup.
+- Period lock conflict.
+
+Solusi user:
+
+Cek status, pastikan semua tahap sudah selesai.
+
+Jika status sudah benar tapi lock gagal, arahkan ke IT.
+
+
+10. Consolidated Trial Balance
+
+#10.1 Apa Itu Consolidated Trial Balance
+
+Consolidated Trial Balance adalah hasil gabungan Trial Balance dari beberapa perusahaan dalam satu grup, termasuk informasi eliminasi.
+
+Menu ini menampilkan data company, period, status, serta detail akun konsolidasi.
+
+#10.2 Tujuan Consolidated Trial Balance
+
+Tujuannya adalah:
+
+1. Menampilkan hasil gabungan TB dari seluruh perusahaan terkait.
+2. Melihat saldo per COA setelah digabung.
+3. Melihat breakdown kontribusi masing-masing company.
+4. Melihat saldo sebelum eliminasi.
+5. Melihat elimination debit dan credit.
+6. Menjadi dasar laporan konsolidasi.
+
+#10.3 Field Utama List
+
+1. Company Code
+2. Period
+3. Status
+4. Action
+
+#10.4 Field Detail
+
+Detail consolidated TB dapat menampilkan:
+
+1. COA Code
+2. Description
+3. Nilai per company
+4. Beginning Debit
+5. Beginning Credit
+6. Mutasi Debit
+7. Mutasi Credit
+8. Ending Debit
+9. Ending Credit
+10. Elimination Debit Code
+11. Elimination Debit
+12. Elimination Credit Code
+13. Elimination Credit
+
+#10.5 Flow Consolidated Trial Balance
+
+1. Pastikan Trial Balance company sudah compute, submit, approve, dan consolidate.
+2. Buka menu Consolidated Trial Balance.
+3. Pilih Create jika perlu membuat consolidated TB baru.
+4. Pilih company atau unit konsolidasi.
+5. Pilih period.
+6. Sistem membentuk consolidated trial balance.
+7. User membuka detail.
+8. User mengecek COA, saldo, dan elimination.
+9. User dapat show detail untuk melihat breakdown per company.
+10. Jika ada salah, kembali ke sumber masalah:
+    - Trial Balance company
+    - Upload TB
+    - Elimination Journal
+    - Caje/Paje adjustment
+11. Setelah benar, data digunakan untuk laporan konsolidasi.
+
+#10.6 Cara Membaca Consolidated Trial Balance
+
+- COA Code menunjukkan akun.
+- Description menunjukkan nama akun.
+- Nilai per company menunjukkan kontribusi saldo masing-masing perusahaan.
+- Beginning Debit dan Credit menunjukkan posisi awal.
+- Mutasi Debit dan Credit menunjukkan perubahan selama periode.
+- Ending Debit dan Credit menunjukkan posisi akhir sebelum atau setelah proses tertentu.
+- Elimination Debit dan Credit menunjukkan koreksi konsolidasi.
+
+#10.7 Error Umum Consolidated Trial Balance
+
+##Data detail tidak muncul
+
+Kemungkinan penyebab:
+
+- Data consolidated TB belum terbentuk.
+- Proses consolidate belum dijalankan.
+- API detail gagal.
+- User tidak punya akses company.
+
+Solusi user:
+
+1. Pastikan data sudah consolidate.
+2. Refresh halaman.
+3. Buka ulang detail.
+
+Jika tetap tidak muncul, arahkan ke IT.
+
+##Angka consolidated tidak sesuai
+
+Kemungkinan penyebab:
+
+- Ada company yang belum approved.
+- Upload TB salah.
+- Elimination Journal belum dibuat atau salah.
+- Periode salah.
+- COA mapping berbeda antar company.
+
+Solusi user:
+
+1. Cek Trial Balance per company.
+2. Cek company yang masuk dalam konsolidasi.
+3. Cek elimination journal.
+4. Cek COA mapping.
+5. Cek period.
+
+Jika hasil manual benar tetapi sistem salah, arahkan ke IT atau consolidation admin.
+
+##Delete consolidated TB
+
+Delete hanya boleh dilakukan jika data memang salah dan belum menjadi laporan final.
+
+Sebelum delete, user harus memastikan:
+
+1. Tidak sedang dipakai untuk laporan final.
+2. Tidak sudah locked.
+3. Ada approval dari supervisor.
+4. Penyebab delete jelas.
+
+Jika user tidak yakin, jangan delete. Arahkan ke supervisor.
+
+
+11. Elimination Journal
+
+#11.1 Apa Itu Elimination Journal
+
+Elimination Journal adalah jurnal khusus yang dibuat pada proses konsolidasi untuk menghilangkan dampak transaksi antar perusahaan dalam satu grup.
+
+Tanpa elimination journal, laporan konsolidasi bisa salah karena transaksi internal dapat terhitung ganda.
+
+#11.2 Contoh Sederhana
+
+Perusahaan A menjual jasa ke Perusahaan B sebesar Rp100 juta.
+
+Dalam laporan individu:
+
+- Perusahaan A mencatat pendapatan Rp100 juta.
+- Perusahaan B mencatat beban Rp100 juta.
+
+Dalam laporan grup:
+
+Transaksi ini tidak boleh dianggap transaksi dengan pihak luar. Maka pendapatan dan beban internal perlu dieliminasi.
+
+#11.3 Tujuan Elimination Journal
+
+1. Menghilangkan transaksi internal antar company.
+2. Menghindari double counting.
+3. Menyesuaikan piutang dan hutang antar company.
+4. Menyajikan laporan konsolidasi yang benar.
+5. Menyediakan audit trail atas koreksi konsolidasi.
+
+#11.4 Jenis Transaksi yang Umum Dieliminasi
+
+1. Intercompany receivable dan payable.
+2. Intercompany sales dan purchase.
+3. Intercompany revenue dan expense.
+4. Intercompany loan.
+5. Interest income dan interest expense antar company.
+6. Dividend income dari subsidiary.
+7. Investment in subsidiary terhadap equity subsidiary.
+8. Unrealized profit atas transaksi internal.
+9. Management fee antar company.
+10. Reimbursement antar company.
+
+#11.5 Struktur Form Elimination Journal
+
+Form terdiri dari dua area besar:
+
+1. List Related Transaction
+   - Menampilkan transaksi antar company yang terkait.
+   - Membantu user melihat data yang mungkin perlu dieliminasi.
+
+2. Add Journal Elimination
+   - Area untuk membuat jurnal eliminasi.
+   - User mengisi unit, period, dan detail jurnal.
+
+#11.6 Field Header Elimination Journal
+
+1. Unit atau Company
+   - Wajib diisi.
+   - Menentukan unit konsolidasi atau parent company.
+
+2. Period
+   - Wajib diisi.
+   - Menentukan periode elimination journal.
+
+#11.7 Field Detail Elimination Journal
+
+Setiap baris detail berisi:
+
+1. Company Code
+   - Company yang terkena eliminasi.
+
+2. Company Name
+   - Nama company. Biasanya auto-fill dari company code.
+
+3. COA Code
+   - Akun yang dieliminasi.
+
+4. COA Description
+   - Nama akun. Biasanya auto-fill dari COA.
+
+5. Currency
+   - Mata uang jurnal. Default dapat IDR.
+
+6. Debit
+   - Nilai debit elimination.
+
+7. Credit
+   - Nilai credit elimination.
+
+8. Description
+   - Penjelasan baris jurnal.
+
+9. Effect to PL
+   - Nilai pengaruh ke Profit and Loss, jika elimination berdampak ke laba rugi.
+
+10. Elimination Code
+   - Kode baris elimination, misalnya E001, E002, dan seterusnya.
+
+#11.8 Flow Membuat Elimination Journal
+
+1. User membuka menu Elimination Journal.
+2. Sistem menampilkan daftar elimination journal berdasarkan company, period, dan status.
+3. User klik Create.
+4. Sistem membuka form Create Elimination Journal.
+5. User memilih Unit atau Company.
+6. User memilih Period.
+7. Sistem menampilkan related transaction antar company.
+8. User memeriksa transaksi related.
+9. Jika ada transaksi yang perlu dieliminasi, user menambahkan baris jurnal.
+10. User memilih company code pada detail.
+11. User memilih COA code.
+12. User memastikan company name dan COA description benar.
+13. User memilih currency.
+14. User mengisi debit atau credit.
+15. User mengisi description.
+16. User mengisi Effect to PL jika diperlukan.
+17. User memastikan total debit sama dengan total credit.
+18. User klik Save.
+19. Sistem menyimpan elimination journal.
+20. Data elimination journal akan memengaruhi consolidated trial balance dan laporan konsolidasi.
+
+#11.9 Related Transaction dalam Elimination Journal
+
+Related Transaction membantu user melihat transaksi antar company.
+
+Dalam panel related transaction, user dapat:
+
+1. Melihat transaksi dari company A ke company B.
+2. Melihat transaksi dari company B ke company A.
+3. Membuka detail jurnal transaksi.
+4. Menandai transaksi sebagai checked atau unchecked.
+
+Tujuan related transaction:
+
+- Membantu identifikasi pasangan transaksi intercompany.
+- Mengurangi risiko ada transaksi internal yang belum dieliminasi.
+- Menjadi alat bantu reconciliation.
+
+#11.10 Validasi Elimination Journal
+
+Sebelum save, sistem harus memastikan:
+
+1. Company atau unit sudah dipilih.
+2. Period sudah dipilih.
+3. Minimal ada satu detail journal.
+4. Setiap detail punya company code.
+5. Setiap detail punya COA code.
+6. Currency sudah dipilih.
+7. Debit tidak negatif.
+8. Credit tidak negatif.
+9. Effect to PL tidak negatif.
+10. Setiap baris memiliki nilai debit atau credit lebih besar dari nol.
+11. Total debit sama dengan total credit.
+
+Jika debit dan credit tidak sama, jurnal tidak boleh disimpan.
+
+#11.11 Contoh Elimination Journal
+
+##Contoh 1: Eliminasi piutang dan hutang antar company
+
+Kasus:
+
+Perusahaan A memiliki piutang ke Perusahaan B sebesar Rp100 juta.
+Perusahaan B memiliki hutang ke Perusahaan A sebesar Rp100 juta.
+
+Elimination Journal:
+
+- Debit: Intercompany Payable Rp100 juta
+- Credit: Intercompany Receivable Rp100 juta
+
+Tujuan:
+
+Menghapus saldo hutang-piutang internal dari laporan konsolidasi.
+
+##Contoh 2: Eliminasi revenue dan expense internal
+
+Kasus:
+
+Perusahaan A mencatat pendapatan jasa ke Perusahaan B sebesar Rp50 juta.
+Perusahaan B mencatat beban jasa dari Perusahaan A sebesar Rp50 juta.
+
+Elimination Journal:
+
+- Debit: Intercompany Revenue Rp50 juta
+- Credit: Intercompany Expense Rp50 juta
+
+Tujuan:
+
+Menghapus pendapatan dan beban internal agar laporan grup tidak overstatement.
+
+#11.12 Error Umum Elimination Journal
+
+##Error: Please select a Company Code
+
+Penyebab:
+Company atau unit belum dipilih.
+
+Solusi:
+Pilih company sebelum save.
+
+Jika dropdown kosong, arahkan ke IT.
+
+##Error: Please select a Period
+
+Penyebab:
+Period belum dipilih.
+
+Solusi:
+Pilih periode elimination journal.
+
+##Error: Please add at least one journal detail
+
+Penyebab:
+Belum ada baris detail.
+
+Solusi:
+Tambahkan minimal satu baris elimination journal.
+
+##Error: COA Code is required
+
+Penyebab:
+COA belum dipilih pada detail.
+
+Solusi:
+Pilih COA yang sesuai.
+
+Jika COA tidak tersedia, cek master COA atau arahkan ke IT/master data admin.
+
+##Error: Debit amount cannot be negative
+
+Penyebab:
+Debit bernilai negatif.
+
+Solusi:
+Isi debit dengan nilai nol atau nilai positif.
+
+##Error: Credit amount cannot be negative
+
+Penyebab:
+Credit bernilai negatif.
+
+Solusi:
+Isi credit dengan nilai nol atau nilai positif.
+
+##Error: Either Debit or Credit must be greater than zero
+
+Penyebab:
+Baris detail tidak memiliki nilai debit atau credit.
+
+Solusi:
+Isi salah satu sisi debit atau credit.
+
+##Error: Journal not balanced
+
+Penyebab:
+Total debit tidak sama dengan total credit.
+
+Solusi:
+Periksa seluruh baris elimination journal dan samakan total debit dengan total credit.
+
+##Error: Failed to load detail data
+
+Penyebab:
+Sistem gagal mengambil detail elimination journal.
+
+Solusi user:
+Refresh halaman dan buka ulang dokumen.
+
+Jika tetap gagal, arahkan ke IT.
+
+##Error related transaction tidak muncul
+
+Kemungkinan penyebab:
+
+- Tidak ada transaksi antar company pada periode tersebut.
+- Company relationship belum terdaftar.
+- API related transaction gagal.
+- User tidak punya akses.
+
+Solusi:
+
+Cek company, period, dan akses. Jika harusnya ada transaksi tetapi tidak muncul, arahkan ke IT atau admin consolidation.
+
+#11.13 Error Elimination Journal yang Harus ke IT
+
+Arahkan ke IT jika:
+
+1. Related transaction tidak muncul padahal ada data transaksi.
+2. Company dropdown kosong.
+3. COA dropdown kosong.
+4. Currency dropdown kosong.
+5. Save berhasil tetapi data tidak muncul.
+6. Delete tidak mengubah status.
+7. Detail grid error.
+8. Status checked related transaction tidak tersimpan.
+9. Ada unauthorized, forbidden, server error, atau token expired.
+10. Data elimination muncul ganda tanpa alasan.
+
+
+12. Consolidated Balance Sheet
+
+#12.1 Apa Itu Consolidated Balance Sheet
+
+Consolidated Balance Sheet adalah laporan posisi keuangan konsolidasi grup pada periode tertentu.
+
+Laporan ini menunjukkan:
+
+1. Assets
+2. Liabilities
+3. Equity
+
+Dalam consolidation accounting, Balance Sheet harus mencerminkan posisi grup setelah elimination journal diterapkan.
+
+#12.2 Tujuan
+
+1. Menampilkan posisi aset, kewajiban, dan ekuitas grup.
+2. Membandingkan saldo sebelum dan sesudah eliminasi.
+3. Menampilkan kontribusi per company jika detail ditampilkan.
+4. Menjadi laporan utama untuk management.
+
+#12.3 Parameter
+
+User memilih:
+
+1. Company
+2. Period
+
+Kemudian klik Query.
+
+#12.4 Data yang Ditampilkan
+
+Laporan dapat menampilkan dua bagian:
+
+1. Assets
+2. Liabilities dan Equity
+
+Kolom utama:
+
+1. Header
+2. COA Code
+3. Description
+4. Nilai per company jika detail dibuka
+5. Balance before Elimination
+6. Elimination Debit Code
+7. Elimination Debit
+8. Elimination Credit Code
+9. Elimination Credit
+10. Balance final
+
+#12.5 Flow Menggunakan Balance Sheet
+
+1. User membuka menu Balance Sheet.
+2. User memilih company.
+3. User memilih period.
+4. User klik Query.
+5. Sistem menampilkan Assets dan Liabilities/Equity.
+6. User dapat klik Show Detail untuk melihat breakdown company.
+7. User review saldo sebelum eliminasi, eliminasi, dan final balance.
+8. Jika perlu, user export ke Excel.
+
+#12.6 Cara Membaca Balance Sheet
+
+Balance before Elimination:
+Saldo gabungan sebelum eliminasi.
+
+Elimination Debit dan Credit:
+Jurnal eliminasi yang memengaruhi saldo.
+
+Balance:
+Saldo akhir setelah eliminasi.
+
+Jika angka final tidak masuk akal, user harus mengecek:
+
+1. Trial Balance per company.
+2. Elimination journal.
+3. COA mapping.
+4. Period.
+5. Company yang dimasukkan dalam konsolidasi.
+
+#12.7 Validasi Balance Sheet
+
+Balance Sheet harus memenuhi prinsip:
+
+Assets = Liabilities + Equity
+
+Jika tidak seimbang, itu masalah serius.
+
+Solusi bisnis:
+
+1. Cek apakah semua TB company sudah approved dan consolidated.
+2. Cek elimination journal balance.
+3. Cek apakah ada COA salah mapping.
+4. Cek apakah ada company yang belum masuk.
+5. Cek apakah period salah.
+
+Jika setelah dicek manual tetap tidak seimbang, arahkan ke IT atau accounting supervisor.
+
+#12.8 Error Balance Sheet yang Harus ke IT
+
+Arahkan ke IT jika:
+
+1. Query tidak menghasilkan data padahal data ada.
+2. Export Excel gagal.
+3. Show Detail tidak menampilkan company breakdown.
+4. Assets atau liabilities grid error.
+5. Angka berubah setelah refresh tanpa ada proses baru.
+6. User tidak bisa memilih company.
+7. Ada access denied.
+8. Ada server/API error.
+
+
+13. Consolidated Profit and Loss
+
+#13.1 Apa Itu Profit and Loss Consolidation
+
+Profit and Loss adalah laporan laba rugi konsolidasi. Laporan ini menunjukkan pendapatan, beban, dan laba atau rugi grup setelah eliminasi transaksi internal.
+
+#13.2 Tujuan
+
+1. Melihat kinerja laba rugi grup.
+2. Menghapus revenue dan expense internal antar company.
+3. Melihat saldo sebelum dan sesudah eliminasi.
+4. Menyediakan data untuk laporan manajemen.
+
+#13.3 Parameter
+
+User memilih:
+
+1. Company
+2. Period
+
+Lalu klik Query.
+
+#13.4 Data yang Ditampilkan
+
+Kolom utama:
+
+1. Header
+2. COA Code
+3. Description
+4. Nilai per company jika detail ditampilkan
+5. Balance before Elimination
+6. Elimination Debit Code
+7. Elimination Debit
+8. Elimination Credit Code
+9. Elimination Credit
+10. Balance final
+
+#13.5 Flow Menggunakan Profit and Loss
+
+1. User membuka menu Profit and Loss.
+2. User memilih company.
+3. User memilih period.
+4. User klik Query.
+5. Sistem menampilkan laporan laba rugi konsolidasi.
+6. User cek pendapatan, beban, dan elimination.
+7. User gunakan Show Detail untuk melihat breakdown per company.
+8. User export ke Excel jika diperlukan.
+
+#13.6 Hal yang Harus Dicek
+
+1. Apakah revenue internal sudah dieliminasi.
+2. Apakah expense internal sudah dieliminasi.
+3. Apakah laba rugi final masuk akal dibanding periode sebelumnya.
+4. Apakah ada akun dengan nilai ekstrem.
+5. Apakah Effect to PL dari elimination journal sudah benar.
+
+#13.7 Error Profit and Loss yang Harus ke IT
+
+Arahkan ke IT jika:
+
+1. Query gagal.
+2. Data tidak muncul padahal TB sudah consolidated.
+3. Detail per company tidak muncul.
+4. Export gagal.
+5. Elimination tidak masuk ke laporan padahal jurnal sudah dibuat.
+6. Ada error server/API.
+
+
+14. Equity Report
+
+#14.1 Apa Itu Equity Report
+
+Equity Report adalah laporan yang menunjukkan pergerakan atau posisi ekuitas konsolidasi berdasarkan periode.
+
+Laporan ini membantu melihat total equity dan kontribusi company dalam periode tertentu.
+
+#14.2 Tujuan
+
+1. Melihat total equity konsolidasi.
+2. Membantu analisis perubahan modal, retained earnings, dan laba berjalan.
+3. Menyediakan informasi untuk laporan keuangan konsolidasi.
+
+#14.3 Parameter
+
+User memilih:
+
+1. Company
+2. Period
+
+Lalu klik Query.
+
+#14.4 Data yang Ditampilkan
+
+Kolom utama:
+
+1. Period
+2. Nilai per company
+3. Total
+
+#14.5 Hal yang Harus Dicek
+
+1. Total equity harus konsisten dengan Balance Sheet.
+2. Perubahan equity harus bisa dijelaskan.
+3. Jika ada elimination investasi atau equity subsidiary, pastikan sudah tercermin.
+4. Jika total tidak sesuai, cek elimination journal dan consolidated trial balance.
+
+#14.6 Error Equity Report yang Harus ke IT
+
+Arahkan ke IT jika:
+
+1. Query tidak menghasilkan data.
+2. Total equity tidak sinkron dengan Balance Sheet padahal data sumber sudah benar.
+3. Breakdown per company tidak muncul.
+4. Ada error akses atau API.
+
+
+15. Rincian Working Paper: Intangible Assets, Investment Property, Right of Use
+
+#15.1 Apa Itu Working Paper Detail
+
+Working Paper Detail adalah laporan pendukung untuk akun tertentu dalam consolidation.
+
+Modul yang diberikan mencakup:
+
+1. Intangible Assets
+2. Investment Property
+3. Right of Use
+
+Laporan ini membantu user melihat rincian saldo awal, penambahan, pengurangan, reklasifikasi, saldo akhir, working paper, dan control.
+
+#15.2 Tujuan
+
+1. Mendukung angka laporan konsolidasi.
+2. Memberikan rincian atas akun besar.
+3. Membantu audit dan rekonsiliasi.
+4. Membantu menjelaskan pergerakan saldo akun.
+
+#15.3 Parameter
+
+User memilih:
+
+1. Company
+2. Period From
+3. Period To
+
+Lalu klik Preview.
+
+#15.4 Kolom Utama
+
+1. Account Descriptions
+2. Beginning Balance
+3. Additions
+4. Deductions
+5. Reclass
+6. Ending Balance
+7. WP
+8. Control
+
+#15.5 Cara Membaca Working Paper
+
+Beginning Balance:
+Saldo awal periode.
+
+Additions:
+Penambahan selama periode.
+
+Deductions:
+Pengurangan selama periode.
+
+Reclass:
+Reklasifikasi antar akun.
+
+Ending Balance:
+Saldo akhir.
+
+WP:
+Nilai working paper atau angka pendukung.
+
+Control:
+Kolom kontrol untuk memastikan saldo sesuai.
+
+#15.6 Flow Menggunakan Working Paper Detail
+
+1. User membuka laporan rincian.
+2. User memilih company.
+3. User memilih period from.
+4. User memilih period to.
+5. User klik Preview.
+6. Sistem menampilkan rincian akun.
+7. User membandingkan ending balance dengan laporan utama.
+8. Jika ada selisih, user cek transaksi atau journal sumber.
+
+#15.7 Error Working Paper yang Harus ke IT
+
+Arahkan ke IT jika:
+
+1. Preview tidak menghasilkan data padahal laporan utama memiliki saldo.
+2. Company dropdown kosong.
+3. Period tidak bisa dipilih.
+4. Grid error atau loading terus.
+5. Ending balance berbeda dari laporan utama padahal sumber data sama.
+6. Ada server/API error.
+
+
+16. Hubungan Antar Modul
+
+#16.1 Upload TB dengan Trial Balance
+
+Upload TB memasukkan data Trial Balance ke sistem. Data upload dapat digunakan untuk proses compute atau sebagai sumber Trial Balance company.
+
+Jika upload salah, Trial Balance akan salah.
+
+#16.2 Trial Balance dengan Consolidated Trial Balance
+
+Trial Balance per company adalah bahan dasar consolidated trial balance.
+
+Jika salah satu company belum compute, submit, atau approve, hasil consolidated trial balance bisa tidak lengkap.
+
+#16.3 Elimination Journal dengan Consolidated Trial Balance
+
+Elimination Journal mengubah angka consolidated trial balance dengan menghapus transaksi internal.
+
+Jika elimination journal belum dibuat atau tidak balance, laporan konsolidasi bisa salah.
+
+#16.4 Consolidated Trial Balance dengan Reports
+
+Balance Sheet, Profit and Loss, Equity, dan Working Paper menggunakan data consolidated trial balance dan elimination.
+
+Jika consolidated TB salah, laporan juga salah.
+
+#16.5 Caje/Paje dengan Trial Balance
+
+Caje/Paje journal dapat digunakan untuk adjustment atau jurnal manual yang memengaruhi data accounting dan Trial Balance.
+
+Jika Caje/Paje salah, saldo akhir TB juga dapat salah.
+
+
+17. Alur Closing Konsolidasi yang Direkomendasikan
+
+1. Pastikan semua transaksi perusahaan individual sudah posted.
+2. Pastikan jurnal adjustment individual selesai.
+3. Generate Trial Balance per company.
+4. Upload TB untuk company yang membutuhkan upload manual.
+5. Review Trial Balance setiap company.
+6. Pastikan debit dan credit balance.
+7. Submit TB.
+8. Approve TB.
+9. Identifikasi intercompany transaction.
+10. Buat Elimination Journal.
+11. Pastikan elimination journal balance.
+12. Consolidate Trial Balance.
+13. Review Consolidated Trial Balance.
+14. Generate Balance Sheet dan Profit and Loss.
+15. Generate Equity Report.
+16. Generate working paper detail.
+17. Rekonsiliasi laporan.
+18. Jika semua benar, lock Trial Balance atau consolidation period.
+19. Export laporan untuk dokumentasi.
+20. Simpan bukti dan working paper untuk audit.
+
+
+18. Checklist Sebelum Consolidate
+
+Sebelum klik Consolidate Trial Balance, pastikan:
+
+1. Semua company yang diperlukan sudah memiliki Trial Balance untuk periode tersebut.
+2. Semua TB sudah balance.
+3. Semua TB sudah submitted dan approved.
+4. Tidak ada upload TB yang salah company atau salah period.
+5. Tidak ada COA penting yang hilang.
+6. Intercompany receivable dan payable sudah direkonsiliasi.
+7. Intercompany revenue dan expense sudah direkonsiliasi.
+8. Elimination journal sudah dibuat untuk transaksi internal.
+9. Total debit dan credit elimination journal balance.
+10. Tidak ada journal pending yang harusnya masuk periode tersebut.
+11. Period yang dipilih sudah benar.
+12. User punya akses company consolidation.
+
+
+19. Checklist Sebelum Lock
+
+Sebelum Lock Trial Balance atau lock period consolidation, pastikan:
+
+1. Semua laporan sudah direview.
+2. Consolidated Trial Balance sudah benar.
+3. Balance Sheet balance.
+4. Profit and Loss sudah masuk akal.
+5. Equity sesuai dengan Balance Sheet.
+6. Working Paper sesuai dengan laporan utama.
+7. Tidak ada elimination journal pending.
+8. Tidak ada upload TB yang perlu diperbaiki.
+9. Tidak ada company yang tertinggal.
+10. Approval supervisor sudah ada.
+11. Export laporan sudah disimpan.
+12. Dokumen pendukung sudah diarsipkan.
+
+Jika masih ada keraguan, jangan lock. Tanyakan ke Accounting Supervisor atau Consolidation Manager.
+
+
+20. Penanganan Error Umum Consolidation Accounting
+
+#20.1 Data Tidak Muncul
+
+Kemungkinan penyebab:
+
+- Period salah.
+- Company salah.
+- Data belum compute.
+- Data belum approve.
+- User tidak punya akses.
+- API error.
+
+Solusi user:
+
+1. Cek company.
+2. Cek period.
+3. Refresh halaman.
+4. Pastikan data sudah diproses.
+
+Jika tetap tidak muncul, hubungi IT.
+
+#20.2 Angka Tidak Balance
+
+Kemungkinan penyebab:
+
+- Jurnal sumber tidak balance.
+- Upload TB salah.
+- Elimination Journal tidak balance.
+- Ada company belum masuk consolidation.
+- Ada COA mapping salah.
+
+Solusi user:
+
+1. Cek TB per company.
+2. Cek upload TB.
+3. Cek elimination journal.
+4. Cek laporan per company.
+
+Jika secara manual benar tetapi sistem tidak balance, hubungi IT.
+
+#20.3 Export Excel Gagal
+
+Kemungkinan penyebab:
+
+- Browser memblokir download.
+- Session expired.
+- Data terlalu besar.
+- Server error.
+
+Solusi user:
+
+1. Refresh browser.
+2. Coba export ulang.
+3. Pastikan pop-up/download tidak diblokir.
+4. Coba filter periode lebih kecil.
+
+Jika tetap gagal, hubungi IT.
+
+#20.4 Access Denied atau Unauthorized
+
+Penyebab:
+
+- Session expired.
+- Token login tidak valid.
+- Role tidak punya akses.
+- Company mapping tidak sesuai.
+
+Solusi user:
+
+1. Logout dan login ulang.
+2. Cek apakah user membuka company yang benar.
+
+Jika tetap tidak bisa, hubungi IT untuk cek role dan company access.
+
+#20.5 Dropdown Company atau COA Kosong
+
+Kemungkinan penyebab:
+
+- Master data belum aktif.
+- User tidak punya akses company.
+- API master gagal.
+- Token expired.
+
+Solusi:
+
+Refresh halaman dan login ulang. Jika tetap kosong, hubungi IT atau master data admin.
+
+#20.6 Status Tidak Berubah Setelah Submit, Approve, Consolidate, atau Lock
+
+Kemungkinan penyebab:
+
+- Proses gagal di backend.
+- Data belum memenuhi syarat.
+- Cache browser.
+- Session expired.
+- API error.
+
+Solusi user:
+
+1. Refresh grid.
+2. Cek apakah muncul pesan error.
+3. Jangan klik berkali-kali jika belum jelas berhasil atau gagal.
+
+Jika status tetap tidak berubah, hubungi IT.
+
+#20.7 Periode Salah atau Tidak Bisa Dipilih
+
+Penyebab:
+
+- Date picker error.
+- Browser issue.
+- Period closed/locked.
+- Role tidak punya akses.
+
+Solusi:
+
+Refresh halaman. Jika tetap tidak bisa, hubungi IT.
+
+#20.8 Duplicate Data
+
+Kemungkinan penyebab:
+
+- Upload dilakukan lebih dari sekali.
+- Compute dijalankan berulang.
+- Save diklik beberapa kali.
+- Backend tidak menolak duplikasi.
+
+Solusi user:
+
+1. Jangan input ulang sebelum status jelas.
+2. Cek daftar existing data.
+3. Jika sudah duplikat, minta arahan supervisor.
+4. Untuk pembersihan data, hubungi IT jika user tidak punya menu delete atau delete berisiko.
+
+
+21. Prinsip Jawaban AI Chatbot untuk Modul Ini
+
+AI chatbot harus menjawab dengan prinsip berikut:
+
+1. Jelaskan proses secara bisnis dulu, bukan teknis code.
+2. Selalu tanyakan atau identifikasi company dan period jika user bertanya soal data.
+3. Jika user melaporkan angka tidak sesuai, arahkan untuk cek sumber data berurutan:
+   - Trial Balance company
+   - Upload TB
+   - Caje/Paje atau adjustment
+   - Elimination Journal
+   - Consolidated Trial Balance
+   - Report final
+4. Jika user bertanya soal error sistem, bedakan error bisnis dan error teknis.
+5. Error bisnis dapat diarahkan ke user atau accounting supervisor.
+6. Error teknis harus diarahkan ke IT.
+7. Jangan menyarankan user menghapus atau mengubah data final tanpa approval.
+8. Untuk data locked, arahkan user ke supervisor dan IT jika perlu unlock.
+9. Untuk laporan tidak balance, jangan bilang normal. Itu harus dicek.
+10. Untuk intercompany, jelaskan bahwa transaksi internal harus dieliminasi.
+
+
+22. Pola Diagnosa AI Chatbot
+
+#22.1 Jika User Bertanya: Data consolidated tidak muncul
+
+Jawaban AI harus mengecek:
+
+1. Company apa?
+2. Period apa?
+3. Apakah TB per company sudah computed?
+4. Apakah sudah submitted?
+5. Apakah sudah approved?
+6. Apakah sudah consolidate?
+7. Apakah user punya akses company?
+
+Jika semua sudah benar tetapi tetap tidak muncul, arahkan ke IT.
+
+#22.2 Jika User Bertanya: Balance Sheet tidak balance
+
+Jawaban AI harus menjelaskan:
+
+Balance Sheet harus balance. Cek:
+
+1. Trial Balance per company.
+2. Elimination Journal.
+3. COA mapping.
+4. Company yang masuk consolidation.
+5. Period.
+6. Jurnal adjustment.
+
+Jika manual benar tetapi sistem tetap tidak balance, hubungi IT.
+
+#22.3 Jika User Bertanya: Kenapa harus elimination journal
+
+Jawaban AI:
+
+Karena transaksi antar perusahaan dalam satu grup tidak boleh dihitung sebagai transaksi eksternal grup. Elimination journal menghapus dampak transaksi internal agar laporan konsolidasi tidak overstatement.
+
+#22.4 Jika User Bertanya: Upload TB gagal
+
+Jawaban AI:
+
+Cek company, period, template, isi file, COA code, format angka, dan apakah grid terbaca. Jika template benar tetapi tetap gagal, kirim file dan screenshot error ke IT.
+
+#22.5 Jika User Bertanya: Tidak bisa approve Trial Balance
+
+Jawaban AI:
+
+Cek status TB. Data harus sudah submitted sebelum approve. Jika status sudah sesuai tetapi gagal, kemungkinan role/access atau error sistem. Hubungi IT.
+
+#22.6 Jika User Bertanya: Tidak bisa lock
+
+Jawaban AI:
+
+Lock hanya bisa dilakukan jika data sudah final. Pastikan TB sudah approved/consolidated, tidak ada pending adjustment, dan user punya authority. Jika masih gagal, hubungi IT.
+
+
+23. Skenario Pertanyaan dan Jawaban untuk AI Chatbot
+
+#Q1: Apa itu Consolidation Accounting di JIFAS?
+
+Consolidation Accounting adalah proses menggabungkan data akuntansi dari beberapa perusahaan dalam grup Jababeka menjadi satu laporan konsolidasi. Proses ini menggunakan Trial Balance per company, lalu menambahkan Elimination Journal untuk menghapus transaksi internal antar company sebelum laporan seperti Balance Sheet dan Profit and Loss dibuat.
+
+#Q2: Kenapa angka di laporan konsolidasi beda dengan laporan company?
+
+Karena laporan konsolidasi sudah menggabungkan beberapa company dan dapat dikoreksi oleh Elimination Journal. Jadi angka final bukan hanya angka satu company, tetapi hasil gabungan company dikurangi atau disesuaikan dengan transaksi internal yang harus dieliminasi.
+
+#Q3: Kenapa Trial Balance harus di-submit dan di-approve?
+
+Karena Trial Balance menjadi dasar laporan konsolidasi. Jika data belum direview dan disetujui, laporan konsolidasi bisa salah. Submit berarti diajukan untuk review, approve berarti data sudah dinyatakan benar oleh pihak berwenang.
+
+#Q4: Kapan perlu upload TB?
+
+Upload TB diperlukan jika Trial Balance perusahaan berasal dari file Excel atau sumber eksternal, atau data tidak dihitung langsung dari transaksi JIFAS. User harus menggunakan template yang benar agar data bisa dibaca sistem.
+
+#Q5: Kenapa upload TB saya terbaca kosong?
+
+Kemungkinan file tidak menggunakan template yang benar, data dimulai dari baris yang salah, kolom wajib kosong, atau spreadsheet tidak berhasil dibaca. Coba gunakan template dari menu Download TB Template. Jika tetap kosong, hubungi IT dengan melampirkan file upload dan screenshot error.
+
+#Q6: Apa fungsi Elimination Journal?
+
+Elimination Journal digunakan untuk menghapus dampak transaksi antar perusahaan dalam satu grup, seperti piutang-hutang internal, pendapatan-beban internal, pinjaman internal, dan investasi parent ke subsidiary. Tujuannya agar laporan konsolidasi hanya menunjukkan transaksi grup dengan pihak luar.
+
+#Q7: Kenapa Elimination Journal tidak bisa disimpan?
+
+Biasanya karena company belum dipilih, period belum dipilih, detail masih kosong, COA belum diisi, ada nilai negatif, atau total debit tidak sama dengan total credit. Perbaiki data tersebut. Jika grid atau dropdown error, hubungi IT.
+
+#Q8: Apa yang harus dilakukan jika Balance Sheet tidak balance?
+
+Jangan lanjut finalisasi. Cek Trial Balance per company, upload TB, elimination journal, COA mapping, company yang masuk konsolidasi, dan periode. Jika semua sudah benar secara manual tetapi sistem tetap tidak balance, eskalasi ke IT atau accounting supervisor.
+
+#Q9: Kenapa tombol Consolidate gagal?
+
+Kemungkinan ada Trial Balance company yang belum approved, data period tidak lengkap, elimination journal tidak balance, atau user tidak punya akses. Cek status semua TB dan elimination. Jika tetap gagal, hubungi IT.
+
+#Q10: Apa artinya Lock Trial Balance?
+
+Lock berarti mengunci data Trial Balance agar tidak berubah lagi. Ini dilakukan setelah data final, laporan sudah direview, dan tidak ada adjustment pending. Jangan lock jika masih ada keraguan.
+
+#Q11: Setelah data locked, bisa diubah lagi?
+
+Secara normal tidak bisa. Jika memang harus diubah karena kesalahan, perlu approval supervisor dan bantuan IT atau admin untuk prosedur unlock atau koreksi sesuai kebijakan.
+
+#Q12: Apa bedanya Trial Balance dan Consolidated Trial Balance?
+
+Trial Balance adalah saldo akun satu company untuk satu periode. Consolidated Trial Balance adalah saldo gabungan dari beberapa company setelah proses konsolidasi dan eliminasi.
+
+#Q13: Apa itu Balance before Elimination?
+
+Balance before Elimination adalah saldo gabungan sebelum jurnal eliminasi diterapkan. Setelah elimination debit dan credit dimasukkan, sistem menghasilkan balance final.
+
+#Q14: Kenapa report Profit and Loss belum berubah padahal elimination sudah dibuat?
+
+Kemungkinan consolidated trial balance belum direfresh atau belum dijalankan ulang, elimination journal belum tersimpan, period salah, atau jurnal tidak berdampak ke P&L. Jika semua sudah benar tetapi laporan tetap tidak berubah, hubungi IT.
+
+#Q15: Apa yang harus dikirim ke IT jika ada error consolidation?
+
+Kirim:
+
+1. Nama menu.
+2. Company code.
+3. Period.
+4. Nomor dokumen jika ada.
+5. Screenshot error.
+6. Waktu kejadian.
+7. Langkah yang dilakukan sebelum error.
+8. File upload jika error upload.
+9. Status terakhir yang terlihat.
+
+
+24. Data yang Harus Disiapkan Saat Eskalasi ke IT
+
+Jika user diarahkan ke IT, minta user menyiapkan:
+
+1. Menu yang digunakan.
+2. Company code.
+3. Period.
+4. User login.
+5. Role user jika diketahui.
+6. Screenshot error lengkap.
+7. Screenshot filter atau parameter.
+8. File upload jika terkait Upload TB.
+9. Nomor jurnal atau rec no jika ada.
+10. Waktu kejadian.
+11. Apakah sudah coba refresh atau login ulang.
+12. Apakah user lain mengalami hal yang sama.
+
+
+25. Kapan AI Harus Mengarahkan ke Accounting Supervisor
+
+Arahkan ke Accounting Supervisor jika:
+
+1. User tidak yakin akun mana yang harus dipakai.
+2. User tidak yakin transaksi harus dieliminasi atau tidak.
+3. Balance Sheet tidak balance karena masalah accounting.
+4. Ada angka besar atau tidak wajar.
+5. Perlu approval untuk delete atau recreate data.
+6. Perlu lock period.
+7. Perlu koreksi setelah data final.
+8. Perlu menentukan treatment intercompany transaction.
+
+
+26. Kapan AI Harus Mengarahkan ke IT
+
+Arahkan ke IT jika:
+
+1. Error teknis muncul.
+2. Data tidak muncul padahal proses sudah benar.
+3. Dropdown kosong padahal master data ada.
+4. Upload atau download template gagal.
+5. Export gagal.
+6. Tombol tidak berfungsi.
+7. Status tidak berubah setelah action berhasil.
+8. User mendapat unauthorized atau access denied padahal seharusnya punya akses.
+9. Sistem loading terus.
+10. Data berubah tanpa action user.
+11. Proses compute, submit, approve, consolidate, atau lock gagal tanpa alasan bisnis yang jelas.
+12. Ada duplicate data akibat error sistem.
+
+
+27. Best Practice Consolidation Accounting
+
+1. Jangan consolidate sebelum semua Trial Balance company approved.
+2. Jangan lock sebelum laporan final direview.
+3. Gunakan template resmi untuk upload TB.
+4. Jangan membuat elimination journal tanpa dokumen pendukung.
+5. Selalu isi description yang jelas.
+6. Gunakan COA yang konsisten antar company.
+7. Rekonsiliasi intercompany receivable dan payable sebelum consolidation.
+8. Simpan export laporan setiap periode.
+9. Jangan delete data tanpa approval.
+10. Jika ada error sistem, jangan klik tombol berkali-kali.
+11. Catat semua adjustment dan elimination untuk audit trail.
+12. Pastikan semua jurnal debit dan credit balance.
+
+
+28. Catatan RAG untuk AI Chatbot
+
+Saat menjawab pertanyaan tentang Consolidation Accounting, AI harus memahami prioritas berikut:
+
+1. Pertama, pahami apakah user bertanya tentang input data, proses, approval, error, atau laporan.
+2. Jika terkait input data, cek Upload TB, Caje/Paje, atau Trial Balance.
+3. Jika terkait angka laporan, cek Consolidated Trial Balance dan Elimination Journal.
+4. Jika terkait output, jelaskan Balance Sheet, Profit and Loss, Equity, atau Working Paper.
+5. Jika terkait error teknis, arahkan ke IT dengan data pendukung.
+6. Jika terkait keputusan accounting, arahkan ke Accounting Supervisor.
+7. Jika terkait akses, role, company mapping, atau session, arahkan ke IT.
+8. Jangan menyarankan bypass workflow.
+9. Jangan menyarankan edit data locked tanpa approval.
+10. Selalu tekankan audit trail, balancing, period consistency, dan company consistency.
+
+
+29. Ringkasan Singkat untuk AI
+
+Consolidation Accounting di JIFAS adalah proses menggabungkan Trial Balance beberapa perusahaan menjadi laporan konsolidasi. Data dapat berasal dari compute sistem atau upload TB. Setelah Trial Balance dibuat, data harus direview, submit, approve, consolidate, lalu lock jika final. Elimination Journal digunakan untuk menghapus transaksi antar perusahaan dalam satu grup. Consolidated Trial Balance menjadi dasar Balance Sheet, Profit and Loss, Equity, dan working paper seperti Intangible Assets, Investment Property, dan Right of Use. Error bisnis seperti debit-credit tidak balance harus diperbaiki oleh user/accounting. Error teknis seperti dropdown kosong, upload gagal, data tidak muncul, access denied, atau status tidak berubah harus diarahkan ke IT.

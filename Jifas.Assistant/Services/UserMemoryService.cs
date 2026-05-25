@@ -39,7 +39,7 @@ namespace Jifas.Assistant.Services
         /// </summary>
         Task UpdateMemoryAsync(string userId, string userMessage, string aiResponse,
             IntentType intent, double confidenceScore, string currentModule = null,
-            string userRole = null);
+            string userRole = null, string sessionId = null);
 
         /// <summary>
         /// Bangun string konteks user untuk disuntikkan ke prompt AI.
@@ -148,7 +148,8 @@ namespace Jifas.Assistant.Services
             IntentType intent,
             double confidenceScore,
             string currentModule = null,
-            string userRole = null)
+            string userRole = null,
+            string sessionId = null)
         {
             if (string.IsNullOrWhiteSpace(userId) || userId == "anonymous") return;
 
@@ -176,6 +177,20 @@ namespace Jifas.Assistant.Services
                 memory.TotalQuestions++;
                 memory.LastSeenAt = DateTime.UtcNow;
                 memory.UpdatedAt = DateTime.UtcNow;
+
+                // Track unique sessions to increment TotalSessions
+                if (!string.IsNullOrWhiteSpace(sessionId))
+                {
+                    var sessionCacheKey = $"UserSession_{userId}_{sessionId}";
+                    var seenBefore = _cache.Get<bool>(sessionCacheKey);
+                    if (!seenBefore)
+                    {
+                        memory.TotalSessions++;
+                        _cache.Set(sessionCacheKey, true, 24 * 60); // 24 hours
+                        _logger.LogDebug($"[UserMemory] {userId} — New session detected, TotalSessions: {memory.TotalSessions}");
+                    }
+                }
+
                 _logger.LogDebug($"[UserMemory] {userId} — TotalQuestions: {memory.TotalQuestions}");
 
                 if (intent == IntentType.HowTo)        memory.HowToCount++;

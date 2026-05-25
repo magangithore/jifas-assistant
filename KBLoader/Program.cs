@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using jifas_assistant.DAL.Models;
 using Jifas.Assistant.Services;
+using Jifas.Assistant.Utilities;
 
 namespace Jifas.Assistant.KBLoader
 {
@@ -176,10 +177,10 @@ namespace Jifas.Assistant.KBLoader
                 {
                     try
                     {
-                        var embedding = await embeddingService.GenerateEmbeddingAsync(doc.Content);
+                        var embedding = await embeddingService.GenerateEmbeddingAsFloatArrayAsync(doc.Content);
                         if (embedding != null && embedding.Length > 0)
                         {
-                            doc.Embedding = Convert.ToBase64String(embedding);
+                            doc.Embedding = EmbeddingSerializer.Serialize(embedding);
                             doc.EmbeddingDimensions = embedding.Length;
                             embeddingCount++;
                             
@@ -257,10 +258,10 @@ namespace Jifas.Assistant.KBLoader
                             // Generate embedding for chunk
                             try
                             {
-                                var chunkEmbedding = await embeddingService.GenerateEmbeddingAsync(chunk);
+                                var chunkEmbedding = await embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk);
                                 if (chunkEmbedding != null && chunkEmbedding.Length > 0)
                                 {
-                                    chunkObj.Embedding = Convert.ToBase64String(chunkEmbedding);
+                                    chunkObj.Embedding = EmbeddingSerializer.Serialize(chunkEmbedding);
                                     chunkObj.EmbeddingDimensions = chunkEmbedding.Length;
                                     chunksWithEmbedding++;
                                 }
@@ -423,4 +424,3 @@ namespace Jifas.Assistant.KBLoader
         }
     }
 }
-

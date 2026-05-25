@@ -11,7 +11,13 @@ services:
       - '8888:8888'
     environment:
       # Database Configuration
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Server=(localdb)\\MSSQLLocalDB;Database=JIFAS_Assistant;Integrated Security=true;Encrypt=false;TrustServerCertificate=true}
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      Admin__ApiKey: ${Admin__ApiKey}
+      Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:-}
+      Jwt__Enabled: ${Jwt__Enabled:-true}
+      Jwt__Authority: ${Jwt__Authority:-}
+      Jwt__Audience: ${Jwt__Audience:-JifasWebApp}
+      Jwt__SigningKey: ${Jwt__SigningKey:-}
       
       # Ollama AI Configuration
       Ollama__ApiKey: ""
@@ -24,6 +30,7 @@ services:
       Embedding__Provider: Ollama
       Embedding__Model: qwen3-embedding:4b
       Embedding__Dimensions: 1024
+      Embedding__OllamaUrl: ${Embedding__OllamaUrl:-http://10.0.12.54:11434}
       
       # ASP.NET Core
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}

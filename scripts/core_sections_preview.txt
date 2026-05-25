@@ -1,0 +1,165 @@
+
+0. Prinsip Utama AI Chatbot JIFAS
+
+AI chatbot JIFAS harus menjawab sebagai asisten operasional sistem JIFAS. Jawaban harus membantu user memahami proses, bukan membahas coding.
+
+Aturan utama:
+1. Jawab dengan bahasa yang mudah dipahami user bisnis.
+2. Jika user bertanya tentang error teknis, arahkan ke IT.
+3. Jika user bertanya tentang akses, role, menu tidak muncul, login, token, API, atau data tidak loading, arahkan ke IT/Admin JIFAS.
+4. Jika user bertanya tentang COA, jurnal, posting, Trial B
+...
+
+1. Apa Itu JIFAS?
+
+JIFAS adalah Jababeka Integrated Finance & Accounting System, yaitu sistem keuangan internal berbasis web milik Jababeka Group. Sistem ini digunakan untuk mengelola proses keuangan dan akuntansi secara terpusat, mulai dari invoice, PUM, receiving, payment, cashbank, accounting, budget control, sampai report.
+
+JIFAS berfungsi sebagai kontrol utama agar uang keluar dan uang masuk perusahaan tercatat, diverifikasi, disetujui, dan diposting dengan benar.
+
+Secara sederhana, JIFAS 
+...
+
+2. URL Akses dan Login
+
+Akses JIFAS menggunakan URL sesuai perusahaan/unit bisnis:
+
+- KIJ, GBC, MPK, JM, BW, TL, SPPK: http://jifas.jababeka.com atau http://10.0.8.57/
+- JI, ICTEL, NGE: http://jifasweb.jiinfra.com/ atau http://10.10.1.30/
+- BP, UP, TS: http://jifas-bp.bekasipower.co.id/ atau http://10.12.0.47/
+- KIK: http://jifas.kik.com atau http://10.5.1.240/
+
+Login menggunakan akun Windows tanpa @jababeka.com.
+
+Contoh:
+- Benar: john.doe
+- Salah: john.doe@jababeka.com
+
+Jika user tidak bisa lo
+...
+
+3. Modul Utama JIFAS
+
+Modul utama JIFAS:
+
+1. Account / Login / User Access
+2. Home / Dashboard
+3. Master Data
+4. Invoice
+5. PUM
+6. OLD PUM
+7. Receiving / IK
+8. Payment
+9. CashBank
+10. Over Budget
+11. SPK
+12. Report
+13. Accounting
+14. Consolidation Accounting
+15. JIFAS Assistant
+
+...
+
+4. Alur Approval Umum JIFAS
+
+Alur umum dokumen JIFAS:
+
+Creator membuat dokumen
+? Submit / Save
+? Head atau Supervisor Approval
+? Finance Checking / Finance Approval
+? Tax Approval jika ada pajak
+? Accounting Checking
+? Posting ke General Ledger
+? Payment / Paid / Complete jika dokumen terkait pembayaran
+
+Tidak semua modul memakai urutan yang persis sama, tetapi prinsipnya sama:
+- Creator membuat,
+- pihak terkait memverifikasi,
+- pajak dicek bila ada,
+- accounting memposting,
+- status final tida
+...
+
+5. Status Global yang Sering Muncul
+
+Draft atau New:
+Dokumen baru dibuat dan belum final.
+
+Need Head Approval:
+Menunggu approval atasan.
+
+Need Supervisor Approval:
+Menunggu approval supervisor.
+
+Need Finance Approval:
+Menunggu approval finance.
+
+Need Finance Checking:
+Menunggu pengecekan finance.
+
+Need Tax Approval:
+Menunggu pengecekan tax.
+
+Need Accounting Checking:
+Menunggu pengecekan accounting.
+
+Need Posting:
+Siap diposting ke General Ledger.
+
+Ready To Pay:
+Dokumen sudah lolos approval dan 
+...
+
+6. Role Umum
+
+WMTR:
+Webmaster atau IT Admin. Akses luas untuk konfigurasi dan troubleshooting.
+
+USER:
+User umum. Akses sesuai modul yang diberikan.
+
+USRL:
+User All Level. Pada PUM dapat mengajukan untuk user/divisi/departemen lain sesuai hak akses.
+
+FINA:
+Finance Staff. Melakukan checking, approval, payment, dan monitoring transaksi finance.
+
+SPVR:
+Supervisor Finance. Approval level supervisor.
+
+HDFA:
+Head Finance. Approval level kepala finance.
+
+ACCT:
+Accounting Staff. Mengelola checking, post
+...
+
+7. Master Data Ringkas
+
+Master Data adalah fondasi seluruh modul JIFAS.
+
+Sub-modul master penting:
+- Company: data perusahaan/unit bisnis.
+- Employee: data karyawan, head, divisi, department.
+- Vendor: supplier/rekanan yang digunakan di invoice, payment, SPK, receiving.
+- Division: struktur divisi.
+- Department: struktur department.
+- COA: Chart of Accounts.
+- Account Period: periode accounting open/closed.
+- List COA: daftar COA aktif.
+- Report Setup: mapping COA ke laporan.
+- Budget: anggaran
+...
+
+8. Aturan Final Dokumen
+
+1. Dokumen Posted tidak bisa diedit biasa.
+2. Dokumen Confirmed tidak bisa dimodifikasi biasa.
+3. Dokumen Paid/Complete biasanya hanya bisa dilihat atau dibatalkan dengan prosedur khusus.
+4. Void digunakan untuk pembatalan dokumen sesuai status.
+5. Reverse digunakan untuk membalik jurnal yang sudah posted.
+6. Reject berarti dokumen dikembalikan atau ditolak dengan alasan.
+7. Jika data sudah final tetapi salah, jangan edit database manual tanpa approval dan audit trail.
+
+...
+

@@ -1,6 +1,6 @@
 ﻿# 🤖 JIFAS AI Assistant - Knowledge Base RAG System
 
-**A sophisticated ASP.NET Web API that leverages Google Gemini AI with intelligent knowledge base retrieval to provide accurate, context-aware answers for the JIFAS (Jababeka Integrated Finance Accounting System).**
+**A sophisticated ASP.NET Web API that leverages local Ollama AI with intelligent knowledge base retrieval to provide accurate, context-aware answers for the JIFAS (Jababeka Integrated Finance Accounting System).**
 
 ---
 
@@ -46,7 +46,7 @@ JIFAS AI Assistant is a **Retrieval-Augmented Generation (RAG)** system designed
   - Model: `qwen3:8b` (local Ollama)
   - Embeddings: `qwen3-embedding:4b` (1024-dimensional, local Ollama)
   - Both FREE tier available!
-- **Google Generative AI NuGet** - Official SDK
+- **Ollama HTTP API** - Local LLM and embedding runtime
 
 ### Database
 - **SQL Server** - Production-grade relational database
@@ -56,7 +56,7 @@ JIFAS AI Assistant is a **Retrieval-Augmented Generation (RAG)** system designed
 ### Caching & Performance
 - **In-Memory Cache** - Fast response caching
 - **Redis** (optional) - Distributed caching untuk session management
-- **Qdrant Vector Database** (optional) - Semantic search acceleration
+- **SQL Server Semantic Search** - Embeddings are stored with KB chunks and ranked by cosine similarity
 
 ### Additional Libraries
 - **Newtonsoft.Json** - JSON serialization
@@ -114,13 +114,13 @@ jifas-assistant/
 │   ├── appsettings.Docker.json               Docker overrides
 │   │
 │   ├── Controllers/                          API Endpoints
-│   │   ├── ChatbotController.cs              POST /api/chatbot - Main chat endpoint
+│   │   ├── ChatController.cs                 POST /api/chat/message - Main chat endpoint
 │   │   ├── KnowledgeBaseController.cs        KB CRUD operations
 │   │   └── KnowledgeBaseSearchController.cs  KB search endpoints
 │   │
 │   ├── Services/                             Business Logic (23+ services)
 │   │   ├── ChatService.cs                    🔴 CORE - Orchestrates entire chat flow
-│   │   ├── OllamaService.cs                  🔴 CORE - Calls Local Ollama API
+│   │   ├── OllamaAIService.cs                🔴 CORE - Calls Local Ollama API
 │   │   ├── OllamaEmbeddingService.cs         🔴 CORE - Generates text embeddings (qwen3-embedding:4b)
 │   │   ├── KnowledgeBaseSearchService.cs     🔴 CORE - Search KB (keyword + semantic)
 │   │   ├── KnowledgeBaseService.cs           KB document management
@@ -136,7 +136,7 @@ jifas-assistant/
 │   ├── Configuration/                        Settings & Config
 │   │   ├── AppSettings.cs                    Strongly-typed config accessor
 │   │   ├── OllamaSettings.cs                 Ollama AI settings
-│   │   ├── QdrantSettings.cs                 Vector DB settings
+│   │   ├── LocalAISettings.cs                Local AI settings
 │   │   ├── CachingSettings.cs                Cache configuration
 │   │   └── [+5 more settings classes]
 │   │
@@ -177,10 +177,10 @@ jifas-assistant/
 │   ├── efpt.config.json                      Entity Framework Power Tools config
 │   └── jifas_assistant.DAL.csproj
 │
-├── jifas_assistant.Seeding/                  [DATA SEEDING UTILITY]
-│   ├── Program.cs                            Seeding entry point
-│   ├── appsettings.json                      Seeding configuration
-│   └── jifas_assistant.Seeding.csproj
+├── KBLoader/                                 [KNOWLEDGE BASE LOADER]
+│   ├── Program.cs                            KB loading entry point
+│   ├── appsettings.json                      Loader configuration
+│   └── KBLoader.csproj
 │
 ├── Documentation Files (Created by Analysis)
 │   ├── README.md                             (This file) Overview & guide
@@ -338,9 +338,9 @@ See **SETUP.md** for detailed configuration options.
 | `ConnectionStrings:DefaultConnection` | Database connection | `Server=localhost;Database=JIFAS...` |
 | `ASPNETCORE_ENVIRONMENT` | Environment (Development/Production) | `Production` |
 | `Caching:EnableResponseCache` | Enable response caching | `true` |
-| `Qdrant:Enabled` | Enable vector database | `false` |
-| `Qdrant:Url` | Vector DB endpoint | `http://localhost:6333` |
-| `Qdrant:ApiKey` | Vector DB API key | (optional) |
+| `Embedding:Provider` | Embedding provider | `Ollama` |
+| `Embedding:Model` | Embedding model | `qwen3-embedding:4b` |
+| `Embedding:Dimensions` | Embedding dimensions | `1024` |
 
 Set these via:
 1. **User Secrets** (dev): `dotnet user-secrets set "Key" "Value"`
@@ -431,10 +431,10 @@ TTL: 24 hours
 
 ## 🐛 Troubleshooting
 
-### Issue: "Gemini API key not configured"
+### Issue: "Ollama service is unavailable"
 **Solution**: 
 ```bash
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_KEY"
+curl http://10.0.12.54:11434/api/tags
 ```
 
 ### Issue: Database connection failed
@@ -451,7 +451,7 @@ dotnet user-secrets set "Gemini:ApiKey" "YOUR_KEY"
 **Solution**: Ensure embeddings are populated:
 ```bash
 # Run seeding script
-dotnet run --project jifas_assistant.Seeding
+dotnet run --project KBLoader -- --yes
 ```
 
 ### Issue: Slow response time
