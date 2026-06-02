@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Pgvector;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
@@ -131,8 +132,8 @@ namespace Jifas.Assistant.Controllers
                     Category = request.Category ?? "General",
                     Tags = request.Tags,
                     IsActive = true,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 _db.KnowledgeBaseDocuments.Add(document);
@@ -186,7 +187,7 @@ namespace Jifas.Assistant.Controllers
                 if (!string.IsNullOrWhiteSpace(request.Tags))
                     document.Tags = request.Tags;
 
-                document.UpdatedAt = DateTime.Now;
+                document.UpdatedAt = DateTime.UtcNow;
 
                 await _db.SaveChangesAsync();
 
@@ -216,7 +217,7 @@ namespace Jifas.Assistant.Controllers
                     return NotFound();
 
                 document.IsActive = false;
-                document.UpdatedAt = DateTime.Now;
+                document.UpdatedAt = DateTime.UtcNow;
 
                 await _db.SaveChangesAsync();
 
@@ -284,7 +285,7 @@ namespace Jifas.Assistant.Controllers
                         DocumentId = documentId,
                         ChunkIndex = chunkIndex++,
                         Content = currentChunk.Trim(),
-                        CreatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow
                     });
 
                     // Keep overlap
@@ -303,7 +304,7 @@ namespace Jifas.Assistant.Controllers
                     DocumentId = documentId,
                     ChunkIndex = chunkIndex,
                     Content = currentChunk.Trim(),
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 });
             }
 
@@ -326,6 +327,7 @@ namespace Jifas.Assistant.Controllers
                         if (embedding != null && embedding.Length > 0)
                         {
                             chunk.Embedding = EmbeddingSerializer.Serialize(embedding);
+                            chunk.EmbeddingVector = new Vector(embedding);
                             chunk.EmbeddingDimensions = embedding.Length;
                             successCount++;
                             System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: {embedding.Length}-dim embedding");
@@ -357,6 +359,7 @@ namespace Jifas.Assistant.Controllers
                     if (sourceChunk?.Embedding != null)
                     {
                         trackedChunk.Embedding = sourceChunk.Embedding;
+                        trackedChunk.EmbeddingVector = sourceChunk.EmbeddingVector;
                         trackedChunk.EmbeddingDimensions = sourceChunk.EmbeddingDimensions;
                     }
                 }
@@ -436,8 +439,9 @@ namespace Jifas.Assistant.Controllers
                         if (embedding != null && embedding.Length > 0)
                         {
                             chunk.Embedding = EmbeddingSerializer.Serialize(embedding);
+                            chunk.EmbeddingVector = new Vector(embedding);
                             chunk.EmbeddingDimensions = embedding.Length;
-                            chunk.UpdatedAt = DateTime.Now;
+                            chunk.UpdatedAt = DateTime.UtcNow;
                             successCount++;
                             System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: {embedding.Length}-dim embedding generated");
                         }

@@ -57,6 +57,19 @@ public class MonitoringController : ControllerBase
         }));
     }
 
+    /// <summary>Quality stats from persisted chat responses.</summary>
+    [HttpGet("quality")]
+    public async Task<IActionResult> GetQuality([FromQuery] int minutes = 60, [FromQuery] int slowThresholdMs = 30000)
+    {
+        var stats = await _monitoring.GetQualityStatsAsync(minutes, slowThresholdMs);
+        if (stats.LastResponseAt.HasValue && stats.LastResponseAt.Value.Kind == DateTimeKind.Unspecified)
+        {
+            stats = stats with { LastResponseAt = DateTime.SpecifyKind(stats.LastResponseAt.Value, DateTimeKind.Utc) };
+        }
+
+        return Ok(stats);
+    }
+
     /// <summary>All data in one call — used by dashboard on initial load.</summary>
     [HttpGet("all")]
     public async Task<IActionResult> GetAll([FromQuery] int minutes = 60)
@@ -64,6 +77,7 @@ public class MonitoringController : ControllerBase
         var statsRaw   = await _monitoring.GetStatsAsync(minutes);
         var logsRaw    = await _monitoring.GetRecentLogsAsync(50);
         var seriesRaw  = await _monitoring.GetTimeSeriesAsync(minutes);
+        var qualityRaw = await _monitoring.GetQualityStatsAsync(minutes);
 
         // Ensure all dates have UTC Kind so JSON serializer emits 'Z'
         var stats = statsRaw.LastCallAt.HasValue && statsRaw.LastCallAt.Value.Kind == DateTimeKind.Unspecified
@@ -79,7 +93,11 @@ public class MonitoringController : ControllerBase
                 : p.Minute
         });
 
-        return Ok(new { stats, logs, timeSeries });
+        var quality = qualityRaw.LastResponseAt.HasValue && qualityRaw.LastResponseAt.Value.Kind == DateTimeKind.Unspecified
+            ? qualityRaw with { LastResponseAt = DateTime.SpecifyKind(qualityRaw.LastResponseAt.Value, DateTimeKind.Utc) }
+            : qualityRaw;
+
+        return Ok(new { stats, logs, timeSeries, quality });
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

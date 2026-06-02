@@ -27,16 +27,16 @@ public partial class JIFAS_AssistantContext
             entity.Property(e => e.HowToCount).HasDefaultValue(0);
             entity.Property(e => e.TroubleshootingCount).HasDefaultValue(0);
             entity.Property(e => e.AverageConfidenceReceived).HasDefaultValue(0.0);
-            entity.Property(e => e.FirstSeenAt).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.LastSeenAt).HasDefaultValueSql("(getutcdate())");
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.FirstSeenAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.LastSeenAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<AiUsageLog>(entity =>
         {
             entity.ToTable("AiUsageLogs");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Model).HasDefaultValue("qwen3:8b");
         });
     }

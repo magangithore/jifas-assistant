@@ -11,6 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Pgvector.EntityFrameworkCore;
 using Jifas.Assistant;
 using Jifas.Assistant.Configuration;
 using Jifas.Assistant.Services;
@@ -32,20 +33,6 @@ builder.Services.Configure<KestrelServerOptions>(options =>
 // ========================================
 // ADD SERVICES TO CONTAINER
 // ========================================
-
-// 1. Add Database Context with SQL Server (OLD)
-// NOTE: Using JIFAS_AssistantContext from DAL instead
-/*
-builder.Services.AddDbContext<JifasAssistantDbContext>(options =>
-{
-    var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"];
-    options.UseSqlServer(connectionString, sqlServerOptions =>
-    {
-        sqlServerOptions.MigrationsAssembly("Jifas.Assistant");
-        sqlServerOptions.EnableRetryOnFailure(maxRetryCount: 5);
-    });
-});
-*/
 
 // 2. Add Configuration Models (Strongly Typed Settings) - ONLY ESSENTIALS
 builder.Services.Configure<OllamaSettings>(builder.Configuration.GetSection("Ollama"));
@@ -70,7 +57,7 @@ builder.Services.AddDbContext<JIFAS_AssistantContext>(options =>
     if (string.IsNullOrWhiteSpace(connectionString))
         throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 
-    options.UseSqlServer(connectionString);
+    options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseVector());
 });
 
 // 3.7. Add Controllers
@@ -221,6 +208,7 @@ builder.Services.AddScoped<IKnowledgeBaseContextService, KnowledgeBaseContextSer
 builder.Services.AddScoped<IQueryUnderstandingService, QueryUnderstandingService>();
 builder.Services.AddScoped<IResponseQualityService, ResponseQualityService>();
 builder.Services.AddScoped<IConversationIntelligenceService, ConversationIntelligenceService>();
+builder.Services.AddScoped<IAdaptiveContextPackService, AdaptiveContextPackService>();
 // Register legacy interfaces pointing to consolidated services
 builder.Services.AddScoped<IConversationMemoryService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
 builder.Services.AddScoped<IFeedbackLearningService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
@@ -263,7 +251,18 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<JIFAS_AssistantContext>();
         
-        if (context.Database.IsSqlServer())
+        if (context.Database.IsNpgsql())
+        {
+            context.Database.ExecuteSqlRaw("CREATE EXTENSION IF NOT EXISTS vector;");
+            context.Database.EnsureCreated();
+            context.Database.ExecuteSqlRaw(
+                "ALTER TABLE \"KnowledgeBaseChunks\" ADD COLUMN IF NOT EXISTS \"EmbeddingVector\" vector(2560);");
+
+            var logger = services.GetService<ILogger<Program>>();
+            if (logger != null)
+                logger.LogInformation("PostgreSQL database initialization completed successfully.");
+        }
+        else
         {
             try
             {

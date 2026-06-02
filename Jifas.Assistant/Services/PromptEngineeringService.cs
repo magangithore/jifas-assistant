@@ -109,27 +109,39 @@ namespace Jifas.Assistant.Services
                 // Build query-type-specific instructions
                 var querySpecificInstructions = BuildQuerySpecificInstructionsWithExamples(queryType, userQuery, kbResults);
 
-                // Parse active page context from sessionContext (format: "PAGE:{page}|MODULE:{module}|TITLE:{title}|DOC:{docId}|STATUS:{status}")
-                var activePageContext = BuildActivePageContextSection(sessionContext);
+                // Parse active page context only for the compact pipe-delimited page format.
+                // Full context packs are already rendered and should stay in the main context.
+                var activePageContext = LooksLikeActivePageContext(sessionContext)
+                    ? BuildActivePageContextSection(sessionContext)
+                    : string.Empty;
 
                 var confidenceLevel = contextAnalysis.OverallRelevance >= 80 ? "TINGGI" : 
                                      contextAnalysis.OverallRelevance >= 60 ? "SEDANG" : "RENDAH";
 
                 var finalPrompt = $@"{systemPrompt}
 {activePageContext}
-=== KNOWLEDGE BASE ===
+=== INFORMASI REFERENSI ===
 {mainPrompt}
-=== END KB ===
+=== END REFERENSI ===
 
 PERTANYAAN USER: ""{userQuery}""
-CONFIDENCE KB: {confidenceLevel} ({contextAnalysis.OverallRelevance}%)
+RELEVANSI: {confidenceLevel} ({contextAnalysis.OverallRelevance}%)
 
 {querySpecificInstructions}
 
+=== STRUCTURED THINKING ===
+Sebelum menjawab, analisis secara internal (JANGAN tampilkan proses ini ke user):
+1. Modul JIFAS mana yang relevan untuk pertanyaan ini?
+2. Apa tujuan utama user? (How-to / Troubleshooting / Informasi / Eskalasi)
+3. Apakah ini follow-up dari percakapan sebelumnya?
+4. Apakah informasi referensi cukup lengkap untuk menjawab?
+5. Level detail apa yang tepat untuk user ini?
+Gunakan hasil analisis ini untuk menyusun jawaban terbaik.
+
 INSTRUKSI FINAL:
-- Confidence TINGGI: Jawab dengan lengkap dan percaya diri berdasarkan KB
-- Confidence SEDANG: Jawab dengan info yang ada, tambahkan catatan jika ada yang kurang
-- Confidence RENDAH: Jujur bahwa info terbatas, sarankan hubungi IT Help Desk
+- Relevansi TINGGI: Jawab dengan lengkap dan percaya diri berdasarkan informasi yang tersedia
+- Relevansi SEDANG: Jawab dengan info yang ada, tambahkan catatan jika ada yang kurang
+- Relevansi RENDAH: Jujur bahwa info terbatas, sarankan hubungi IT Help Desk
 - Jika ada konteks halaman aktif di atas, prioritaskan jawaban yang relevan dengan halaman tersebut
 - Format: Natural, spesifik, actionable. Gunakan bullet/numbering untuk langkah-langkah.
 
@@ -186,6 +198,22 @@ JAWABAN:";
             }
         }
 
+        private static bool LooksLikeActivePageContext(string? sessionContext)
+        {
+            if (string.IsNullOrWhiteSpace(sessionContext))
+                return false;
+
+            if (sessionContext.Contains("=== CONTEXT PACK ===", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var trimmed = sessionContext.TrimStart();
+            return trimmed.StartsWith("PAGE:", StringComparison.OrdinalIgnoreCase)
+                || trimmed.StartsWith("MODULE:", StringComparison.OrdinalIgnoreCase)
+                || trimmed.StartsWith("TITLE:", StringComparison.OrdinalIgnoreCase)
+                || trimmed.StartsWith("DOC:", StringComparison.OrdinalIgnoreCase)
+                || trimmed.StartsWith("STATUS:", StringComparison.OrdinalIgnoreCase);
+        }
+
         /// <summary>
         /// Build enhanced JIFAS-specific system prompt.
         /// Dynamically enriched based on detected KB categories, query type, and confidence level.
@@ -206,6 +234,7 @@ JAWABAN:";
                 // Core identity - compact but rich
                 sb.AppendLine("Kamu adalah JIFAS AI Assistant, AI Persona Agent untuk sistem JIFAS PT Jababeka Tbk.");
                 sb.AppendLine("Kamu seperti rekan kerja senior yang sangat paham JIFAS - helpful, jujur, dan langsung ke inti jawaban.");
+                sb.AppendLine("PENTING: JANGAN PERNAH menyebut 'Knowledge Base', 'KB', atau 'basis pengetahuan' dalam jawabanmu. Jawab secara natural seolah kamu memang paham sistem.");
                 sb.AppendLine();
 
                 // Domain knowledge reminder - aligned with full KB (65 docs, 7235 chunks)
@@ -230,7 +259,7 @@ JAWABAN:";
                 if (categories.Count > 0)
                     sb.AppendLine($"TOPIK YANG RELEVAN SAAT INI: {string.Join(" | ", categories.Take(4))}");
                 if (documentTitles.Count > 0)
-                    sb.AppendLine($"DOKUMEN KB YANG TERSEDIA: {string.Join(", ", documentTitles.Take(3))}");
+                    sb.AppendLine($"DOKUMEN YANG TERSEDIA: {string.Join(", ", documentTitles.Take(3))}");
                 sb.AppendLine($"KEPERCAYAAN JAWABAN: {confidenceLabel} ({(highestScore * 100):F0}% match)");
                 sb.AppendLine();
 
@@ -242,7 +271,7 @@ JAWABAN:";
                 {
                     case "HowTo":
                         sb.AppendLine("? Berikan langkah-langkah BERNOMOR yang jelas, konkret, dan bisa langsung dilakukan.");
-                        if (hasSteps) sb.AppendLine("? KB punya panduan langkah-langkah � gunakan sepenuhnya.");
+                        if (hasSteps) sb.AppendLine("? Referensi punya panduan langkah-langkah — gunakan sepenuhnya.");
                         break;
                     case "Troubleshooting":
                         sb.AppendLine("? Identifikasi root cause terlebih dahulu, lalu berikan solusi yang actionable.");
@@ -305,7 +334,7 @@ JAWABAN:";
                 systemPromptBuilder.AppendLine();
                 systemPromptBuilder.AppendLine("PERAN MU:");
                 systemPromptBuilder.AppendLine("- Ahli dalam sistem JIFAS dan semua modulnya");
-                systemPromptBuilder.AppendLine("- Memberikan jawaban yang akurat berdasarkan Knowledge Base");
+                systemPromptBuilder.AppendLine("- Memberikan jawaban yang akurat berdasarkan informasi yang tersedia");
                 systemPromptBuilder.AppendLine("- Memahami konteks bisnis dan proses kerja JIFAS");
                 systemPromptBuilder.AppendLine();
 
@@ -325,7 +354,7 @@ JAWABAN:";
                 // Guide for response format
                 systemPromptBuilder.AppendLine("CARA MENJAWAB:");
                 systemPromptBuilder.AppendLine("1. ANALISIS pertanyaan user dengan cermat");
-                systemPromptBuilder.AppendLine("2. CARI bagian Knowledge Base yang paling relevan");
+                systemPromptBuilder.AppendLine("2. CARI bagian informasi referensi yang paling relevan");
                 systemPromptBuilder.AppendLine("3. RANGKUM informasi dengan jelas dan terstruktur");
                 if (hasStepByStepGuide)
                 {
@@ -335,11 +364,11 @@ JAWABAN:";
                 systemPromptBuilder.AppendLine();
 
                 systemPromptBuilder.AppendLine("ATURAN KETAT:");
-                systemPromptBuilder.AppendLine("- JANGAN membuat informasi yang tidak ada di KB");
+                systemPromptBuilder.AppendLine("- JANGAN membuat informasi yang tidak ada di referensi");
                 systemPromptBuilder.AppendLine("- Jika ada keraguan, tanyakan klarifikasi pada user");
                 systemPromptBuilder.AppendLine("- Jawab dalam Bahasa Indonesia yang profesional");
                 systemPromptBuilder.AppendLine("- Berikan jawaban yang singkat tapi lengkap");
-                systemPromptBuilder.AppendLine("- Jika KB tidak punya jawaban, katakan dengan jelas");
+                systemPromptBuilder.AppendLine("- Jika informasi tidak tersedia, katakan dengan jelas");
 
                 return systemPromptBuilder.ToString();
             }
@@ -371,7 +400,7 @@ JAWABAN:";
             var orderedResults = kbResults.OrderByDescending(r => r.Score).ToList();
             var groupedByDoc = orderedResults.GroupBy(r => r.Title).ToList();
 
-            promptBuilder.AppendLine("INFORMASI RELEVAN DARI KNOWLEDGE BASE:");
+            promptBuilder.AppendLine("INFORMASI REFERENSI YANG RELEVAN:");
             promptBuilder.AppendLine("(Diurutkan dari paling relevan)");
             promptBuilder.AppendLine();
 
@@ -404,15 +433,15 @@ JAWABAN:";
             promptBuilder.AppendLine("CATATAN ANALISIS:");
             if (analysis.IsExactMatch)
             {
-                promptBuilder.AppendLine("? Pertanyaan user memiliki kecocokan LANGSUNG dengan Knowledge Base");
+                promptBuilder.AppendLine("? Pertanyaan user memiliki kecocokan LANGSUNG dengan informasi referensi");
             }
             else if (analysis.IsPartialMatch)
             {
-                promptBuilder.AppendLine("? Pertanyaan user SEBAGIAN sesuai dengan KB - gunakan informasi yang tersedia sebaik mungkin");
+                promptBuilder.AppendLine("? Pertanyaan user SEBAGIAN sesuai dengan referensi - gunakan informasi yang tersedia sebaik mungkin");
             }
             else
             {
-                promptBuilder.AppendLine("? Kecocokan TERBATAS dengan KB - berikan jawaban berdasarkan konteks terdekat");
+                promptBuilder.AppendLine("? Kecocokan TERBATAS dengan referensi - berikan jawaban berdasarkan konteks terdekat");
             }
 
             if (analysis.ContentCoverage > 0)
@@ -444,7 +473,7 @@ JAWABAN:";
             // Group by document for better organization
             var groupedByDoc = orderedResults.GroupBy(r => r.Title).ToList();
 
-            promptBuilder.AppendLine("INFORMASI DARI KB (Diurutkan dari paling relevan):");
+            promptBuilder.AppendLine("INFORMASI REFERENSI (Diurutkan dari paling relevan):");
             promptBuilder.AppendLine();
 
             int sectionNum = 1;
@@ -581,10 +610,10 @@ JAWABAN:";
             }
             else
             {
-                fallbackBuilder.AppendLine("Kamu adalah JIFAS AI Assistant. Jawab pertanyaan berikut berdasarkan Knowledge Base dan domain knowledge JIFAS kamu.");
+                fallbackBuilder.AppendLine("Kamu adalah JIFAS AI Assistant. Jawab pertanyaan berikut berdasarkan informasi referensi dan domain knowledge JIFAS kamu.");
                 fallbackBuilder.AppendLine("Gunakan informasi di bawah sebagai referensi utama, dan lengkapi dengan pengetahuan JIFAS kamu jika diperlukan.");
                 fallbackBuilder.AppendLine();
-                fallbackBuilder.AppendLine("KNOWLEDGE BASE:");
+                fallbackBuilder.AppendLine("INFORMASI REFERENSI:");
 
                 foreach (var result in kbResults.OrderByDescending(r => r.Score).Take(3))
                 {
@@ -613,7 +642,7 @@ JAWABAN:";
 
             if (analysis.OverallRelevance < 50)
             {
-                return $@"Berdasarkan Knowledge Base JIFAS, pertanyaan Anda kurang jelas. 
+                return $@"Pertanyaan Anda kurang jelas, bisa tolong jelaskan lebih detail?
 
 Untuk memberikan jawaban yang lebih akurat, saya perlu klarifikasi:
 
@@ -698,8 +727,8 @@ Silakan jelaskan lebih detail agar saya dapat memberikan jawaban yang tepat.";
         {
             var hasKbContent = kbResults.Count > 0;
             var confidenceNote = hasKbContent
-                ? $"KB tersedia ({kbResults.Count} dokumen relevan) � gunakan penuh."
-                : "KB tidak punya jawaban spesifik � jujur bahwa info terbatas.";
+                ? $"Informasi tersedia ({kbResults.Count} dokumen relevan) — gunakan penuh."
+                : "Informasi spesifik tidak ditemukan — jujur bahwa info terbatas.";
 
             return queryType switch
             {
@@ -707,7 +736,7 @@ Silakan jelaskan lebih detail agar saya dapat memberikan jawaban yang tepat.";
 $@"INSTRUKSI � PERTANYAAN 'CARA/LANGKAH' ({confidenceNote})
 - Berikan langkah bernomor yang jelas dan actionable
 - Gunakan nama tombol/menu JIFAS yang sebenarnya (Save, Submit, Approve, Post, Void, dll)
-- Sebutkan path menu jika diketahui dari KB
+- Sebutkan path menu jika diketahui dari referensi
 - Tambahkan catatan/tip penting di akhir jika ada
 - Jangan skip langkah � user mungkin pemula dengan JIFAS",
 
@@ -758,7 +787,7 @@ $@"INSTRUKSI � PERTANYAAN UMUM ({confidenceNote})
 
         private string GetDefaultSystemPrompt() =>
             "Kamu adalah JIFAS AI Assistant, asisten untuk sistem JIFAS PT Jababeka Tbk. " +
-            "Jawab berdasarkan Knowledge Base yang diberikan, jujur jika info tidak ada di KB, " +
+            "Jawab berdasarkan informasi yang diberikan, jujur jika info tidak tersedia, " +
             "gunakan Bahasa Indonesia yang natural, dan berikan jawaban yang actionable.";
 
         /// </summary>

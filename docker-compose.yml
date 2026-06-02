@@ -1,6 +1,24 @@
-﻿version: '3.8'
+﻿services:
+  jifas-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: jifas-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-jifas_assistant}
+      POSTGRES_USER: ${POSTGRES_USER:-jifas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jifas_dev_password}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jifas} -d ${POSTGRES_DB:-jifas_assistant}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - jifas-network
 
-services:
   jifas-api:
     build:
       context: .
@@ -9,10 +27,13 @@ services:
     image: jifas-assistant:latest
     ports:
       - '8888:8888'
+    depends_on:
+      jifas-postgres:
+        condition: service_healthy
     environment:
       # Database Configuration
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
-      Admin__ApiKey: ${Admin__ApiKey}
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=jifas-postgres;Port=5432;Database=jifas_assistant;Username=jifas;Password=jifas_dev_password}
+      Admin__ApiKey: ${Admin__ApiKey:-}
       Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:-}
       Jwt__Enabled: ${Jwt__Enabled:-true}
       Jwt__Authority: ${Jwt__Authority:-}
@@ -29,7 +50,7 @@ services:
       # Embedding Configuration  
       Embedding__Provider: Ollama
       Embedding__Model: qwen3-embedding:4b
-      Embedding__Dimensions: 1024
+      Embedding__Dimensions: 2560
       Embedding__OllamaUrl: ${Embedding__OllamaUrl:-http://10.0.12.54:11434}
       
       # ASP.NET Core
@@ -65,4 +86,6 @@ networks:
 
 volumes:
   logs:
+    driver: local
+  postgres_data:
     driver: local

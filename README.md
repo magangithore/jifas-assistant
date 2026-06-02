@@ -44,19 +44,19 @@ JIFAS AI Assistant is a **Retrieval-Augmented Generation (RAG)** system designed
 ### APIs & Integrations
 - **Ollama (Local AI)** - LLM untuk response generation
   - Model: `qwen3:8b` (local Ollama)
-  - Embeddings: `qwen3-embedding:4b` (1024-dimensional, local Ollama)
+  - Embeddings: `qwen3-embedding:4b` (2560-dimensional, local Ollama)
   - Both FREE tier available!
 - **Ollama HTTP API** - Local LLM and embedding runtime
 
 ### Database
-- **SQL Server** - Production-grade relational database
-- **LocalDB** - Development environment
-- **Entity Framework Migrations** - Database versioning
+- **PostgreSQL 16 + pgvector** - Relational database and vector similarity search
+- **Docker Compose** - Local PostgreSQL runtime
+- **Entity Framework Core + Npgsql** - Database access and schema initialization
 
 ### Caching & Performance
 - **In-Memory Cache** - Fast response caching
 - **Redis** (optional) - Distributed caching untuk session management
-- **SQL Server Semantic Search** - Embeddings are stored with KB chunks and ranked by cosine similarity
+- **pgvector Semantic Search** - Embeddings are stored with KB chunks and ranked by cosine similarity
 
 ### Additional Libraries
 - **Newtonsoft.Json** - JSON serialization
@@ -297,7 +297,7 @@ GET /health                              Application health status
 
 ### Prerequisites
 - **.NET 10.0 SDK** - Download from https://dotnet.microsoft.com/download
-- **SQL Server 2019+** atau **LocalDB** (included with Visual Studio)
+- **Docker Desktop** untuk PostgreSQL + pgvector
 - **Git** - Version control
 - **Ollama Local AI Server** - running at http://10.0.12.54:11434
 
@@ -313,16 +313,19 @@ cd Jifas.Assistant
 dotnet user-secrets init
 # No API key needed - Ollama runs locally
 
-# 3. Create database & run migrations
-dotnet ef database update
+# 3. Start PostgreSQL + pgvector
+docker compose up -d jifas-postgres
 
 # 4. Run application
 dotnet run
 
-# 5. Test it
-curl -X POST http://localhost:5000/api/chatbot \
+# 5. Reindex knowledge base after PostgreSQL is ready
+powershell -ExecutionPolicy Bypass -File ../scripts/ReindexKnowledgeBase.ps1
+
+# 6. Test it
+curl -X POST http://localhost:5000/api/chat/message \
   -H "Content-Type: application/json" \
-  -d '{"message":"Halo! Apa itu JIFAS?"}'
+  -d '{"message":"Halo! Apa itu JIFAS?","userId":"local-user","sessionId":"local-session","userRole":"FINA:KI","userCompanyCode":"KI","language":"id"}'
 ```
 
 See **SETUP.md** for detailed configuration options.
@@ -335,12 +338,12 @@ See **SETUP.md** for detailed configuration options.
 |----------|---------|---------|
 | `Ollama:BaseUrl` | Ollama server URL | `http://10.0.12.54:11434` |
 | `Ollama:Model` | LLM model name | `qwen3:8b` |
-| `ConnectionStrings:DefaultConnection` | Database connection | `Server=localhost;Database=JIFAS...` |
+| `ConnectionStrings:DefaultConnection` | Database connection | `Host=localhost;Port=5432;Database=jifas_assistant;Username=jifas;Password=...` |
 | `ASPNETCORE_ENVIRONMENT` | Environment (Development/Production) | `Production` |
 | `Caching:EnableResponseCache` | Enable response caching | `true` |
 | `Embedding:Provider` | Embedding provider | `Ollama` |
 | `Embedding:Model` | Embedding model | `qwen3-embedding:4b` |
-| `Embedding:Dimensions` | Embedding dimensions | `1024` |
+| `Embedding:Dimensions` | Embedding dimensions | `2560` |
 
 Set these via:
 1. **User Secrets** (dev): `dotnet user-secrets set "Key" "Value"`
@@ -365,11 +368,14 @@ Set these via:
 ### Create Database
 
 ```bash
-# Using migrations (recommended)
-dotnet ef database update
+# Start PostgreSQL + pgvector
+docker compose up -d jifas-postgres
 
-# Or manual SQL
-sqlcmd -S "(localdb)\MSSQLLocalDB" -i JIFAS_Assistant_Database.sql
+# Create schema on application startup
+dotnet run --project Jifas.Assistant
+
+# Reindex KB into PostgreSQL pgvector
+powershell -ExecutionPolicy Bypass -File scripts/ReindexKnowledgeBase.ps1
 ```
 
 ---
@@ -440,18 +446,16 @@ curl http://10.0.12.54:11434/api/tags
 ### Issue: Database connection failed
 **Solution**: Verify connection string:
 ```bash
-# For LocalDB
-"Server=(localdb)\\MSSQLLocalDB;Database=JIFAS_Assistant;Integrated Security=true;"
-
-# For SQL Server
-"Server=YOUR_SERVER;Database=JIFAS_Assistant;User Id=sa;Password=YourPassword;"
+# Local Docker PostgreSQL
+"Host=localhost;Port=5432;Database=jifas_assistant;Username=jifas;Password=jifas_dev_password"
 ```
 
 ### Issue: Semantic search not working
 **Solution**: Ensure embeddings are populated:
 ```bash
-# Run seeding script
-dotnet run --project KBLoader -- --yes
+# Start database, then reindex KB
+docker compose up -d jifas-postgres
+powershell -ExecutionPolicy Bypass -File scripts/ReindexKnowledgeBase.ps1
 ```
 
 ### Issue: Slow response time

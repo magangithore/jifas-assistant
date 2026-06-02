@@ -56,7 +56,7 @@ namespace Jifas.Assistant.Services
                     RelatedDocumentIds = log.UsedDocumentIds?.Count > 0 
                         ? string.Join(",", log.UsedDocumentIds) 
                         : null,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _db.Chats.Add(conversation);

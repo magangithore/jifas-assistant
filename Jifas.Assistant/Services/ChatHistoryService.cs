@@ -48,7 +48,7 @@ namespace Jifas.Assistant.Services
                     chatHistory.SessionId = Guid.NewGuid().ToString();
                 }
 
-                chatHistory.CreatedAt = DateTime.Now;
+                chatHistory.CreatedAt = DateTime.UtcNow;
 
                 _db.ChatHistories.Add(chatHistory);
                 await _db.SaveChangesAsync();

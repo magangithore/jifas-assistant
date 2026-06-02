@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
+using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
 
 namespace Jifas.Assistant.Services
@@ -54,35 +55,39 @@ namespace Jifas.Assistant.Services
 
                     int loaded = 0;
                     int failed = 0;
+                    var embeddings = new Dictionary<int, float[]>();
+                    var metadata = new Dictionary<int, KnowledgeBaseChunkDto>();
 
                     foreach (var chunk in chunks)
                     {
                         if (stoppingToken.IsCancellationRequested) break;
                         try
                         {
-                            if (!KnowledgeBaseSearchService.EmbeddingCache.ContainsKey(chunk.Id))
+                            var parsed = EmbeddingSerializer.Deserialize(chunk.Embedding);
+                            if (parsed.Length > 0)
                             {
-                                var parsed = JsonConvert.DeserializeObject<System.Collections.Generic.List<float>>(chunk.Embedding);
-                                if (parsed != null)
+                                embeddings[chunk.Id] = parsed;
+                                metadata[chunk.Id] = new KnowledgeBaseChunkDto
                                 {
-                                    KnowledgeBaseSearchService.EmbeddingCache.TryAdd(chunk.Id, parsed.ToArray());
-                                    KnowledgeBaseSearchService.MetadataCache.TryAdd(chunk.Id, new KnowledgeBaseChunkDto
-                                    {
-                                        Id = chunk.Id,
-                                        DocumentId = chunk.DocumentId,
-                                        Title = chunk.Document?.Title,
-                                        Content = chunk.Content,
-                                        Category = chunk.Document?.Category,
-                                        ChunkIndex = chunk.ChunkIndex
-                                    });
-                                    loaded++;
-                                }
+                                    Id = chunk.Id,
+                                    DocumentId = chunk.DocumentId,
+                                    Title = chunk.Document?.Title,
+                                    Content = chunk.Content,
+                                    Category = chunk.Document?.Category,
+                                    ChunkIndex = chunk.ChunkIndex
+                                };
+                                loaded++;
                             }
                         }
                         catch
                         {
                             failed++;
                         }
+                    }
+
+                    if (loaded > 0)
+                    {
+                        KnowledgeBaseSearchService.ReplaceEmbeddingCache(embeddings, metadata);
                     }
 
                     sw.Stop();

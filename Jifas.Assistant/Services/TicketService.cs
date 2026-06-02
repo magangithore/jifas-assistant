@@ -94,6 +94,7 @@ namespace Jifas.Assistant.Services
         private readonly string _accountEmail;
         private readonly string _emailDomain;
         private readonly string _defaultIssueType;
+        private readonly IConversationIntelligenceService _conversationIntelligence;
 
         private const string DIALOG_STATE_PREFIX = "TicketFlow_";
         private const int DIALOG_TIMEOUT_MINUTES = 30;
@@ -167,13 +168,15 @@ namespace Jifas.Assistant.Services
             ICacheService cacheService,
             IOllamaService ollamaService,
             ILoggerService logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IConversationIntelligenceService conversationIntelligence)
         {
             _httpClient = httpClient;
             _cacheService = cacheService;
             _ollamaService = ollamaService;
             _logger = logger;
             _configuration = configuration;
+            _conversationIntelligence = conversationIntelligence;
 
             _jiraBaseUrl = _configuration["Jira:BaseUrl"] ?? "https://willyjan.atlassian.net";
             _projectKey = _configuration["Jira:ProjectKey"] ?? "JTU";
@@ -457,7 +460,7 @@ namespace Jifas.Assistant.Services
             {
                 UserId = userId,
                 Title = state.GeneratedTitle,
-                Description = BuildTicketDescription(state),
+                Description = BuildTicketDescription(state, sessionId),
                 Category = state.Category ?? "General",
                 Priority = MapPriorityToJira(state.Priority),
                 SessionId = sessionId
@@ -798,18 +801,36 @@ Tulis HANYA judul tiket, tanpa penjelasan tambahan:";
             }
         }
 
-        private string BuildTicketDescription(TicketDialogState state)
+        private string BuildTicketDescription(TicketDialogState state, string sessionId = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine("=== Deskripsi Masalah ===");
             sb.AppendLine(state.Problem);
 
+            // Use compacted session summary for richer ticket context
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                try
+                {
+                    var compactSummary = _conversationIntelligence.CompactSessionAsync(sessionId, 10).GetAwaiter().GetResult();
+                    if (!string.IsNullOrEmpty(compactSummary))
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine("=== Ringkasan Percakapan ===");
+                        sb.AppendLine(compactSummary);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"[TicketService] Could not compact session: {ex.Message}");
+                }
+            }
+
             if (!string.IsNullOrEmpty(state.AiSolution))
             {
                 sb.AppendLine();
-                sb.AppendLine("=== Solusi AI yang Sudah Dicoba ===");
+                sb.AppendLine("=== Solusi yang Sudah Dicoba (belum berhasil) ===");
                 sb.AppendLine(state.AiSolution);
-                sb.AppendLine("(User melaporkan masalah belum terselesaikan)");
             }
 
             sb.AppendLine();

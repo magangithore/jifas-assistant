@@ -81,6 +81,14 @@ namespace Jifas.Assistant.Services
         Task<string> GetFormattedContextAsync(string sessionId);
         Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery);
         string ExtractTopic(string message);
+
+        /// <summary>
+        /// Compact/summarize an entire session into a structured summary.
+        /// Inspired by Claude Code's compaction system — preserves user intents,
+        /// key decisions, errors, and pending work in a dense format.
+        /// Used for: ticket descriptions, long-session context, handoff to IT.
+        /// </summary>
+        Task<string> CompactSessionAsync(string sessionId, int maxTurns = 20);
     }
 
     /// <summary>
@@ -319,20 +327,36 @@ namespace Jifas.Assistant.Services
 
             var contextBuilder = new StringBuilder();
             contextBuilder.AppendLine("=== KONTEKS PERCAKAPAN SEBELUMNYA ===");
-            contextBuilder.AppendLine("(Gunakan konteks ini untuk memahami referensi dan follow-up questions)");
+
+            // Section 1: Topics discussed (structured overview)
+            var topics = turns.Select(t => t.Topic)
+                .Where(t => !string.IsNullOrEmpty(t) && t != "General")
+                .Distinct().ToList();
+            if (topics.Count > 0)
+                contextBuilder.AppendLine($"Topik yang dibahas: {string.Join(", ", topics)}");
+
+            // Section 2: Conversation intent history
+            var lastTurn = turns.LastOrDefault();
+            if (lastTurn != null)
+                contextBuilder.AppendLine($"Topik terakhir: {lastTurn.Topic ?? "General"}");
+
             contextBuilder.AppendLine();
 
+            // Section 3: Conversation turns (most recent)
+            contextBuilder.AppendLine("Percakapan terkini:");
             foreach (var turn in turns.TakeLast(MEMORY_WINDOW))
             {
                 contextBuilder.AppendLine($"User: {turn.UserMessage}");
-                contextBuilder.AppendLine($"Assistant: {turn.AssistantResponse}");
+                contextBuilder.AppendLine($"AI: {turn.AssistantResponse}");
                 contextBuilder.AppendLine();
             }
 
             contextBuilder.AppendLine("=== AKHIR KONTEKS ===");
             contextBuilder.AppendLine();
-            contextBuilder.AppendLine("INSTRUKSI: Jika pertanyaan saat ini merujuk ke percakapan sebelumnya (menggunakan kata 'itu', 'ini', 'tersebut', dll), " +
-                "hubungkan dengan konteks di atas untuk memberikan jawaban yang koheren.");
+            contextBuilder.AppendLine("INSTRUKSI KONTEKS:");
+            contextBuilder.AppendLine("- Jika user merujuk 'itu', 'ini', 'tersebut', 'tadi' → hubungkan dengan konteks di atas.");
+            contextBuilder.AppendLine("- Jika user bertanya hal baru → jawab tanpa memaksakan hubungan ke konteks sebelumnya.");
+            contextBuilder.AppendLine("- Jika user minta klarifikasi → berikan detail lebih dalam dari topik sebelumnya.");
 
             var formatted = contextBuilder.ToString();
 
@@ -365,6 +389,70 @@ namespace Jifas.Assistant.Services
             }
 
             return truncated.Trim() + "...";
+        }
+
+        /// <summary>
+        /// Compact/summarize the entire session conversation into a structured summary.
+        /// Inspired by Claude Code's compaction system — preserves user intents,
+        /// key decisions, errors/issues, and context in a dense format.
+        /// </summary>
+        public async Task<string> CompactSessionAsync(string sessionId, int maxTurns = 20)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(sessionId))
+                    return string.Empty;
+
+                var history = await _chatHistoryService.GetSessionHistoryAsync(sessionId, maxTurns);
+                if (history == null || history.Count == 0)
+                    return string.Empty;
+
+                var turns = history
+                    .OrderBy(h => h.CreatedAt)
+                    .Select(h => new ConversationTurn
+                    {
+                        UserMessage = h.UserMessage,
+                        AssistantResponse = TruncateResponse(h.AiResponse, 500),
+                        Timestamp = h.CreatedAt,
+                        Topic = ExtractTopic(h.UserMessage)
+                    })
+                    .ToList();
+
+                // Build structured summary (deterministic, no AI call needed)
+                var sb = new StringBuilder();
+
+                // 1. Topics discussed
+                var topics = turns.Select(t => t.Topic)
+                    .Where(t => !string.IsNullOrEmpty(t) && t != "General")
+                    .Distinct().ToList();
+                if (topics.Count > 0)
+                    sb.AppendLine($"Topik: {string.Join(", ", topics)}");
+
+                // 2. User's messages (the core problems/questions)
+                sb.AppendLine();
+                sb.AppendLine("Kronologi percakapan:");
+                foreach (var turn in turns)
+                {
+                    sb.AppendLine($"- [{turn.Timestamp:HH:mm}] User: {turn.UserMessage}");
+                    if (!string.IsNullOrEmpty(turn.AssistantResponse))
+                        sb.AppendLine($"  AI: {turn.AssistantResponse}");
+                }
+
+                // 3. Detect unresolved issues
+                var lastUserMsg = turns.LastOrDefault()?.UserMessage?.ToLowerInvariant() ?? "";
+                var hasUnresolved = lastUserMsg.Contains("error") || lastUserMsg.Contains("gagal") ||
+                                    lastUserMsg.Contains("masalah") || lastUserMsg.Contains("tidak bisa") ||
+                                    lastUserMsg.Contains("tiket");
+                if (hasUnresolved)
+                    sb.AppendLine("\nStatus: Masalah belum sepenuhnya terselesaikan");
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[ConversationMemory] Error compacting session: {ex.Message}");
+                return string.Empty;
+            }
         }
 
         #endregion
@@ -703,7 +791,7 @@ namespace Jifas.Assistant.Services
 
             if (response.Contains("1.") || response.Contains("1)"))
                 return "Numbered Steps";
-            if (response.Contains("-") || response.Contains("�"))
+            if (response.Contains("-") || response.Contains("�"))
                 return "Bullet Points";
             if (response.Contains(":\n"))
                 return "Labeled Sections";

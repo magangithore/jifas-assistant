@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Pgvector;
 
 namespace jifas_assistant.DAL.Models;
 
@@ -23,6 +24,9 @@ public partial class KnowledgeBaseChunks
     public string Content { get; set; }
 
     public string Embedding { get; set; }
+
+    [Column(TypeName = "vector(2560)")]
+    public Vector EmbeddingVector { get; set; }
 
     public int? EmbeddingDimensions { get; set; }
 

@@ -41,6 +41,7 @@ namespace Jifas.Assistant.Services
         private readonly IResponseQualityService _responseQuality;
         private readonly IConversationIntelligenceService _conversationIntelligence;
         private readonly IUserMemoryService _userMemory;
+        private readonly IAdaptiveContextPackService _contextPackService;
         private readonly IMonitoringService _monitoring;
         private readonly IEmbeddingService _embeddingService;
         private readonly ITicketService _ticketService;
@@ -65,6 +66,7 @@ namespace Jifas.Assistant.Services
             IResponseQualityService responseQuality,
             IConversationIntelligenceService conversationIntelligence,
             IUserMemoryService userMemory,
+            IAdaptiveContextPackService contextPackService,
             IMonitoringService monitoring,
             IEmbeddingService embeddingService,
             ITicketService ticketService)
@@ -85,6 +87,7 @@ namespace Jifas.Assistant.Services
             _responseQuality = responseQuality ?? throw new ArgumentNullException(nameof(responseQuality));
             _conversationIntelligence = conversationIntelligence ?? throw new ArgumentNullException(nameof(conversationIntelligence));
             _userMemory = userMemory ?? throw new ArgumentNullException(nameof(userMemory));
+            _contextPackService = contextPackService ?? throw new ArgumentNullException(nameof(contextPackService));
             _monitoring = monitoring ?? throw new ArgumentNullException(nameof(monitoring));
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
@@ -422,6 +425,20 @@ namespace Jifas.Assistant.Services
                 _logger.LogInformation($"[ChatService] KB Search ({metrics.KbSearchMs}ms): {validatedResults.Count} valid results, " +
                     $"Confidence: {confidenceScore:F2}, Threshold: {adaptiveThreshold:F2}, Meets: {confidenceResult.MeetsThreshold}");
 
+                // Claude Code-inspired context packing: give the model a compact briefing,
+                // not just raw snippets, so intent and constraints stay visible.
+                var activePageContext = BuildActivePageContextFromRequest(request);
+                var contextPack = await _contextPackService.BuildAsync(
+                    request,
+                    userMessage,
+                    intentResult,
+                    expandedQuery,
+                    validatedResults.Count > 0 ? validatedResults : kbResults ?? new List<KnowledgeBaseResult>(),
+                    conversationContext,
+                    isFollowUp,
+                    activePageContext,
+                    confidenceScore);
+
                 // ?? STEP 5B: HANDLE LOW CONFIDENCE (Enhanced)
                 if (!_responseQuality.ShouldGenerateResponse(confidenceResult))
                 {
@@ -432,19 +449,28 @@ namespace Jifas.Assistant.Services
                     if (validatedResults != null && validatedResults.Count > 0)
                     {
                         // We have some results - try to help with partial info
-                        fallbackMessage = await GenerateIntelligentPartialResponseAsync(userMessage, validatedResults, intentResult.Intent, userId: request?.UserId);
+                        fallbackMessage = await GenerateIntelligentPartialResponseAsync(
+                            userMessage,
+                            validatedResults,
+                            intentResult.Intent,
+                            contextPack.FormattedContext,
+                            userId: request?.UserId);
                     }
                     else
                     {
                         // No results - use system knowledge to answer
-                        fallbackMessage = await GenerateHelpfulNoMatchResponseAsync(userMessage, intentResult.Intent, userId: request?.UserId);
+                        fallbackMessage = await GenerateHelpfulNoMatchResponseAsync(
+                            userMessage,
+                            intentResult.Intent,
+                            contextPack.FormattedContext,
+                            userId: request?.UserId);
                     }
                     
                     llmStopwatch.Stop();
                     metrics.LlmResponseMs = (long)llmStopwatch.Elapsed.TotalMilliseconds;
                     
                     response.Message = fallbackMessage;
-                    response.Source = validatedResults?.Count > 0 ? "Partial KB Match" : "No KB Match";
+                    response.Source = validatedResults?.Count > 0 ? "Partial Match" : "JIFAS System Knowledge";
                     response.IsFromKnowledgeBase = validatedResults?.Count > 0;
                     response.ConfidenceScore = confidenceScore;
                     response.KnowledgeBaseResults = validatedResults ?? kbResults ?? new List<KnowledgeBaseResult>();
@@ -468,9 +494,6 @@ namespace Jifas.Assistant.Services
                 // ?? STEP 6: GENERATE KB-BASED RESPONSE (Enhanced with context)
                 var responseStopwatch = Stopwatch.StartNew();
 
-                // Build active page context dari request.Context
-                var activePageContext = BuildActivePageContextFromRequest(request);
-
                 var aiResponse = await GenerateEnhancedResponseAsync(
                     userMessage, 
                     validatedResults, 
@@ -478,6 +501,7 @@ namespace Jifas.Assistant.Services
                     conversationContext,
                     isFollowUp,
                     activePageContext,
+                    contextPack.FormattedContext,
                     userId: request?.UserId);
                 responseStopwatch.Stop();
                 metrics.LlmResponseMs = (long)responseStopwatch.Elapsed.TotalMilliseconds;
@@ -500,7 +524,7 @@ namespace Jifas.Assistant.Services
 
                  response.Message = aiResponse;
                  response.Source = validatedResults.Count > 0 
-                     ? $"Knowledge Base ({validatedResults.Count} hasil)"
+                     ? $"JIFAS ({validatedResults.Count} hasil)"
                      : "JIFAS System Knowledge";
                  response.IsFromKnowledgeBase = validatedResults.Count > 0;
                  response.ConfidenceScore = confidenceScore;
@@ -599,6 +623,21 @@ namespace Jifas.Assistant.Services
                     currentModule: request?.Context?.ActiveModule,
                     userRole: request?.UserRole,
                     sessionId: response.SessionId);
+
+                // Extract and persist user patterns (Claude Code-inspired memory extraction)
+                // Fire-and-forget: runs after response, does not block user
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _userMemory.ExtractAndPersistPatternsAsync(
+                            request?.UserId ?? "anonymous",
+                            userMessage,
+                            aiResponse,
+                            sessionId: response.SessionId);
+                    }
+                    catch { /* pattern extraction is best-effort */ }
+                });
 
                 _logger.LogDebug(
                     $"[ChatService] Memory update queued for user: {request?.UserId}, " +
@@ -769,7 +808,7 @@ namespace Jifas.Assistant.Services
                 var resultsSummary = string.Join("\n", partialResults.Take(3).Select((r, i) => 
                     $"{i + 1}. {r.Title} (Relevance: {r.Score:P0})"));
 
-                var prompt = $@"User mengajukan pertanyaan kepada JIFAS AI Assistant dengan hasil pencarian partial match di Knowledge Base.
+                var prompt = $@"User mengajukan pertanyaan kepada JIFAS AI Assistant dengan hasil pencarian partial match.
 
 Pertanyaan user: ""{userQuery}""
 
@@ -806,13 +845,13 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         {
             try
             {
-                var prompt = $@"Pertanyaan berikut tidak memiliki kecocokan yang cukup dalam Knowledge Base JIFAS.
+                var prompt = $@"Pertanyaan berikut tidak memiliki kecocokan yang cukup di sistem JIFAS.
 
 Pertanyaan user: ""{userQuery}""
 
 Buatlah respons yang:
 1. Sopan dan profesional
-2. Jelaskan bahwa informasi tidak tersedia di KB
+2. Jelaskan bahwa informasi ini belum tersedia di sistem JIFAS
 3. Sarankan untuk coba pertanyaan lain atau hubungi IT Help Desk
 4. Gunakan bahasa Indonesia natural dan friendly
 5. Singkat (1-2 kalimat saja)
@@ -844,14 +883,14 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
 
                 var prompt = $@"Buatlah salam pembuka yang natural dan profesional untuk AI Assistant JIFAS (Jababeka Integrated Finance Accounting System). 
 
-KNOWLEDGE BASE YANG TERSEDIA:
+INFORMASI SISTEM JIFAS:
 {systemContext}
 
 Petunjuk pembuatan:
 1. JIFAS adalah sistem terintegrasi untuk Finance & Accounting
 2. Sebutkan secara ringkas modul-modul utama yang ada di system
-3. Jelaskan bahwa AI Assistant ini membantu dengan pertanyaan seputar semua modul yang ada di Knowledge Base
-4. Assistant ini HANYA menjawab berdasarkan Knowledge Base JIFAS - jangan membuat informasi baru
+3. Jelaskan bahwa AI Assistant ini membantu dengan pertanyaan seputar semua modul yang ada di sistem JIFAS
+4. Jawab berdasarkan informasi yang kamu punya tentang JIFAS - jangan membuat informasi baru
 5. Berikan 2-3 contoh pertanyaan yang bisa diajukan (berdasarkan modul yang ada)
 6. Bahasa: Natural, friendly, tapi profesional
 7. Panjang: 2-3 paragraf saja, tidak terlalu panjang
@@ -1083,13 +1122,20 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
             string userQuery, 
             List<KnowledgeBaseResult> partialResults,
             IntentType intent,
+            string? packedContext = null,
             string userId = null)
         {
             try
             {
                 // Use the full AI pipeline with KB results so system prompt knowledge kicks in
                 var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
-                return await _ollamaService.GenerateResponseAsync(userQuery, partialResults, sessionContext: userMemoryContext);
+                var sessionContext = BuildSessionContext(
+                    conversationContext: null,
+                    isFollowUp: false,
+                    activePageContext: packedContext,
+                    userMemoryContext: userMemoryContext);
+
+                return await _ollamaService.GenerateResponseAsync(userQuery, partialResults, sessionContext: sessionContext);
             }
             catch (Exception ex)
             {
@@ -1101,21 +1147,31 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         /// <summary>
         /// Generate helpful "I don't know" response
         /// </summary>
-        private async Task<string> GenerateHelpfulNoMatchResponseAsync(string userQuery, IntentType intent, string userId = null)
+        private async Task<string> GenerateHelpfulNoMatchResponseAsync(
+            string userQuery,
+            IntentType intent,
+            string? packedContext = null,
+            string userId = null)
         {
             try
             {
                 // Even with no KB results, use GenerateResponseAsync so the rich system prompt
                 // can answer from its built-in JIFAS knowledge
                 var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
+                var sessionContext = BuildSessionContext(
+                    conversationContext: null,
+                    isFollowUp: false,
+                    activePageContext: packedContext,
+                    userMemoryContext: userMemoryContext);
+
                 return await _ollamaService.GenerateResponseAsync(
                     userQuery, 
                     new List<KnowledgeBaseResult>(), 
-                    sessionContext: userMemoryContext);
+                    sessionContext: sessionContext);
             }
             catch
             {
-                return "Maaf, saya tidak menemukan informasi yang relevan untuk pertanyaan Anda di Knowledge Base JIFAS. Coba gunakan kata kunci yang berbeda, atau hubungi IT Help Desk untuk bantuan lebih lanjut.";
+                return "Maaf, saya tidak menemukan informasi yang relevan untuk pertanyaan Anda. Coba gunakan kata kunci yang berbeda, atau hubungi IT Help Desk di it@jababeka.com untuk bantuan lebih lanjut.";
             }
         }
 
@@ -1129,6 +1185,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
             string conversationContext,
             bool isFollowUp,
             string? activePageContext = null,
+            string? packedContext = null,
             string? userId = null)
         {
             try
@@ -1137,7 +1194,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
 
                 // Gabungkan user memory + active page + conversation context
-                var sessionContext = BuildSessionContext(conversationContext, isFollowUp, activePageContext, userMemoryContext);
+                var sessionContext = BuildSessionContext(conversationContext, isFollowUp, activePageContext, userMemoryContext, packedContext);
 
                 // Gunakan prompt engineering dengan session context yang lengkap
                 var enhancedQuery = userQuery;
@@ -1191,18 +1248,26 @@ Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
             string? conversationContext,
             bool isFollowUp,
             string? activePageContext,
-            string? userMemoryContext = null)
+            string? userMemoryContext = null,
+            string? packedContext = null)
         {
             var parts = new System.Collections.Generic.List<string>();
 
-            if (!string.IsNullOrEmpty(userMemoryContext))
-                parts.Add(userMemoryContext);
+            if (!string.IsNullOrEmpty(packedContext))
+            {
+                parts.Add(packedContext);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(userMemoryContext))
+                    parts.Add(userMemoryContext);
 
-            if (!string.IsNullOrEmpty(activePageContext))
-                parts.Add(activePageContext);
+                if (!string.IsNullOrEmpty(activePageContext))
+                    parts.Add(activePageContext);
 
-            if (isFollowUp && !string.IsNullOrEmpty(conversationContext))
-                parts.Add(conversationContext);
+                if (isFollowUp && !string.IsNullOrEmpty(conversationContext))
+                    parts.Add(conversationContext);
+            }
 
             return string.Join("\n\n", parts);
         }
@@ -1227,12 +1292,12 @@ Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
 Pertanyaan: ""{userQuery}""
 Intent: {intent}
 
-Knowledge Base:
+Informasi Referensi:
 {kbContext}
 
 Buatlah jawaban yang LEBIH BAIK dengan memperhatikan:
 1. Jawaban harus SPESIFIK dan RELEVAN dengan pertanyaan
-2. Hanya gunakan informasi dari Knowledge Base (no hallucination)
+2. Hanya gunakan informasi yang tersedia (no hallucination)
 3. Struktur yang jelas (langkah-langkah jika how-to)
 4. Natural dan mudah dipahami
 5. Minimal 2-3 kalimat untuk konteks yang cukup

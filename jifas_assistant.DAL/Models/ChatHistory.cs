@@ -64,7 +64,7 @@ namespace jifas_assistant.DAL.Models
         /// Timestamp ketika chat terjadi
         /// </summary>
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Flag untuk tracking success/failure

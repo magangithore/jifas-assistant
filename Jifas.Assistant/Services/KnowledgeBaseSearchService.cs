@@ -3,8 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
 
@@ -35,15 +38,24 @@ namespace Jifas.Assistant.Services
         private readonly ICacheService _cacheService;
         private const int KB_CACHE_MINUTES = 30;
 
-        // Internal static caches exposed for EmbeddingWarmupService
-        internal static readonly ConcurrentDictionary<int, float[]> EmbeddingCache = new();
-        internal static readonly ConcurrentDictionary<int, KnowledgeBaseChunkDto> MetadataCache = new();
-
-        // Keep private aliases for internal use
-        private static ConcurrentDictionary<int, float[]> _embeddingCache => EmbeddingCache;
-        private static ConcurrentDictionary<int, KnowledgeBaseChunkDto> _metadataCache => MetadataCache;
+        private static ConcurrentDictionary<int, float[]> _embeddingCache = new();
+        private static ConcurrentDictionary<int, KnowledgeBaseChunkDto> _metadataCache = new();
         private static DateTime _lastEmbeddingCacheRefreshUtc = DateTime.MinValue;
         private static readonly TimeSpan EmbeddingCacheTtl = TimeSpan.FromMinutes(10);
+        private static readonly SemaphoreSlim EmbeddingCacheLoadLock = new(1, 1);
+
+        // Internal static caches exposed for diagnostics and the warmup service.
+        internal static ConcurrentDictionary<int, float[]> EmbeddingCache => _embeddingCache;
+        internal static ConcurrentDictionary<int, KnowledgeBaseChunkDto> MetadataCache => _metadataCache;
+
+        internal static void ReplaceEmbeddingCache(
+            IDictionary<int, float[]> embeddings,
+            IDictionary<int, KnowledgeBaseChunkDto> metadata)
+        {
+            _embeddingCache = new ConcurrentDictionary<int, float[]>(embeddings);
+            _metadataCache = new ConcurrentDictionary<int, KnowledgeBaseChunkDto>(metadata);
+            _lastEmbeddingCacheRefreshUtc = DateTime.UtcNow;
+        }
 
         public KnowledgeBaseSearchService(JIFAS_AssistantContext db, ILoggerService logger, ICacheService cacheService)
         {
@@ -164,59 +176,52 @@ namespace Jifas.Assistant.Services
                 if (embedding == null || embedding.Length == 0)
                     return new List<KnowledgeBaseChunkDto>();
 
+                if (_db.Database.IsNpgsql())
+                {
+                    var pgResults = await SearchByPgVectorAsync(embedding, topK);
+                    if (pgResults.Count > 0)
+                    {
+                        stopwatch.Stop();
+                        if (!string.IsNullOrEmpty(correlationId))
+                        {
+                            _logger.LogPerformance("KBSemanticSearchPgVector", stopwatch.ElapsedMilliseconds, correlationId);
+                        }
+
+                        return pgResults;
+                    }
+                }
+
                 // Use the static embedding cache — if warm, no DB/JSON needed
-                var needsLoad = _embeddingCache.IsEmpty ||
-                    DateTime.UtcNow - _lastEmbeddingCacheRefreshUtc > EmbeddingCacheTtl;
+                var needsLoad = NeedsEmbeddingCacheLoad();
 
                 if (needsLoad)
                 {
-                    // Cold start: load all chunks with embeddings, parse and cache both embeddings + metadata
-                    var chunks = await _db.KnowledgeBaseChunks
-                        .Include(c => c.Document)
-                        .Where(c => c.Document != null && c.Document.IsActive == true && c.Embedding != null)
-                        .ToListAsync();
-
-                    _embeddingCache.Clear();
-                    _metadataCache.Clear();
-
-                    foreach (var c in chunks)
+                    await EmbeddingCacheLoadLock.WaitAsync();
+                    try
                     {
-                        try
+                        if (NeedsEmbeddingCacheLoad())
                         {
-                            if (!_embeddingCache.ContainsKey(c.Id))
-                            {
-                                var parsed = EmbeddingSerializer.Deserialize(c.Embedding);
-                                if (parsed.Length > 0)
-                                    _embeddingCache.TryAdd(c.Id, parsed);
-                            }
-                            _metadataCache.TryAdd(c.Id, new KnowledgeBaseChunkDto
-                            {
-                                Id = c.Id,
-                                DocumentId = c.DocumentId,
-                                Title = c.Document?.Title,
-                                Content = c.Content,
-                                Category = c.Document?.Category,
-                                ChunkIndex = c.ChunkIndex
-                            });
-                        }
-                        catch (Exception parseEx)
-                        {
-                            _logger.LogWarning("[KnowledgeBaseSearchService] Skipping malformed embedding for chunk {0}: {1}", c.Id, parseEx.Message);
+                            await ReloadEmbeddingCacheAsync();
                         }
                     }
-
-                    _lastEmbeddingCacheRefreshUtc = DateTime.UtcNow;
+                    finally
+                    {
+                        EmbeddingCacheLoadLock.Release();
+                    }
                 }
 
-                // Compute cosine similarity from in-memory cache (fast, no I/O)
-                var results = _embeddingCache
+                // Compute cosine similarity from a stable snapshot of the in-memory cache.
+                var embeddingSnapshot = _embeddingCache;
+                var metadataSnapshot = _metadataCache;
+
+                var results = embeddingSnapshot
                     .AsParallel()
                     .Select(kv =>
                     {
                         var similarity = CosineSimilarity(embedding, kv.Value);
                         if (similarity < 0.3f) return null;
 
-                        if (!_metadataCache.TryGetValue(kv.Key, out var meta)) return null;
+                        if (!metadataSnapshot.TryGetValue(kv.Key, out var meta)) return null;
 
                         return new KnowledgeBaseChunkDto
                         {
@@ -346,6 +351,106 @@ namespace Jifas.Assistant.Services
                     _logger.LogPerformance("KBHybridSearch_Error", totalStopwatch.ElapsedMilliseconds, correlationId);
                 }
                 return new List<KnowledgeBaseChunkDto>();
+            }
+        }
+
+        private static bool NeedsEmbeddingCacheLoad()
+        {
+            return _embeddingCache.IsEmpty ||
+                DateTime.UtcNow - _lastEmbeddingCacheRefreshUtc > EmbeddingCacheTtl;
+        }
+
+        private async Task<List<KnowledgeBaseChunkDto>> SearchByPgVectorAsync(float[] embedding, int topK)
+        {
+            try
+            {
+                var queryVector = new Vector(embedding);
+                var rows = await _db.KnowledgeBaseChunks
+                    .AsNoTracking()
+                    .Where(c => c.Document != null &&
+                        c.Document.IsActive == true &&
+                        c.EmbeddingVector != null)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.DocumentId,
+                        c.ChunkIndex,
+                        c.Content,
+                        Title = c.Document.Title,
+                        Category = c.Document.Category,
+                        Distance = c.EmbeddingVector.CosineDistance(queryVector)
+                    })
+                    .OrderBy(x => x.Distance)
+                    .Take(topK)
+                    .ToListAsync();
+
+                return rows
+                    .Where(r => r.Distance <= 0.7)
+                    .Select(r => new KnowledgeBaseChunkDto
+                    {
+                        Id = r.Id,
+                        DocumentId = r.DocumentId,
+                        Title = r.Title,
+                        Content = r.Content,
+                        Category = r.Category,
+                        ChunkIndex = r.ChunkIndex,
+                        RelevanceScore = Math.Max(0, 1 - r.Distance)
+                    })
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[KnowledgeBaseSearchService] pgvector semantic search failed, falling back to in-memory search: {0}", ex.Message);
+                return new List<KnowledgeBaseChunkDto>();
+            }
+        }
+
+        private async Task ReloadEmbeddingCacheAsync()
+        {
+            var chunks = await _db.KnowledgeBaseChunks
+                .Include(c => c.Document)
+                .Where(c => c.Document != null && c.Document.IsActive == true && c.Embedding != null)
+                .AsNoTracking()
+                .ToListAsync();
+
+            var embeddings = new Dictionary<int, float[]>();
+            var metadata = new Dictionary<int, KnowledgeBaseChunkDto>();
+
+            foreach (var c in chunks)
+            {
+                try
+                {
+                    var parsed = EmbeddingSerializer.Deserialize(c.Embedding);
+                    if (parsed.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    embeddings[c.Id] = parsed;
+                    metadata[c.Id] = new KnowledgeBaseChunkDto
+                    {
+                        Id = c.Id,
+                        DocumentId = c.DocumentId,
+                        Title = c.Document?.Title,
+                        Content = c.Content,
+                        Category = c.Document?.Category,
+                        ChunkIndex = c.ChunkIndex
+                    };
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogWarning("[KnowledgeBaseSearchService] Skipping malformed embedding for chunk {0}: {1}", c.Id, parseEx.Message);
+                }
+            }
+
+            if (embeddings.Count > 0)
+            {
+                ReplaceEmbeddingCache(embeddings, metadata);
+                _logger.LogInformation("[KnowledgeBaseSearchService] Embedding cache loaded atomically: {0} chunks", embeddings.Count);
+            }
+            else
+            {
+                _logger.LogWarning("[KnowledgeBaseSearchService] Embedding cache reload produced 0 chunks; keeping previous cache");
             }
         }
 

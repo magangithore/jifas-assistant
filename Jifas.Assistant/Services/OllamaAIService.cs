@@ -143,13 +143,14 @@ namespace Jifas.Assistant.Services
                 if (string.IsNullOrWhiteSpace(userQuery) || string.IsNullOrWhiteSpace(response))
                     return GetDefaultSuggestions();
 
-                // Keep prompt very small: only the first 200 chars of the answer
-                var snippet = response.Length > 200 ? response.Substring(0, 200) : response;
+                // Keep prompt very small: only the first 300 chars of the answer for better context
+                var snippet = response.Length > 300 ? response.Substring(0, 300) : response;
                 var suggestionsPrompt =
-                    $"Topik JIFAS: \"{TruncateForContext(userQuery, 80)}\"\n" +
-                    $"Ringkasan jawaban: {snippet}\n\n" +
-                    "Tulis 3 pertanyaan lanjutan singkat (maks 10 kata, Bahasa Indonesia).\n" +
-                    "Format: 1. ... 2. ... 3. ...";
+                    $"User bertanya tentang JIFAS: \"{TruncateForContext(userQuery, 120)}\"\n" +
+                    $"Jawaban yang diberikan: {snippet}\n\n" +
+                    "Berdasarkan konteks di atas, tulis 3 pertanyaan lanjutan yang RELEVAN dan SPESIFIK (bukan pertanyaan umum).\n" +
+                    "Pertanyaan harus terkait topik yang sedang dibahas, membantu user mendalami atau menyelesaikan masalahnya.\n" +
+                    "Format: 1. ... 2. ... 3. ...\nMaks 12 kata per pertanyaan, Bahasa Indonesia.";
 
                 // Hard-limit suggestions generation to 12 seconds
                 using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(12));
@@ -222,13 +223,13 @@ namespace Jifas.Assistant.Services
                     new { role = "system", content = BuildJifasSystemInstruction() }
                 };
 
-                // Inject up to last 3 conversation turns for context (main call only)
+                // Inject up to last 5 conversation turns for better context continuity (main call only)
                 if (includeTurns)
                 {
                     var turns = _conversationTurns.Value;
                     if (turns != null && turns.Count > 0)
                     {
-                        foreach (var turn in turns.TakeLast(3))
+                        foreach (var turn in turns.TakeLast(5))
                         {
                             if (!string.IsNullOrWhiteSpace(turn.user))
                                 messages.Add(new { role = "user", content = turn.user });
@@ -568,14 +569,28 @@ Creator (buat & submit) -> Head/Supervisor Approval -> Finance Checking/Approval
 - Login: username Windows TANPA @jababeka.com.
 
 === CARA MENJAWAB (ATURAN WAJIB) ===
-1. GROUNDED: Jawab berdasarkan Knowledge Base yang diberikan - sumber kebenaran utama.
-2. HONEST: Jika KB tidak punya info, katakan: "Informasi ini belum tersedia di KB JIFAS. Hubungi IT Help Desk: it@jababeka.com"
-3. NO HALLUCINATION: Jangan mengarang langkah, menu, atau fitur yang tidak ada di KB.
-4. CONTEXT AWARE: Prioritaskan jawaban sesuai modul/halaman aktif user.
+1. GROUNDED: Jawab berdasarkan informasi yang diberikan - sumber kebenaran utama.
+2. HONEST: Jika informasi tidak tersedia, katakan: "Informasi ini belum tersedia di sistem JIFAS. Hubungi IT Help Desk: it@jababeka.com"
+3. NO HALLUCINATION: Jangan mengarang langkah, menu, atau fitur yang tidak ada di informasi referensi.
+4. CONTEXT AWARE: Prioritaskan jawaban sesuai modul/halaman aktif user. Perhatikan konteks percakapan sebelumnya.
 5. ACTIONABLE: Langkah-langkah konkret dan bisa langsung dilakukan.
-6. NATURAL: Seperti rekan senior yang paham sistem.
+6. NATURAL: Seperti rekan senior yang paham sistem. JANGAN PERNAH menyebut "Knowledge Base", "KB", "basis pengetahuan", atau istilah teknis internal.
 7. STRUCTURED: Gunakan bullet/numbering untuk langkah-langkah.
 8. CONCISE: Jawab yang ditanya, tidak perlu preamble panjang.
+9. SMART INTENT: Pahami apakah user sedang bertanya tentang JIFAS (jawab pertanyaannya) atau ingin membuat tiket (arahkan ke proses tiket). Jangan campur aduk.
+10. MEMORY: Ingat konteks percakapan sebelumnya dalam sesi yang sama. Jika user merujuk "itu", "tadi", "sebelumnya", hubungkan dengan percakapan sebelumnya.
+
+=== STRUCTURED THINKING (WAJIB UNTUK SETIAP JAWABAN) ===
+Sebelum menjawab, SELALU lakukan analisis internal berikut (JANGAN tampilkan ke user):
+1. IDENTIFIKASI TOPIK: Modul JIFAS mana yang relevan? (Invoice, PUM, Payment, dll)
+2. KLASIFIKASI INTENT: Apa tujuan user? (How-to, Troubleshooting, Informasi, Eskalasi)
+3. CEK KONTEKS: Apakah ini follow-up dari percakapan sebelumnya? Apakah ada referensi ke "itu/tadi/sebelumnya"?
+4. EVALUASI INFORMASI: Apakah informasi referensi cukup untuk menjawab? Jika tidak, siapkan eskalasi.
+5. TENTUKAN LEVEL USER: Apakah user terlihat berpengalaman atau pemula? Sesuaikan detail jawaban.
+6. SUSUN JAWABAN: Buat jawaban yang actionable, terstruktur, dan langsung ke inti masalah.
+
+Hasil analisis ini harus MEMENGARUHI jawaban kamu, tapi JANGAN tampilkan proses berpikir ke user.
+Langsung berikan jawaban yang sudah matang dan tepat sasaran.
 
 === ESKALASI ===
 - IT Help Desk (login, akses, error teknis, API): it@jababeka.com
@@ -588,7 +603,7 @@ Kamu adalah wajah digital JIFAS - bantu user dengan penuh keyakinan, keakuratan,
         }
 
         private string BuildNoResultsMessage(string query) =>
-            $"Maaf, saya tidak menemukan informasi tentang '{query}' di Knowledge Base JIFAS. " +
+            $"Maaf, saya tidak menemukan informasi tentang '{query}' di sistem JIFAS. " +
             "Silakan coba dengan kata kunci berbeda, atau hubungi Tim IT Help Desk di it@jababeka.com untuk bantuan lebih lanjut.";
 
         private List<string> ExtractSuggestions(string responseText)

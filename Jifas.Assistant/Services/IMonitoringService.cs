@@ -53,6 +53,22 @@ public record MonitoringStats
     public DateTime? LastCallAt { get; init; }
 }
 
+public record QualityMonitoringStats
+{
+    public int TotalResponses { get; init; }
+    public int SuccessfulResponses { get; init; }
+    public int KnowledgeBaseResponses { get; init; }
+    public int FallbackResponses { get; init; }
+    public int LowConfidenceResponses { get; init; }
+    public double SuccessRate { get; init; }
+    public double KnowledgeBaseHitRate { get; init; }
+    public double LowConfidenceRate { get; init; }
+    public double AvgConfidenceScore { get; init; }
+    public double AvgResponseTimeMs { get; init; }
+    public long SlowResponses { get; init; }
+    public DateTime? LastResponseAt { get; init; }
+}
+
 /// <summary>
 /// Manages persistence and real-time broadcast of AI usage metrics.
 /// </summary>
@@ -69,6 +85,9 @@ public interface IMonitoringService
 
     /// <summary>Per-minute time series for the last N minutes.</summary>
     Task<List<TimeSeriesPoint>> GetTimeSeriesAsync(int lastMinutes = 60);
+
+    /// <summary>Quality stats from persisted chat responses for the last N minutes.</summary>
+    Task<QualityMonitoringStats> GetQualityStatsAsync(int lastMinutes = 60, int slowThresholdMs = 30000);
 }
 
 public record TimeSeriesPoint(DateTime Minute, int Calls, double AvgDurationMs, int TotalTokens);

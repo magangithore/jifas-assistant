@@ -10,7 +10,7 @@ using Jifas.Assistant.Hubs;
 namespace Jifas.Assistant.Services;
 
 /// <summary>
-/// Persists every AI call metric to SQL Server and broadcasts a real-time
+/// Persists every AI call metric and broadcasts a real-time
 /// event via SignalR so the monitoring dashboard updates instantly.
 /// </summary>
 public class MonitoringService : IMonitoringService
@@ -157,5 +157,41 @@ public class MonitoringService : IMonitoringService
                 g.Sum(l => l.TotalTokens)
             ))
             .ToList();
+    }
+
+    public async Task<QualityMonitoringStats> GetQualityStatsAsync(int lastMinutes = 60, int slowThresholdMs = 30000)
+    {
+        var since = DateTime.UtcNow.AddMinutes(-lastMinutes);
+        var chats = await _db.ChatHistories
+            .AsNoTracking()
+            .Where(c => c.CreatedAt >= since)
+            .ToListAsync();
+
+        if (chats.Count == 0)
+            return new QualityMonitoringStats();
+
+        var successful = chats.Count(c => c.Success);
+        var kbHits = chats.Count(c => c.IsFromKnowledgeBase);
+        var lowConfidence = chats.Count(c => (c.ConfidenceScore ?? 0) > 0 && c.ConfidenceScore <= 0.5);
+        var confidenceSamples = chats
+            .Where(c => c.ConfidenceScore.HasValue)
+            .Select(c => c.ConfidenceScore!.Value)
+            .ToList();
+
+        return new QualityMonitoringStats
+        {
+            TotalResponses = chats.Count,
+            SuccessfulResponses = successful,
+            KnowledgeBaseResponses = kbHits,
+            FallbackResponses = chats.Count - kbHits,
+            LowConfidenceResponses = lowConfidence,
+            SuccessRate = Math.Round(successful / (double)chats.Count * 100, 1),
+            KnowledgeBaseHitRate = Math.Round(kbHits / (double)chats.Count * 100, 1),
+            LowConfidenceRate = Math.Round(lowConfidence / (double)chats.Count * 100, 1),
+            AvgConfidenceScore = confidenceSamples.Count == 0 ? 0 : Math.Round(confidenceSamples.Average(), 3),
+            AvgResponseTimeMs = Math.Round(chats.Average(c => c.ResponseTimeMs), 0),
+            SlowResponses = chats.LongCount(c => c.ResponseTimeMs >= slowThresholdMs),
+            LastResponseAt = chats.Max(c => c.CreatedAt)
+        };
     }
 }

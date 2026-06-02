@@ -13,7 +13,7 @@ namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Ollama-based embedding service menggunakan qwen3-embedding:4b model
-    /// Menghasilkan 1024-dimensional vectors
+    /// Menghasilkan embedding vector dari Ollama sesuai model yang dikonfigurasi
     /// </summary>
     public class OllamaEmbeddingService : IEmbeddingService
     {

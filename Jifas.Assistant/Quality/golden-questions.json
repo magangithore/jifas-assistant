@@ -1,0 +1,92 @@
+[
+  {
+    "id": "overview-001",
+    "question": "Apa itu JIFAS?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "login-001",
+    "question": "Kenapa saya tidak bisa login ke JIFAS?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "access-001",
+    "question": "Menu tidak muncul setelah login, harus cek apa?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "approval-001",
+    "question": "Apa saja status dalam workflow approval?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "journal-001",
+    "question": "Bagaimana cara membuat jurnal memorial?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "journal-002",
+    "question": "Apa penyebab total debit dan credit tidak balance?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "posting-001",
+    "question": "Apa itu bulk posting dan kapan digunakan?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "reverse-001",
+    "question": "Bagaimana cara melakukan reverse journal?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "report-001",
+    "question": "Bagaimana cara melihat trial balance?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "report-002",
+    "question": "Kenapa laporan balance sheet tidak muncul?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "cashflow-001",
+    "question": "Apa fungsi daily cashflow di JIFAS?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "tax-001",
+    "question": "Apa yang harus dicek kalau faktur pajak tidak valid?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "budget-001",
+    "question": "Kenapa transaksi bisa terkena over budget?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "vendor-001",
+    "question": "Apa yang perlu dicek jika data vendor tidak ditemukan?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  },
+  {
+    "id": "audit-001",
+    "question": "Bagaimana audit trail membantu pengecekan transaksi?",
+    "expectedCategory": "Accounting",
+    "expectedTitleContains": "JIFAS_ACCOUNTING"
+  }
+]

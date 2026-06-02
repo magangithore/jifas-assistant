@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 using jifas_assistant.DAL.Models;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
@@ -55,7 +57,7 @@ namespace Jifas.Assistant.KBLoader
                 services.AddDbContext<JIFAS_AssistantContext>(options =>
                 {
                     var connectionString = configuration["ConnectionStrings:DefaultConnection"];
-                    options.UseSqlServer(connectionString);
+                    options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.UseVector());
                 });
                 services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
 
@@ -136,8 +138,8 @@ namespace Jifas.Assistant.KBLoader
                             Embedding = null,
                             EmbeddingDimensions = 0,
                             IsActive = true,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
                             ViewCount = 0,
                             RelevanceScore = 0,
                             CreatedBy = "KBLoader"
@@ -164,46 +166,14 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation($"? {docsToInsert.Count} documents inserted in seconds!");
                 Console.ResetColor();
 
-                // PHASE 2: Generate embeddings for documents
+                // PHASE 2: Document-level embeddings are intentionally skipped.
+                // Retrieval uses chunk-level embeddings in pgvector; embedding full documents is slow and unnecessary.
                 logger.LogInformation("");
                 logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation("PHASE 2: EMBEDDING GENERATION (DOCUMENTS)");
+                logger.LogInformation("PHASE 2: SKIP DOCUMENT EMBEDDINGS");
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
-                
-                int embeddingCount = 0;
-                int embeddingErrors = 0;
-                foreach (var doc in docsToInsert)
-                {
-                    try
-                    {
-                        var embedding = await embeddingService.GenerateEmbeddingAsFloatArrayAsync(doc.Content);
-                        if (embedding != null && embedding.Length > 0)
-                        {
-                            doc.Embedding = EmbeddingSerializer.Serialize(embedding);
-                            doc.EmbeddingDimensions = embedding.Length;
-                            embeddingCount++;
-                            
-                            if (embeddingCount % 10 == 0 || embeddingCount == docsToInsert.Count)
-                            {
-                                logger.LogInformation($"  [{embeddingCount}/{docsToInsert.Count}] {doc.Title}");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        logger.LogWarning($"  ??  Embedding failed for {doc.Title}: {ex.Message}");
-                        Console.ResetColor();
-                        embeddingErrors++;
-                    }
-                }
-                
-                await context.SaveChangesAsync();
-                logger.LogInformation("");
-                Console.ForegroundColor = ConsoleColor.Green;
-                logger.LogInformation($"? Generated {embeddingCount} embeddings (Errors: {embeddingErrors})");
-                Console.ResetColor();
+                logger.LogInformation("Document embeddings skipped. Chunk embeddings will be generated in Phase 3.");
 
                 // PHASE 3: Chunk documents
                 logger.LogInformation("");
@@ -249,26 +219,39 @@ namespace Jifas.Assistant.KBLoader
                                 Content = chunk,
                                 StartCharPos = GetCharPosition(document.Content, chunk, i),
                                 EndCharPos = GetCharPosition(document.Content, chunk, i) + chunk.Length,
-                                CreatedAt = DateTime.Now,
-                                UpdatedAt = DateTime.Now,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
                                 Embedding = null,
                                 EmbeddingDimensions = 0
                             };
 
-                            // Generate embedding for chunk
-                            try
+                            // Generate embedding for chunk with retries; one transient timeout should not leave a KB gap.
+                            const int maxEmbeddingAttempts = 3;
+                            for (var attempt = 1; attempt <= maxEmbeddingAttempts; attempt++)
                             {
-                                var chunkEmbedding = await embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk);
-                                if (chunkEmbedding != null && chunkEmbedding.Length > 0)
+                                try
                                 {
-                                    chunkObj.Embedding = EmbeddingSerializer.Serialize(chunkEmbedding);
-                                    chunkObj.EmbeddingDimensions = chunkEmbedding.Length;
-                                    chunksWithEmbedding++;
+                                    var chunkEmbedding = await embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk);
+                                    if (chunkEmbedding != null && chunkEmbedding.Length > 0)
+                                    {
+                                        chunkObj.Embedding = EmbeddingSerializer.Serialize(chunkEmbedding);
+                                        chunkObj.EmbeddingVector = new Vector(chunkEmbedding);
+                                        chunkObj.EmbeddingDimensions = chunkEmbedding.Length;
+                                        chunksWithEmbedding++;
+                                        break;
+                                    }
+
+                                    logger.LogWarning($"  ??  Chunk embedding returned empty result (attempt {attempt}/{maxEmbeddingAttempts})");
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.LogWarning($"  ??  Chunk embedding failed: {ex.Message}");
+                                catch (Exception ex)
+                                {
+                                    logger.LogWarning($"  ??  Chunk embedding failed (attempt {attempt}/{maxEmbeddingAttempts}): {ex.Message}");
+                                }
+
+                                if (attempt < maxEmbeddingAttempts)
+                                {
+                                    await Task.Delay(TimeSpan.FromSeconds(attempt * 2));
+                                }
                             }
 
                             chunksToInsert.Add(chunkObj);
@@ -305,7 +288,6 @@ namespace Jifas.Assistant.KBLoader
 
                 // Final Verify
                 var finalDocCount = await context.KnowledgeBaseDocuments.CountAsync();
-                var finalEmbeddedCount = await context.KnowledgeBaseDocuments.CountAsync(d => d.Embedding != null);
                 var finalChunkCount = await context.KnowledgeBaseChunks.CountAsync();
                 var finalChunksEmbeddedCount = await context.KnowledgeBaseChunks.CountAsync(c => c.Embedding != null);
                 
@@ -315,7 +297,7 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation("???????????????????????????????????????????????????");
                 logger.LogInformation("");
                 logger.LogInformation($"  Documents:         {finalDocCount}");
-                logger.LogInformation($"  Doc Embeddings:    {finalEmbeddedCount}/{finalDocCount}");
+                logger.LogInformation("  Doc Embeddings:    skipped");
                 logger.LogInformation($"  Chunks:            {finalChunkCount}");
                 logger.LogInformation($"  Chunk Embeddings:  {finalChunksEmbeddedCount}/{finalChunkCount}");
                 logger.LogInformation("");

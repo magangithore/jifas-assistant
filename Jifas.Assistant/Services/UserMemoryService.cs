@@ -45,6 +45,14 @@ namespace Jifas.Assistant.Services
         /// Bangun string konteks user untuk disuntikkan ke prompt AI.
         /// </summary>
         Task<string> BuildUserContextForPromptAsync(string userId);
+
+        /// <summary>
+        /// Extract and persist common issue patterns from a user's conversation.
+        /// Inspired by Claude Code's memory extraction — identifies recurring problems
+        /// and stores them so the AI can proactively help next time.
+        /// </summary>
+        Task ExtractAndPersistPatternsAsync(string userId, string userMessage, string aiResponse,
+            string sessionId = null);
     }
 
     /// <summary>
@@ -288,6 +296,81 @@ namespace Jifas.Assistant.Services
             sb.AppendLine("=== END PROFIL USER ===");
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Extract and persist common issue patterns from a user's conversation.
+        /// Identifies: recurring errors, common modules, escalation patterns.
+        /// Stores extracted insights back into user profile for future personalization.
+        /// </summary>
+        public async Task ExtractAndPersistPatternsAsync(string userId, string userMessage, string aiResponse,
+            string sessionId = null)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || userId == "anonymous") return;
+
+            try
+            {
+                var memory = await _db.UserMemories.FirstOrDefaultAsync(m => m.UserId == userId);
+                if (memory == null) return;
+
+                var msgLower = userMessage?.ToLowerInvariant() ?? "";
+
+                // --- Pattern 1: Detect if user had an error/issue ---
+                var errorKeywords = new[] { "error", "gagal", "tidak bisa", "masalah", "stuck", "hang", "blank", "tidak muncul", "tidak loading" };
+                bool isErrorReport = errorKeywords.Any(k => msgLower.Contains(k));
+
+                if (isErrorReport)
+                {
+                    // Track error patterns per module
+                    var module = DetectModule(userMessage);
+                    if (!string.IsNullOrEmpty(module))
+                    {
+                        var errorModules = ParseJsonList(memory.FrequentTopics);
+                        var errorKey = $"Error:{module}";
+                        if (!errorModules.Contains(errorKey))
+                        {
+                            errorModules.Add(errorKey);
+                            // Keep only last 15 patterns
+                            if (errorModules.Count > 15)
+                                errorModules = errorModules.Skip(errorModules.Count - 15).ToList();
+                            memory.FrequentTopics = JsonSerializer.Serialize(errorModules);
+                        }
+                    }
+                }
+
+                // --- Pattern 2: Detect escalation needs ---
+                var escalationKeywords = new[] { "tiket", "ticket", "it help", "helpdesk", "eskalasi" };
+                bool needsEscalation = escalationKeywords.Any(k => msgLower.Contains(k));
+
+                if (needsEscalation && string.IsNullOrEmpty(memory.DetectedRole))
+                {
+                    // User who creates tickets likely has a specific operational role
+                    memory.DetectedRole = "Operational User";
+                }
+
+                // --- Pattern 3: Detect user's preferred communication style ---
+                // Short messages = experienced, prefers concise answers
+                // Long messages = might need more explanation
+                var wordCount = userMessage?.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length ?? 0;
+                if (wordCount <= 5 && memory.TotalQuestions > 5)
+                {
+                    // Consistently short messages = experienced user who prefers brevity
+                    if (memory.ExpertiseLevel == "Beginner" && memory.TotalQuestions > 10)
+                        memory.ExpertiseLevel = "Intermediate";
+                }
+
+                memory.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+
+                // Invalidate cache
+                _cache.Remove(CACHE_PREFIX + userId);
+
+                _logger.LogDebug($"[UserMemory] Patterns extracted for {userId} — IsError: {isErrorReport}, Escalation: {needsEscalation}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[UserMemory] Error extracting patterns for {userId}: {ex.Message}", ex);
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────

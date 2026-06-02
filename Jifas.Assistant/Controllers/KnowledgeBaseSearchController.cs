@@ -15,10 +15,14 @@ namespace Jifas.Assistant.Controllers
     public class KnowledgeBaseSearchController : ControllerBase
     {
         private readonly IKnowledgeBaseSearchService _searchService;
+        private readonly IEmbeddingService _embeddingService;
 
-        public KnowledgeBaseSearchController(IKnowledgeBaseSearchService searchService)
+        public KnowledgeBaseSearchController(
+            IKnowledgeBaseSearchService searchService,
+            IEmbeddingService embeddingService)
         {
             _searchService = searchService;
+            _embeddingService = embeddingService;
         }
 
         /// <summary>
@@ -109,6 +113,35 @@ namespace Jifas.Assistant.Controllers
         }
 
         /// <summary>
+        /// Hybrid search by natural language query. The API generates the query embedding
+        /// server-side, so evaluators and tools do not need to send raw vectors.
+        /// </summary>
+        [HttpPost("query")]
+        [ProducesResponseType(typeof(List<KnowledgeBaseChunkDto>), 200)]
+        public async Task<IActionResult> SearchByQuery([FromBody] KnowledgeBaseQueryRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request?.Query))
+            {
+                return BadRequest(new { error = "Query cannot be empty" });
+            }
+
+            if (request.TopK <= 0 || request.TopK > 20)
+                request.TopK = 5;
+
+            var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(request.Query);
+            var results = await _searchService.SearchAsync(request.Query, embedding, request.TopK);
+
+            return Ok(new
+            {
+                query = request.Query,
+                searchType = "hybrid",
+                embeddingDimensions = embedding.Length,
+                resultsCount = results.Count,
+                results
+            });
+        }
+
+        /// <summary>
         /// Health check for KB search service
         /// </summary>
         [HttpGet("health")]
@@ -134,6 +167,12 @@ namespace Jifas.Assistant.Controllers
     {
         public string? Query { get; set; }
         public float[]? Embedding { get; set; }
+        public int TopK { get; set; } = 5;
+    }
+
+    public class KnowledgeBaseQueryRequest
+    {
+        public string? Query { get; set; }
         public int TopK { get; set; } = 5;
     }
 }
