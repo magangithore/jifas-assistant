@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Pgvector;
 using Jifas.Assistant.Services;
 using Jifas.Assistant.Utilities;
@@ -13,7 +16,8 @@ using jifas_assistant.DAL.Models;
 namespace Jifas.Assistant.Controllers
 {
     /// <summary>
-    /// Admin controller for managing JIFAS Knowledge Base
+    /// Controller admin untuk mengelola dokumen Knowledge Base JIFAS.
+    /// Endpoint write dilindungi policy KnowledgeBaseAdmin.
     /// </summary>
     [ApiController]
     [Route("api/kb")]
@@ -23,21 +27,24 @@ namespace Jifas.Assistant.Controllers
         private readonly IEmbeddingService _embeddingService;
         private readonly ILoggerService _loggerService;
         private readonly IKnowledgeBaseService _knowledgeBaseService;
+        private readonly IWebHostEnvironment _environment;
 
         public KnowledgeBaseController(
             JIFAS_AssistantContext db,
             IEmbeddingService embeddingService,
             ILoggerService loggerService,
-            IKnowledgeBaseService knowledgeBaseService)
+            IKnowledgeBaseService knowledgeBaseService,
+            IWebHostEnvironment environment)
         {
             _db = db;
             _embeddingService = embeddingService;
             _loggerService = loggerService;
             _knowledgeBaseService = knowledgeBaseService;
+            _environment = environment;
         }
 
         /// <summary>
-        /// Get all knowledge base documents
+        /// Ambil seluruh dokumen Knowledge Base yang masih aktif.
         /// </summary>
         [HttpGet("documents")]
         public async Task<IActionResult> GetDocuments()
@@ -62,12 +69,12 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error: {ex.Message}" });
+                return InternalError(ex, "Gagal mengambil daftar Knowledge Base.");
             }
         }
 
         /// <summary>
-        /// Get a specific document by ID
+        /// Ambil detail satu dokumen beserta daftar chunk-nya.
         /// </summary>
         [HttpGet("documents/{id:int}")]
         public async Task<IActionResult> GetDocument(int id)
@@ -102,12 +109,12 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error: {ex.Message}" });
+                return InternalError(ex, "Gagal mengambil detail Knowledge Base.");
             }
         }
 
         /// <summary>
-        /// Add a new knowledge base document
+        /// Tambah dokumen Knowledge Base baru, lalu pecah menjadi chunk dan generate embedding.
         /// </summary>
         [Authorize(Policy = "KnowledgeBaseAdmin")]
         [HttpPost("documents")]
@@ -151,7 +158,7 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error: {ex.Message}" });
+                return InternalError(ex, "Gagal menambah dokumen Knowledge Base.");
             }
         }
 
@@ -199,7 +206,7 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error: {ex.Message}" });
+                return InternalError(ex, "Gagal memperbarui dokumen Knowledge Base.");
             }
         }
 
@@ -229,7 +236,7 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error: {ex.Message}" });
+                return InternalError(ex, "Gagal menghapus dokumen Knowledge Base.");
             }
         }
 
@@ -237,7 +244,7 @@ namespace Jifas.Assistant.Controllers
         /// Search knowledge base
         /// </summary>
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int topK = 5)
+        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int topK = 5, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -246,7 +253,7 @@ namespace Jifas.Assistant.Controllers
 
             try
             {
-                var results = await _knowledgeBaseService.SearchAsync(query, topK);
+                var results = await _knowledgeBaseService.SearchAsync(query, topK, cancellationToken);
 
                 return Ok(results.Select(r => new
                 {
@@ -259,7 +266,7 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error: {ex.Message}" });
+                return InternalError(ex, "Gagal mencari Knowledge Base.");
             }
         }
 
@@ -313,7 +320,7 @@ namespace Jifas.Assistant.Controllers
 
             System.Diagnostics.Debug.WriteLine($"[KB Upload] Created {chunks.Count} chunks, now generating embeddings...");
 
-            // Generate embeddings for each chunk
+            // Generate embedding untuk setiap chunk agar dokumen langsung bisa dipakai semantic search.
             try
             {
                 int successCount = 0;
@@ -322,7 +329,7 @@ namespace Jifas.Assistant.Controllers
                 {
                     try
                     {
-                        var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk.Content);
+                        var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk.Content, HttpContext.RequestAborted);
                         
                         if (embedding != null && embedding.Length > 0)
                         {
@@ -330,15 +337,15 @@ namespace Jifas.Assistant.Controllers
                             chunk.EmbeddingVector = new Vector(embedding);
                             chunk.EmbeddingDimensions = embedding.Length;
                             successCount++;
-                            System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: {embedding.Length}-dim embedding");
+                            System.Diagnostics.Debug.WriteLine($"[KB Upload] OK Chunk {chunk.ChunkIndex}: {embedding.Length}-dim embedding");
                         }
                         else
                         {
-                            System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Chunk {chunk.ChunkIndex}: Failed to generate embedding");
+                            System.Diagnostics.Debug.WriteLine($"[KB Upload] FAILED Chunk {chunk.ChunkIndex}: embedding kosong");
                         }
 
-                        // Small delay to avoid rate limits
-                        await Task.Delay(100);
+                        // Delay kecil untuk menghindari overload ke service embedding.
+                        await Task.Delay(100, HttpContext.RequestAborted);
                     }
                     catch (Exception ex)
                     {
@@ -346,13 +353,13 @@ namespace Jifas.Assistant.Controllers
                     }
                 }
 
-                // Re-fetch chunks from database to ensure they're tracked and update embeddings
+                // Ambil ulang chunk dari database agar entity yang diupdate benar-benar tracked EF.
                 var chunkIds = chunks.Select(c => c.Id).ToList();
                 var trackedChunks = await _db.KnowledgeBaseChunks
                     .Where(c => chunkIds.Contains(c.Id))
                     .ToListAsync();
 
-                // Update embeddings for each tracked chunk
+                // Salin hasil embedding ke entity tracked sebelum SaveChanges.
                 foreach (var trackedChunk in trackedChunks)
                 {
                     var sourceChunk = chunks.FirstOrDefault(c => c.Id == trackedChunk.Id);
@@ -365,17 +372,17 @@ namespace Jifas.Assistant.Controllers
                 }
 
                 await _db.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine($"[KB Upload] ? Generated embeddings for {successCount}/{chunks.Count()} chunks");
+                System.Diagnostics.Debug.WriteLine($"[KB Upload] OK Generated embeddings for {successCount}/{chunks.Count()} chunks");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[KB Upload] Error in embedding generation: {ex.Message}");
-                // Continue even if embedding generation fails - chunks are still created
+                // Dokumen dan chunk tetap disimpan meskipun embedding gagal, agar bisa diperbaiki lewat endpoint repair.
             }
         }
 
         /// <summary>
-        /// Get Knowledge Base statistics
+        /// Ambil statistik Knowledge Base dan coverage embedding.
         /// </summary>
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
@@ -397,7 +404,7 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error getting stats: {ex.Message}" });
+                return InternalError(ex, "Gagal mengambil statistik Knowledge Base.");
             }
         }
 
@@ -406,14 +413,14 @@ namespace Jifas.Assistant.Controllers
         /// </summary>
         [Authorize(Policy = "KnowledgeBaseAdmin")]
         [HttpPost("generate-embeddings")]
-        public async Task<IActionResult> GenerateEmbeddings()
+        public async Task<IActionResult> GenerateEmbeddings(CancellationToken cancellationToken)
         {
             try
             {
                 // Get all chunks with NULL embeddings
                 var nullEmbeddingChunks = await _db.KnowledgeBaseChunks
                     .Where(c => c.Embedding == null || c.Embedding == "")
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 if (nullEmbeddingChunks.Count == 0)
                 {
@@ -434,7 +441,7 @@ namespace Jifas.Assistant.Controllers
                 {
                     try
                     {
-                        var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk.Content);
+                        var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(chunk.Content, cancellationToken);
 
                         if (embedding != null && embedding.Length > 0)
                         {
@@ -443,16 +450,16 @@ namespace Jifas.Assistant.Controllers
                             chunk.EmbeddingDimensions = embedding.Length;
                             chunk.UpdatedAt = DateTime.UtcNow;
                             successCount++;
-                            System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: {embedding.Length}-dim embedding generated");
+                            System.Diagnostics.Debug.WriteLine($"[KB Repair] OK Chunk {chunk.Id}: {embedding.Length}-dim embedding generated");
                         }
                         else
                         {
                             failedChunks.Add(chunk.Id);
-                            System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Chunk {chunk.Id}: Failed to generate embedding (null response)");
+                            System.Diagnostics.Debug.WriteLine($"[KB Repair] FAILED Chunk {chunk.Id}: embedding kosong");
                         }
 
-                        // Small delay to avoid rate limits
-                        await Task.Delay(100);
+                        // Delay kecil untuk menghindari overload ke service embedding.
+                        await Task.Delay(100, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -461,11 +468,11 @@ namespace Jifas.Assistant.Controllers
                     }
                 }
 
-                // Save all changes
+                // Simpan perubahan hanya jika ada embedding yang berhasil dibuat.
                 if (successCount > 0)
                 {
-                    await _db.SaveChangesAsync();
-                    System.Diagnostics.Debug.WriteLine($"[KB Repair] ? Successfully generated {successCount}/{nullEmbeddingChunks.Count} embeddings");
+                    await _db.SaveChangesAsync(cancellationToken);
+                    System.Diagnostics.Debug.WriteLine($"[KB Repair] OK Generated {successCount}/{nullEmbeddingChunks.Count} embeddings");
                 }
 
                 return Ok(new
@@ -480,8 +487,22 @@ namespace Jifas.Assistant.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Error generating embeddings: {ex.Message}", details = ex.InnerException?.Message });
+                return InternalError(ex, "Gagal membuat embedding Knowledge Base.");
             }
+        }
+
+        private IActionResult InternalError(Exception ex, string publicMessage)
+        {
+            _loggerService.LogError($"[KnowledgeBaseController] {publicMessage} TraceId: {HttpContext.TraceIdentifier}", ex);
+
+            return StatusCode(500, new
+            {
+                error = publicMessage,
+                detail = _environment.IsDevelopment()
+                    ? ex.Message
+                    : "Silakan cek log aplikasi untuk detail teknis.",
+                traceId = HttpContext.TraceIdentifier
+            });
         }
     }
 

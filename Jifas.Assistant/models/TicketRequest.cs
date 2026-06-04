@@ -1,50 +1,50 @@
 namespace Jifas.Assistant.Models
 {
     /// <summary>
-    /// Request model for creating a JIFAS support ticket
+    /// Request untuk membuat tiket support JIFAS dari percakapan chatbot.
     /// </summary>
     public class TicketRequest
     {
         /// <summary>
-        /// User identifier
+        /// Identitas user pemohon.
         /// </summary>
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Session ID from chat conversation
+        /// Session id percakapan chatbot.
         /// </summary>
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ticket subject (brief description of issue)
+        /// Ringkasan singkat masalah.
         /// </summary>
-        public string Subject { get; set; }
+        public string Subject { get; set; } = string.Empty;
 
         /// <summary>
-        /// Detailed description of the issue
+        /// Detail masalah yang akan dikirim ke ticketing system.
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
-        /// Category of the issue (access, error, feature_request, training, etc.)
+        /// Kategori masalah, misalnya access, error, feature request, atau training.
         /// </summary>
-        public string Category { get; set; }
+        public string Category { get; set; } = string.Empty;
 
         /// <summary>
-        /// Priority level (Low, Medium, High)
+        /// Prioritas tiket.
         /// </summary>
-        public string Priority { get; set; }
+        public string Priority { get; set; } = "Medium";
     }
 
     /// <summary>
-    /// Response model for ticket operations
+    /// Response operasi tiket.
     /// </summary>
     public class TicketResponse
     {
         public bool Success { get; set; }
-        public string TicketNumber { get; set; }
-        public string Message { get; set; }
-        public string Status { get; set; }
-        public string CreatedAt { get; set; }
+        public string TicketNumber { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string CreatedAt { get; set; } = string.Empty;
     }
 }

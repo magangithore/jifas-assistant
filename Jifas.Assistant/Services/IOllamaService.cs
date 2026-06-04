@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Interface for AI service - uses Local Ollama for response generation based on JIFAS Knowledge Base content
+    /// Kontrak service AI untuk membuat jawaban berdasarkan hasil Knowledge Base JIFAS.
     /// </summary>
     public interface IOllamaService
     {
         /// <summary>
-        /// Generate response based on knowledge base context.
+        /// Buat jawaban berdasarkan query user dan konteks KB.
         /// </summary>
         /// <param name="userQuery">The user's question.</param>
         /// <param name="kbResults">Knowledge base search results.</param>
@@ -18,34 +19,25 @@ namespace Jifas.Assistant.Services
         /// Optional active page context from the frontend.
         /// Format: "PAGE:{url}|MODULE:{module}|TITLE:{title}|DOC:{docId}|DOCTYPE:{type}|STATUS:{status}"
         /// </param>
-        Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null);
+        Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Generate follow-up suggestions based on context
-        /// </summary>
-        Task<List<string>> GenerateSuggestionsAsync(string userQuery, string response);
-
-        /// <summary>
-        /// Check if the query is within JIFAS scope
+        /// Cek apakah pertanyaan masih berada dalam scope JIFAS.
         /// </summary>
         Task<bool> IsInScopeAsync(string userQuery);
 
         /// <summary>
-        /// Call Ollama AI service directly with custom prompt
-        /// Uses Local Ollama (qwen3:8b model) for generating natural responses
+        /// Panggil model AI langsung dengan prompt custom.
         /// </summary>
-        Task<string> CallOllamaApiAsync(string prompt);
+        Task<string> CallOllamaApiAsync(string prompt, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Set per-call context (userId, sessionId, module, callType) so monitoring
-        /// can attach identity information to each recorded metric.
-        /// Must be called before GenerateResponseAsync / GenerateSuggestionsAsync.
+        /// Set konteks per panggilan agar monitoring bisa menyimpan identitas request.
         /// </summary>
         void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat");
 
         /// <summary>
-        /// Set recent conversation turns so Ollama can maintain true multi-turn context.
-        /// Each tuple is (userMessage, assistantResponse) ordered oldest-first.
+        /// Set riwayat percakapan terbaru agar model memahami follow-up user.
         /// </summary>
         void SetConversationHistory(List<(string user, string assistant)>? turns);
     }
@@ -53,15 +45,15 @@ namespace Jifas.Assistant.Services
     public class KnowledgeBaseResult
     {
         public int DocumentId { get; set; }
-        public string Title { get; set; }
-        public string Content { get; set; }
-        public string Category { get; set; }
-        public string Department { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string Category { get; set; } = "General";
+        public string Department { get; set; } = string.Empty;
         public double Score { get; set; }
         
-        // NEW: Properties for Option 3 Re-ranking Service
-        public DateTime? UpdatedDate { get; set; }          // For freshness scoring
-        public int? ViewCount { get; set; }                 // For popularity scoring (optional)
-        public bool IsOfficial { get; set; } = true;        // For confidence scoring (default true)
+        // Metadata untuk re-ranking dan confidence scoring.
+        public DateTime? UpdatedDate { get; set; }
+        public int? ViewCount { get; set; }
+        public bool IsOfficial { get; set; } = true;
     }
 }

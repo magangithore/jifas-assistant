@@ -14,10 +14,10 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class UserProfile
     {
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public string ExpertiseLevel { get; set; } = "Beginner";
-        public string DetectedDepartment { get; set; }
-        public string DetectedRole { get; set; }
+        public string DetectedDepartment { get; set; } = string.Empty;
+        public string DetectedRole { get; set; } = string.Empty;
         public List<string> FavoriteModules { get; set; } = new();
         public List<string> FrequentTopics { get; set; } = new();
         public List<string> RecentQuestions { get; set; } = new();
@@ -30,7 +30,7 @@ namespace Jifas.Assistant.Services
     public interface IUserMemoryService
     {
         /// <summary>
-        /// Ambil profil user (dari cache → DB). Return profil kosong jika belum ada.
+        /// Ambil profil user dari cache lalu database. Return profil kosong jika belum ada.
         /// </summary>
         Task<UserProfile> GetUserProfileAsync(string userId);
 
@@ -38,8 +38,8 @@ namespace Jifas.Assistant.Services
         /// Update memori user berdasarkan interaksi terbaru (fire-and-forget friendly).
         /// </summary>
         Task UpdateMemoryAsync(string userId, string userMessage, string aiResponse,
-            IntentType intent, double confidenceScore, string currentModule = null,
-            string userRole = null, string sessionId = null);
+            IntentType intent, double confidenceScore, string? currentModule = null,
+            string? userRole = null, string? sessionId = null);
 
         /// <summary>
         /// Bangun string konteks user untuk disuntikkan ke prompt AI.
@@ -47,22 +47,21 @@ namespace Jifas.Assistant.Services
         Task<string> BuildUserContextForPromptAsync(string userId);
 
         /// <summary>
-        /// Extract and persist common issue patterns from a user's conversation.
-        /// Inspired by Claude Code's memory extraction — identifies recurring problems
-        /// and stores them so the AI can proactively help next time.
+        /// Ambil pola masalah berulang dari percakapan user dan simpan sebagai memori.
+        /// Data ini membantu AI memberi jawaban yang lebih personal di percakapan berikutnya.
         /// </summary>
         Task ExtractAndPersistPatternsAsync(string userId, string userMessage, string aiResponse,
-            string sessionId = null);
+            string? sessionId = null);
     }
 
     /// <summary>
     /// Service untuk menyimpan dan menganalisis memori percakapan per user.
-    /// Menggunakan SQL Server (tabel UserMemory) + MemoryCache untuk performa.
+    /// Menggunakan tabel UserMemory dan cache untuk performa.
     /// AI menjadi makin personal karena mengenal karakteristik setiap user.
     /// </summary>
     public class UserMemoryService : IUserMemoryService
     {
-        private readonly JIFAS_AssistantContext _db;
+        private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
         private readonly ICacheService _cache;
         private readonly ILoggerService _logger;
 
@@ -98,11 +97,11 @@ namespace Jifas.Assistant.Services
             };
 
         public UserMemoryService(
-            JIFAS_AssistantContext db,
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory,
             ICacheService cache,
             ILoggerService logger)
         {
-            _db = db;
+            _dbFactory = dbFactory;
             _cache = cache;
             _logger = logger;
         }
@@ -128,7 +127,8 @@ namespace Jifas.Assistant.Services
             // 2. Ambil dari DB
             try
             {
-                var memory = await _db.UserMemories
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var memory = await db.UserMemories
                     .AsNoTracking()
                     .FirstOrDefaultAsync(m => m.UserId == userId);
 
@@ -155,9 +155,9 @@ namespace Jifas.Assistant.Services
             string aiResponse,
             IntentType intent,
             double confidenceScore,
-            string currentModule = null,
-            string userRole = null,
-            string sessionId = null)
+            string? currentModule = null,
+            string? userRole = null,
+            string? sessionId = null)
         {
             if (string.IsNullOrWhiteSpace(userId) || userId == "anonymous") return;
 
@@ -167,7 +167,8 @@ namespace Jifas.Assistant.Services
                     $"[UserMemory] Update started for {userId} — Intent: {intent}, Module: {currentModule ?? "(detected)"}, Role: {userRole ?? "(none)"}");
 
                 // Upsert ke database
-                var memory = await _db.UserMemories
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var memory = await db.UserMemories
                     .FirstOrDefaultAsync(m => m.UserId == userId);
 
                 var isNew = memory == null;
@@ -180,6 +181,9 @@ namespace Jifas.Assistant.Services
                     };
                     _logger.LogInformation($"[UserMemory] NEW profile created for {userId}");
                 }
+
+                // Setelah blok create di atas, memory pasti berisi entity yang valid.
+                memory ??= new UserMemory { UserId = userId };
 
                 // Update statistik
                 memory.TotalQuestions++;
@@ -213,16 +217,16 @@ namespace Jifas.Assistant.Services
                 // Deteksi dan update modul favorit
                 var detectedModule = currentModule ?? DetectModule(userMessage);
                 if (!string.IsNullOrEmpty(detectedModule))
-                    memory.FavoriteModules = UpdateTopList(memory.FavoriteModules, detectedModule, MAX_FAVORITE_MODULES);
+                    memory.FavoriteModules = UpdateTopList(memory.FavoriteModules ?? "[]", detectedModule, MAX_FAVORITE_MODULES);
 
                 // Update topik dari response
                 var detectedTopic = DetectTopic(userMessage);
                 if (!string.IsNullOrEmpty(detectedTopic))
-                    memory.FrequentTopics = UpdateTopList(memory.FrequentTopics, detectedTopic, 10);
+                    memory.FrequentTopics = UpdateTopList(memory.FrequentTopics ?? "[]", detectedTopic, 10);
 
                 // Update recent questions (sliding window)
                 memory.RecentQuestions = AddToRecentList(
-                    memory.RecentQuestions,
+                    memory.RecentQuestions ?? "[]",
                     TruncateForStorage(userMessage, 150),
                     MAX_RECENT_QUESTIONS);
 
@@ -238,9 +242,9 @@ namespace Jifas.Assistant.Services
                 memory.ExpertiseLevel = CalculateExpertiseLevel(memory);
 
                 if (isNew)
-                    _db.UserMemories.Add(memory);
+                    db.UserMemories.Add(memory);
 
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
 
                 // Invalidate cache agar profil fresh
                 _cache.Remove(CACHE_PREFIX + userId);
@@ -299,18 +303,18 @@ namespace Jifas.Assistant.Services
         }
 
         /// <summary>
-        /// Extract and persist common issue patterns from a user's conversation.
-        /// Identifies: recurring errors, common modules, escalation patterns.
-        /// Stores extracted insights back into user profile for future personalization.
+        /// Ekstrak pola masalah dari percakapan user.
+        /// Pola yang disimpan meliputi error berulang, modul yang sering dipakai, dan sinyal eskalasi.
         /// </summary>
         public async Task ExtractAndPersistPatternsAsync(string userId, string userMessage, string aiResponse,
-            string sessionId = null)
+            string? sessionId = null)
         {
             if (string.IsNullOrWhiteSpace(userId) || userId == "anonymous") return;
 
             try
             {
-                var memory = await _db.UserMemories.FirstOrDefaultAsync(m => m.UserId == userId);
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var memory = await db.UserMemories.FirstOrDefaultAsync(m => m.UserId == userId);
                 if (memory == null) return;
 
                 var msgLower = userMessage?.ToLowerInvariant() ?? "";
@@ -322,10 +326,10 @@ namespace Jifas.Assistant.Services
                 if (isErrorReport)
                 {
                     // Track error patterns per module
-                    var module = DetectModule(userMessage);
+                    var module = DetectModule(userMessage ?? string.Empty);
                     if (!string.IsNullOrEmpty(module))
                     {
-                        var errorModules = ParseJsonList(memory.FrequentTopics);
+                        var errorModules = ParseJsonList(memory.FrequentTopics ?? "[]");
                         var errorKey = $"Error:{module}";
                         if (!errorModules.Contains(errorKey))
                         {
@@ -360,7 +364,7 @@ namespace Jifas.Assistant.Services
                 }
 
                 memory.UpdatedAt = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
 
                 // Invalidate cache
                 _cache.Remove(CACHE_PREFIX + userId);
@@ -379,13 +383,13 @@ namespace Jifas.Assistant.Services
 
         private static UserProfile MapToProfile(UserMemory m) => new()
         {
-            UserId          = m.UserId,
+            UserId          = m.UserId ?? string.Empty,
             ExpertiseLevel  = m.ExpertiseLevel ?? "Beginner",
-            DetectedDepartment = m.DetectedDepartment,
-            DetectedRole    = m.DetectedRole,
-            FavoriteModules = ParseJsonList(m.FavoriteModules),
-            FrequentTopics  = ParseJsonList(m.FrequentTopics),
-            RecentQuestions = ParseJsonList(m.RecentQuestions),
+            DetectedDepartment = m.DetectedDepartment ?? string.Empty,
+            DetectedRole    = m.DetectedRole ?? string.Empty,
+            FavoriteModules = ParseJsonList(m.FavoriteModules ?? "[]"),
+            FrequentTopics  = ParseJsonList(m.FrequentTopics ?? "[]"),
+            RecentQuestions = ParseJsonList(m.RecentQuestions ?? "[]"),
             TotalSessions   = m.TotalSessions,
             TotalQuestions  = m.TotalQuestions,
             IsNewUser       = false,
@@ -450,7 +454,7 @@ namespace Jifas.Assistant.Services
             _              => "Beginner (pengguna baru atau jarang pakai JIFAS)"
         };
 
-        private static string DetectModule(string message)
+        private static string? DetectModule(string message)
         {
             var lower = message.ToLowerInvariant();
             foreach (var (module, keywords) in ModuleKeywords)
@@ -459,13 +463,13 @@ namespace Jifas.Assistant.Services
             return null;
         }
 
-        private static string DetectTopic(string message)
+        private static string? DetectTopic(string message)
         {
             // Topic = first matched module keyword group
             return DetectModule(message);
         }
 
-        private static string DetectDepartment(string message)
+        private static string? DetectDepartment(string message)
         {
             var lower = message.ToLowerInvariant();
             foreach (var (dept, keywords) in DepartmentKeywords)

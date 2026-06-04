@@ -6,194 +6,205 @@ using Jifas.Assistant.Services;
 namespace Jifas.Assistant.Models
 {
     /// <summary>
-    /// Response model for JIFAS AI Assistant
-    /// Includes error handling, audit trail, and performance metrics
+    /// Model response utama dari chatbot JIFAS.
+    /// Berisi pesan, error, source KB, tiket, suggestion kompatibilitas, dan performance metrics.
     /// </summary>
     public class ChatResponse
     {
         /// <summary>
-        /// Name of the AI assistant
+        /// Nama pengirim response.
         /// </summary>
         public string Sender { get; set; } = "JIFAS AI Assistant";
 
         /// <summary>
-        /// The AI response message
+        /// Isi jawaban chatbot.
         /// </summary>
         [JsonProperty("message")]
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         /// <summary>
-        /// Error messages if response generation failed
-        /// Null/empty if successful
+        /// Daftar error jika request gagal diproses.
         /// </summary>
         public List<string> Errors { get; set; } = new List<string>();
 
         /// <summary>
-        /// Correlation ID from the request for audit trail
-        /// Used to track requests through the system
+        /// Correlation id untuk tracing request di log.
         /// </summary>
-        public string CorrelationId { get; set; }
+        public string CorrelationId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Source of the response (Knowledge Base, AI Generated, Out of Scope, etc.)
+        /// Sumber jawaban, misalnya Knowledge Base, Ticket Flow, atau Input Validation.
         /// </summary>
-        public string Source { get; set; }
+        public string Source { get; set; } = string.Empty;
 
         /// <summary>
-        /// Timestamp of the response
+        /// Waktu response dibuat.
         /// </summary>
-        public string Timestamp { get; set; }
+        public string Timestamp { get; set; } = string.Empty;
 
         /// <summary>
-        /// Indicates if the request was processed successfully
+        /// Menandakan request berhasil diproses.
         /// </summary>
         public bool Success { get; set; }
 
         /// <summary>
-        /// Session ID for conversation tracking
+        /// Session id untuk menghubungkan percakapan.
         /// </summary>
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Indicates if the response was derived from Knowledge Base
+        /// True jika jawaban berasal dari Knowledge Base.
         /// </summary>
         public bool IsFromKnowledgeBase { get; set; }
 
         /// <summary>
-        /// Confidence score of the response (0-1)
+        /// Confidence score jawaban dalam rentang 0 sampai 1.
         /// </summary>
         public double ConfidenceScore { get; set; }
 
         /// <summary>
-        /// Follow-up question suggestions for user
+        /// Suggestion pertanyaan lanjutan untuk kompatibilitas frontend lama.
+        /// Pipeline chat normal mengisi ini kosong agar tidak ada AI call kedua.
         /// </summary>
         public List<string> Suggestions { get; set; } = new List<string>();
 
         /// <summary>
-        /// Ticket information if a ticket was created from this response
+        /// Informasi tiket jika percakapan membuat tiket.
         /// </summary>
-        public TicketInfo Ticket { get; set; }
+        public TicketInfo? Ticket { get; set; }
 
         /// <summary>
-        /// Knowledge Base results used to generate this response
+        /// Hasil Knowledge Base yang dipakai untuk membuat jawaban.
         /// </summary>
         public List<KnowledgeBaseResult> KnowledgeBaseResults { get; set; } = new List<KnowledgeBaseResult>();
 
         /// <summary>
-        /// Performance metrics for this response (in milliseconds)
+        /// Metrics performa response dalam milidetik.
         /// </summary>
         [JsonProperty("performanceMetrics")]
         public PerformanceMetrics PerformanceMetrics { get; set; } = new PerformanceMetrics();
     }
 
     /// <summary>
-    /// Performance metrics tracking for response time analysis
-    /// All times in milliseconds (ms)
+    /// Metrics performa untuk analisis latency chatbot.
+    /// Semua nilai durasi memakai milidetik.
     /// </summary>
     public class PerformanceMetrics
     {
         /// <summary>
-        /// Time taken for input validation (ms)
+        /// Durasi validasi input.
         /// </summary>
         public long InputValidationMs { get; set; }
 
         /// <summary>
-        /// Time taken for cache lookup (ms)
+        /// Durasi lookup cache.
         /// </summary>
         public long CacheLookupMs { get; set; }
 
         /// <summary>
-        /// Time taken for scope detection (ms)
+        /// Durasi deteksi scope.
         /// </summary>
         public long ScopeDetectionMs { get; set; }
 
         /// <summary>
-        /// Time taken for KB search (keyword + semantic in parallel) (ms)
+        /// Durasi pencarian KB.
         /// </summary>
         public long KbSearchMs { get; set; }
 
         /// <summary>
-        /// Time taken for KB result validation (ms)
+        /// Durasi validasi hasil KB.
         /// </summary>
         public long ResultValidationMs { get; set; }
 
         /// <summary>
-        /// Time taken for confidence calculation (ms)
+        /// Durasi perhitungan confidence.
         /// </summary>
         public long ConfidenceCalculationMs { get; set; }
 
         /// <summary>
-        /// Time taken for LLM response generation (ms)
+        /// Durasi generate jawaban LLM.
         /// </summary>
         public long LlmResponseMs { get; set; }
 
         /// <summary>
-        /// Time taken for suggestions generation (ms)
+        /// Durasi pipeline suggestion lama. Normalnya 0 ms karena suggestion LLM terpisah sudah dimatikan.
         /// </summary>
         public long SuggestionsMs { get; set; }
 
         /// <summary>
-        /// Time taken for response caching (ms)
+        /// Durasi menyimpan response ke cache.
         /// </summary>
         public long CachingMs { get; set; }
 
         /// <summary>
-        /// Total end-to-end response time (ms)
+        /// Durasi total end-to-end.
         /// </summary>
         public long TotalMs { get; set; }
 
         /// <summary>
-        /// Whether the response was served from cache (fast path)
+        /// True jika response berasal dari cache.
         /// </summary>
         public bool WasCacheLit { get; set; }
 
         /// <summary>
-        /// Whether suggestions were cached
+        /// Scope cache yang dipakai: shared untuk pertanyaan umum, contextual untuk pertanyaan berbasis user/halaman.
+        /// </summary>
+        public string CacheScope { get; set; } = string.Empty;
+
+        /// <summary>
+        /// True jika suggestion lama berasal dari cache.
         /// </summary>
         public bool SuggestionsCached { get; set; }
 
         /// <summary>
-        /// Average KB search result score (0-1)
+        /// Rata-rata score hasil KB.
         /// </summary>
         public double AverageKbScore { get; set; }
 
         /// <summary>
-        /// Number of KB results before validation
+        /// Jumlah hasil KB sebelum validasi.
         /// </summary>
         public int KbResultsBeforeValidation { get; set; }
 
         /// <summary>
-        /// Number of KB results after validation
+        /// Jumlah hasil KB setelah validasi.
         /// </summary>
         public int KbResultsAfterValidation { get; set; }
 
         /// <summary>
-        /// Performance summary for logging
+        /// Ringkasan performa untuk log.
         /// </summary>
         public string GetSummary()
         {
-            return $"[PERFORMANCE] Total: {TotalMs}ms | Validation: {InputValidationMs}ms | KB Search: {KbSearchMs}ms | LLM: {LlmResponseMs}ms | Suggestions: {SuggestionsMs}ms | Cache: {(WasCacheLit ? "HIT (fast)" : "MISS")}";
+            var cacheLabel = WasCacheLit ? "HIT" : "MISS";
+            var scopeLabel = string.IsNullOrWhiteSpace(CacheScope) ? "n/a" : CacheScope;
+            return $"[PERFORMANCE] Total: {TotalMs}ms | Validation: {InputValidationMs}ms | KB Search: {KbSearchMs}ms | LLM: {LlmResponseMs}ms | Suggestions: {SuggestionsMs}ms | Cache: {cacheLabel}/{scopeLabel}";
         }
     }
 
     /// <summary>
-    /// Ticket information embedded in chat response
+    /// Informasi tiket yang ditempelkan pada response chat.
     /// </summary>
     public class TicketInfo
     {
         /// <summary>
-        /// Generated ticket number
+        /// Nomor tiket yang dibuat.
         /// </summary>
-        public string TicketNumber { get; set; }
+        public string TicketNumber { get; set; } = string.Empty;
 
         /// <summary>
-        /// Current status of the ticket
+        /// Status tiket saat ini.
         /// </summary>
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
 
         /// <summary>
-        /// Response message about the ticket
+        /// Pesan terkait tiket.
         /// </summary>
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Link tiket Jira jika tiket dibuat di Jira.
+        /// </summary>
+        public string Url { get; set; } = string.Empty;
     }
 }

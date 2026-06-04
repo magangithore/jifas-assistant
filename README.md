@@ -1,540 +1,268 @@
-﻿# 🤖 JIFAS AI Assistant - Knowledge Base RAG System
+# JIFAS AI Assistant
 
-**A sophisticated ASP.NET Web API that leverages local Ollama AI with intelligent knowledge base retrieval to provide accurate, context-aware answers for the JIFAS (Jababeka Integrated Finance Accounting System).**
+JIFAS AI Assistant adalah backend chatbot internal untuk membantu user JIFAS memahami proses finance, accounting, menu, troubleshooting, dan pembuatan tiket bantuan. Aplikasi ini memakai pola RAG: pertanyaan user dicari dulu ke Knowledge Base, lalu Ollama membuat jawaban berdasarkan konteks yang ditemukan.
 
----
+Target runtime saat ini adalah Docker internal dengan PostgreSQL pgvector, Redis cache, Ollama server internal, Jira integration, dan dashboard monitoring.
 
-## 📋 Table of Contents
+## Status Produksi
 
-1. [Project Overview](#-project-overview)
-2. [Technology Stack](#-technology-stack)
-3. [Architecture](#-architecture)
-4. [Project Structure](#-project-structure)
-5. [Key Features](#-key-features)
-6. [API Endpoints](#-api-endpoints)
-7. [Getting Started](#-getting-started)
-8. [Environment Variables](#-environment-variables)
-9. [Database Setup](#-database-setup)
-10. [Performance Optimizations](#-performance-optimizations)
-11. [Troubleshooting](#-troubleshooting)
-12. [Contributing](#-contributing)
+- Chat API utama: `POST /api/chat/message`.
+- Health check: `/health`, `/api/chat/health`, dan `/api/KnowledgeBaseSearch/health`.
+- Monitoring dashboard: `/monitoring/index.html`.
+- Database utama: PostgreSQL 16 + pgvector.
+- Cache utama: Redis, dengan fallback memory/no-cache jika Redis bermasalah.
+- Vector store: kolom pgvector di `KnowledgeBaseChunks`.
+- Ticketing: Jira, memakai secret dari environment.
+- App-level rate limit: tidak aktif sampai diminta lagi.
+- Field `suggestions`: tetap ada untuk kompatibilitas frontend lama, tetapi normalnya kosong. Arahan lanjutan harus masuk ke isi `message`.
 
----
+## Arsitektur Singkat
 
-## 🎯 Project Overview
-
-JIFAS AI Assistant is a **Retrieval-Augmented Generation (RAG)** system designed specifically for the JIFAS accounting system. It combines:
-
-- **Knowledge Base Search**: Keyword + semantic search untuk menemukan informasi relevan
-- **AI Response Generation**: Ollama (qwen3:8b) untuk menghasilkan jawaban berdasarkan KB
-- **Smart Confidence Scoring**: Memastikan hanya jawaban akurat yang ditampilkan
-- **Performance Monitoring**: Tracking latency & metrics untuk setiap request
-
-**Key Philosophy**: STRICT KB-ONLY mode - AI tidak membuat informasi, hanya mengambil dari Knowledge Base.
-
----
-
-## 🛠 Technology Stack
-
-### Backend Framework
-- **ASP.NET Core 10.0** - Modern, high-performance web framework
-- **Entity Framework Core 10.0.3** - ORM untuk database access
-- **C# 13.0** - Latest language features
-
-### APIs & Integrations
-- **Ollama (Local AI)** - LLM untuk response generation
-  - Model: `qwen3:8b` (local Ollama)
-  - Embeddings: `qwen3-embedding:4b` (2560-dimensional, local Ollama)
-  - Both FREE tier available!
-- **Ollama HTTP API** - Local LLM and embedding runtime
-
-### Database
-- **PostgreSQL 16 + pgvector** - Relational database and vector similarity search
-- **Docker Compose** - Local PostgreSQL runtime
-- **Entity Framework Core + Npgsql** - Database access and schema initialization
-
-### Caching & Performance
-- **In-Memory Cache** - Fast response caching
-- **Redis** (optional) - Distributed caching untuk session management
-- **pgvector Semantic Search** - Embeddings are stored with KB chunks and ranked by cosine similarity
-
-### Additional Libraries
-- **Newtonsoft.Json** - JSON serialization
-- **FluentValidation** - Input validation
-- **Humanizer** - String formatting
-- **Microsoft.Extensions.DependencyInjection** - IoC container
-
----
-
-## 🏗 Architecture
-
-### Request Flow Diagram
-
-```
-Client Request
-    ↓
-[InputValidator] - Sanitize & validate input
-    ↓
-[ChatService] - Main orchestration service
-    ├─ [CacheService] - Check cached responses
-    ├─ [OutOfScopeDetector] - Is query in scope?
-    ├─ [KnowledgeBaseSearchService] - Search KB
-    │   ├─ Keyword search (database-side filtering)
-    │   └─ Semantic search (embeddings similarity)
-    ├─ [ConfidenceCalculator] - Score relevance
-    ├─ [OllamaService] - Generate AI response
-    │   └─ [PromptEngineeringService] - Smart prompts
-    ├─ [SuggestionService] - Generate follow-up suggestions
-    └─ [ChatHistoryService] - Save conversation
-    ↓
-[ChatResponse] - Return with metrics & caching
+```text
+Client / JIFAS Web
+    |
+    v
+ChatController
+    |
+    v
+ChatService
+    |-- InputValidator
+    |-- TicketService
+    |-- CommonQueryCache / RedisCacheService
+    |-- OutOfScopeDetector
+    |-- KnowledgeBaseSearchService
+    |-- PromptEngineeringService
+    |-- OllamaAIService
+    |-- ChatHistoryService
+    `-- MonitoringService
 ```
 
-### Key Design Patterns
+Prinsip utama: AI hanya menjawab dalam konteks JIFAS dan Knowledge Base. Jika pertanyaan di luar konteks, sistem memberi jawaban aman dan mengarahkan user kembali ke JIFAS.
 
-| Pattern | Where | Purpose |
-|---------|-------|---------|
-| **Dependency Injection** | Program.cs | Loose coupling, testability |
-| **Repository Pattern** | KnowledgeBaseSearchService | Abstract data access |
-| **Strategy Pattern** | Search backends | Multiple search implementations |
-| **Factory Pattern** | Service creation | Create complex objects |
-| **Caching Strategy** | CacheService | Multi-level caching |
+## Struktur Folder
 
----
-
-## 📁 Project Structure
-
-```
+```text
 jifas-assistant/
-├── Jifas.Assistant/                          [MAIN WEB API PROJECT]
-│   ├── Program.cs                            Entry point, DI registration, middleware setup
-│   ├── appsettings.json                      Default configuration (no secrets!)
-│   ├── appsettings.Development.json          Dev overrides
-│   ├── appsettings.Production.json           Prod config
-│   ├── appsettings.Docker.json               Docker overrides
-│   │
-│   ├── Controllers/                          API Endpoints
-│   │   ├── ChatController.cs                 POST /api/chat/message - Main chat endpoint
-│   │   ├── KnowledgeBaseController.cs        KB CRUD operations
-│   │   └── KnowledgeBaseSearchController.cs  KB search endpoints
-│   │
-│   ├── Services/                             Business Logic (23+ services)
-│   │   ├── ChatService.cs                    🔴 CORE - Orchestrates entire chat flow
-│   │   ├── OllamaAIService.cs                🔴 CORE - Calls Local Ollama API
-│   │   ├── OllamaEmbeddingService.cs         🔴 CORE - Generates text embeddings (qwen3-embedding:4b)
-│   │   ├── KnowledgeBaseSearchService.cs     🔴 CORE - Search KB (keyword + semantic)
-│   │   ├── KnowledgeBaseService.cs           KB document management
-│   │   ├── PromptEngineeringService.cs       🟠 Smart prompt generation
-│   │   ├── OutOfScopeDetector.cs             Detect out-of-scope queries
-│   │   ├── InputValidator.cs                 Input sanitization & validation
-│   │   ├── SuggestionService.cs              Generate follow-up suggestions
-│   │   ├── ChatHistoryService.cs             Persist chat conversations
-│   │   ├── MemoryCacheService.cs             In-memory caching
-│   │   ├── MetricsService.cs                 Collect performance metrics
-│   │   └── [+12 more services]
-│   │
-│   ├── Configuration/                        Settings & Config
-│   │   ├── AppSettings.cs                    Strongly-typed config accessor
-│   │   ├── OllamaSettings.cs                 Ollama AI settings
-│   │   ├── LocalAISettings.cs                Local AI settings
-│   │   ├── CachingSettings.cs                Cache configuration
-│   │   └── [+5 more settings classes]
-│   │
-│   ├── Models/                               DTOs & Request/Response Models
-│   │   ├── ChatRequest.cs                    User message + metadata
-│   │   ├── ChatResponse.cs                   AI response + metrics + suggestions
-│   │   ├── KnowledgeBaseResult.cs            Search result structure
-│   │   ├── PerformanceMetrics.cs             Latency tracking
-│   │   └── [+12 more models]
-│   │
-│   ├── Utilities/                            Helper Classes
-│   │   ├── HashHelper.cs                     🆕 SHA256 stable hashing
-│   │   ├── InputValidator.cs                 Regex patterns for validation
-│   │   └── ValidationConstants.cs            Validation thresholds
-│   │
-│   ├── Middleware/                           HTTP Middleware
-│   │   ├── ErrorHandlingMiddleware.cs        Global exception handling
-│   │   ├── LoggingMiddleware.cs              Request/response logging
-│   │   └── CorrelationIdMiddleware.cs        Request tracing
-│   │
-│   ├── bin/ & obj/                           Build artifacts (ignored)
-│   └── Logs/                                 Application logs
-│
-├── jifas_assistant.DAL/                      [DATA ACCESS LAYER - EF Core]
-│   ├── Models/                               Database models (auto-generated)
-│   │   ├── Chat.cs                           Chat history entity
-│   │   ├── KnowledgeBaseDocument.cs          KB document entity
-│   │   ├── KnowledgeBaseChunk.cs             Document chunk with embedding
-│   │   ├── Metrics.cs                        Performance metrics entity
-│   │   └── UserFeedback.cs                   User feedback entity
-│   │
-│   ├── JIFAS_AssistantContext.cs             DbContext - Database connection
-│   ├── Migrations/                           EF migration files
-│   │   ├── 001_Initial.cs                    Initial schema
-│   │   ├── 002_AddEmbeddings.cs              Add embedding columns
-│   │   └── [...]
-│   │
-│   ├── efpt.config.json                      Entity Framework Power Tools config
-│   └── jifas_assistant.DAL.csproj
-│
-├── KBLoader/                                 [KNOWLEDGE BASE LOADER]
-│   ├── Program.cs                            KB loading entry point
-│   ├── appsettings.json                      Loader configuration
-│   └── KBLoader.csproj
-│
-├── Documentation Files (Created by Analysis)
-│   ├── README.md                             (This file) Overview & guide
-│   ├── SETUP.md                              Installation & configuration
-│   ├── SECURITY.md                           Credential management
-│   ├── ANALYSIS.md                           Technical deep-dive
-│   ├── ROADMAP.md                            Future improvements
-│   ├── CODE_IMPROVEMENTS_IMPLEMENTED.md      Optimization details
-│   └── [+5 more documentation files]
-│
-├── Configuration Files
-│   ├── .env                                  Environment variables (not in repo)
-│   ├── .env.example                          Template for .env
-│   ├── .gitignore                            Git ignore rules
-│   ├── docker-compose.yml                    Docker services definition
-│   ├── Dockerfile                            Container image definition
-│   └── jifas-assistant.slnx                  Visual Studio solution file
-│
-├── Database Scripts
-│   ├── JIFAS_Assistant_Database.sql          Initial schema
-│   ├── delete-kb-data.sql                    Clear KB data
-│   └── INSERT_KB_MANUAL.sql                  Manual KB insertion
-│
-└── PowerShell Scripts (Admin/Dev Tools)
-    ├── setup-local-env.ps1                   Setup development environment
-    ├── run-migrations.ps1                    Apply database migrations
-    ├── insert-kb-documents.ps1               Load KB documents
-    ├── test-embedding-api.ps1                Test embedding service
-    └── [+5 more utility scripts]
+|-- Jifas.Assistant/                 Web API utama
+|   |-- Controllers/                 Endpoint chat, KB, monitoring
+|   |-- Services/                    Orkestrasi chat, RAG, cache, Jira, monitoring
+|   |-- Models/                      DTO request/response API
+|   |-- Database/                    Bootstrap PostgreSQL pgvector
+|   |-- KnowledgeBase/               Source dokumen KB lokal
+|   |-- wwwroot/monitoring/          Dashboard monitoring
+|   `-- Program.cs                   DI, middleware, startup validation
+|-- jifas_assistant.DAL/             EF Core DbContext dan entity database
+|-- Jifas.Assistant.Tests/           Unit test service inti
+|-- KBLoader/                        Tool load/reindex Knowledge Base
+|-- scripts/                         Operational scripts
+|-- docs/                            Runbook dan readiness document
+|-- docker-compose.yml               Stack API + Postgres + Redis
+|-- Dockerfile                       Image API
+|-- .env.example                     Template non-secret
+|-- .env.docker                      Placeholder Docker
+`-- .env.docker.local                Secret lokal, tidak boleh commit
 ```
 
----
+## Service Penting
 
-## ✨ Key Features
+| File | Fungsi |
+|------|--------|
+| `ChatService.cs` | Orchestrator utama: validasi, ticket flow, cache, scope, KB, LLM, history, metrics. |
+| `KnowledgeBaseSearchService.cs` | Hybrid search keyword + semantic pgvector. |
+| `OllamaAIService.cs` | HTTP client ke Ollama untuk generate jawaban. |
+| `OllamaEmbeddingService.cs` | HTTP client ke Ollama untuk embedding KB/query. |
+| `RedisCacheService.cs` | Distributed cache berbasis Redis dengan fallback terkontrol. |
+| `MemoryCacheService.cs` | Cache lokal saat Redis tidak dipakai. |
+| `TicketService.cs` | Flow tiket conversational dan integrasi Jira. |
+| `MonitoringService.cs` | Simpan metrik request AI dan data dashboard. |
+| `InputValidator.cs` | Sanitasi dan validasi payload chat. |
+| `PromptEngineeringService.cs` | Instruksi sistem agar jawaban tetap sesuai KB/JIFAS. |
 
-### 1. **Intelligent Knowledge Base Search**
-- **Keyword Search**: Database-side filtering with LIKE patterns
-- **Semantic Search**: Cosine similarity dengan embedding vectors
-- **Hybrid Search**: Combine both for best results
-- **Fuzzy Matching**: Tolerance untuk typos
+## Kontrak Chat API
 
-### 2. **AI Response Generation**
-- **Context-Aware**: Pulls specific KB sections
-- **Query Classification**: HowTo, Definition, Troubleshooting, Technical
-- **Smart Prompting**: Query-type-specific instructions
-- **Confidence Scoring**: Multi-factor relevance calculation
+Endpoint:
 
-### 3. **Performance & Scalability**
-- **Response Caching**: Fast retrieval untuk repeated queries
-- **In-Memory Search Optimization**: Database-side filtering
-- **Metrics Collection**: Track latency per operation
-- **Async/Await**: Non-blocking API calls
-
-### 4. **Security & Validation**
-- **Input Sanitization**: SQL injection & XSS prevention
-- **Credential Management**: Environment variables + user secrets
-- **CORS Configuration**: Safe cross-origin requests
-- **Request Validation**: FluentValidation rules
-
-### 5. **Session & History Management**
-- **Chat History**: Persisted conversations per session
-- **Session Tracking**: Unique SessionId per conversation
-- **User Feedback**: Collect rating pada setiap response
-
----
-
-## 🔌 API Endpoints
-
-### Chat Endpoint
-```
-POST /api/chatbot
+```http
+POST /api/chat/message
 Content-Type: application/json
+```
 
-Request:
+Request minimal:
+
+```json
 {
-  "message": "Bagaimana cara login ke JIFAS?",
-  "userId": "user-123",
-  "sessionId": "session-456"  // Optional: new session if null
+  "message": "Apa itu JIFAS?",
+  "userId": "user-001",
+  "sessionId": "session-001",
+  "userRole": "FINA:KI",
+  "userCompCode": "KI",
+  "currentModule": "Home",
+  "companyId": "KI",
+  "language": "id",
+  "isFirstMessage": true,
+  "context": {
+    "activeModule": "Home",
+    "pageTitle": "Home",
+    "currentPage": "/Home"
+  }
 }
+```
 
-Response:
+Response utama:
+
+```json
 {
-  "message": "Untuk login ke JIFAS, silakan...",
-  "source": "Knowledge Base",
+  "sender": "JIFAS AI Assistant",
+  "message": "Jawaban AI...",
+  "success": true,
+  "source": "JIFAS (5 hasil)",
+  "sessionId": "session-001",
   "isFromKnowledgeBase": true,
-  "confidenceScore": 0.87,
-  "suggestions": ["Bagaimana reset password?", "Apa itu 2FA?"],
+  "confidenceScore": 0.85,
+  "suggestions": [],
+  "ticket": null,
   "performanceMetrics": {
-    "totalMs": 245,
-    "kbSearchMs": 45,
-    "llmResponseMs": 180,
-    "cachingMs": 20
-  },
-  "sessionId": "session-456"
+    "totalMs": 120,
+    "kbSearchMs": 20,
+    "llmResponseMs": 80,
+    "wasCacheLit": false,
+    "cacheScope": "shared"
+  }
 }
 ```
 
-### Knowledge Base Endpoints
-```
-GET /api/kb/documents                    List all KB documents
-POST /api/kb/documents                   Add new KB document
-GET /api/kb/search?query=login&topK=5    Keyword search
-POST /api/kb/search                      Semantic search dengan embedding
-```
+## Cache Policy
 
-### Health Check
-```
-GET /health                              Application health status
-```
+- Pertanyaan umum JIFAS memakai shared cache lintas user.
+- Pertanyaan yang bergantung pada user, company, page, dokumen, atau ticket memakai contextual cache.
+- Ticket flow tidak masuk response cache.
+- Request invalid dan response error tidak masuk response cache.
+- Jika Redis gagal, chat utama tetap berjalan dengan fallback memory/no-cache.
 
----
+## Docker Run
 
-## 🚀 Getting Started
+Siapkan secret lokal di `.env.docker.local` dari template `.env.example`, lalu jalankan:
 
-### Prerequisites
-- **.NET 10.0 SDK** - Download from https://dotnet.microsoft.com/download
-- **Docker Desktop** untuk PostgreSQL + pgvector
-- **Git** - Version control
-- **Ollama Local AI Server** - running at http://10.0.12.54:11434
-
-### Quick Start (5 minutes)
-
-```bash
-# 1. Clone repository
-git clone https://github.com/your-org/jifas-assistant.git
-cd jifas-assistant
-
-# 2. Set up local secrets (don't commit credentials!)
-cd Jifas.Assistant
-dotnet user-secrets init
-# No API key needed - Ollama runs locally
-
-# 3. Start PostgreSQL + pgvector
-docker compose up -d jifas-postgres
-
-# 4. Run application
-dotnet run
-
-# 5. Reindex knowledge base after PostgreSQL is ready
-powershell -ExecutionPolicy Bypass -File ../scripts/ReindexKnowledgeBase.ps1
-
-# 6. Test it
-curl -X POST http://localhost:5000/api/chat/message \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Halo! Apa itu JIFAS?","userId":"local-user","sessionId":"local-session","userRole":"FINA:KI","userCompanyCode":"KI","language":"id"}'
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Start-DockerStack.ps1 -SkipTests
 ```
 
-See **SETUP.md** for detailed configuration options.
+Cek container:
 
----
+```powershell
+docker compose ps
+```
 
-## 🔐 Environment Variables
+Cek endpoint:
 
-| Variable | Purpose | Example |
-|----------|---------|---------|
-| `Ollama:BaseUrl` | Ollama server URL | `http://10.0.12.54:11434` |
-| `Ollama:Model` | LLM model name | `qwen3:8b` |
-| `ConnectionStrings:DefaultConnection` | Database connection | `Host=localhost;Port=5432;Database=jifas_assistant;Username=jifas;Password=...` |
-| `ASPNETCORE_ENVIRONMENT` | Environment (Development/Production) | `Production` |
-| `Caching:EnableResponseCache` | Enable response caching | `true` |
-| `Embedding:Provider` | Embedding provider | `Ollama` |
-| `Embedding:Model` | Embedding model | `qwen3-embedding:4b` |
-| `Embedding:Dimensions` | Embedding dimensions | `2560` |
+```powershell
+Invoke-WebRequest http://localhost:8888/health
+Invoke-WebRequest http://localhost:8888/api/chat/health
+Invoke-WebRequest http://localhost:8888/api/monitoring/all?minutes=60
+```
 
-Set these via:
-1. **User Secrets** (dev): `dotnet user-secrets set "Key" "Value"`
-2. **Environment Variables** (any): `$env:Key="Value"`
-3. **.env File** (local): Create `.env` in project root
-4. **appsettings.json** (default) - For non-secret values
+## Development Run
 
----
-
-## 💾 Database Setup
-
-### Database Schema (5 Tables)
-
-| Table | Purpose | Key Fields |
-|-------|---------|-----------|
-| **Chats** | Chat history | SessionId, UserId, UserMessage, AiResponse, Timestamp |
-| **KnowledgeBaseDocuments** | KB documents | Title, Category, Content, IsActive, CreatedDate |
-| **KnowledgeBaseChunks** | Document chunks | DocumentId, Content, ChunkIndex, Embedding (vector) |
-| **Metrics** | Performance tracking | OperationName, ResponseTimeMs, ResultCount, Timestamp |
-| **UserFeedbacks** | User ratings | ChatId, Rating (1-5), Comment, Timestamp |
-
-### Create Database
-
-```bash
-# Start PostgreSQL + pgvector
-docker compose up -d jifas-postgres
-
-# Create schema on application startup
+```powershell
+dotnet build --no-restore
+dotnet test --no-restore
 dotnet run --project Jifas.Assistant
-
-# Reindex KB into PostgreSQL pgvector
-powershell -ExecutionPolicy Bypass -File scripts/ReindexKnowledgeBase.ps1
 ```
 
----
+Default development biasanya listen di `http://localhost:5000`.
 
-## ⚡ Performance Optimizations
+## Database dan Knowledge Base
 
-### What We Optimized (6 Improvements)
+PostgreSQL bootstrap resmi berada di:
 
-1. **Database-Side KB Search** (Issue #2)
-   - Before: Load all chunks to memory (500ms)
-   - After: Filter at database level (50-100ms)
-   - Result: **5-10x faster!**
-
-2. **Embedding Dimension Validation** (Issue #1)
-   - Prevent semantic search errors with consistency checks
-   - Result: 100% accurate vector operations
-
-3. **Multi-Factor Confidence Scoring** (Issue #3)
-   - Better accuracy detection
-   - Result: +15% accuracy improvement
-
-4. **Query-Type-Specific Prompts** (Issue #4)
-   - Customize response format by question type
-   - Result: +20% response quality
-
-5. **Smart Fallback Logic** (Issue #5)
-   - Better handling of low-confidence queries
-   - Result: Improved user experience
-
-6. **Input Sanitization** (Issue #6)
-   - Preserve valid content while removing dangerous chars
-   - Result: Better input handling
-
-### Caching Strategy
-
-```csharp
-// Response caching
-Cache Key: "Chat_Response_{stableHash(userMessage)}"
-TTL: 24 hours
-Hit Rate: ~30-40% for common queries
-
-// Suggestion caching
-Cache Key: "Suggestions_{stableHash(response)}"
-TTL: 24 hours
+```text
+Jifas.Assistant/Database/Initialize-PostgresPgvector.sql
 ```
 
-### Scalability Metrics
+Reindex Knowledge Base:
 
-| Metric | Capacity |
-|--------|----------|
-| KB Documents | 10,000+ |
-| KB Chunks | 100,000+ |
-| Concurrent Users | 1,000+ |
-| Response Time (p50) | <100ms |
-| Response Time (p95) | <500ms |
-| Cache Hit Rate | 30-40% |
-
----
-
-## 🐛 Troubleshooting
-
-### Issue: "Ollama service is unavailable"
-**Solution**: 
-```bash
-curl http://10.0.12.54:11434/api/tags
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\ReindexKnowledgeBase.ps1
 ```
 
-### Issue: Database connection failed
-**Solution**: Verify connection string:
-```bash
-# Local Docker PostgreSQL
-"Host=localhost;Port=5432;Database=jifas_assistant;Username=jifas;Password=jifas_dev_password"
+Dokumen KB source berada di:
+
+```text
+Jifas.Assistant/KnowledgeBase/
 ```
 
-### Issue: Semantic search not working
-**Solution**: Ensure embeddings are populated:
-```bash
-# Start database, then reindex KB
-docker compose up -d jifas-postgres
-powershell -ExecutionPolicy Bypass -File scripts/ReindexKnowledgeBase.ps1
+## Validation Checklist
+
+Local gate:
+
+```powershell
+dotnet build --no-restore
+dotnet test --no-restore
+powershell -ExecutionPolicy Bypass -File scripts\Test-ProductionReadiness.ps1
+docker compose --env-file .env.docker --env-file .env.docker.local config --quiet
 ```
 
-### Issue: Slow response time
-**Solution**: Check these:
-1. Is caching enabled? `Caching:EnableResponseCache=true`
-2. Are embeddings indexed in database?
-3. Is KB too large? Consider filtering by category.
+Functional smoke:
 
----
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Run-FullFeatureSmokeTest.ps1
+```
 
-## 📚 What You Can Do
+Stress baseline:
 
-### Use the Chat API
-- Ask questions about JIFAS system
-- Get step-by-step guides
-- Troubleshoot issues
-- Learn system features
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Run-ChatStressTest.ps1 -VirtualUsers 50
+```
 
-### Manage Knowledge Base
-- Add/update KB documents
-- Delete outdated content
-- Categorize documents
-- Track performance metrics
+Acceptance saat rate limit disabled:
 
-### Monitor Performance
-- View response times per query
-- Track cache hit rates
-- Analyze KB search results
-- Monitor AI confidence scores
+- HTTP 429 = 0.
+- HTTP 5xx = 0.
+- API/Postgres/Redis healthy.
+- Restart count container = 0.
+- Monitoring error tidak berisi timeout suggestion.
+- Cache hit tercatat untuk pertanyaan umum berulang.
 
-### Collect Feedback
-- Get user ratings on responses
-- Identify improvement areas
-- Track user satisfaction
-- Improve KB quality
+## Jira Safety
 
----
+Automated smoke normal tidak boleh membuat tiket Jira real. Tiket real hanya dibuat jika script dijalankan dengan flag eksplisit:
 
-## 🤝 Contributing
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Run-FullFeatureSmokeTest.ps1 -CreateRealJiraTicket
+```
 
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Make changes and test locally
-3. Commit: `git commit -m "feat: description"`
-4. Push: `git push origin feature/your-feature`
-5. Create Pull Request
+Tiket validasi wajib memakai prefix `[TEST]` dan tidak ditutup otomatis.
 
-See **ROADMAP.md** for planned improvements.
+## Dokumentasi Tambahan
 
----
+- `docs/PRODUCTION_READINESS_REPORT_20260603.md`
+- `docs/JIFAS_AI_ARCHITECTURE.md`
+- `docs/POSTGRES_PGVECTOR_RUNBOOK.md`
+- `docs/DOCKER_REDIS_CACHE.md`
+- `docs/AI_QUALITY_RUNBOOK.md`
 
-## 📄 License
+## Troubleshooting
 
-Internal Project - Jababeka IT Department
+Jika chat lambat:
 
----
+- Cek apakah Redis hidup.
+- Cek apakah query sudah cache hit.
+- Cek apakah Ollama sedang antre request.
+- Cek dashboard monitoring untuk p95 latency dan dependency failure.
 
-## 📞 Support
+Jika KB tidak hit:
 
-- **Documentation**: See SETUP.md, ANALYSIS.md, ROADMAP.md
-- **Issues**: Create GitHub issue with details
-- **Security**: Report to IT Security team
-- **Questions**: Contact development team
+- Jalankan reindex KB.
+- Cek `/api/KnowledgeBaseSearch/health`.
+- Cek apakah embedding dimensions sama dengan konfigurasi.
 
----
+Jika Jira gagal:
 
-## 📝 Quick Links
+- Pastikan `Jira__Email`, `Jira__ApiToken`, dan URL project benar.
+- Jangan aktifkan offline fallback kecuali untuk demo lokal.
 
-| Document | Purpose |
-|----------|---------|
-| [SETUP.md](SETUP.md) | Installation & configuration guide |
-| [SECURITY.md](SECURITY.md) | Credential management & security |
-| [ANALYSIS.md](ANALYSIS.md) | Deep technical analysis |
-| [ROADMAP.md](ROADMAP.md) | Future improvements & timeline |
-| [CODE_IMPROVEMENTS_IMPLEMENTED.md](CODE_IMPROVEMENTS_IMPLEMENTED.md) | Optimization details |
+Jika dashboard kosong:
 
----
-
-**Last Updated**: 18 February 2026  
-**Version**: 2.0 (With 6 Code Optimizations)  
-**Status**: 🟢 Production Ready
-
-
+- Buka API lebih dulu agar ada data monitoring.
+- Cek `/api/monitoring/all?minutes=60`.
+- Cek log container `jifas-assistant-api`.

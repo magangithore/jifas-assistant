@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Jifas.Assistant.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ namespace Jifas.Assistant.Controllers
         /// <returns>List of relevant KB chunks</returns>
         [HttpGet("keyword")]
         [ProducesResponseType(typeof(List<KnowledgeBaseChunkDto>), 200)]
-        public async Task<IActionResult> SearchByKeyword([FromQuery] string query, [FromQuery] int topK = 5)
+        public async Task<IActionResult> SearchByKeyword([FromQuery] string query, [FromQuery] int topK = 5, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -43,7 +44,7 @@ namespace Jifas.Assistant.Controllers
             if (topK <= 0 || topK > 20)
                 topK = 5;
 
-            var results = await _searchService.SearchByKeywordAsync(query, topK);
+            var results = await _searchService.SearchByKeywordAsync(query, topK, cancellationToken: cancellationToken);
             return Ok(new
             {
                 query,
@@ -61,7 +62,7 @@ namespace Jifas.Assistant.Controllers
         /// <returns>List of semantically similar KB chunks</returns>
         [HttpPost("semantic")]
         [ProducesResponseType(typeof(List<KnowledgeBaseChunkDto>), 200)]
-        public async Task<IActionResult> SearchBySemantic([FromBody] SemanticSearchRequest request)
+        public async Task<IActionResult> SearchBySemantic([FromBody] SemanticSearchRequest request, CancellationToken cancellationToken)
         {
             if (request?.Embedding == null || request.Embedding.Length == 0)
             {
@@ -71,7 +72,7 @@ namespace Jifas.Assistant.Controllers
             if (request.TopK <= 0 || request.TopK > 20)
                 request.TopK = 5;
 
-            var results = await _searchService.SearchBySemanticAsync(request.Embedding, request.TopK);
+            var results = await _searchService.SearchBySemanticAsync(request.Embedding, request.TopK, cancellationToken: cancellationToken);
             return Ok(new
             {
                 embeddingDimensions = request.Embedding.Length,
@@ -87,7 +88,7 @@ namespace Jifas.Assistant.Controllers
         /// <returns>List of relevant KB chunks (hybrid results)</returns>
         [HttpPost("search")]
         [ProducesResponseType(typeof(List<KnowledgeBaseChunkDto>), 200)]
-        public async Task<IActionResult> Search([FromBody] KnowledgeBaseSearchRequest request)
+        public async Task<IActionResult> Search([FromBody] KnowledgeBaseSearchRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request?.Query))
             {
@@ -100,7 +101,8 @@ namespace Jifas.Assistant.Controllers
             var results = await _searchService.SearchAsync(
                 request.Query,
                 request.Embedding,
-                request.TopK
+                request.TopK,
+                cancellationToken: cancellationToken
             );
 
             return Ok(new
@@ -118,7 +120,7 @@ namespace Jifas.Assistant.Controllers
         /// </summary>
         [HttpPost("query")]
         [ProducesResponseType(typeof(List<KnowledgeBaseChunkDto>), 200)]
-        public async Task<IActionResult> SearchByQuery([FromBody] KnowledgeBaseQueryRequest request)
+        public async Task<IActionResult> SearchByQuery([FromBody] KnowledgeBaseQueryRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request?.Query))
             {
@@ -128,8 +130,8 @@ namespace Jifas.Assistant.Controllers
             if (request.TopK <= 0 || request.TopK > 20)
                 request.TopK = 5;
 
-            var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(request.Query);
-            var results = await _searchService.SearchAsync(request.Query, embedding, request.TopK);
+            var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(request.Query, cancellationToken);
+            var results = await _searchService.SearchAsync(request.Query, embedding, request.TopK, cancellationToken: cancellationToken);
 
             return Ok(new
             {

@@ -364,12 +364,18 @@ FodyWeavers.xsd
 
 #ENV files
 .env
+.env.docker.local
 
 # Logs and runtime files
 [Ll]ogs/
 logs/
 *.log
 log/
+reports/
+*.err
+scripts/*_log.txt
+scripts/*_raw.txt
+scripts/*_preview.txt
 
 # Docker artifacts
 publish/

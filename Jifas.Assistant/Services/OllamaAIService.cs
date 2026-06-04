@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -72,7 +71,7 @@ namespace Jifas.Assistant.Services
 
             _apiKey = _configuration["Ollama:ApiKey"] ?? string.Empty;
             _model = _configuration["Ollama:Model"] ?? "qwen3:8b";
-            _baseUrl = _configuration["Ollama:BaseUrl"] ?? "http://10.0.12.54:11434";
+            _baseUrl = _configuration["Ollama:BaseUrl"] ?? throw new InvalidOperationException("Ollama:BaseUrl configuration is required.");
             _temperature = _configuration.GetValue<float>("Ollama:Temperature", 0.3f);
             _maxOutputTokens = _configuration.GetValue<int>("Ollama:MaxTokens", 2048);
 
@@ -85,10 +84,12 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Generate response menggunakan Ollama dengan knowledge base context
         /// </summary>
-        public async Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null)
+        public async Task<string> GenerateResponseAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (string.IsNullOrWhiteSpace(userQuery))
                     return "Pertanyaan tidak valid. Silakan berikan pertanyaan yang jelas.";
 
@@ -112,7 +113,7 @@ namespace Jifas.Assistant.Services
                         userQuery, kbResults, sessionContext: sessionContext);
                 }
 
-                var response = await CallOllamaApiAsync(intelligentPrompt);
+                var response = await CallOllamaApiAsync(intelligentPrompt, cancellationToken);
 
                 if (string.IsNullOrEmpty(response))
                     return "Maaf, terjadi kesalahan dalam memproses jawaban. Silakan coba lagi.";
@@ -133,39 +134,6 @@ namespace Jifas.Assistant.Services
         }
 
         /// <summary>
-        /// Generate 3 follow-up suggestions. Uses a short timeout (12s) so it never
-        /// blocks the main response. Falls back to defaults if Ollama is slow.
-        /// </summary>
-        public async Task<List<string>> GenerateSuggestionsAsync(string userQuery, string response)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(userQuery) || string.IsNullOrWhiteSpace(response))
-                    return GetDefaultSuggestions();
-
-                // Keep prompt very small: only the first 300 chars of the answer for better context
-                var snippet = response.Length > 300 ? response.Substring(0, 300) : response;
-                var suggestionsPrompt =
-                    $"User bertanya tentang JIFAS: \"{TruncateForContext(userQuery, 120)}\"\n" +
-                    $"Jawaban yang diberikan: {snippet}\n\n" +
-                    "Berdasarkan konteks di atas, tulis 3 pertanyaan lanjutan yang RELEVAN dan SPESIFIK (bukan pertanyaan umum).\n" +
-                    "Pertanyaan harus terkait topik yang sedang dibahas, membantu user mendalami atau menyelesaikan masalahnya.\n" +
-                    "Format: 1. ... 2. ... 3. ...\nMaks 12 kata per pertanyaan, Bahasa Indonesia.";
-
-                // Hard-limit suggestions generation to 12 seconds
-                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(12));
-                var text = await CallOllamaApiInternalAsync(suggestionsPrompt, maxTokens: 128, ct: cts.Token);
-                var parsed = ExtractSuggestions(text);
-                return parsed.Count > 0 ? parsed : GetDefaultSuggestions();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("[OllamaAIService] Suggestions generation skipped: {0}", ex.Message);
-                return GetDefaultSuggestions();
-            }
-        }
-
-        /// <summary>
         /// Scope check tanpa LLM call - sudah dihandle OutOfScopeDetector via keyword matching.
         /// Method ini dipertahankan untuk kompatibilitas interface.
         /// </summary>
@@ -181,7 +149,7 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Memanggil Ollama API dengan retry on error
         /// </summary>
-        public async Task<string> CallOllamaApiAsync(string prompt)
+        public async Task<string> CallOllamaApiAsync(string prompt, CancellationToken cancellationToken = default)
         {
             const int maxRetries = 2;
             var retryDelaysMs = new[] { 3000, 8000 };
@@ -190,13 +158,14 @@ namespace Jifas.Assistant.Services
             {
                 try
                 {
-                    return await CallOllamaApiInternalAsync(prompt);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return await CallOllamaApiInternalAsync(prompt, ct: cancellationToken);
                 }
                 catch (HttpRequestException ex) when (ex.Message.Contains("TooManyRequests") && attempt < maxRetries)
                 {
                     var delayMs = retryDelaysMs[attempt];
                     _logger.LogWarning("[OllamaAIService] Rate limited (429), retry {0}/{1} in {2}ms...", (attempt + 1), maxRetries, delayMs);
-                    await Task.Delay(delayMs);
+                    await Task.Delay(delayMs, cancellationToken);
                 }
             }
 
@@ -266,12 +235,12 @@ namespace Jifas.Assistant.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorBody = await response.Content.ReadAsStringAsync();
+                    var errorBody = await response.Content.ReadAsStringAsync(ct);
                     _logger.LogError($"[OllamaAIService] API error {response.StatusCode}: {errorBody}");
                     throw new HttpRequestException($"Ollama API returned {response.StatusCode}: {errorBody}");
                 }
 
-                responseText = await response.Content.ReadAsStringAsync();
+                responseText = await response.Content.ReadAsStringAsync(ct);
                 sw.Stop();
                 _logger.LogDebug("[OllamaAIService] Response received, parsing...");
 
@@ -434,6 +403,8 @@ Bahasa: Bahasa Indonesia yang natural, hangat, dan mudah dipahami oleh user bisn
 8. Dokumen final yang salah -> arahkan ke Void, Reverse, atau koreksi resmi.
 9. Jangan mengarang data transaksi.
 10. Untuk eskalasi: minta user siapkan nomor dokumen, company code, status, screenshot error, waktu kejadian.
+11. Akhiri jawaban dengan 1 kalimat lanjutan natural, misalnya langkah berikutnya atau pertanyaan klarifikasi yang relevan.
+12. Jangan membuat daftar suggestion terpisah; lanjutan percakapan harus menyatu di jawaban utama.
 
 === TENTANG JIFAS ===
 JIFAS adalah sistem ERP keuangan terintegrasi berbasis web milik Jababeka Group.
@@ -605,40 +576,6 @@ Kamu adalah wajah digital JIFAS - bantu user dengan penuh keyakinan, keakuratan,
         private string BuildNoResultsMessage(string query) =>
             $"Maaf, saya tidak menemukan informasi tentang '{query}' di sistem JIFAS. " +
             "Silakan coba dengan kata kunci berbeda, atau hubungi Tim IT Help Desk di it@jababeka.com untuk bantuan lebih lanjut.";
-
-        private List<string> ExtractSuggestions(string responseText)
-        {
-            var suggestions = new List<string>();
-            if (string.IsNullOrEmpty(responseText)) return GetDefaultSuggestions();
-
-            try
-            {
-                var lines = responseText.Split(new[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
-                {
-                    var match = Regex.Match(line.Trim(), @"^\d+[.)]\s*(.+)$");
-                    if (match.Success)
-                    {
-                        var suggestion = match.Groups[1].Value.Trim();
-                        if (suggestion.Length >= 5 && suggestion.Length <= 200)
-                            suggestions.Add(suggestion);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("[OllamaAIService] Error parsing suggestions: {0}", ex.Message);
-            }
-
-            return suggestions.Count > 0 ? suggestions.Take(3).ToList() : GetDefaultSuggestions();
-        }
-
-        private static List<string> GetDefaultSuggestions() => new List<string>
-        {
-            "Bagaimana cara membuat dokumen baru di JIFAS?",
-            "Apa saja status yang ada dalam workflow approval?",
-            "Bagaimana cara melihat riwayat transaksi di JIFAS?"
-        };
 
         private static string TruncateForContext(string text, int maxLength) =>
             text?.Length > maxLength ? text.Substring(0, maxLength) + "..." : text ?? string.Empty;

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Jifas.Assistant.Services
@@ -12,17 +13,17 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Generate embedding (vector) dari text
         /// </summary>
-        Task<byte[]> GenerateEmbeddingAsync(string text);
+        Task<byte[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Generate multiple embeddings sekaligus
         /// </summary>
-        Task<byte[][]> GenerateEmbeddingsAsync(string[] texts);
+        Task<byte[][]> GenerateEmbeddingsAsync(string[] texts, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Generate embedding as float[] for semantic search compatibility
         /// </summary>
-        Task<float[]> GenerateEmbeddingAsFloatArrayAsync(string text);
+        Task<float[]> GenerateEmbeddingAsFloatArrayAsync(string text, CancellationToken cancellationToken = default);
     }
 
     /// <summary>

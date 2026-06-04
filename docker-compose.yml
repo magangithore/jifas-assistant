@@ -1,4 +1,21 @@
 ﻿services:
+  jifas-redis:
+    image: redis:7-alpine
+    container_name: jifas-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - jifas-network
+
   jifas-postgres:
     image: pgvector/pgvector:pg16
     container_name: jifas-postgres
@@ -30,9 +47,12 @@
     depends_on:
       jifas-postgres:
         condition: service_healthy
+      jifas-redis:
+        condition: service_healthy
     environment:
       # Database Configuration
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=jifas-postgres;Port=5432;Database=jifas_assistant;Username=jifas;Password=jifas_dev_password}
+      ConnectionStrings__Redis: ${ConnectionStrings__Redis:-jifas-redis:6379}
       Admin__ApiKey: ${Admin__ApiKey:-}
       Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:-}
       Jwt__Enabled: ${Jwt__Enabled:-true}
@@ -52,6 +72,18 @@
       Embedding__Model: qwen3-embedding:4b
       Embedding__Dimensions: 2560
       Embedding__OllamaUrl: ${Embedding__OllamaUrl:-http://10.0.12.54:11434}
+
+      # Jira Ticket Integration
+      Jira__BaseUrl: ${Jira__BaseUrl:-https://willyjan.atlassian.net}
+      Jira__ProjectKey: ${Jira__ProjectKey:-JTU}
+      Jira__CloudId: ${Jira__CloudId:-}
+      Jira__ApiToken: ${Jira__ApiToken:-}
+      Jira__AccountEmail: ${Jira__AccountEmail:-}
+      Jira__EmailDomain: ${Jira__EmailDomain:-jababeka.com}
+      Jira__DefaultIssueType: ${Jira__DefaultIssueType:-Task}
+      Jira__TimeoutSeconds: ${Jira__TimeoutSeconds:-30}
+      Jira__EnableOfflineFallback: ${Jira__EnableOfflineFallback:-false}
+      Jira__BypassSslValidation: ${Jira__BypassSslValidation:-false}
       
       # ASP.NET Core
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
@@ -60,14 +92,19 @@
       
       # Logging
       Logging__LogLevel__Default: ${Logging__LogLevel__Default:-Information}
+      Logging__EnableRequestLogging: ${Logging__EnableRequestLogging:-false}
+      Https__EnableRedirection: ${Https__EnableRedirection:-false}
       
       # Caching
+      Caching__UseRedis: ${Caching__UseRedis:-true}
+      Caching__RedisInstanceName: ${Caching__RedisInstanceName:-JIFAS:}
       Caching__EnableResponseCache: ${Caching__EnableResponseCache:-true}
       Caching__ResponseCacheDurationHours: ${Caching__ResponseCacheDurationHours:-24}
       Caching__EnableKBCache: ${Caching__EnableKBCache:-true}
     
     volumes:
       - ./logs:/app/logs
+      - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
@@ -88,4 +125,8 @@ volumes:
   logs:
     driver: local
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  dataprotection_keys:
     driver: local

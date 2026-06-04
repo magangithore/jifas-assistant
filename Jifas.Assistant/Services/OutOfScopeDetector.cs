@@ -8,7 +8,7 @@ namespace Jifas.Assistant.Services
     public class ScopeCheckResult
     {
         public bool IsInScope { get; set; }
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 
     public interface IOutOfScopeDetector
@@ -106,7 +106,7 @@ Jawab SATU KATA: Ya atau Tidak";
                 var result = await _ollamaService.CallOllamaApiAsync(scopePrompt);
                 var isInScope = !(result?.Trim().StartsWith("Tidak", StringComparison.OrdinalIgnoreCase) == true);
 
-                _logger.LogInformation("[OutOfScopeDetector] AI scope check: '{0}' → {1} (AI: {2})", userQuery, isInScope ? "InScope" : "OutOfScope", result?.Trim());
+                _logger.LogInformation("[OutOfScopeDetector] AI scope check: '{0}' => {1} (AI: {2})", userQuery, isInScope ? "InScope" : "OutOfScope", result?.Trim() ?? string.Empty);
 
                 if (!isInScope)
                     return new ScopeCheckResult { IsInScope = false, Message = BuildOutOfScopeMessage(userQuery) };

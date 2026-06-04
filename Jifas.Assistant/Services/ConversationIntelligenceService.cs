@@ -15,20 +15,20 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class ConversationContext
     {
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
         public List<ConversationTurn> RecentTurns { get; set; } = new List<ConversationTurn>();
         public List<string> TopicsDiscussed { get; set; } = new List<string>();
-        public string CurrentTopic { get; set; }
+        public string CurrentTopic { get; set; } = string.Empty;
         public bool HasPreviousContext { get; set; }
-        public string FormattedContext { get; set; }
+        public string FormattedContext { get; set; } = string.Empty;
     }
 
     public class ConversationTurn
     {
-        public string UserMessage { get; set; }
-        public string AssistantResponse { get; set; }
+        public string UserMessage { get; set; } = string.Empty;
+        public string AssistantResponse { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; }
-        public string Topic { get; set; }
+        public string Topic { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -37,11 +37,11 @@ namespace Jifas.Assistant.Services
     public class UserFeedbackInput
     {
         public int? ChatId { get; set; }
-        public string SessionId { get; set; }
-        public string MessageId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
+        public string MessageId { get; set; } = string.Empty;
         public int Rating { get; set; }  // 1-5
-        public string Comment { get; set; }
-        public string UserId { get; set; }
+        public string Comment { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class FailurePattern
     {
-        public string QueryPattern { get; set; }
+        public string QueryPattern { get; set; } = string.Empty;
         public int FailureCount { get; set; }
         public List<string> CommonIssues { get; set; } = new List<string>();
         public double AverageRating { get; set; }
@@ -60,9 +60,9 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class SuccessPattern
     {
-        public string QueryType { get; set; }
-        public string Topic { get; set; }
-        public string ResponseStructure { get; set; }
+        public string QueryType { get; set; } = string.Empty;
+        public string Topic { get; set; } = string.Empty;
+        public string ResponseStructure { get; set; } = string.Empty;
         public double AverageRating { get; set; }
         public int UsageCount { get; set; }
     }
@@ -80,7 +80,7 @@ namespace Jifas.Assistant.Services
         Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 5);
         Task<string> GetFormattedContextAsync(string sessionId);
         Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery);
-        string ExtractTopic(string message);
+        string? ExtractTopic(string message);
 
         /// <summary>
         /// Compact/summarize an entire session into a structured summary.
@@ -99,7 +99,7 @@ namespace Jifas.Assistant.Services
     {
         Task RecordFeedbackAsync(UserFeedbackInput feedback);
         Task<List<FailurePattern>> GetFailurePatternsAsync(int top = 10);
-        Task<List<SuccessPattern>> GetSuccessPatternsAsync(string topic = null);
+        Task<List<SuccessPattern>> GetSuccessPatternsAsync(string? topic = null);
         Task<bool> IsKnownFailurePatternAsync(string query);
         Task<List<string>> GetImprovementSuggestionsAsync(string query);
     }
@@ -120,7 +120,7 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class ConversationIntelligenceService : IConversationIntelligenceService
     {
-        private readonly JIFAS_AssistantContext _db;
+        private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
         private readonly IChatHistoryService _chatHistoryService;
         private readonly ICacheService _cacheService;
         private readonly ILoggerService _logger;
@@ -164,12 +164,12 @@ namespace Jifas.Assistant.Services
         };
 
         public ConversationIntelligenceService(
-            JIFAS_AssistantContext db,
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory,
             IChatHistoryService chatHistoryService,
             ICacheService cacheService,
             ILoggerService logger)
         {
-            _db = db;
+            _dbFactory = dbFactory;
             _chatHistoryService = chatHistoryService;
             _cacheService = cacheService;
             _logger = logger;
@@ -213,7 +213,7 @@ namespace Jifas.Assistant.Services
                         UserMessage = h.UserMessage,
                         AssistantResponse = TruncateResponse(h.AiResponse, 300),
                         Timestamp = h.CreatedAt,
-                        Topic = ExtractTopic(h.UserMessage)
+                        Topic = ExtractTopic(h.UserMessage) ?? string.Empty
                     })
                     .Take(maxTurns)
                     .ToList();
@@ -221,7 +221,7 @@ namespace Jifas.Assistant.Services
                 context.RecentTurns = turns;
                 context.HasPreviousContext = turns.Count > 0;
                 context.TopicsDiscussed = turns.Select(t => t.Topic).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
-                context.CurrentTopic = turns.LastOrDefault()?.Topic;
+                context.CurrentTopic = turns.LastOrDefault()?.Topic ?? string.Empty;
                 context.FormattedContext = FormatContext(turns);
 
                 // Cache for 30 minutes
@@ -241,7 +241,7 @@ namespace Jifas.Assistant.Services
         public async Task<string> GetFormattedContextAsync(string sessionId)
         {
             var context = await BuildContextAsync(sessionId);
-            return context.FormattedContext;
+            return context.FormattedContext ?? string.Empty;
         }
 
         public async Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery)
@@ -299,7 +299,7 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public string ExtractTopic(string message)
+        public string? ExtractTopic(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
                 return null;
@@ -323,7 +323,7 @@ namespace Jifas.Assistant.Services
         private string FormatContext(List<ConversationTurn> turns)
         {
             if (turns == null || turns.Count == 0)
-                return null;
+                return string.Empty;
 
             var contextBuilder = new StringBuilder();
             contextBuilder.AppendLine("=== KONTEKS PERCAKAPAN SEBELUMNYA ===");
@@ -414,7 +414,7 @@ namespace Jifas.Assistant.Services
                         UserMessage = h.UserMessage,
                         AssistantResponse = TruncateResponse(h.AiResponse, 500),
                         Timestamp = h.CreatedAt,
-                        Topic = ExtractTopic(h.UserMessage)
+                        Topic = ExtractTopic(h.UserMessage) ?? string.Empty
                     })
                     .ToList();
 
@@ -480,8 +480,11 @@ namespace Jifas.Assistant.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _db.UserFeedbacks.Add(userFeedback);
-                await _db.SaveChangesAsync();
+                await using (var db = await _dbFactory.CreateDbContextAsync())
+                {
+                    db.UserFeedbacks.Add(userFeedback);
+                    await db.SaveChangesAsync();
+                }
 
                 // Process feedback for learning
                 await ProcessFeedbackForLearningAsync(feedback);
@@ -507,11 +510,12 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Query poor-rated feedbacks with their chat IDs
-                var poorFeedbacks = await _db.UserFeedbacks
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var poorFeedbacks = await db.UserFeedbacks
                     .Where(f => f.Rating != null && f.Rating <= POOR_RATING && f.ChatId != null)
                     .OrderByDescending(f => f.CreatedAt)
                     .Take(100)
-                    .Select(f => f.ChatId.Value)
+                    .Select(f => f.ChatId.GetValueOrDefault())
                     .ToListAsync();
 
                 if (poorFeedbacks.Count == 0)
@@ -520,7 +524,7 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Get related chat history by matching with ChatId
-                var failedChats = await _db.ChatHistories
+                var failedChats = await db.ChatHistories
                     .Where(ch => poorFeedbacks.Contains(ch.Id))
                     .ToListAsync();
 
@@ -539,7 +543,7 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public async Task<List<SuccessPattern>> GetSuccessPatternsAsync(string topic = null)
+        public async Task<List<SuccessPattern>> GetSuccessPatternsAsync(string? topic = null)
         {
             try
             {
@@ -552,11 +556,12 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Query good-rated feedbacks
-                var goodFeedbacks = await _db.UserFeedbacks
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var goodFeedbacks = await db.UserFeedbacks
                     .Where(f => f.Rating != null && f.Rating >= GOOD_RATING && f.ChatId != null)
                     .OrderByDescending(f => f.CreatedAt)
                     .Take(100)
-                    .Select(f => f.ChatId.Value)
+                    .Select(f => f.ChatId.GetValueOrDefault())
                     .ToListAsync();
 
                 if (goodFeedbacks.Count == 0)
@@ -565,7 +570,7 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Get related chat history
-                var successChats = await _db.ChatHistories
+                var successChats = await db.ChatHistories
                     .Where(ch => goodFeedbacks.Contains(ch.Id) && ch.Success == true)
                     .ToListAsync();
 
@@ -658,7 +663,8 @@ namespace Jifas.Assistant.Services
                 // For poor ratings, flag for review
                 if (feedback.Rating <= POOR_RATING && feedback.ChatId.HasValue)
                 {
-                    var chatHistory = await _db.ChatHistories
+                    await using var db = await _dbFactory.CreateDbContextAsync();
+                    var chatHistory = await db.ChatHistories
                         .Where(ch => ch.Id == feedback.ChatId.Value)
                         .FirstOrDefaultAsync();
 
@@ -722,7 +728,7 @@ namespace Jifas.Assistant.Services
                 .ToList();
         }
 
-        private List<SuccessPattern> AnalyzeSuccessPatterns(List<ChatHistory> successChats, string filterTopic)
+        private List<SuccessPattern> AnalyzeSuccessPatterns(List<ChatHistory> successChats, string? filterTopic)
         {
             var patterns = new Dictionary<string, SuccessPattern>();
 

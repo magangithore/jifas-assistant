@@ -1,55 +1,69 @@
 # AI Quality Runbook
 
-## User-Facing Response Policy
+## Tujuan
 
-The chat response should stay simple for users. Internal source and retrieval details are used for confidence and monitoring, but the UI does not need to display source citations.
+Runbook ini dipakai untuk memvalidasi kualitas jawaban chatbot JIFAS secara repeatable sebelum rilis.
 
-## Feedback API
+## Golden Evaluation
 
-```http
-POST /api/feedback
-Content-Type: application/json
-
-{
-  "chatId": null,
-  "sessionId": "local-session",
-  "messageId": "optional-client-message-id",
-  "userId": "local-user",
-  "rating": 5,
-  "comment": "Jawaban membantu"
-}
-```
-
-Rating must be between 1 and 5.
-
-## Quality Monitoring
+Jalankan evaluasi Knowledge Base:
 
 ```powershell
-Invoke-RestMethod "http://localhost:5000/api/monitoring/quality?minutes=60&slowThresholdMs=30000"
+powershell -ExecutionPolicy Bypass -File scripts\Run-GoldenEvaluation.ps1 -BaseUrl http://localhost:8888
 ```
 
-The endpoint summarizes:
+Output default: `golden-evaluation-results.json`.
 
-- KB hit rate
-- fallback response rate
-- low-confidence response rate
-- average confidence
-- average response time
-- slow responses
+## Functional Smoke
 
-## Golden Questions
+Minimal scenario sebelum rilis:
 
-Golden questions live in `Jifas.Assistant/Quality/golden-questions.json`.
+- `Apa itu JIFAS?`
+- pertanyaan halaman aktif, contoh Invoice approval;
+- out-of-scope, contoh cuaca/film;
+- ticket flow cancel path;
+- health monitoring dashboard.
+- ulangi pertanyaan umum yang sama dari user berbeda untuk memastikan shared response cache berjalan.
 
-Run:
+Runner otomatis:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/Run-GoldenEvaluation.ps1 -BaseUrl http://localhost:5000
+powershell -ExecutionPolicy Bypass -File scripts\Run-FullFeatureSmokeTest.ps1 -BaseUrl http://localhost:8888
 ```
 
-Use this after:
+Untuk validasi Jira end-to-end yang membuat tiket asli:
 
-- changing the LLM model
-- changing the embedding model
-- reindexing the KB
-- modifying prompt or search logic
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Run-FullFeatureSmokeTest.ps1 -BaseUrl http://localhost:8888 -CreateRealJiraTicket
+```
+
+Ticket real Jira hanya dibuat jika switch `-CreateRealJiraTicket` dipakai. Tiket test memakai prefix `[TEST]` dan boleh ditutup setelah diverifikasi.
+
+## Stress Baseline
+
+Gunakan 50 virtual users:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\Run-ChatStressTest.ps1 -VirtualUsers 50
+```
+
+Acceptance:
+
+- tidak ada HTTP 5xx;
+- container API/Postgres/Redis tetap healthy;
+- HTTP 429 harus 0 selama rate limit chat sedang dinonaktifkan;
+- report JSON dan Markdown tersimpan.
+- warmup shared cache berhasil sebelum 50 VU paralel, kecuali `-SkipWarmup` dipakai untuk exploratory cold test.
+- monitoring error tidak boleh didominasi `suggestions`, karena suggestion LLM terpisah sudah tidak dipakai.
+- `suggestionsTotalMs` pada report stress normalnya 0 ms untuk chat utama.
+- jika Jira real test diminta, report wajib berisi ticket key Jira asli, bukan `OFFLINE-*`.
+
+## Kriteria Kualitas Jawaban
+
+- Jawaban harus tentang JIFAS.
+- Tidak menyebut detail internal seperti `Knowledge Base` ke user.
+- Jika data tidak tersedia, arahkan ke IT/Finance/Accounting/Tax sesuai masalah.
+- Untuk masalah teknis, minta nomor dokumen, company, status, screenshot, dan waktu kejadian.
+- Arahan lanjutan harus berada di dalam isi jawaban utama, bukan mengandalkan field `suggestions`.
+- Field `suggestions` hanya dipertahankan untuk kompatibilitas frontend lama dan boleh kosong.
+- Service suggestion terpisah tidak diregistrasikan lagi di runtime supaya tidak ada call LLM kedua.

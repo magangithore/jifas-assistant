@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using jifas_assistant.DAL.Models;
@@ -13,29 +14,31 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public interface IChatHistoryService
     {
-        Task SaveChatAsync(ChatHistory chatHistory);
-        Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, int limit = 50);
-        Task<List<ChatHistory>> GetUserHistoryAsync(string userId, int limit = 100);
+        Task SaveChatAsync(ChatHistory chatHistory, CancellationToken cancellationToken = default);
+        Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, int limit = 50, CancellationToken cancellationToken = default);
+        Task<List<ChatHistory>> GetUserHistoryAsync(string userId, int limit = 100, CancellationToken cancellationToken = default);
     }
 
     public class ChatHistoryService : IChatHistoryService
     {
-        private readonly JIFAS_AssistantContext _db;
+        private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
         private readonly ILoggerService _logger;
 
-        public ChatHistoryService(JIFAS_AssistantContext db, ILoggerService logger)
+        public ChatHistoryService(IDbContextFactory<JIFAS_AssistantContext> dbFactory, ILoggerService logger)
         {
-            _db = db;
+            _dbFactory = dbFactory;
             _logger = logger;
         }
 
         /// <summary>
         /// Simpan chat history ke database
         /// </summary>
-        public async Task SaveChatAsync(ChatHistory chatHistory)
+        public async Task SaveChatAsync(ChatHistory chatHistory, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (chatHistory == null)
                 {
                     _logger.LogWarning("[ChatHistoryService] Attempted to save null ChatHistory");
@@ -50,8 +53,9 @@ namespace Jifas.Assistant.Services
 
                 chatHistory.CreatedAt = DateTime.UtcNow;
 
-                _db.ChatHistories.Add(chatHistory);
-                await _db.SaveChangesAsync();
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                db.ChatHistories.Add(chatHistory);
+                await db.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation($"[ChatHistoryService] Chat saved - Session: {chatHistory.SessionId}, ResponseTime: {chatHistory.ResponseTimeMs}ms");
             }
@@ -65,20 +69,23 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Get chat history untuk specific session
         /// </summary>
-        public async Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, int limit = 50)
+        public async Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, int limit = 50, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (string.IsNullOrWhiteSpace(sessionId))
                 {
                     return new List<ChatHistory>();
                 }
 
-                var history = await _db.ChatHistories
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                var history = await db.ChatHistories
                     .Where(h => h.SessionId == sessionId)
                     .OrderByDescending(h => h.CreatedAt)
                     .Take(limit)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 _logger.LogInformation($"[ChatHistoryService] Retrieved {history.Count} records for session {sessionId}");
                 return history;
@@ -93,20 +100,23 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Get chat history untuk specific user
         /// </summary>
-        public async Task<List<ChatHistory>> GetUserHistoryAsync(string userId, int limit = 100)
+        public async Task<List<ChatHistory>> GetUserHistoryAsync(string userId, int limit = 100, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (string.IsNullOrWhiteSpace(userId))
                 {
                     return new List<ChatHistory>();
                 }
 
-                var history = await _db.ChatHistories
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                var history = await db.ChatHistories
                     .Where(h => h.UserId == userId)
                     .OrderByDescending(h => h.CreatedAt)
                     .Take(limit)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 _logger.LogInformation($"[ChatHistoryService] Retrieved {history.Count} records for user {userId}");
                 return history;

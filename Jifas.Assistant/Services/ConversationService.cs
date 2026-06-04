@@ -7,8 +7,8 @@ using jifas_assistant.DAL.Models;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Service for logging conversations to database
-    /// Tracks which KB documents were used in each conversation for analytics
+    /// Service untuk mencatat percakapan ke database.
+    /// Data ini dipakai untuk audit, analytics, dan evaluasi kualitas jawaban.
     /// </summary>
     public interface IConversationService
     {
@@ -17,16 +17,16 @@ namespace Jifas.Assistant.Services
 
     public class ConversationLog
     {
-        public string UserId { get; set; }
-        public string SessionId { get; set; }
-        public string UserMessage { get; set; }
-        public string AiResponse { get; set; }
-        public string Category { get; set; }
+        public string UserId { get; set; } = "anonymous";
+        public string SessionId { get; set; } = string.Empty;
+        public string UserMessage { get; set; } = string.Empty;
+        public string AiResponse { get; set; } = string.Empty;
+        public string Category { get; set; } = "General";
         public double? ConfidenceScore { get; set; }
         public bool IsFromKnowledgeBase { get; set; }
         
         /// <summary>
-        /// IDs of KB documents used in this conversation
+        /// ID dokumen KB yang dipakai untuk menjawab percakapan ini.
         /// </summary>
         public List<int> UsedDocumentIds { get; set; } = new List<int>();
     }
@@ -77,10 +77,10 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        private string TruncateString(string value, int maxLength)
+        private string TruncateString(string? value, int maxLength)
         {
             if (string.IsNullOrEmpty(value))
-                return value;
+                return string.Empty;
             
             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
         }

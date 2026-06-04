@@ -5,7 +5,8 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// In-memory cache implementation using Microsoft.Extensions.Caching.Memory
+    /// Cache lokal berbasis memory.
+    /// Dipakai untuk development dan fallback singkat ketika Redis tidak tersedia.
     /// </summary>
     public class MemoryCacheService : ICacheService
     {
@@ -19,16 +20,17 @@ namespace Jifas.Assistant.Services
         public T Get<T>(string key)
         {
             if (string.IsNullOrWhiteSpace(key))
-                return default;
+                return default!;
 
             try
             {
-                _cache.TryGetValue(key, out T value);
-                return value;
+                return _cache.TryGetValue(key, out T? value)
+                    ? value!
+                    : default!;
             }
             catch
             {
-                return default;
+                return default!;
             }
         }
 
@@ -48,7 +50,7 @@ namespace Jifas.Assistant.Services
             }
             catch
             {
-                // Silently fail on cache write errors
+                // Cache hanya optimasi, jadi kegagalan tulis tidak boleh memutus request utama.
             }
         }
 
@@ -63,15 +65,14 @@ namespace Jifas.Assistant.Services
             }
             catch
             {
-                // Silently fail on cache removal errors
+                // Cache hanya optimasi, jadi kegagalan hapus tidak boleh memutus request utama.
             }
         }
 
         public void Clear()
         {
-            // IMemoryCache doesn't have a Clear() method,
-            // so we would need to track keys manually or dispose/recreate
-            // For now, this is a no-op as per standard IMemoryCache behavior
+            // IMemoryCache tidak punya API Clear bawaan.
+            // Jika perlu clear total, provider cache perlu diganti atau key perlu dilacak sendiri.
         }
 
         public bool Exists(string key)

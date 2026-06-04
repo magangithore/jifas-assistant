@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -61,10 +63,11 @@ namespace Jifas.Assistant.Services
             if (!httpContext.Request.Headers.TryGetValue("X-Admin-Api-Key", out var providedKey))
                 return false;
 
-            return string.Equals(
-                providedKey.ToString(),
-                configuredKey,
-                StringComparison.Ordinal);
+            var providedBytes = Encoding.UTF8.GetBytes(providedKey.ToString());
+            var configuredBytes = Encoding.UTF8.GetBytes(configuredKey);
+
+            return providedBytes.Length == configuredBytes.Length &&
+                   CryptographicOperations.FixedTimeEquals(providedBytes, configuredBytes);
         }
     }
 }

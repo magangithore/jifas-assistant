@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Jifas.Assistant.Services;
 
@@ -9,12 +10,12 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public interface IKnowledgeBaseService
     {
-        Task<List<KnowledgeBaseResult>> SearchAsync(string query, int topK = 5);
+        Task<List<KnowledgeBaseResult>> SearchAsync(string query, int topK = 5, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Hybrid search using both keyword and semantic embedding
         /// </summary>
-        Task<List<KnowledgeBaseResult>> SearchWithEmbeddingAsync(string query, float[] embedding, int topK = 5);
+        Task<List<KnowledgeBaseResult>> SearchWithEmbeddingAsync(string query, float[]? embedding, int topK = 5, CancellationToken cancellationToken = default);
     }
 
     public class KnowledgeBaseService : IKnowledgeBaseService
@@ -28,19 +29,20 @@ namespace Jifas.Assistant.Services
             _logger = logger;
         }
 
-        public async Task<List<KnowledgeBaseResult>> SearchAsync(string query, int topK = 5)
+        public async Task<List<KnowledgeBaseResult>> SearchAsync(string query, int topK = 5, CancellationToken cancellationToken = default)
         {
-            return await SearchWithEmbeddingAsync(query, null, topK);
+            return await SearchWithEmbeddingAsync(query, null, topK, cancellationToken);
         }
 
-        public async Task<List<KnowledgeBaseResult>> SearchWithEmbeddingAsync(string query, float[] embedding, int topK = 5)
+        public async Task<List<KnowledgeBaseResult>> SearchWithEmbeddingAsync(string query, float[]? embedding, int topK = 5, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 _logger.LogInformation($"[KnowledgeBaseService] Searching KB: {query} (semantic: {embedding != null})");
 
                 // Delegate to RAG search service with optional embedding
-                var results = await _searchService.SearchAsync(query, embedding, topK);
+                var results = await _searchService.SearchAsync(query, embedding, topK, cancellationToken: cancellationToken);
 
                 // Convert to KnowledgeBaseResult format
                 var kbResults = new List<KnowledgeBaseResult>();
@@ -57,6 +59,10 @@ namespace Jifas.Assistant.Services
                 }
 
                 return kbResults;
+            }
+            catch (System.OperationCanceledException)
+            {
+                throw;
             }
             catch (System.Exception ex)
             {

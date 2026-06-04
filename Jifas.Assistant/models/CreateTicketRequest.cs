@@ -1,38 +1,38 @@
 namespace Jifas.Assistant.Models
 {
     /// <summary>
-    /// Request model for creating a support ticket
+    /// Request internal untuk membuat tiket support.
     /// </summary>
     public class CreateTicketRequest
     {
         /// <summary>
-        /// User ID (Windows AD username)
+        /// User ID, biasanya username Windows/AD.
         /// </summary>
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ticket title/subject
+        /// Judul tiket.
         /// </summary>
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ticket description
+        /// Deskripsi masalah.
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ticket category
+        /// Kategori tiket.
         /// </summary>
-        public string Category { get; set; }
+        public string Category { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ticket priority (LOW, MEDIUM, HIGH, CRITICAL)
+        /// Prioritas tiket.
         /// </summary>
         public string Priority { get; set; } = "MEDIUM";
 
         /// <summary>
-        /// Session ID for tracking
+        /// Session id untuk audit percakapan.
         /// </summary>
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
     }
 }

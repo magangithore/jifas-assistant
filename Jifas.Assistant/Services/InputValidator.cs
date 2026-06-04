@@ -8,9 +8,8 @@ using Jifas.Assistant.Utilities;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Input validator implementation
-    /// Comprehensive validation and sanitization
-    /// Protects against: SQL injection, XSS, invalid formats, buffer overflow
+    /// Implementasi validasi dan sanitasi input.
+    /// Melindungi request dari SQL injection, XSS, format tidak valid, dan input terlalu panjang.
     /// </summary>
     public class InputValidator : IInputValidator
     {
@@ -21,7 +20,7 @@ namespace Jifas.Assistant.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public ValidationResult<ChatRequest> ValidateChatRequest(ChatRequest request)
+        public ValidationResult<ChatRequest> ValidateChatRequest(ChatRequest? request)
         {
             var correlationId = request?.CorrelationId ?? Guid.NewGuid().ToString();
             
@@ -30,52 +29,52 @@ namespace Jifas.Assistant.Services
                 if (request == null)
                 {
                     _logger.LogWarningWithCorrelation(correlationId, "[InputValidator] Chat request is null");
-                    return new ValidationResult<ChatRequest>(false, null, "Request cannot be null");
+                    return new ValidationResult<ChatRequest>(false, default!, "Request cannot be null");
                 }
 
-                // Validate message (CRITICAL)
+                // Pesan wajib valid sebelum request masuk ke proses chatbot.
                 if (string.IsNullOrWhiteSpace(request.Message))
                 {
                     _logger.LogWarningWithCorrelation(correlationId, "[InputValidator] Empty chat message");
-                    return new ValidationResult<ChatRequest>(false, null, "Message cannot be empty");
+                    return new ValidationResult<ChatRequest>(false, default!, "Message cannot be empty");
                 }
 
                 var messageResult = ValidateMessage(request.Message);
                 if (!messageResult.IsValid)
                 {
                     _logger.LogWarningWithCorrelation(correlationId, $"[InputValidator] Invalid message: {messageResult.ErrorMessage}");
-                    return new ValidationResult<ChatRequest>(false, null, messageResult.ErrorMessage);
+                    return new ValidationResult<ChatRequest>(false, default!, messageResult.ErrorMessage);
                 }
 
-                // Update request with sanitized message
+                // Simpan pesan yang sudah disanitasi kembali ke request.
                 request.Message = messageResult.Value;
                 
-                // Ensure correlation ID is set
+                // Pastikan correlation id tersedia untuk tracing.
                 if (string.IsNullOrEmpty(request.CorrelationId))
                 {
                     request.CorrelationId = correlationId;
                 }
 
-                // Validate session ID if provided
+                // Validasi session id jika dikirim frontend.
                 if (!string.IsNullOrWhiteSpace(request.SessionId))
                 {
                     var sessionResult = ValidateSessionId(request.SessionId);
                     if (!sessionResult.IsValid)
                     {
                         _logger.LogWarningWithCorrelation(correlationId, $"[InputValidator] Invalid session ID: {sessionResult.ErrorMessage}");
-                        return new ValidationResult<ChatRequest>(false, null, sessionResult.ErrorMessage);
+                        return new ValidationResult<ChatRequest>(false, default!, sessionResult.ErrorMessage);
                     }
                     request.SessionId = sessionResult.Value;
                 }
 
-                // Validate user ID if provided
+                // Validasi user id jika dikirim frontend.
                 if (!string.IsNullOrWhiteSpace(request.UserId))
                 {
                     var userResult = ValidateUserId(request.UserId);
                     if (!userResult.IsValid)
                     {
                         _logger.LogWarningWithCorrelation(correlationId, $"[InputValidator] Invalid user ID: {userResult.ErrorMessage}");
-                        return new ValidationResult<ChatRequest>(false, null, userResult.ErrorMessage);
+                        return new ValidationResult<ChatRequest>(false, default!, userResult.ErrorMessage);
                     }
                     request.UserId = userResult.Value;
                 }
@@ -87,7 +86,7 @@ namespace Jifas.Assistant.Services
             catch (Exception ex)
             {
                 _logger.LogErrorWithCorrelation(correlationId, "[InputValidator] Error validating chat request", ex);
-                return new ValidationResult<ChatRequest>(false, null, "Validation error: " + ex.Message);
+                return new ValidationResult<ChatRequest>(false, default!, "Validation error: " + ex.Message);
             }
         }
 
@@ -97,45 +96,45 @@ namespace Jifas.Assistant.Services
             {
                 if (string.IsNullOrWhiteSpace(message))
                 {
-                    return new ValidationResult<string>(false, null, "Message cannot be empty");
+                    return new ValidationResult<string>(false, default!, "Message cannot be empty");
                 }
 
                 var trimmed = message.Trim();
 
-                // Check length (CRITICAL)
+                // Batasi panjang pesan agar request tidak membebani sistem.
                 if (trimmed.Length < ValidationConstants.MIN_MESSAGE_LENGTH)
                 {
-                    return new ValidationResult<string>(false, null, "Message is too short");
+                    return new ValidationResult<string>(false, default!, "Message is too short");
                 }
 
                 if (trimmed.Length > ValidationConstants.MAX_MESSAGE_LENGTH)
                 {
-                    return new ValidationResult<string>(false, null, 
+                    return new ValidationResult<string>(false, default!,
                         $"Message exceeds maximum length of {ValidationConstants.MAX_MESSAGE_LENGTH} characters");
                 }
 
-                // Sanitize input
+                // Sanitasi HTML/control character sebelum dicek pattern berbahaya.
                 trimmed = SanitizeInput(trimmed);
 
-                // Check for SQL injection (CRITICAL)
+                // Blokir pattern SQL injection.
                 if (ContainsSqlInjectionPattern(trimmed))
                 {
                     _logger.LogWarning("[InputValidator] Potential SQL injection detected in message");
-                    return new ValidationResult<string>(false, null, "Invalid message format");
+                    return new ValidationResult<string>(false, default!, "Invalid message format");
                 }
 
-                // Check for XSS (CRITICAL)
+                // Blokir pattern XSS.
                 if (ContainsXssPattern(trimmed))
                 {
                     _logger.LogWarning("[InputValidator] Potential XSS detected in message");
-                    return new ValidationResult<string>(false, null, "Invalid message format");
+                    return new ValidationResult<string>(false, default!, "Invalid message format");
                 }
 
-                // Check for invalid characters
+                // Blokir karakter kontrol yang tidak valid.
                 if (ContainsInvalidCharacters(trimmed))
                 {
                     _logger.LogWarning("[InputValidator] Invalid characters detected in message");
-                    return new ValidationResult<string>(false, null, "Message contains invalid characters");
+                    return new ValidationResult<string>(false, default!, "Message contains invalid characters");
                 }
 
                 return new ValidationResult<string>(true, trimmed);
@@ -143,13 +142,13 @@ namespace Jifas.Assistant.Services
             catch (Exception ex)
             {
                 _logger.LogError($"[InputValidator] Error validating message: {ex.Message}");
-                return new ValidationResult<string>(false, null, "Validation error");
+                return new ValidationResult<string>(false, default!, "Validation error");
             }
         }
 
         public ValidationResult<string> ValidateQuery(string query)
         {
-            // Same as message validation for now
+            // Query memakai aturan yang sama dengan message.
             return ValidateMessage(query);
         }
 
@@ -172,7 +171,7 @@ namespace Jifas.Assistant.Services
                     var trimmed = suggestion.Trim();
                     trimmed = SanitizeInput(trimmed);
 
-                    // Check length
+                    // Suggestion terlalu pendek/panjang tidak dikirim ke user.
                     if (trimmed.Length < ValidationConstants.MIN_SUGGESTION_LENGTH ||
                         trimmed.Length > ValidationConstants.MAX_SUGGESTION_LENGTH)
                     {
@@ -180,7 +179,7 @@ namespace Jifas.Assistant.Services
                         continue;
                     }
 
-                    // Check for injection patterns
+                    // Suggestion juga harus bebas injection pattern.
                     if (ContainsSqlInjectionPattern(trimmed) || ContainsXssPattern(trimmed))
                     {
                         _logger.LogWarning("[InputValidator] Injection pattern detected in suggestion, skipping");
@@ -190,7 +189,7 @@ namespace Jifas.Assistant.Services
                     validSuggestions.Add(trimmed);
                 }
 
-                // Limit to max suggestions (normally 3)
+                // Batasi jumlah suggestion agar UI tetap rapi.
                 if (validSuggestions.Count > ValidationConstants.MAX_SUGGESTIONS)
                 {
                     validSuggestions = validSuggestions.Take(ValidationConstants.MAX_SUGGESTIONS).ToList();
@@ -211,7 +210,7 @@ namespace Jifas.Assistant.Services
             {
                 if (string.IsNullOrWhiteSpace(sessionId))
                 {
-                    return new ValidationResult<string>(false, null, "Session ID cannot be empty");
+                    return new ValidationResult<string>(false, default!, "Session ID cannot be empty");
                 }
 
                 var trimmed = sessionId.Trim();
@@ -219,13 +218,13 @@ namespace Jifas.Assistant.Services
                 if (trimmed.Length < ValidationConstants.MIN_SESSION_ID_LENGTH ||
                     trimmed.Length > ValidationConstants.MAX_SESSION_ID_LENGTH)
                 {
-                    return new ValidationResult<string>(false, null, "Session ID length is invalid");
+                    return new ValidationResult<string>(false, default!, "Session ID length is invalid");
                 }
 
-                // Only allow alphanumeric and hyphens (standard GUID format)
+                // Session id hanya boleh alphanumeric dan hyphen seperti GUID.
                 if (!Regex.IsMatch(trimmed, @"^[a-zA-Z0-9\-]+$"))
                 {
-                    return new ValidationResult<string>(false, null, "Session ID contains invalid characters");
+                    return new ValidationResult<string>(false, default!, "Session ID contains invalid characters");
                 }
 
                 return new ValidationResult<string>(true, trimmed);
@@ -233,7 +232,7 @@ namespace Jifas.Assistant.Services
             catch (Exception ex)
             {
                 _logger.LogError($"[InputValidator] Error validating session ID: {ex.Message}");
-                return new ValidationResult<string>(false, null, "Validation error");
+                return new ValidationResult<string>(false, default!, "Validation error");
             }
         }
 
@@ -243,7 +242,7 @@ namespace Jifas.Assistant.Services
             {
                 if (string.IsNullOrWhiteSpace(userId))
                 {
-                    return new ValidationResult<string>(false, null, "User ID cannot be empty");
+                    return new ValidationResult<string>(false, default!, "User ID cannot be empty");
                 }
 
                 var trimmed = userId.Trim();
@@ -251,14 +250,14 @@ namespace Jifas.Assistant.Services
                 if (trimmed.Length < ValidationConstants.MIN_USER_ID_LENGTH ||
                     trimmed.Length > ValidationConstants.MAX_USER_ID_LENGTH)
                 {
-                    return new ValidationResult<string>(false, null, "User ID length is invalid");
+                    return new ValidationResult<string>(false, default!, "User ID length is invalid");
                 }
 
-                // Check for SQL injection in user ID
+                // User id tetap dicek agar tidak menjadi jalur injection.
                 if (ContainsSqlInjectionPattern(trimmed))
                 {
                     _logger.LogWarning("[InputValidator] SQL injection pattern in user ID");
-                    return new ValidationResult<string>(false, null, "User ID contains invalid content");
+                    return new ValidationResult<string>(false, default!, "User ID contains invalid content");
                 }
 
                 return new ValidationResult<string>(true, trimmed);
@@ -266,7 +265,7 @@ namespace Jifas.Assistant.Services
             catch (Exception ex)
             {
                 _logger.LogError($"[InputValidator] Error validating user ID: {ex.Message}");
-                return new ValidationResult<string>(false, null, "Validation error");
+                return new ValidationResult<string>(false, default!, "Validation error");
             }
         }
 

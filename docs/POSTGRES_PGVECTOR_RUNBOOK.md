@@ -1,54 +1,74 @@
 # PostgreSQL pgvector Runbook
 
-## Start Database
+## Tujuan
+
+JIFAS Assistant memakai PostgreSQL `pgvector` sebagai database utama dan semantic-search store. Container yang dipakai adalah `pgvector/pgvector:pg16` melalui `docker-compose.yml`.
+
+## Komponen
+
+- Service: `jifas-postgres`
+- Database default: `jifas_assistant`
+- User default lokal: `jifas`
+- Port lokal: `5432`
+- Extension wajib: `vector`
+- Data volume: `postgres_data`
+
+## Konfigurasi
+
+Secret dan connection string production tidak disimpan di repo. Gunakan `.env.docker.local` atau secret manager.
 
 ```powershell
-docker compose up -d jifas-postgres
-docker compose ps jifas-postgres
+POSTGRES_PASSWORD=<strong-password>
+ConnectionStrings__DefaultConnection=Host=jifas-postgres;Port=5432;Database=jifas_assistant;Username=jifas;Password=<strong-password>
 ```
 
-The compose service uses `pgvector/pgvector:pg16` and creates:
+## Operasi Harian
 
-- Database: `jifas_assistant`
-- User: `jifas`
-- Default local password: `jifas_dev_password`
-- Port: `5432`
-
-Override these through `.env` before starting Docker.
-
-## Run API Locally
+Start stack:
 
 ```powershell
-dotnet run --project Jifas.Assistant
+powershell -ExecutionPolicy Bypass -File scripts\Start-DockerStack.ps1
 ```
 
-On startup the API ensures the `vector` extension exists, creates the schema when needed, and adds the `EmbeddingVector` column.
-
-The current embedding model returns 2560-dimensional vectors. pgvector can store and search these vectors, but HNSW indexes are limited to 2000 dimensions for `vector`, so this project uses exact pgvector cosine search for now.
-
-## Reindex Knowledge Base
+Cek health:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/ReindexKnowledgeBase.ps1
+docker ps --filter name=jifas
+docker exec jifas-postgres pg_isready -U jifas -d jifas_assistant
 ```
 
-The reindex script calls `KBLoader` and writes both:
-
-- `Embedding`: JSON fallback embedding storage
-- `EmbeddingVector`: pgvector column used by PostgreSQL cosine search
-
-## Smoke Checks
+Cek extension:
 
 ```powershell
-Invoke-RestMethod http://localhost:5000/health
-Invoke-RestMethod http://localhost:5000/api/chat/health
-Invoke-RestMethod http://localhost:5000/api/KnowledgeBaseSearch/health
+docker exec jifas-postgres psql -U jifas -d jifas_assistant -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
 ```
 
-## Golden Evaluation
+## Startup dan Migration
+
+Aplikasi menjalankan bootstrap PostgreSQL/pgvector dari script resmi:
+
+- `Jifas.Assistant/Database/Initialize-PostgresPgvector.sql`
+
+Script ini ikut `dotnet publish` dan dieksekusi saat startup Docker. Isinya idempotent:
+
+- `CREATE EXTENSION IF NOT EXISTS vector;`
+- tabel runtime utama jika database baru masih kosong;
+- kolom `EmbeddingVector vector(2560)`;
+- foreign key dan index penting untuk KB, chat history, monitoring, dan user memory.
+
+Setelah script bootstrap, aplikasi tetap mencoba `Database.Migrate()` jika migration EF tersedia.
+
+Jangan menghapus volume `postgres_data` kecuali sedang reset environment lokal.
+
+## Backup Lokal
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/Run-GoldenEvaluation.ps1 -BaseUrl http://localhost:5000
+docker exec jifas-postgres pg_dump -U jifas -d jifas_assistant > backup-jifas-assistant.sql
 ```
 
-The output JSON is written to `golden-evaluation-results.json` by default. Treat this as a local test artifact and avoid committing result files unless a report is explicitly needed.
+## Troubleshooting
+
+- API gagal start: cek `ConnectionStrings__DefaultConnection`.
+- Semantic search lambat: cek jumlah chunk dan apakah embedding sudah terisi.
+- Extension vector tidak ada: jalankan ulang stack dan cek log API.
+- Database corrupt/reset lokal: stop stack, backup dulu, baru hapus volume jika memang perlu.

@@ -17,23 +17,23 @@ namespace Jifas.Assistant.Services
     {
         public int Id { get; set; }
         public int DocumentId { get; set; }
-        public string Title { get; set; }
-        public string Content { get; set; }
-        public string Category { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
         public int ChunkIndex { get; set; }
         public double RelevanceScore { get; set; }
     }
 
     public interface IKnowledgeBaseSearchService
     {
-        Task<List<KnowledgeBaseChunkDto>> SearchByKeywordAsync(string query, int topK = 5, string correlationId = null);
-        Task<List<KnowledgeBaseChunkDto>> SearchBySemanticAsync(float[] embedding, int topK = 5, string correlationId = null);
-        Task<List<KnowledgeBaseChunkDto>> SearchAsync(string query, float[] embedding = null, int topK = 5, string correlationId = null);
+        Task<List<KnowledgeBaseChunkDto>> SearchByKeywordAsync(string query, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
+        Task<List<KnowledgeBaseChunkDto>> SearchBySemanticAsync(float[]? embedding, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
+        Task<List<KnowledgeBaseChunkDto>> SearchAsync(string query, float[]? embedding = null, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
     }
 
     public class KnowledgeBaseSearchService : IKnowledgeBaseSearchService
     {
-        private readonly JIFAS_AssistantContext _db;
+        private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
         private readonly ILoggerService _logger;
         private readonly ICacheService _cacheService;
         private const int KB_CACHE_MINUTES = 30;
@@ -44,7 +44,7 @@ namespace Jifas.Assistant.Services
         private static readonly TimeSpan EmbeddingCacheTtl = TimeSpan.FromMinutes(10);
         private static readonly SemaphoreSlim EmbeddingCacheLoadLock = new(1, 1);
 
-        // Internal static caches exposed for diagnostics and the warmup service.
+        // Cache static ini dipakai warmup service agar semantic search tidak selalu decode embedding dari DB.
         internal static ConcurrentDictionary<int, float[]> EmbeddingCache => _embeddingCache;
         internal static ConcurrentDictionary<int, KnowledgeBaseChunkDto> MetadataCache => _metadataCache;
 
@@ -57,14 +57,14 @@ namespace Jifas.Assistant.Services
             _lastEmbeddingCacheRefreshUtc = DateTime.UtcNow;
         }
 
-        public KnowledgeBaseSearchService(JIFAS_AssistantContext db, ILoggerService logger, ICacheService cacheService)
+        public KnowledgeBaseSearchService(IDbContextFactory<JIFAS_AssistantContext> dbFactory, ILoggerService logger, ICacheService cacheService)
         {
-            _db = db;
+            _dbFactory = dbFactory;
             _logger = logger;
             _cacheService = cacheService;
         }
 
-        // Common stopwords that carry no domain meaning
+        // Stopword umum yang tidak membantu pencarian domain JIFAS.
         private static readonly HashSet<string> _stopwords = new(StringComparer.OrdinalIgnoreCase)
         {
             "apa","itu","ini","yang","dan","ke","di","dari","untuk","dengan","adalah","ada",
@@ -73,11 +73,12 @@ namespace Jifas.Assistant.Services
             "the","is","are","what","how","why","when","where","who","can","please","help"
         };
 
-        public async Task<List<KnowledgeBaseChunkDto>> SearchByKeywordAsync(string query, int topK = 5, string correlationId = null)
+        public async Task<List<KnowledgeBaseChunkDto>> SearchByKeywordAsync(string query, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var logMsg = string.IsNullOrEmpty(correlationId) 
                     ? $"[KnowledgeBaseSearchService] Keyword search: {query}"
                     : $"[{correlationId}] Keyword search: {query}";
@@ -86,19 +87,20 @@ namespace Jifas.Assistant.Services
                 var allKeywords = query.ToLower()
                     .Split(new[] { ' ', '?', '!', ',', '.', ';', ':' }, StringSplitOptions.RemoveEmptyEntries);
 
-                // Prefer meaningful keywords (non-stopwords), fall back to all keywords
+                // Utamakan keyword bermakna; jika habis, fallback ke semua token.
                 var meaningfulKeywords = allKeywords.Where(k => !_stopwords.Contains(k) && k.Length > 2).ToArray();
                 var keywords = meaningfulKeywords.Length > 0 ? meaningfulKeywords : allKeywords;
 
                 if (keywords.Length == 0)
                     return new List<KnowledgeBaseChunkDto>();
 
-                // Build SQL-side LIKE filters for each keyword (push filtering to DB, not in-memory)
-                var baseQuery = _db.KnowledgeBaseChunks
+                // Filter LIKE dijalankan di database agar tidak menarik semua chunk ke memory.
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                var baseQuery = db.KnowledgeBaseChunks
                     .Include(c => c.Document)
                     .Where(c => c.Document != null && c.Document.IsActive == true);
 
-                // Use top 3 keywords for SQL LIKE
+                // Batasi tiga keyword pertama agar query SQL tetap ringan.
                 var topKeywords = keywords.Take(3).ToArray();
                 var p0 = $"%{topKeywords[0]}%";
                 var p1 = topKeywords.Length > 1 ? $"%{topKeywords[1]}%" : null;
@@ -111,7 +113,7 @@ namespace Jifas.Assistant.Services
 
                 var matchedChunks = await filteredQuery
                     .Take(topK * 5)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 stopwatch.Stop();
                 if (!string.IsNullOrEmpty(correlationId))
@@ -134,9 +136,9 @@ namespace Jifas.Assistant.Services
                         {
                             Id = c.Id,
                             DocumentId = c.DocumentId,
-                            Title = c.Document?.Title,
-                            Content = c.Content,
-                            Category = c.Document?.Category,
+                            Title = c.Document?.Title ?? string.Empty,
+                            Content = c.Content ?? string.Empty,
+                            Category = c.Document?.Category ?? string.Empty,
                             ChunkIndex = c.ChunkIndex,
                             RelevanceScore = Math.Min(relevanceScore, 1.0)
                         };
@@ -146,6 +148,10 @@ namespace Jifas.Assistant.Services
                     .ToList();
 
                 return results;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -163,11 +169,12 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public async Task<List<KnowledgeBaseChunkDto>> SearchBySemanticAsync(float[] embedding, int topK = 5, string correlationId = null)
+        public async Task<List<KnowledgeBaseChunkDto>> SearchBySemanticAsync(float[]? embedding, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var logMsg = string.IsNullOrEmpty(correlationId)
                     ? $"[KnowledgeBaseSearchService] Semantic search with {embedding?.Length ?? 0}-dim embedding"
                     : $"[{correlationId}] Semantic search with {embedding?.Length ?? 0}-dim embedding";
@@ -176,9 +183,10 @@ namespace Jifas.Assistant.Services
                 if (embedding == null || embedding.Length == 0)
                     return new List<KnowledgeBaseChunkDto>();
 
-                if (_db.Database.IsNpgsql())
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                if (db.Database.IsNpgsql())
                 {
-                    var pgResults = await SearchByPgVectorAsync(embedding, topK);
+                    var pgResults = await SearchByPgVectorAsync(db, embedding, topK, cancellationToken);
                     if (pgResults.Count > 0)
                     {
                         stopwatch.Stop();
@@ -196,12 +204,12 @@ namespace Jifas.Assistant.Services
 
                 if (needsLoad)
                 {
-                    await EmbeddingCacheLoadLock.WaitAsync();
+                    await EmbeddingCacheLoadLock.WaitAsync(cancellationToken);
                     try
                     {
                         if (NeedsEmbeddingCacheLoad())
                         {
-                            await ReloadEmbeddingCacheAsync();
+                            await ReloadEmbeddingCacheAsync(cancellationToken);
                         }
                     }
                     finally
@@ -210,7 +218,7 @@ namespace Jifas.Assistant.Services
                     }
                 }
 
-                // Compute cosine similarity from a stable snapshot of the in-memory cache.
+                // Hitung cosine similarity dari snapshot cache agar aman saat cache direfresh.
                 var embeddingSnapshot = _embeddingCache;
                 var metadataSnapshot = _metadataCache;
 
@@ -235,6 +243,7 @@ namespace Jifas.Assistant.Services
                         };
                     })
                     .Where(r => r != null)
+                    .Select(r => r!)
                     .OrderByDescending(r => r.RelevanceScore)
                     .Take(topK)
                     .ToList();
@@ -246,6 +255,10 @@ namespace Jifas.Assistant.Services
                 }
 
                 return results;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -263,11 +276,13 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public async Task<List<KnowledgeBaseChunkDto>> SearchAsync(string query, float[] embedding = null, int topK = 5, string correlationId = null)
+        public async Task<List<KnowledgeBaseChunkDto>> SearchAsync(string query, float[]? embedding = null, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default)
         {
-            // Check cache for keyword-only searches (semantic results vary)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Cache hanya untuk keyword-only search; semantic search bergantung embedding request.
             var useCache = embedding == null;
-            var cacheKey = useCache ? $"KB_Search_{Utilities.HashHelper.ToShortStableHash(query)}_{topK}" : null;
+            var cacheKey = $"KB_Search_{Utilities.HashHelper.ToShortStableHash(query)}_{topK}";
             if (useCache)
             {
                 var cached = _cacheService.Get<List<KnowledgeBaseChunkDto>>(cacheKey);
@@ -286,16 +301,16 @@ namespace Jifas.Assistant.Services
                     : $"[{correlationId}] Hybrid search: {query}";
                 _logger.LogInformation(logMsg);
 
-                // Hybrid search: keyword + semantic
-                var keywordResults = await SearchByKeywordAsync(query, topK, correlationId);
+                // Hybrid search menggabungkan keyword dan semantic search.
+                var keywordResults = await SearchByKeywordAsync(query, topK, correlationId, cancellationToken);
                 
-                List<KnowledgeBaseChunkDto> semanticResults = null;
+                List<KnowledgeBaseChunkDto>? semanticResults = null;
                 if (embedding != null && embedding.Length > 0)
                 {
-                    semanticResults = await SearchBySemanticAsync(embedding, topK, correlationId);
+                    semanticResults = await SearchBySemanticAsync(embedding, topK, correlationId, cancellationToken);
                 }
 
-                // Merge results dengan deduplication
+                // Gabungkan hasil dengan deduplication berdasarkan chunk id.
                 var mergedResults = new Dictionary<int, KnowledgeBaseChunkDto>();
                 
                 foreach (var result in keywordResults)
@@ -330,13 +345,17 @@ namespace Jifas.Assistant.Services
                     _logger.LogPerformance("KBHybridSearch", totalStopwatch.ElapsedMilliseconds, correlationId);
                 }
 
-                // Cache keyword-only results
+                // Simpan hasil keyword-only ke cache.
                 if (useCache && finalResults.Count > 0)
                 {
                     _cacheService.Set(cacheKey, finalResults, KB_CACHE_MINUTES);
                 }
 
                 return finalResults;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -360,12 +379,13 @@ namespace Jifas.Assistant.Services
                 DateTime.UtcNow - _lastEmbeddingCacheRefreshUtc > EmbeddingCacheTtl;
         }
 
-        private async Task<List<KnowledgeBaseChunkDto>> SearchByPgVectorAsync(float[] embedding, int topK)
+        private async Task<List<KnowledgeBaseChunkDto>> SearchByPgVectorAsync(JIFAS_AssistantContext db, float[] embedding, int topK, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var queryVector = new Vector(embedding);
-                var rows = await _db.KnowledgeBaseChunks
+                var rows = await db.KnowledgeBaseChunks
                     .AsNoTracking()
                     .Where(c => c.Document != null &&
                         c.Document.IsActive == true &&
@@ -382,7 +402,7 @@ namespace Jifas.Assistant.Services
                     })
                     .OrderBy(x => x.Distance)
                     .Take(topK)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 return rows
                     .Where(r => r.Distance <= 0.7)
@@ -398,6 +418,10 @@ namespace Jifas.Assistant.Services
                     })
                     .ToList();
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogWarning("[KnowledgeBaseSearchService] pgvector semantic search failed, falling back to in-memory search: {0}", ex.Message);
@@ -405,13 +429,14 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        private async Task ReloadEmbeddingCacheAsync()
+        private async Task ReloadEmbeddingCacheAsync(CancellationToken cancellationToken = default)
         {
-            var chunks = await _db.KnowledgeBaseChunks
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+            var chunks = await db.KnowledgeBaseChunks
                 .Include(c => c.Document)
                 .Where(c => c.Document != null && c.Document.IsActive == true && c.Embedding != null)
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var embeddings = new Dictionary<int, float[]>();
             var metadata = new Dictionary<int, KnowledgeBaseChunkDto>();
@@ -431,9 +456,9 @@ namespace Jifas.Assistant.Services
                     {
                         Id = c.Id,
                         DocumentId = c.DocumentId,
-                        Title = c.Document?.Title,
-                        Content = c.Content,
-                        Category = c.Document?.Category,
+                        Title = c.Document?.Title ?? string.Empty,
+                        Content = c.Content ?? string.Empty,
+                        Category = c.Document?.Category ?? string.Empty,
                         ChunkIndex = c.ChunkIndex
                     };
                 }

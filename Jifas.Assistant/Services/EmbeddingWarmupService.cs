@@ -71,9 +71,9 @@ namespace Jifas.Assistant.Services
                                 {
                                     Id = chunk.Id,
                                     DocumentId = chunk.DocumentId,
-                                    Title = chunk.Document?.Title,
-                                    Content = chunk.Content,
-                                    Category = chunk.Document?.Category,
+                                    Title = chunk.Document?.Title ?? string.Empty,
+                                    Content = chunk.Content ?? string.Empty,
+                                    Category = chunk.Document?.Category ?? "General",
                                     ChunkIndex = chunk.ChunkIndex
                                 };
                                 loaded++;

@@ -70,7 +70,7 @@ public class MonitoringController : ControllerBase
         return Ok(stats);
     }
 
-    /// <summary>All data in one call — used by dashboard on initial load.</summary>
+    /// <summary>Semua data dashboard dalam satu request agar initial load lebih ringan.</summary>
     [HttpGet("all")]
     public async Task<IActionResult> GetAll([FromQuery] int minutes = 60)
     {
@@ -100,7 +100,7 @@ public class MonitoringController : ControllerBase
         return Ok(new { stats, logs, timeSeries, quality });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // Helper normalisasi tanggal agar browser selalu membaca waktu sebagai UTC.
 
     private static AiUsageLog NormalizeLogDates(AiUsageLog l)
     {

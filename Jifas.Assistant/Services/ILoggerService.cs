@@ -3,42 +3,39 @@ using System;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Interface for application logging
-    /// Abstraction for logging provider (Serilog, NLog, etc.)
-    /// Supports structured logging with correlation tracking
+    /// Kontrak logging aplikasi.
+    /// Service ini menjaga format log, correlation id, audit trail, dan performance metrics tetap konsisten.
     /// </summary>
     public interface ILoggerService
     {
         void LogInformation(string message, params object[] args);
         void LogWarning(string message, params object[] args);
-        void LogError(string message, Exception ex = null, params object[] args);
+        void LogError(string message, Exception? ex = null, params object[] args);
         void LogDebug(string message, params object[] args);
 
         /// <summary>
-        /// Log with correlation ID for request tracing through the system
+        /// Catat log informasi dengan correlation id untuk tracing request.
         /// </summary>
         void LogInformationWithCorrelation(string correlationId, string message, params object[] args);
         
         /// <summary>
-        /// Log warning with correlation ID for tracking
+        /// Catat warning dengan correlation id.
         /// </summary>
         void LogWarningWithCorrelation(string correlationId, string message, params object[] args);
         
         /// <summary>
-        /// Log error with correlation ID for request tracking
+        /// Catat error dengan correlation id.
         /// </summary>
-        void LogErrorWithCorrelation(string correlationId, string message, Exception ex = null, params object[] args);
+        void LogErrorWithCorrelation(string correlationId, string message, Exception? ex = null, params object[] args);
 
         /// <summary>
-        /// Log audit trail event (user action tracking)
-        /// Includes user, action, timestamp, and any relevant context
+        /// Catat audit trail untuk aksi user.
         /// </summary>
-        void LogAudit(string userId, string action, string details, string correlationId = null);
+        void LogAudit(string userId, string action, string details, string? correlationId = null);
 
         /// <summary>
-        /// Log performance metric
-        /// Tracks timing information for monitoring and optimization
+        /// Catat durasi operasi untuk monitoring performa.
         /// </summary>
-        void LogPerformance(string operation, long milliseconds, string correlationId = null);
+        void LogPerformance(string operation, long milliseconds, string? correlationId = null);
     }
 }

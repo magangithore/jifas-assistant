@@ -15,16 +15,16 @@ namespace Jifas.Assistant.Services;
 /// </summary>
 public class MonitoringService : IMonitoringService
 {
-    private readonly JIFAS_AssistantContext _db;
+    private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
     private readonly IHubContext<MonitoringHub> _hub;
     private readonly ILoggerService _logger;
 
     public MonitoringService(
-        JIFAS_AssistantContext db,
+        IDbContextFactory<JIFAS_AssistantContext> dbFactory,
         IHubContext<MonitoringHub> hub,
         ILoggerService logger)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _hub = hub;
         _logger = logger;
     }
@@ -62,8 +62,9 @@ public class MonitoringService : IMonitoringService
                 CreatedAt            = m.CreatedAt
             };
 
-            _db.AiUsageLogs.Add(log);
-            await _db.SaveChangesAsync();
+            await using var db = await _dbFactory.CreateDbContextAsync();
+            db.AiUsageLogs.Add(log);
+            await db.SaveChangesAsync();
 
             // Broadcast to all connected dashboard clients
             await _hub.Clients.All.SendAsync("NewMetric", new
@@ -103,7 +104,8 @@ public class MonitoringService : IMonitoringService
     public async Task<MonitoringStats> GetStatsAsync(int lastMinutes = 60)
     {
         var since = DateTime.UtcNow.AddMinutes(-lastMinutes);
-        var logs  = await _db.AiUsageLogs
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var logs  = await db.AiUsageLogs
             .Where(l => l.CreatedAt >= since)
             .ToListAsync();
 
@@ -131,7 +133,8 @@ public class MonitoringService : IMonitoringService
 
     public async Task<List<AiUsageLog>> GetRecentLogsAsync(int count = 100)
     {
-        return await _db.AiUsageLogs
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.AiUsageLogs
             .OrderByDescending(l => l.CreatedAt)
             .Take(count)
             .ToListAsync();
@@ -142,7 +145,8 @@ public class MonitoringService : IMonitoringService
     public async Task<List<TimeSeriesPoint>> GetTimeSeriesAsync(int lastMinutes = 60)
     {
         var since = DateTime.UtcNow.AddMinutes(-lastMinutes);
-        var logs  = await _db.AiUsageLogs
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var logs  = await db.AiUsageLogs
             .Where(l => l.CreatedAt >= since)
             .ToListAsync();
 
@@ -162,7 +166,8 @@ public class MonitoringService : IMonitoringService
     public async Task<QualityMonitoringStats> GetQualityStatsAsync(int lastMinutes = 60, int slowThresholdMs = 30000)
     {
         var since = DateTime.UtcNow.AddMinutes(-lastMinutes);
-        var chats = await _db.ChatHistories
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var chats = await db.ChatHistories
             .AsNoTracking()
             .Where(c => c.CreatedAt >= since)
             .ToListAsync();

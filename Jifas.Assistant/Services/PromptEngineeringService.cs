@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using jifas_assistant.DAL.Models;
@@ -9,11 +10,11 @@ using jifas_assistant.DAL.Models;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Result of context analysis
+    /// Hasil analisis konteks dari hasil pencarian Knowledge Base.
     /// </summary>
     public class ContextAnalysisResult
     {
-        public string UserQuery { get; set; }
+        public string UserQuery { get; set; } = string.Empty;
         public int ResultCount { get; set; }
         public double AverageRelevance { get; set; }
         public int OverallRelevance { get; set; }
@@ -21,21 +22,20 @@ namespace Jifas.Assistant.Services
         public bool IsExactMatch { get; set; }
         public bool IsPartialMatch { get; set; }
         public bool IsWeakMatch { get; set; }
-        public string MatchType { get; set; }
+        public string MatchType { get; set; } = string.Empty;
         public List<string> MissingContext { get; set; } = new List<string>();
     }
 
     /// <summary>
-    /// Advanced prompt engineering service for JIFAS AI Assistant
-    /// Creates intelligent, context-aware prompts that guide Ollama to find answers
-    /// This is NOT hardcoded - it analyzes KB content and builds dynamic prompts
+    /// Service pembentuk prompt AI.
+    /// Prompt dibuat dinamis dari query user, hasil KB, dan konteks session.
     /// </summary>
     public interface IPromptEngineeringService
     {
         /// <summary>
         /// Build intelligent prompt based on KB results and user query
         /// </summary>
-        Task<string> BuildIntelligentPromptAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string sessionContext = null);
+        Task<string> BuildIntelligentPromptAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null);
 
         /// <summary>
         /// Generate context-aware system prompt dynamically
@@ -86,7 +86,7 @@ namespace Jifas.Assistant.Services
         /// Improvement #9: Error message context enrichment
         /// Improvement #10: Semantic chunking refinement
         /// </summary>
-        public async Task<string> BuildIntelligentPromptAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string sessionContext = null)
+        public async Task<string> BuildIntelligentPromptAsync(string userQuery, List<KnowledgeBaseResult> kbResults, string? sessionContext = null)
         {
             try
             {
@@ -111,9 +111,7 @@ namespace Jifas.Assistant.Services
 
                 // Parse active page context only for the compact pipe-delimited page format.
                 // Full context packs are already rendered and should stay in the main context.
-                var activePageContext = LooksLikeActivePageContext(sessionContext)
-                    ? BuildActivePageContextSection(sessionContext)
-                    : string.Empty;
+                var activePageContext = BuildActivePageContextSection(sessionContext);
 
                 var confidenceLevel = contextAnalysis.OverallRelevance >= 80 ? "TINGGI" : 
                                      contextAnalysis.OverallRelevance >= 60 ? "SEDANG" : "RENDAH";
@@ -144,6 +142,8 @@ INSTRUKSI FINAL:
 - Relevansi RENDAH: Jujur bahwa info terbatas, sarankan hubungi IT Help Desk
 - Jika ada konteks halaman aktif di atas, prioritaskan jawaban yang relevan dengan halaman tersebut
 - Format: Natural, spesifik, actionable. Gunakan bullet/numbering untuk langkah-langkah.
+- Akhiri jawaban dengan 1 kalimat lanjutan yang natural, misalnya langkah berikutnya atau pertanyaan klarifikasi yang relevan.
+- Jangan membuat daftar ""suggestion"" terpisah; lanjutan percakapan harus menyatu di jawaban utama.
 
 JAWABAN:";
 
@@ -166,10 +166,19 @@ JAWABAN:";
 
             try
             {
-                var parts = sessionContext.Split('|', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(p => p.Split(':', 2))
-                    .Where(p => p.Length == 2)
-                    .ToDictionary(p => p[0].Trim(), p => p[1].Trim());
+                var parts = Regex.Matches(
+                        sessionContext,
+                        @"(?<key>PAGE|MODULE|TITLE|DOC|DOCTYPE|STATUS):(?<value>[^|\r\n]+)",
+                        RegexOptions.IgnoreCase)
+                    .Cast<Match>()
+                    .GroupBy(m => m.Groups["key"].Value.ToUpperInvariant())
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.First().Groups["value"].Value.Trim(),
+                        StringComparer.OrdinalIgnoreCase);
+
+                if (parts.Count == 0)
+                    return string.Empty;
 
                 var sb = new StringBuilder();
                 sb.AppendLine("=== KONTEKS HALAMAN AKTIF USER ===");
@@ -188,6 +197,7 @@ JAWABAN:";
                     sb.AppendLine($"Status dokumen: {status}");
 
                 sb.AppendLine("CATATAN: Prioritaskan jawaban yang relevan dengan konteks halaman di atas!");
+                sb.AppendLine("Jika user bertanya sedang di halaman apa, jawab dari PAGE/MODULE/TITLE ini. Jangan menebak halaman Home atau dashboard jika context berbeda.");
                 sb.AppendLine("=== END KONTEKS ===");
 
                 return sb.ToString();
@@ -203,11 +213,11 @@ JAWABAN:";
             if (string.IsNullOrWhiteSpace(sessionContext))
                 return false;
 
-            if (sessionContext.Contains("=== CONTEXT PACK ===", StringComparison.OrdinalIgnoreCase))
-                return false;
-
             var trimmed = sessionContext.TrimStart();
-            return trimmed.StartsWith("PAGE:", StringComparison.OrdinalIgnoreCase)
+            return sessionContext.Contains("PAGE:", StringComparison.OrdinalIgnoreCase)
+                || sessionContext.Contains("MODULE:", StringComparison.OrdinalIgnoreCase)
+                || sessionContext.Contains("TITLE:", StringComparison.OrdinalIgnoreCase)
+                || trimmed.StartsWith("PAGE:", StringComparison.OrdinalIgnoreCase)
                 || trimmed.StartsWith("MODULE:", StringComparison.OrdinalIgnoreCase)
                 || trimmed.StartsWith("TITLE:", StringComparison.OrdinalIgnoreCase)
                 || trimmed.StartsWith("DOC:", StringComparison.OrdinalIgnoreCase)
@@ -293,16 +303,17 @@ JAWABAN:";
                 }
                 sb.AppendLine();
 
-                // Precision rules � non-negotiable
+                // Aturan presisi ini menjaga jawaban tetap grounded dan siap dipakai user bisnis.
                 sb.AppendLine("ATURAN WAJIB:");
-                sb.AppendLine("? Confidence TINGGI: jawab lengkap dan percaya diri dari KB");
-                sb.AppendLine("? Confidence SEDANG: jawab dengan info yang ada, tambahkan catatan jika kurang");
-                sb.AppendLine("? Confidence RENDAH: jujur bahwa informasi terbatas, sarankan hubungi IT Help Desk");
-                sb.AppendLine("? JANGAN mengarang info yang tidak ada di KB");
-                sb.AppendLine("? JANGAN ulangi pertanyaan user di awal jawaban");
-                sb.AppendLine("? JANGAN tambahkan disclaimer panjang yang tidak perlu");
+                sb.AppendLine("- Confidence TINGGI: jawab lengkap dan percaya diri dari informasi yang tersedia");
+                sb.AppendLine("- Confidence SEDANG: jawab dengan info yang ada, tambahkan catatan jika kurang");
+                sb.AppendLine("- Confidence RENDAH: jujur bahwa informasi terbatas, sarankan hubungi IT Help Desk");
+                sb.AppendLine("- JANGAN mengarang info yang tidak ada di referensi");
+                sb.AppendLine("- JANGAN ulangi pertanyaan user di awal jawaban");
+                sb.AppendLine("- JANGAN tambahkan disclaimer panjang yang tidak perlu");
+                sb.AppendLine("- Akhiri dengan 1 kalimat lanjutan natural di dalam jawaban utama, bukan suggestion terpisah.");
                 sb.AppendLine();
-                sb.AppendLine("Eskalasi jika perlu: IT Help Desk ? it@jababeka.com");
+                sb.AppendLine("Eskalasi jika perlu: IT Help Desk - it@jababeka.com");
 
                 return sb.ToString();
             }
@@ -384,7 +395,7 @@ JAWABAN:";
         /// Improvement #1: Semantic chunking optimization - groups by document boundaries
         /// Improvement #10: Refinement with optimal chunk size (600 words/section)
         /// </summary>
-        private string BuildOptimizedMainPrompt(string userQuery, List<KnowledgeBaseResult> kbResults, ContextAnalysisResult analysis, string sessionContext)
+        private string BuildOptimizedMainPrompt(string userQuery, List<KnowledgeBaseResult> kbResults, ContextAnalysisResult analysis, string? sessionContext)
         {
             var promptBuilder = new StringBuilder();
 
@@ -653,7 +664,7 @@ Untuk memberikan jawaban yang lebih akurat, saya perlu klarifikasi:
 Silakan jelaskan lebih detail agar saya dapat memberikan jawaban yang tepat.";
             }
 
-            return null;
+            return string.Empty;
         }
 
         /// <summary>

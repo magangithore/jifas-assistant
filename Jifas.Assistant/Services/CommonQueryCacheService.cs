@@ -7,16 +7,15 @@ using Newtonsoft.Json;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Option 1 Optimization: Common Query Cache Service
-    /// Loads common queries from external JSON file (not hardcoded)
-    /// Makes it easy to add/update cached queries without code changes
+    /// Cache untuk pertanyaan umum yang jawabannya statis.
+    /// Data diambil dari file JSON agar bisa diubah tanpa compile ulang.
     /// </summary>
     public interface ICommonQueryCacheService
     {
         /// <summary>
         /// Get cached response for a common query
         /// </summary>
-        string GetCachedResponse(string normalizedQuery);
+        string? GetCachedResponse(string normalizedQuery);
 
         /// <summary>
         /// Get all cached queries
@@ -34,7 +33,7 @@ namespace Jifas.Assistant.Services
         private Dictionary<string, string> _cachedQueries;
         private readonly string _cacheFilePath;
         private DateTime _lastLoadTime;
-        private const int RELOAD_INTERVAL_MINUTES = 60; // Reload cache every hour
+        private const int RELOAD_INTERVAL_MINUTES = 60; // Reload cache setiap 1 jam
 
         public CommonQueryCacheService()
         {
@@ -42,15 +41,15 @@ namespace Jifas.Assistant.Services
             _cachedQueries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             _lastLoadTime = DateTime.MinValue;
             
-            // Load cache on initialization
+            // Muat cache saat service pertama kali dibuat.
             ReloadCache();
         }
 
-        public string GetCachedResponse(string normalizedQuery)
+        public string? GetCachedResponse(string normalizedQuery)
         {
             try
             {
-                // Check if cache needs reload (hourly)
+                // Refresh otomatis supaya perubahan file JSON ikut terbaca.
                 if ((DateTime.Now - _lastLoadTime).TotalMinutes > RELOAD_INTERVAL_MINUTES)
                 {
                     ReloadCache();
@@ -59,14 +58,14 @@ namespace Jifas.Assistant.Services
                 if (string.IsNullOrWhiteSpace(normalizedQuery))
                     return null;
 
-                // Try exact match first
+                // Cocokkan exact match terlebih dahulu.
                 if (_cachedQueries.ContainsKey(normalizedQuery))
                 {
                     System.Diagnostics.Debug.WriteLine($"[CommonQueryCache] Exact match found for: {normalizedQuery}");
                     return _cachedQueries[normalizedQuery];
                 }
 
-                // Try case-insensitive lookup
+                // Fallback: cocokkan tanpa peduli huruf besar/kecil.
                 foreach (var kvp in _cachedQueries)
                 {
                     if (kvp.Key.Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
@@ -87,7 +86,7 @@ namespace Jifas.Assistant.Services
 
         public Dictionary<string, string> GetAllCachedQueries()
         {
-            // Check if reload needed
+            // Refresh otomatis jika file sudah lama tidak dibaca.
             if ((DateTime.Now - _lastLoadTime).TotalMinutes > RELOAD_INTERVAL_MINUTES)
             {
                 ReloadCache();
@@ -117,7 +116,7 @@ namespace Jifas.Assistant.Services
 
                 _cachedQueries.Clear();
 
-                // Load queries into dictionary
+                // Masukkan query ke dictionary dengan key yang sudah dinormalisasi.
                 foreach (var query in data.CommonQueries)
                 {
                     if (!string.IsNullOrWhiteSpace(query.Key) && !string.IsNullOrWhiteSpace(query.Response))
@@ -138,39 +137,39 @@ namespace Jifas.Assistant.Services
 
         private string GetCacheFilePath()
         {
-            // For ASP.NET Core - use content root path
+            // Pakai content root ASP.NET Core sebagai base path.
             var basePath = Directory.GetCurrentDirectory();
             
-            // Try Data folder first (production style)
+            // Prioritas folder Data untuk deployment production.
             var appDataPath = Path.Combine(basePath, "Data", "CommonQueries.json");
             if (File.Exists(appDataPath))
                 return appDataPath;
 
-            // Fallback: wwwroot/Data (for development)
+            // Fallback untuk development lama yang menyimpan data di wwwroot.
             var wwwrootPath = Path.Combine(basePath, "wwwroot", "Data", "CommonQueries.json");
             if (File.Exists(wwwrootPath))
                 return wwwrootPath;
 
-            // Return default path (will show warning if not exists)
+            // Return default agar warning path tetap jelas jika file belum ada.
             return appDataPath;
         }
 
         /// <summary>
-        /// Internal DTO for deserializing JSON
+        /// DTO internal untuk deserialisasi CommonQueries.json.
         /// </summary>
         private class CommonQueriesData
         {
             [JsonProperty("commonQueries")]
-            public List<CommonQueryItem> CommonQueries { get; set; }
+            public List<CommonQueryItem> CommonQueries { get; set; } = new();
         }
 
         private class CommonQueryItem
         {
             [JsonProperty("key")]
-            public string Key { get; set; }
+            public string Key { get; set; } = string.Empty;
 
             [JsonProperty("response")]
-            public string Response { get; set; }
+            public string Response { get; set; } = string.Empty;
         }
     }
 }

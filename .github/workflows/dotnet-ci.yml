@@ -30,5 +30,6 @@ jobs:
       - name: Test
         run: dotnet test --no-build --verbosity normal
 
-      - name: Validate Docker Compose
-        run: docker compose config
+      - name: Production readiness gate
+        shell: pwsh
+        run: ./scripts/Test-ProductionReadiness.ps1 -SkipDotNet

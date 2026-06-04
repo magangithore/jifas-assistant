@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -40,18 +41,20 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Generate embedding (vector) dari text menggunakan Ollama
         /// </summary>
-        public async Task<byte[]> GenerateEmbeddingAsync(string text)
+        public async Task<byte[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     _logger.LogWarning("Text kosong untuk embedding");
-                    return null;
+                    return Array.Empty<byte>();
                 }
 
-                var embeddings = await GenerateEmbeddingsAsync(new[] { text });
-                return embeddings?.FirstOrDefault();
+                var embeddings = await GenerateEmbeddingsAsync(new[] { text }, cancellationToken);
+                return embeddings.FirstOrDefault() ?? Array.Empty<byte>();
             }
             catch (Exception ex)
             {
@@ -63,10 +66,12 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Generate multiple embeddings sekaligus
         /// </summary>
-        public async Task<byte[][]> GenerateEmbeddingsAsync(string[] texts)
+        public async Task<byte[][]> GenerateEmbeddingsAsync(string[] texts, CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (texts == null || texts.Length == 0)
                 {
                     _logger.LogWarning("No texts provided for embedding");
@@ -84,22 +89,22 @@ namespace Jifas.Assistant.Services
                 var json = JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // Set timeout
-                var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_timeoutSeconds));
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
                 _logger.LogDebug($"Calling Ollama embedding API: {url}");
                 _logger.LogDebug($"Model: {_embeddingModel}, Texts count: {texts.Length}");
 
-                var response = await _httpClient.PostAsync(url, content, cts.Token);
+                var response = await _httpClient.PostAsync(url, content, linkedCts.Token);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
+                    var errorContent = await response.Content.ReadAsStringAsync(linkedCts.Token);
                     _logger.LogError($"Ollama API error: {response.StatusCode} - {errorContent}");
                     throw new Exception($"Ollama API returned {response.StatusCode}");
                 }
 
-                var responseContent = await response.Content.ReadAsStringAsync();
+                var responseContent = await response.Content.ReadAsStringAsync(linkedCts.Token);
                 var jsonDocument = JsonDocument.Parse(responseContent);
                 var embeddings = jsonDocument.RootElement.GetProperty("embeddings");
 
@@ -149,11 +154,11 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Generate embedding as float[] for direct use in semantic search
         /// </summary>
-        public async Task<float[]> GenerateEmbeddingAsFloatArrayAsync(string text)
+        public async Task<float[]> GenerateEmbeddingAsFloatArrayAsync(string text, CancellationToken cancellationToken = default)
         {
             try
             {
-                var bytes = await GenerateEmbeddingAsync(text);
+                var bytes = await GenerateEmbeddingAsync(text, cancellationToken);
                 return bytes?.ToFloatArray() ?? Array.Empty<float>();
             }
             catch (Exception ex)

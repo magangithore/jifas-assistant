@@ -32,12 +32,12 @@ public class InputValidatorTests
     {
         public void LogInformation(string message, params object[] args) { }
         public void LogWarning(string message, params object[] args) { }
-        public void LogError(string message, Exception ex = null, params object[] args) { }
+        public void LogError(string message, Exception? ex = null, params object[] args) { }
         public void LogDebug(string message, params object[] args) { }
         public void LogInformationWithCorrelation(string correlationId, string message, params object[] args) { }
         public void LogWarningWithCorrelation(string correlationId, string message, params object[] args) { }
-        public void LogErrorWithCorrelation(string correlationId, string message, Exception ex = null, params object[] args) { }
-        public void LogAudit(string userId, string action, string details, string correlationId = null) { }
-        public void LogPerformance(string operation, long milliseconds, string correlationId = null) { }
+        public void LogErrorWithCorrelation(string correlationId, string message, Exception? ex = null, params object[] args) { }
+        public void LogAudit(string userId, string action, string details, string? correlationId = null) { }
+        public void LogPerformance(string operation, long milliseconds, string? correlationId = null) { }
     }
 }

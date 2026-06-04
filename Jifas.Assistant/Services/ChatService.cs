@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Jifas.Assistant.Models;
@@ -12,13 +13,13 @@ using jifas_assistant.DAL.Models;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Main chat service that orchestrates all JIFAS AI Assistant components
-    /// Enhanced with intelligent query understanding, adaptive confidence, and quality validation
-    /// Strictly knowledge base only - NO general AI responses
+    /// Orchestrator utama chatbot JIFAS.
+    /// Service ini mengatur validasi input, ticket flow, cache, pencarian KB, LLM, dan monitoring.
+    /// Jawaban dibatasi ke konteks JIFAS/Knowledge Base agar AI tidak menjawab topik umum yang tidak relevan.
     /// </summary>
     public interface IChatService
     {
-        Task<ChatResponse> ProcessMessageAsync(ChatRequest request);
+        Task<ChatResponse> ProcessMessageAsync(ChatRequest request, CancellationToken cancellationToken = default);
     }
 
     public class ChatService : IChatService
@@ -26,7 +27,6 @@ namespace Jifas.Assistant.Services
         private readonly IOllamaService _ollamaService;
         private readonly IKnowledgeBaseService _knowledgeBaseService;
         private readonly IOutOfScopeDetector _outOfScopeDetector;
-        private readonly ISuggestionService _suggestionService;
         private readonly ILoggerService _logger;
         private readonly ICacheService _cacheService;
         private readonly IJifasContextService _jifasContextService;
@@ -36,13 +36,12 @@ namespace Jifas.Assistant.Services
         private readonly IInputValidator _inputValidator;
         private readonly IChatHistoryService _chatHistoryService;
         
-        // NEW: Consolidated enhanced services for better AI quality
+        // Service kualitas AI: intent detection, validasi jawaban, memori percakapan, dan context packing.
         private readonly IQueryUnderstandingService _queryUnderstanding;
         private readonly IResponseQualityService _responseQuality;
         private readonly IConversationIntelligenceService _conversationIntelligence;
         private readonly IUserMemoryService _userMemory;
         private readonly IAdaptiveContextPackService _contextPackService;
-        private readonly IMonitoringService _monitoring;
         private readonly IEmbeddingService _embeddingService;
         private readonly ITicketService _ticketService;
 
@@ -53,7 +52,6 @@ namespace Jifas.Assistant.Services
             IOllamaService ollamaService,
             IKnowledgeBaseService knowledgeBaseService,
             IOutOfScopeDetector outOfScopeDetector,
-            ISuggestionService suggestionService,
             ILoggerService logger,
             ICacheService cacheService,
             IJifasContextService jifasContextService,
@@ -67,14 +65,12 @@ namespace Jifas.Assistant.Services
             IConversationIntelligenceService conversationIntelligence,
             IUserMemoryService userMemory,
             IAdaptiveContextPackService contextPackService,
-            IMonitoringService monitoring,
             IEmbeddingService embeddingService,
             ITicketService ticketService)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
             _outOfScopeDetector = outOfScopeDetector;
-            _suggestionService = suggestionService;
             _logger = logger;
             _cacheService = cacheService;
             _jifasContextService = jifasContextService;
@@ -88,33 +84,33 @@ namespace Jifas.Assistant.Services
             _conversationIntelligence = conversationIntelligence ?? throw new ArgumentNullException(nameof(conversationIntelligence));
             _userMemory = userMemory ?? throw new ArgumentNullException(nameof(userMemory));
             _contextPackService = contextPackService ?? throw new ArgumentNullException(nameof(contextPackService));
-            _monitoring = monitoring ?? throw new ArgumentNullException(nameof(monitoring));
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
         }
 
-        public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request)
+        public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request, CancellationToken cancellationToken = default)
         {
-            // ?? START TOTAL TIMER
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Timer total dipakai untuk performance metrics di response dan monitoring.
             var totalStopwatch = Stopwatch.StartNew();
 
-            // ?? GET OR CREATE CORRELATION ID
+            // CorrelationId memudahkan tracing satu request dari log sampai response API.
             var correlationId = request?.CorrelationId ?? Guid.NewGuid().ToString();
 
             var response = new ChatResponse
             {
                 Sender = "JIFAS AI Assistant",
-                Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
                 Success = true,
                 SessionId = request?.SessionId ?? Guid.NewGuid().ToString(),
                 CorrelationId = correlationId
             };
 
-            // ?? INITIALIZE PERFORMANCE METRICS
+            // Metrics diisi bertahap di setiap fase pemrosesan.
             var metrics = new PerformanceMetrics();
 
-            // ?? SET MONITORING CONTEXT EARLY (before any processing)
-            // This ensures all AI calls are tracked with user identity
+            // Context monitoring diset sedini mungkin agar semua call AI punya user/session/module.
             _ollamaService.SetCallContext(
                 userId:       request?.UserId,
                 sessionId:    request?.SessionId,
@@ -123,7 +119,7 @@ namespace Jifas.Assistant.Services
 
             var isFirstMessage = string.IsNullOrWhiteSpace(request?.SessionId);
 
-            // ?? BACKEND DEBUG: Log context from frontend
+            // Log context dari frontend untuk membantu analisis issue company/module/page.
             _logger.LogDebug(
                 $"[ChatService] Processing message — UserId: {request?.UserId}, " +
                 $"IsFirstMessage: {isFirstMessage} (or request field: {request?.IsFirstMessage}), " +
@@ -134,7 +130,7 @@ namespace Jifas.Assistant.Services
             var jifasIntroductionKey = $"JIFAS_Intro_{response.SessionId}";
             var hasSeenIntroduction = _cacheService.Get<bool>(jifasIntroductionKey);
 
-            // ?? STEP 1: VALIDATE INPUT (CRITICAL!)
+            // Step 1: validasi input sebelum menyentuh cache, KB, atau LLM.
             var validationStopwatch = Stopwatch.StartNew();
             var validationResult = _inputValidator.ValidateChatRequest(request);
             validationStopwatch.Stop();
@@ -155,8 +151,8 @@ namespace Jifas.Assistant.Services
                 metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                 response.PerformanceMetrics = metrics;
                 
-                // Save chat history asynchronously
-                await SaveChatHistoryAsync(response, validationResult.ErrorMessage ?? "", request);
+                // Simpan riwayat agar request invalid tetap bisa diaudit.
+                await SaveChatHistoryAsync(response, validationResult.ErrorMessage ?? "", request, cancellationToken);
                 
                 return response;
             }
@@ -165,13 +161,12 @@ namespace Jifas.Assistant.Services
 
             try
             {
-                // ?? CHECK ACTIVE TICKET FLOW (before anything else)
-                // If user is in a ticket creation dialog, route to ticket flow handler
+                // Ticket flow harus diproses lebih dulu karena user sedang berada di dialog pembuatan tiket.
                 if (_ticketService.IsInTicketFlow(response.SessionId))
                 {
                     _logger.LogInformation($"[ChatService] User is in active ticket flow - routing to TicketService");
                     var ticketDialogResult = await _ticketService.HandleTicketDialogAsync(
-                        response.SessionId, request?.UserId ?? "anonymous", userMessage);
+                        response.SessionId, request?.UserId ?? "anonymous", userMessage, cancellationToken: cancellationToken);
 
                     response.Message = ticketDialogResult.Message;
                     response.Source = "Ticket Flow";
@@ -185,22 +180,25 @@ namespace Jifas.Assistant.Services
                         {
                             TicketNumber = ticketDialogResult.Ticket.TicketNumber,
                             Status = ticketDialogResult.Ticket.Status,
-                            Message = ticketDialogResult.Ticket.Message
+                            Message = ticketDialogResult.Ticket.Message,
+                            Url = ticketDialogResult.Ticket.Url
                         };
                     }
 
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
-                // ?? CHECK CACHE
+                // Cache response dicek sebelum KB/LLM agar pertanyaan berulang bisa dijawab cepat dari Redis.
                 var cacheStopwatch = Stopwatch.StartNew();
                 var enableCache = _configuration.GetValue<bool>("Caching:EnableResponseCache");
                 if (enableCache && !string.IsNullOrWhiteSpace(userMessage))
                 {
+                    var cacheScope = BuildResponseCacheScope(userMessage, request);
+                    metrics.CacheScope = cacheScope;
                     var cacheKey = BuildResponseCacheKey(userMessage, request);
                     var cachedResponse = _cacheService.Get<ChatResponse>(cacheKey);
                     cacheStopwatch.Stop();
@@ -208,22 +206,23 @@ namespace Jifas.Assistant.Services
                     
                     if (cachedResponse != null)
                     {
-                        cachedResponse.Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        cachedResponse.Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                         cachedResponse.SessionId = response.SessionId;
                         cachedResponse.CorrelationId = correlationId;
                         cachedResponse.PerformanceMetrics ??= new PerformanceMetrics();
                         cachedResponse.PerformanceMetrics.WasCacheLit = true;
+                        cachedResponse.PerformanceMetrics.CacheScope = cacheScope;
                         cachedResponse.PerformanceMetrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                        _logger.LogInformation($"[ChatService] ?? Response cache HIT - Total: {cachedResponse.PerformanceMetrics.TotalMs}ms | {cachedResponse.PerformanceMetrics.GetSummary()}");
+                        _logger.LogInformation($"[ChatService] Response cache HIT - Total: {cachedResponse.PerformanceMetrics.TotalMs}ms | {cachedResponse.PerformanceMetrics.GetSummary()}");
                         return cachedResponse;
                     }
                 }
 
-                // Show JIFAS introduction on first message if not yet shown
+                // Pesan pertama sesi menampilkan intro JIFAS satu kali per session.
                 if (isFirstMessage && !hasSeenIntroduction)
                 {
                     _logger.LogInformation($"[ChatService] New session detected - showing JIFAS introduction");
-                    await ShowJIFASIntroductionAsync(response);
+                    await ShowJIFASIntroductionAsync(response, cancellationToken);
                     _cacheService.Set(jifasIntroductionKey, true, 24 * 60);
                     
                     totalStopwatch.Stop();
@@ -231,13 +230,13 @@ namespace Jifas.Assistant.Services
                     response.PerformanceMetrics = metrics;
                     _logger.LogInformation($"[INTRO] {metrics.GetSummary()}");
                     
-                    // Save chat history asynchronously
-                    await SaveChatHistoryAsync(response, "[JIFAS Introduction]", request);
+                    // Simpan intro agar histori sesi tetap lengkap.
+                    await SaveChatHistoryAsync(response, "[JIFAS Introduction]", request, cancellationToken);
                     
                     return response;
                 }
 
-                // ?? STEP 2: INTENT CLASSIFICATION (Enhanced)
+                // Step 2: pahami intent dan scope pertanyaan sebelum pencarian KB.
                 var intentStopwatch = Stopwatch.StartNew();
                 var intentResult = await _queryUnderstanding.ClassifyIntentAsync(userMessage);
                 intentStopwatch.Stop();
@@ -250,17 +249,12 @@ namespace Jifas.Assistant.Services
                     response.Source = "Greeting";
                     response.IsFromKnowledgeBase = false;
                     response.Success = true;
-                    response.Suggestions = new List<string>
-                    {
-                        "Bagaimana cara membuat Invoice?",
-                        "Apa itu PUM?",
-                        "Siapa yang bisa approve payment?"
-                    };
+                    response.Suggestions = new List<string>();
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
@@ -275,16 +269,16 @@ namespace Jifas.Assistant.Services
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
-                // ?? STEP 2A.5: TICKET REQUEST DETECTION
+                // Step 2A: deteksi apakah user ingin membuat tiket support.
                 if (intentResult.Intent == IntentType.TicketRequest)
                 {
                     _logger.LogInformation("[ChatService] Ticket request detected - starting ticket flow");
                     var ticketDialogResult = await _ticketService.HandleTicketDialogAsync(
-                        response.SessionId, request?.UserId ?? "anonymous", userMessage);
+                        response.SessionId, request?.UserId ?? "anonymous", userMessage, cancellationToken: cancellationToken);
 
                     response.Message = ticketDialogResult.Message;
                     response.Source = "Ticket Flow";
@@ -298,18 +292,19 @@ namespace Jifas.Assistant.Services
                         {
                             TicketNumber = ticketDialogResult.Ticket.TicketNumber,
                             Status = ticketDialogResult.Ticket.Status,
-                            Message = ticketDialogResult.Ticket.Message
+                            Message = ticketDialogResult.Ticket.Message,
+                            Url = ticketDialogResult.Ticket.Url
                         };
                     }
 
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
-                // ?? STEP 2B: SCOPE DETECTION (Enhanced with Intent)
+                // Step 2B: cek apakah pertanyaan masih berada dalam scope JIFAS.
                 var scopeStopwatch = Stopwatch.StartNew();
                 var scopeCheckResult = await _outOfScopeDetector.CheckScopeAsync(userMessage);
                 scopeStopwatch.Stop();
@@ -321,22 +316,22 @@ namespace Jifas.Assistant.Services
                     response.Message = await GenerateNaturalOutOfScopeResponseAsync(userMessage);
                     response.Source = "Out of Scope";
                     response.IsFromKnowledgeBase = false;
-                    response.Suggestions = await _suggestionService.GenerateSuggestionsAsync(userMessage, response.Message);
+                    response.Suggestions = new List<string>();
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
                     _logger.LogInformation($"[OUT_OF_SCOPE] {metrics.GetSummary()}");
                     
-                    await SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
-                // ?? STEP 2C: QUERY EXPANSION (Enhanced)
+                // Step 2C: perluas query agar pencarian KB menangkap istilah sinonim.
                 var expandedQuery = await _queryUnderstanding.ExpandQueryAsync(userMessage);
                 _logger.LogDebug($"[ChatService] Query expanded: Keywords={expandedQuery.Keywords.Count}, Synonyms={expandedQuery.Synonyms.Count}");
 
-                // ?? STEP 2D: BUILD CONVERSATION CONTEXT
+                // Step 2D: bangun konteks percakapan, halaman aktif, dan memori user.
                 var conversationContext = await _conversationIntelligence.GetFormattedContextAsync(response.SessionId);
                 var isFollowUp = await _conversationIntelligence.IsFollowUpQueryAsync(response.SessionId, userMessage);
                 if (isFollowUp)
@@ -358,14 +353,14 @@ namespace Jifas.Assistant.Services
                     _ollamaService.SetConversationHistory(null);
                 }
 
-                // ?? STEP 3: KNOWLEDGE BASE SEARCH (Hybrid: keyword + semantic)
+                // Step 3: cari Knowledge Base dengan hybrid search keyword + semantic pgvector.
                 var kbSearchStopwatch = Stopwatch.StartNew();
 
                 // Generate query embedding for semantic search
-                float[] queryEmbedding = null;
+                float[]? queryEmbedding = null;
                 try
                 {
-                    queryEmbedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(userMessage);
+                    queryEmbedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(userMessage, cancellationToken);
                     if (queryEmbedding != null && queryEmbedding.Length > 0)
                         _logger.LogInformation($"[ChatService] Generated query embedding: {queryEmbedding.Length} dimensions");
                 }
@@ -375,12 +370,12 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Hybrid search: keyword + semantic embedding
-                var kbResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(userMessage, queryEmbedding, topK: 5);
+                var kbResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(userMessage, queryEmbedding, topK: 5, cancellationToken: cancellationToken);
 
                 // If results are weak, also search with expanded terms
                 if (kbResults == null || kbResults.Count < 2 || (kbResults.Count > 0 && kbResults.Max(r => r.Score) < 0.3))
                 {
-                    var expandedResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(expandedQuery.EnhancedSearchQuery, queryEmbedding, topK: 3);
+                    var expandedResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(expandedQuery.EnhancedSearchQuery, queryEmbedding, topK: 3, cancellationToken: cancellationToken);
                     if (expandedResults != null && expandedResults.Count > 0)
                     {
                         kbResults = MergeKBResults(kbResults ?? new List<KnowledgeBaseResult>(), expandedResults);
@@ -392,9 +387,9 @@ namespace Jifas.Assistant.Services
                 metrics.KbSearchMs = kbSearchStopwatch.ElapsedMilliseconds;
                 metrics.KbResultsBeforeValidation = kbResults?.Count ?? 0;
 
-                // ?? STEP 4: VALIDATE KB RESULTS
+                // Step 4: validasi hasil KB supaya jawaban tidak mengambil sumber yang lemah.
                 var validationStopwatch2 = Stopwatch.StartNew();
-                var validatedResults = ValidateKBResults(kbResults);
+                var validatedResults = ValidateKBResults(kbResults ?? new List<KnowledgeBaseResult>());
                 validationStopwatch2.Stop();
                 metrics.ResultValidationMs = validationStopwatch2.ElapsedMilliseconds;
                 metrics.KbResultsAfterValidation = validatedResults.Count;
@@ -404,7 +399,7 @@ namespace Jifas.Assistant.Services
                     _logger.LogWarning($"[ChatService] KB results validation failed - all results filtered out");
                 }
 
-                // ?? STEP 5: ADAPTIVE CONFIDENCE CALCULATION (Enhanced)
+                // Step 5: hitung confidence adaptif berdasarkan intent, relevance, dan konteks.
                 var confidenceStopwatch = Stopwatch.StartNew();
                 
                 // Calculate adaptive threshold based on intent
@@ -439,7 +434,7 @@ namespace Jifas.Assistant.Services
                     activePageContext,
                     confidenceScore);
 
-                // ?? STEP 5B: HANDLE LOW CONFIDENCE (Enhanced)
+                // Step 5B: tangani low confidence dengan jawaban aman dan arahan support.
                 if (!_responseQuality.ShouldGenerateResponse(confidenceResult))
                 {
                     var llmStopwatch = Stopwatch.StartNew();
@@ -454,7 +449,8 @@ namespace Jifas.Assistant.Services
                             validatedResults,
                             intentResult.Intent,
                             contextPack.FormattedContext,
-                            userId: request?.UserId);
+                            userId: request?.UserId,
+                            cancellationToken: cancellationToken);
                     }
                     else
                     {
@@ -463,7 +459,8 @@ namespace Jifas.Assistant.Services
                             userMessage,
                             intentResult.Intent,
                             contextPack.FormattedContext,
-                            userId: request?.UserId);
+                            userId: request?.UserId,
+                            cancellationToken: cancellationToken);
                     }
                     
                     llmStopwatch.Stop();
@@ -475,11 +472,9 @@ namespace Jifas.Assistant.Services
                     response.ConfidenceScore = confidenceScore;
                     response.KnowledgeBaseResults = validatedResults ?? kbResults ?? new List<KnowledgeBaseResult>();
                     
-                    // Generate relevant suggestions
-                    var suggestionsStopwatch = Stopwatch.StartNew();
-                    response.Suggestions = await GenerateContextualSuggestionsAsync(userMessage, intentResult.Intent, validatedResults);
-                    suggestionsStopwatch.Stop();
-                    metrics.SuggestionsMs = (long)suggestionsStopwatch.Elapsed.TotalMilliseconds;
+                    response.Suggestions = new List<string>();
+                    metrics.SuggestionsMs = 0;
+                    metrics.SuggestionsCached = false;
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
@@ -487,11 +482,11 @@ namespace Jifas.Assistant.Services
                     
                     _logger.LogInformation($"[PARTIAL_RESPONSE] Confidence({confidenceScore:F2}) | {metrics.GetSummary()}");
                     
-                    await SaveChatHistoryAsync(response, userMessage, request);
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
-                // ?? STEP 6: GENERATE KB-BASED RESPONSE (Enhanced with context)
+                // Step 6: generate jawaban berbasis KB dengan konteks yang sudah dipadatkan.
                 var responseStopwatch = Stopwatch.StartNew();
 
                 var aiResponse = await GenerateEnhancedResponseAsync(
@@ -502,11 +497,12 @@ namespace Jifas.Assistant.Services
                     isFollowUp,
                     activePageContext,
                     contextPack.FormattedContext,
-                    userId: request?.UserId);
+                    userId: request?.UserId,
+                    cancellationToken: cancellationToken);
                 responseStopwatch.Stop();
                 metrics.LlmResponseMs = (long)responseStopwatch.Elapsed.TotalMilliseconds;
 
-                // ?? STEP 6B: VALIDATE RESPONSE QUALITY
+                // Step 6B: cek kualitas jawaban sebelum dikirim ke user.
                 var qualityResult = await _responseQuality.ValidateResponseAsync(userMessage, aiResponse, validatedResults);
                 
                 // If quality is poor, try to regenerate once
@@ -514,7 +510,7 @@ namespace Jifas.Assistant.Services
                 {
                     _logger.LogWarning($"[ChatService] Low quality response detected ({qualityResult.OverallScore:P0}), regenerating...");
                     
-                    aiResponse = await RegenerateImprovedResponseAsync(userMessage, validatedResults, intentResult.Intent, qualityResult);
+                    aiResponse = await RegenerateImprovedResponseAsync(userMessage, validatedResults, intentResult.Intent, qualityResult, cancellationToken);
                     
                     // Re-validate
                     qualityResult = await _responseQuality.ValidateResponseAsync(userMessage, aiResponse, validatedResults);
@@ -531,64 +527,17 @@ namespace Jifas.Assistant.Services
                  response.KnowledgeBaseResults = validatedResults;
                  response.Success = true;
 
-                 // ?? STEP 7: GENERATE SUGGESTIONS (with caching)
-                 var suggestionsStopwatch2 = Stopwatch.StartNew();
+                 // Step 7: suggestion terpisah dimatikan untuk produksi.
+                 // Arahan lanjutan sudah diminta di prompt utama agar tidak ada LLM call kedua.
+                 response.Suggestions = new List<string>();
+                 metrics.SuggestionsMs = 0;
+                 metrics.SuggestionsCached = false;
 
-                 // Update callType for suggestions
-                 _ollamaService.SetCallContext(
-                     userId:       request?.UserId,
-                     sessionId:    request?.SessionId,
-                     activeModule: request?.Context?.ActiveModule,
-                     callType:     "suggestions");
-
-                 if (enableCache)
-                 {
-                     var suggestionCacheKey = $"Suggestions_{HashHelper.ToShortStableHash(aiResponse)}";
-                     var cachedResult = _cacheService.Get<List<string>>(suggestionCacheKey);
-
-                     if (cachedResult != null)
-                     {
-                         _logger.LogInformation("[ChatService] ?? Suggestions cache HIT");
-                         response.Suggestions = cachedResult;
-                         metrics.SuggestionsCached = true;
-
-                         // Still record a monitoring entry so the dashboard shows this call
-                         await _monitoring.RecordAsync(new AiCallMetrics
-                         {
-                             UserId              = request?.UserId,
-                             SessionId           = request?.SessionId,
-                             ActiveModule        = request?.Context?.ActiveModule,
-                             CallType            = "suggestions",
-                             Model               = "cache",
-                             PromptTokens        = 0,
-                             CompletionTokens    = 0,
-                             TotalDurationMs     = 0,
-                             ResponseLengthChars = cachedResult.Sum(s => s.Length),
-                             IsError             = false,
-                             CreatedAt           = DateTime.UtcNow
-                         });
-                     }
-                     else
-                     {
-                         var suggestions = await _suggestionService.GenerateSuggestionsAsync(userMessage, aiResponse);
-                         var cacheDuration = _configuration.GetValue<int>("Caching:ResponseCacheDurationHours", 24);
-                         _cacheService.Set(suggestionCacheKey, suggestions, cacheDuration * 60);
-                         response.Suggestions = suggestions;
-                         metrics.SuggestionsCached = false;
-                     }
-                 }
-                 else
-                 {
-                     response.Suggestions = await _suggestionService.GenerateSuggestionsAsync(userMessage, aiResponse);
-                     metrics.SuggestionsCached = false;
-                 }
-                 suggestionsStopwatch2.Stop();
-                 metrics.SuggestionsMs = (long)suggestionsStopwatch2.Elapsed.TotalMilliseconds;
-
-                // ?? STEP 8: CACHE RESPONSE
+                // Step 8: simpan response final ke Redis agar request identik bisa cepat.
                 var cacheStopwatch2 = Stopwatch.StartNew();
                 if (enableCache && response.Success)
                 {
+                    metrics.CacheScope = BuildResponseCacheScope(userMessage, request);
                     var cacheKey = BuildResponseCacheKey(userMessage, request);
                     var cacheDuration = _configuration.GetValue<int>("Caching:ResponseCacheDurationHours", 24);
                     _cacheService.Set(cacheKey, response, cacheDuration * 60);
@@ -601,16 +550,16 @@ namespace Jifas.Assistant.Services
                 response.PerformanceMetrics = metrics;
                 response.CorrelationId = correlationId;
                 
-                // ?? LOG PERFORMANCE METRICS
+                // Catat performance metrics untuk monitoring.
                 _logger.LogPerformance("ChatProcessing", metrics.TotalMs, correlationId);
                 _logger.LogInformationWithCorrelation(correlationId, $"[KB_RESPONSE] {metrics.GetSummary()}");
                 
-                // ?? LOG AUDIT TRAIL
+                // Catat audit trail request berhasil.
                 _logger.LogAudit(request?.UserId ?? "Unknown", "ProcessMessage", 
                     $"Source: {response.Source}, Confidence: {response.ConfidenceScore:F2}", correlationId);
 
                 // Save chat history asynchronously
-                await SaveChatHistoryAsync(response, userMessage, request);
+                await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
 
                 // Update long-term user memory after a successful grounded response.
                 // Pass new fields: isFirstMessage, userCompCode, userEmpCode, userRole, currentModule
@@ -624,24 +573,24 @@ namespace Jifas.Assistant.Services
                     userRole: request?.UserRole,
                     sessionId: response.SessionId);
 
-                // Extract and persist user patterns (Claude Code-inspired memory extraction)
-                // Fire-and-forget: runs after response, does not block user
-                _ = Task.Run(async () =>
+                // Ekstraksi pola user tetap best-effort, tetapi harus awaited agar scoped DbContext
+                // tidak dipakai setelah request selesai dan service scope sudah disposed.
+                try
                 {
-                    try
-                    {
-                        await _userMemory.ExtractAndPersistPatternsAsync(
-                            request?.UserId ?? "anonymous",
-                            userMessage,
-                            aiResponse,
-                            sessionId: response.SessionId);
-                    }
-                    catch { /* pattern extraction is best-effort */ }
-                });
+                    await _userMemory.ExtractAndPersistPatternsAsync(
+                        request?.UserId ?? "anonymous",
+                        userMessage,
+                        aiResponse,
+                        sessionId: response.SessionId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"[ChatService] Pattern extraction skipped: {ex.Message}");
+                }
 
                 _logger.LogDebug(
-                    $"[ChatService] Memory update queued for user: {request?.UserId}, " +
-                    $"Message count incremented, Expertise calc pending");
+                    $"[ChatService] Memory updated for user: {request?.UserId}, " +
+                    $"Message count incremented, Expertise calculated");
 
                 return response;
             }
@@ -653,29 +602,23 @@ namespace Jifas.Assistant.Services
                 response.Source = "Error";
                 response.Success = false;
                 response.CorrelationId = correlationId;
-                response.Errors.Add($"Exception: {ex.GetType().Name}: {ex.Message}");
+                // Detail exception hanya ditulis ke log. Response user cukup membawa correlation id.
+                response.Errors.Add($"Terjadi kesalahan internal. CorrelationId: {correlationId}");
                 
-                try
-                {
-                    response.Suggestions = await _suggestionService.GenerateSuggestionsAsync(userMessage ?? "", response.Message);
-                }
-                catch
-                {
-                    response.Suggestions = new List<string>();
-                }
+                response.Suggestions = new List<string>();
 
                 totalStopwatch.Stop();
                 metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                 response.PerformanceMetrics = metrics;
                 response.CorrelationId = correlationId;
                 
-                // ?? LOG AUDIT TRAIL FOR ERROR
+                // Catat audit trail untuk request yang gagal.
                 _logger.LogAudit(request?.UserId ?? "Unknown", "ProcessMessage_ERROR", 
                     $"{ex.GetType().Name}: {ex.Message}", correlationId);
                 _logger.LogPerformance("ChatProcessing_Error", metrics.TotalMs, correlationId);
                 
                 // Save chat history asynchronously
-                await SaveChatHistoryAsync(response, userMessage ?? "", request);
+                await SaveChatHistoryAsync(response, userMessage ?? "", request, cancellationToken);
                 
                 return response;
             }
@@ -736,7 +679,7 @@ namespace Jifas.Assistant.Services
 
             if (validated.Count < results.Count)
             {
-                _logger.LogInformation($"[ChatService] KB validation: {results.Count} ? {validated.Count} results " +
+                _logger.LogInformation($"[ChatService] KB validation: {results.Count} -> {validated.Count} results " +
                                       $"({results.Count - validated.Count} filtered out)");
             }
 
@@ -744,140 +687,15 @@ namespace Jifas.Assistant.Services
         }
 
         /// <summary>
-        /// Calculate confidence score based on KB results
-        /// FIX #3: More sophisticated calculation taking multiple factors into account
-        /// </summary>
-        private double CalculateKBConfidence(List<KnowledgeBaseResult> results)
-        {
-            if (results == null || results.Count == 0)
-            {
-                return 0.0;
-            }
-
-            // FIX #3: Enhanced multi-factor confidence calculation
-            var topResults = results.Take(3).ToList();
-            
-            // Factor 1: Average relevance score (40% weight)
-            var avgScore = topResults.Average(r => r.Score);
-            
-            // Factor 2: Best match score (30% weight)
-            var maxScore = topResults.Max(r => r.Score);
-            var scoreCeiling = maxScore >= 0.8 ? maxScore : maxScore * 0.9;
-            
-            // Factor 3: Result count diversity (20% weight)
-            var documentDiversity = topResults.Select(r => r.DocumentId).Distinct().Count();
-            var diversityScore = Math.Min(documentDiversity / 3.0, 1.0);
-            
-            // Factor 4: Minimum quality check
-            var hasHighRelevance = topResults.Any(r => r.Score >= 0.75);
-            var qualityBonus = hasHighRelevance ? 0.1 : 0.0;
-            
-            // Factor 5: Result count (10% weight)
-            var resultCountScore = Math.Min(results.Count / 5.0, 1.0);
-            
-            // Composite confidence score (weighted)
-            var confidence = (avgScore * 0.4) +
-                            (scoreCeiling * 0.3) +
-                            (diversityScore * 0.2) +
-                            (resultCountScore * 0.1);
-            
-            // Penalize if no high-relevance match found
-            if (!hasHighRelevance && confidence > 0.65)
-            {
-                confidence *= 0.85; // Reduce confidence by 15% if no strong match
-                _logger.LogWarning($"[ChatService] Confidence reduced due to lack of high-relevance match");
-            }
-
-            // Final confidence capped at 1.0
-            confidence = Math.Min(confidence + qualityBonus, 1.0);
-            
-            _logger.LogDebug($"[ChatService] Confidence calculated - AvgScore: {avgScore:F2}, MaxScore: {maxScore:F2}, " +
-                           $"Diversity: {documentDiversity}, ResultCount: {results.Count}, Final: {confidence:F2}");
-
-            return confidence;
-        }
-
-        /// <summary>
-        /// Generate partial match response using Ollama
-        /// When KB has some results but confidence is borderline
-        /// </summary>
-        private async Task<string> GeneratePartialMatchResponseAsync(string userQuery, List<KnowledgeBaseResult> partialResults)
-        {
-            try
-            {
-                var resultsSummary = string.Join("\n", partialResults.Take(3).Select((r, i) => 
-                    $"{i + 1}. {r.Title} (Relevance: {r.Score:P0})"));
-
-                var prompt = $@"User mengajukan pertanyaan kepada JIFAS AI Assistant dengan hasil pencarian partial match.
-
-Pertanyaan user: ""{userQuery}""
-
-Hasil yang ditemukan:
-{resultsSummary}
-
-Buatlah respons yang:
-1. Sopan dan profesional
-2. Tunjukkan bahwa ada beberapa informasi terkait yang mungkin membantu
-3. Sampaikan hasil yang ditemukan secara natural
-4. Jika hasil tidak 100% sesuai, jelaskan perbedaannya
-5. Sarankan user untuk ulangi pertanyaan atau hubungi IT Help Desk jika masih belum jelas
-6. Gunakan bahasa Indonesia natural dan friendly
-7. Singkat dan to the point
-
-Buatlah respons langsung tanpa penjelasan tambahan.";
-
-                var response = await _ollamaService.CallOllamaApiAsync(prompt);
-                _logger.LogInformation("[ChatService] Generated partial match response");
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"[ChatService] Error generating partial match response: {ex.Message}");
-                return "Saya menemukan beberapa informasi yang mungkin relevan, namun tidak 100% sesuai dengan pertanyaan Anda. Silakan coba reformulasi pertanyaan atau hubungi IT Help Desk untuk bantuan lebih lanjut.";
-            }
-        }
-
-        /// <summary>
-        /// Generate natural no-match response using Ollama
-        /// When KB confidence is too low or no relevant results found
-        /// </summary>
-        private async Task<string> GenerateNoMatchResponseAsync(string userQuery)
-        {
-            try
-            {
-                var prompt = $@"Pertanyaan berikut tidak memiliki kecocokan yang cukup di sistem JIFAS.
-
-Pertanyaan user: ""{userQuery}""
-
-Buatlah respons yang:
-1. Sopan dan profesional
-2. Jelaskan bahwa informasi ini belum tersedia di sistem JIFAS
-3. Sarankan untuk coba pertanyaan lain atau hubungi IT Help Desk
-4. Gunakan bahasa Indonesia natural dan friendly
-5. Singkat (1-2 kalimat saja)
-6. Jangan hardcoded atau terasa robot
-
-Buatlah respons langsung tanpa penjelasan tambahan.";
-
-                var response = await _ollamaService.CallOllamaApiAsync(prompt);
-                _logger.LogInformation("[ChatService] Generated no-match response");
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"[ChatService] Error generating no-match response: {ex.Message}");
-                return "Maaf, saya tidak menemukan informasi yang relevan untuk pertanyaan Anda. Silakan coba pertanyaan lain atau hubungi IT Help Desk.";
-            }
-        }
-
-        /// <summary>
         /// Display AI introduction to JIFAS system on first user message
         /// Generates natural welcome message from Ollama with DYNAMIC system context
         /// </summary>
-        private async Task ShowJIFASIntroductionAsync(ChatResponse response)
+        private async Task ShowJIFASIntroductionAsync(ChatResponse response, CancellationToken cancellationToken)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Get dynamic context dari Knowledge Base files
                 var systemContext = await _kbContextService.GetSystemContextAsync();
 
@@ -897,16 +715,14 @@ Petunjuk pembuatan:
 
 Buatlah respons langsung tanpa penjelasan tambahan.";
 
-                var introMessage = await _ollamaService.CallOllamaApiAsync(prompt);
+                var introMessage = await _ollamaService.CallOllamaApiAsync(prompt, cancellationToken);
 
                 response.Message = introMessage;
                 response.Source = "JIFAS AI Assistant";
                 response.IsFromKnowledgeBase = false;
                 response.Success = true;
                 
-                // Generate dynamic suggestions berdasarkan available topics
-                var availableTopics = await _kbContextService.GetAvailableTopicsAsync();
-                response.Suggestions = GenerateDynamicSuggestions(availableTopics);
+                response.Suggestions = new List<string>();
 
                 _logger.LogInformation("[ChatService] JIFAS introduction displayed with dynamic context");
             }
@@ -917,99 +733,24 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 response.Source = "JIFAS AI Assistant";
                 response.IsFromKnowledgeBase = false;
                 response.Success = true;
-                response.Suggestions = new List<string>
-                {
-                    "Apa itu JIFAS?",
-                    "Bagaimana cara membuat Invoice?",
-                    "Siapa yang bisa approve invoice?"
-                };
-            }
-        }
-
-        /// <summary>
-        /// Generate dynamic suggestions based on available KB topics
-        /// </summary>
-        private List<string> GenerateDynamicSuggestions(List<string> availableTopics)
-        {
-            var suggestions = new List<string>();
-
-            // Create suggestions based on available topics
-            var topicMap = new Dictionary<string, List<string>>
-            {
-                { "Invoice", new List<string> { "Bagaimana cara membuat Invoice?", "Apa saja approval untuk Invoice?" } },
-                { "Receiving", new List<string> { "Bagaimana proses Receiving barang?", "Apa itu RV dan cara pembuatannya?" } },
-                { "Payment", new List<string> { "Bagaimana cara membuat Payment?", "Apa perbedaan Transfer dan BG?" } },
-                { "Pum", new List<string> { "Apa itu PUM dan bagaimana pengajuannya?", "Siapa yang bisa approve PUM?" } },
-                { "Budget", new List<string> { "Bagaimana cara setup Budget?", "Apa itu Over Budget?" } },
-                { "Report", new List<string> { "Laporan apa saja yang tersedia?", "Bagaimana cara membaca Budget Report?" } },
-                { "Master", new List<string> { "Apa perbedaan Company dan Division?", "Bagaimana setup Master Data?" } },
-                { "Cashbank", new List<string> { "Bagaimana proses Cash & Bank?", "Apa itu Bank Reconciliation?" } },
-                { "OverBudget", new List<string> { "Siapa yang bisa approve Over Budget?", "Bagaimana proses Over Budget?" } },
-                { "Accounting", new List<string> { "Bagaimana proses Posting di GL?", "Apa itu COA?" } }
-            };
-
-            // Add up to 3 suggestions based on available topics
-            foreach (var topic in availableTopics.Take(3))
-            {
-                if (topicMap.ContainsKey(topic))
-                {
-                    suggestions.AddRange(topicMap[topic].Take(1));
-                }
-            }
-
-            // If less than 3 suggestions, add generic ones
-            if (suggestions.Count < 3)
-            {
-                suggestions.Add("Bagaimana cara menggunakan JIFAS?");
-                if (suggestions.Count < 3)
-                    suggestions.Add("Siapa yang dapat melakukan approval?");
-            }
-
-            return suggestions.Take(3).ToList();
-        }
-
-        /// <summary>
-        /// Build conversation context awareness
-        /// Improvement #4: Simple context tracking using cache
-        /// For full context, would need to extend IChatHistoryService
-        /// </summary>
-        private string BuildConversationContext(ChatRequest request)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(request?.SessionId))
-                    return null;
-
-                // For now, we track conversation in cache for context awareness
-                var contextKey = $"ConversationContext_{request.SessionId}";
-                var recentContext = _cacheService.Get<string>(contextKey);
-                
-                if (string.IsNullOrEmpty(recentContext))
-                    return null;
-
-                var contextBuilder = new StringBuilder();
-                contextBuilder.AppendLine("KONTEKS PERCAKAPAN SEBELUMNYA:");
-                contextBuilder.AppendLine(recentContext);
-                contextBuilder.AppendLine("\nGUNAKAN KONTEKS INI UNTUK MEMAHAMI PERTANYAAN FOLLOW-UP!");
-                
-                _logger.LogInformation("[ChatService] Built conversation context from cache");
-                return contextBuilder.ToString();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning($"[ChatService] Failed to build conversation context: {ex.Message}");
-                return null;  // Continue without context if retrieval fails
+                response.Suggestions = new List<string>();
             }
         }
 
         /// <summary>
         /// Save chat history to database.
         /// </summary>
-        private async Task SaveChatHistoryAsync(ChatResponse response, string userMessage, ChatRequest request)
+        private async Task SaveChatHistoryAsync(
+            ChatResponse response,
+            string userMessage,
+            ChatRequest? request,
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                // Extract document IDs jika ada KB results
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Extract document id jika response memakai hasil Knowledge Base.
                 var documentIds = response.KnowledgeBaseResults?.Select(r => r.DocumentId.ToString())
                     .Distinct()
                     .ToList();
@@ -1025,15 +766,15 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                     IsFromKnowledgeBase = response.IsFromKnowledgeBase,
                     ResponseTimeMs = response.PerformanceMetrics?.TotalMs ?? 0,
                     Success = response.Success,
-                    UsedDocumentIds = documentIds?.Count > 0 ? string.Join(",", documentIds) : null
+                    UsedDocumentIds = documentIds?.Count > 0 ? string.Join(",", documentIds) : string.Empty
                 };
 
-                await _chatHistoryService.SaveChatAsync(chatHistory);
+                await _chatHistoryService.SaveChatAsync(chatHistory, cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning($"[ChatService] Failed to save chat history: {ex.Message}");
-                // Don't throw - allow chat to continue even if history save fails
+                // Riwayat chat adalah audit tambahan; kegagalan simpan tidak boleh memutus jawaban user.
             }
         }
 
@@ -1042,77 +783,50 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         /// <summary>
         /// Generate natural greeting response - OPTIMIZED for natural feel
         /// </summary>
-        private async Task<string> GenerateNaturalGreetingAsync()
+        private Task<string> GenerateNaturalGreetingAsync()
         {
-            try
+            var greetings = new[]
             {
-                // Use random greeting for variety without AI call (faster)
-                var greetings = new[]
-                {
-                    "Hai! Ada yang bisa saya bantu soal JIFAS?",
-                    "Halo! Siap membantu pertanyaan seputar JIFAS. Apa yang ingin kamu tahu?",
-                    "Hi! Saya JIFAS Assistant. Silakan tanya apa saja tentang Invoice, Payment, PUM, atau modul JIFAS lainnya.",
-                    "Halo! Mau tanya apa tentang JIFAS hari ini?",
-                    "Hai! Ada pertanyaan tentang sistem JIFAS? Saya siap bantu."
-                };
-                
-                var random = new Random();
-                return greetings[random.Next(greetings.Length)];
-            }
-            catch
-            {
-                return "Halo! Saya JIFAS AI Assistant. Ada yang bisa saya bantu?";
-            }
+                "Hai! Ada yang bisa saya bantu soal JIFAS?",
+                "Halo! Siap membantu pertanyaan seputar JIFAS. Apa yang ingin kamu tahu?",
+                "Hi! Saya JIFAS Assistant. Silakan tanya apa saja tentang Invoice, Payment, PUM, atau modul JIFAS lainnya.",
+                "Halo! Mau tanya apa tentang JIFAS hari ini?",
+                "Hai! Ada pertanyaan tentang sistem JIFAS? Saya siap bantu."
+            };
+
+            return Task.FromResult(greetings[Random.Shared.Next(greetings.Length)]);
         }
 
         /// <summary>
         /// Generate natural gratitude response
         /// </summary>
-        private async Task<string> GenerateNaturalGratitudeResponseAsync()
+        private Task<string> GenerateNaturalGratitudeResponseAsync()
         {
-            try
+            var responses = new[]
             {
-                // Use random response for variety without AI call (faster)
-                var responses = new[]
-                {
-                    "Sama-sama! Kalau ada pertanyaan lagi, langsung tanya saja.",
-                    "Senang bisa membantu! ??",
-                    "Sip! Hubungi lagi kalau butuh bantuan.",
-                    "Sama-sama! Semoga lancar ya.",
-                    "No problem! Tanya lagi kapan saja."
-                };
-                
-                var random = new Random();
-                return responses[random.Next(responses.Length)];
-            }
-            catch
-            {
-                return "Sama-sama! Tanya lagi kalau butuh bantuan.";
-            }
+                "Sama-sama! Kalau ada pertanyaan lagi, langsung tanya saja.",
+                "Senang bisa membantu!",
+                "Sip! Hubungi lagi kalau butuh bantuan.",
+                "Sama-sama! Semoga lancar ya.",
+                "No problem! Tanya lagi kapan saja."
+            };
+
+            return Task.FromResult(responses[Random.Shared.Next(responses.Length)]);
         }
 
         /// <summary>
         /// Generate natural out-of-scope response - OPTIMIZED
         /// </summary>
-        private async Task<string> GenerateNaturalOutOfScopeResponseAsync(string userQuery)
+        private Task<string> GenerateNaturalOutOfScopeResponseAsync(string userQuery)
         {
-            try
+            var responses = new[]
             {
-                // Fast path: use template with slight variation
-                var responses = new[]
-                {
-                    $"Maaf, '{TruncateForDisplay(userQuery, 30)}' di luar area saya. Saya fokus bantu soal JIFAS - Invoice, Payment, PUM, Budget, dan Approval. Ada yang mau ditanyakan dari topik itu?",
-                    $"Hmm, sepertinya itu bukan topik JIFAS. Saya bisa bantu soal Invoice, Payment, PUM, Budget, Receiving, atau Approval. Mau tanya yang mana?",
-                    $"Itu di luar scope saya. Saya khusus untuk sistem JIFAS - mulai dari Invoice sampai Payment. Ada pertanyaan tentang itu?"
-                };
-                
-                var random = new Random();
-                return await Task.FromResult(responses[random.Next(responses.Length)]);
-            }
-            catch
-            {
-                return "Maaf, pertanyaan tersebut di luar cakupan saya. Saya khusus membantu pertanyaan seputar JIFAS seperti Invoice, Payment, PUM, Budget, dan modul lainnya. Ada yang bisa saya bantu tentang JIFAS?";
-            }
+                $"Maaf, '{TruncateForDisplay(userQuery, 30)}' di luar area saya. Saya fokus bantu soal JIFAS - Invoice, Payment, PUM, Budget, dan Approval. Ada yang mau ditanyakan dari topik itu?",
+                $"Hmm, sepertinya itu bukan topik JIFAS. Saya bisa bantu soal Invoice, Payment, PUM, Budget, Receiving, atau Approval. Mau tanya yang mana?",
+                $"Itu di luar scope saya. Saya khusus untuk sistem JIFAS - mulai dari Invoice sampai Payment. Ada pertanyaan tentang itu?"
+            };
+
+            return Task.FromResult(responses[Random.Shared.Next(responses.Length)]);
         }
 
         /// <summary>
@@ -1123,10 +837,13 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
             List<KnowledgeBaseResult> partialResults,
             IntentType intent,
             string? packedContext = null,
-            string userId = null)
+            string? userId = null,
+            CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Use the full AI pipeline with KB results so system prompt knowledge kicks in
                 var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
                 var sessionContext = BuildSessionContext(
@@ -1135,7 +852,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                     activePageContext: packedContext,
                     userMemoryContext: userMemoryContext);
 
-                return await _ollamaService.GenerateResponseAsync(userQuery, partialResults, sessionContext: sessionContext);
+                return await _ollamaService.GenerateResponseAsync(userQuery, partialResults, sessionContext: sessionContext, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
@@ -1151,10 +868,13 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
             string userQuery,
             IntentType intent,
             string? packedContext = null,
-            string userId = null)
+            string? userId = null,
+            CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Even with no KB results, use GenerateResponseAsync so the rich system prompt
                 // can answer from its built-in JIFAS knowledge
                 var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
@@ -1167,7 +887,8 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 return await _ollamaService.GenerateResponseAsync(
                     userQuery, 
                     new List<KnowledgeBaseResult>(), 
-                    sessionContext: sessionContext);
+                    sessionContext: sessionContext,
+                    cancellationToken: cancellationToken);
             }
             catch
             {
@@ -1186,10 +907,13 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
             bool isFollowUp,
             string? activePageContext = null,
             string? packedContext = null,
-            string? userId = null)
+            string? userId = null,
+            CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Bangun user memory context (profil user jangka panjang)
                 var userMemoryContext = await _userMemory.BuildUserContextForPromptAsync(userId ?? "anonymous");
 
@@ -1206,12 +930,12 @@ PERTANYAAN SAAT INI (follow-up): ""{userQuery}""
 Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
                 }
 
-                return await _ollamaService.GenerateResponseAsync(enhancedQuery, kbResults, sessionContext: sessionContext);
+                return await _ollamaService.GenerateResponseAsync(enhancedQuery, kbResults, sessionContext: sessionContext, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"[ChatService] Error generating enhanced response: {ex.Message}");
-                return await _ollamaService.GenerateResponseAsync(userQuery, kbResults, sessionContext: activePageContext);
+                return await _ollamaService.GenerateResponseAsync(userQuery, kbResults, sessionContext: activePageContext, cancellationToken: cancellationToken);
             }
         }
 
@@ -1279,10 +1003,13 @@ Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
             string userQuery,
             List<KnowledgeBaseResult> kbResults,
             IntentType intent,
-            QualityValidationResult previousQuality)
+            QualityValidationResult previousQuality,
+            CancellationToken cancellationToken = default)
         {
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var issues = string.Join(", ", previousQuality.Issues);
                 var kbContext = string.Join("\n\n", kbResults.Take(3).Select(r => 
                     $"[{r.Title}]\n{r.Content}"));
@@ -1304,70 +1031,12 @@ Buatlah jawaban yang LEBIH BAIK dengan memperhatikan:
 
 Respons langsung:";
 
-                return await _ollamaService.CallOllamaApiAsync(prompt);
+                return await _ollamaService.CallOllamaApiAsync(prompt, cancellationToken);
             }
             catch
             {
                 // Fallback to original method
-                return await _ollamaService.GenerateResponseAsync(userQuery, kbResults);
-            }
-        }
-
-        /// <summary>
-        /// Generate contextual suggestions based on intent and KB results
-        /// </summary>
-        private async Task<List<string>> GenerateContextualSuggestionsAsync(
-            string userQuery,
-            IntentType intent,
-            List<KnowledgeBaseResult> kbResults)
-        {
-            try
-            {
-                // If we have KB results, suggest related topics
-                if (kbResults != null && kbResults.Count > 0)
-                {
-                    var topics = kbResults.Select(r => r.Category).Distinct().Take(2).ToList();
-                    var suggestions = new List<string>();
-
-                    foreach (var topic in topics)
-                    {
-                        suggestions.Add($"Bagaimana cara menggunakan {topic}?");
-                    }
-
-                    if (suggestions.Count < 3)
-                    {
-                        suggestions.Add("Apa saja fitur utama JIFAS?");
-                    }
-
-                    return suggestions.Take(3).ToList();
-                }
-
-                // Default suggestions based on intent
-                return intent switch
-                {
-                    IntentType.HowTo => new List<string>
-                    {
-                        "Bagaimana cara membuat Invoice?",
-                        "Bagaimana cara approve Payment?",
-                        "Apa langkah-langkah mengajukan PUM?"
-                    },
-                    IntentType.Troubleshooting => new List<string>
-                    {
-                        "Apa yang harus dilakukan jika Invoice gagal di-approve?",
-                        "Bagaimana cara mengatasi Budget Over?",
-                        "Kenapa Payment tidak bisa diproses?"
-                    },
-                    _ => new List<string>
-                    {
-                        "Apa itu JIFAS?",
-                        "Modul apa saja yang ada di JIFAS?",
-                        "Bagaimana cara mengakses JIFAS?"
-                    }
-                };
-            }
-            catch
-            {
-                return new List<string>();
+                return await _ollamaService.GenerateResponseAsync(userQuery, kbResults, cancellationToken: cancellationToken);
             }
         }
 
@@ -1412,22 +1081,108 @@ Respons langsung:";
             return text.Substring(0, maxLength) + "...";
         }
 
-        private static string BuildResponseCacheKey(string message, ChatRequest request)
+        private static string BuildResponseCacheKey(string message, ChatRequest? request)
         {
-            var scope = string.Join("|", new[]
+            var normalizedMessage = NormalizeCacheText(message);
+            var language = string.IsNullOrWhiteSpace(request?.Language) ? "id" : request!.Language.Trim().ToLowerInvariant();
+            var cacheScope = BuildResponseCacheScope(message, request);
+
+            if (cacheScope == "shared")
             {
-                message?.Trim().ToLowerInvariant() ?? string.Empty,
+                var sharedScope = string.Join("|", new[]
+                {
+                    "shared",
+                    language,
+                    normalizedMessage
+                });
+
+                return $"Chat_Response_Shared_{HashHelper.ToShortStableHash(sharedScope)}";
+            }
+
+            var contextualScope = string.Join("|", new[]
+            {
+                "contextual",
+                normalizedMessage,
                 request?.UserId ?? "anonymous",
                 request?.UserRole ?? string.Empty,
                 request?.UserCompCode ?? string.Empty,
-                request?.Language ?? "id",
+                language,
                 request?.Context?.ActiveModule ?? request?.CurrentModule ?? string.Empty,
                 request?.Context?.CurrentPage ?? string.Empty,
+                request?.Context?.PageTitle ?? string.Empty,
+                request?.Context?.SelectedDocumentId ?? string.Empty,
                 request?.Context?.DocumentType ?? string.Empty,
                 request?.Context?.DocumentStatus ?? string.Empty
             });
 
-            return $"Chat_Response_{HashHelper.ToShortStableHash(scope)}";
+            return $"Chat_Response_Contextual_{HashHelper.ToShortStableHash(contextualScope)}";
+        }
+
+        private static string BuildResponseCacheScope(string message, ChatRequest? request)
+        {
+            if (ContainsContextualSignal(message, request))
+                return "contextual";
+
+            return "shared";
+        }
+
+        private static bool ContainsContextualSignal(string message, ChatRequest? request)
+        {
+            var normalized = NormalizeCacheText(message);
+            var context = request?.Context;
+            var hasDocumentContext =
+                !string.IsNullOrWhiteSpace(context?.SelectedDocumentId) ||
+                !string.IsNullOrWhiteSpace(context?.DocumentType) ||
+                !string.IsNullOrWhiteSpace(context?.DocumentStatus);
+
+            if (hasDocumentContext && ContainsAny(normalized, new[]
+                {
+                    "dokumen", "nomor", "status", "ini", "terpilih", "approve",
+                    "approval", "posting", "paid", "bayar", "void", "reverse"
+                }))
+            {
+                return true;
+            }
+
+            if ((!string.IsNullOrWhiteSpace(context?.CurrentPage) ||
+                 !string.IsNullOrWhiteSpace(context?.ActiveModule) ||
+                 !string.IsNullOrWhiteSpace(request?.CurrentModule)) &&
+                ContainsAny(normalized, new[]
+                {
+                    "halaman ini", "page ini", "menu ini", "di sini", "disini",
+                    "sedang dibuka", "yang sedang", "current page"
+                }))
+            {
+                return true;
+            }
+
+            var contextualKeywords = new[]
+            {
+                "saya", "aku", "punya saya", "dokumen", "nomor", "no ", "status saya",
+                "tiket", "ticket", "jira", "buatkan", "laporkan", "error saya",
+                "halaman ini", "page ini", "yang sedang", "invoice saya", "payment saya"
+            };
+
+            return ContainsAny(normalized, contextualKeywords);
+        }
+
+        private static string NormalizeCacheText(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            var normalized = value.Trim().ToLowerInvariant();
+            while (normalized.Contains("  ", StringComparison.Ordinal))
+            {
+                normalized = normalized.Replace("  ", " ", StringComparison.Ordinal);
+            }
+
+            return normalized;
+        }
+
+        private static bool ContainsAny(string value, IEnumerable<string> keywords)
+        {
+            return keywords.Any(keyword => value.Contains(keyword, StringComparison.OrdinalIgnoreCase));
         }
 
         #endregion

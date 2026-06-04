@@ -34,12 +34,12 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class ExpandedQuery
     {
-        public string OriginalQuery { get; set; }
-        public string NormalizedQuery { get; set; }
+        public string OriginalQuery { get; set; } = string.Empty;
+        public string NormalizedQuery { get; set; } = string.Empty;
         public List<string> Variations { get; set; } = new List<string>();
         public List<string> Keywords { get; set; } = new List<string>();
         public List<string> Synonyms { get; set; } = new List<string>();
-        public string EnhancedSearchQuery { get; set; }
+        public string EnhancedSearchQuery { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -49,10 +49,10 @@ namespace Jifas.Assistant.Services
     {
         public IntentType Intent { get; set; }
         public double Confidence { get; set; }
-        public string Reason { get; set; }
+        public string Reason { get; set; } = string.Empty;
         public List<string> DetectedKeywords { get; set; } = new List<string>();
         public bool RequiresClarification { get; set; }
-        public string SuggestedClarification { get; set; }
+        public string SuggestedClarification { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -60,10 +60,10 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class QueryUnderstandingResult
     {
-        public ExpandedQuery ExpandedQuery { get; set; }
-        public IntentResult Intent { get; set; }
+        public ExpandedQuery ExpandedQuery { get; set; } = new();
+        public IntentResult Intent { get; set; } = new();
         public bool IsInScope { get; set; }
-        public string Topic { get; set; }
+        public string Topic { get; set; } = "General";
     }
 
     #endregion
@@ -594,7 +594,7 @@ namespace Jifas.Assistant.Services
             return false;
         }
 
-        private IntentResult CheckGreetingOrGratitude(string query)
+        private IntentResult? CheckGreetingOrGratitude(string query)
         {
             foreach (var pattern in IntentPatterns[IntentType.Greeting])
             {

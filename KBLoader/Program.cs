@@ -18,10 +18,8 @@ using Jifas.Assistant.Utilities;
 namespace Jifas.Assistant.KBLoader
 {
     /// <summary>
-    /// FAST Knowledge Base Loader - Direct DB Insert with Chunking
-    /// Phase 1: Insert documents
-    /// Phase 2: Generate document embeddings
-    /// Phase 3: Chunk documents and generate chunk embeddings
+    /// Loader Knowledge Base untuk mengisi ulang dokumen, chunk, dan embedding ke database.
+    /// Alurnya dibuat batch agar proses reindex lebih cepat dan konsisten.
     /// </summary>
     class Program
     {
@@ -29,9 +27,9 @@ namespace Jifas.Assistant.KBLoader
         {
             bool autoConfirm = args.Contains("--yes") || args.Contains("-y");
             
-            Console.WriteLine("??????????????????????????????????????????????????????");
-            Console.WriteLine("?   JIFAS KB Loader - FAST Bulk Insert + Chunking   ?");
-            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.WriteLine("====================================================");
+            Console.WriteLine("   JIFAS KB Loader - Bulk Insert + Chunking");
+            Console.WriteLine("====================================================");
             Console.WriteLine();
 
             try
@@ -69,7 +67,7 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation("Starting Knowledge Base bulk loading...");
                 logger.LogInformation("");
 
-                // Get KB folder
+                // Folder KnowledgeBase dibaca dari project API utama.
                 var kbFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Jifas.Assistant", "KnowledgeBase");
                 kbFolderPath = Path.GetFullPath(kbFolderPath);
                 
@@ -85,8 +83,8 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation($"Found {allFiles.Length} KB files");
                 logger.LogInformation("");
 
-                // Confirm
-                logger.LogWarning("??  Will clear existing KB documents");
+                // Konfirmasi manual agar data KB tidak terhapus tanpa sengaja.
+                logger.LogWarning("WARNING: Existing KB documents will be cleared.");
                 
                 if (!autoConfirm)
                 {
@@ -96,12 +94,12 @@ namespace Jifas.Assistant.KBLoader
                 }
 
                 logger.LogInformation("");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("PHASE 1: BULK INSERT DOCUMENTS");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("");
 
-                // FAST: Batch delete
+                // Hapus dokumen lama dalam satu batch sebelum insert ulang.
                 logger.LogInformation("Clearing existing KB...");
                 var existingDocs = await context.KnowledgeBaseDocuments.ToListAsync();
                 if (existingDocs.Any())
@@ -110,7 +108,7 @@ namespace Jifas.Assistant.KBLoader
                     await context.SaveChangesAsync();
                 }
 
-                // FAST: Batch insert all documents
+                // Kumpulkan semua dokumen dulu agar SaveChanges tidak dipanggil berulang.
                 var docsToInsert = new List<KnowledgeBaseDocuments>();
 
                 int fileCount = 0;
@@ -127,7 +125,7 @@ namespace Jifas.Assistant.KBLoader
                         logger.LogInformation($"[{fileCount:D2}/{allFiles.Length}] {category,-15} | {fileName}");
                         Console.ResetColor();
 
-                        // Create document (no chunking, no embeddings here!)
+                        // Dokumen disimpan utuh dulu; chunk dan embedding dibuat pada fase berikutnya.
                         var doc = new KnowledgeBaseDocuments
                         {
                             Title = fileName,
@@ -150,12 +148,12 @@ namespace Jifas.Assistant.KBLoader
                     catch (Exception ex)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        logger.LogError($"              ? Error: {ex.Message}");
+                        logger.LogError($"              ERROR: {ex.Message}");
                         Console.ResetColor();
                     }
                 }
 
-                // FAST: Single bulk insert
+                // Insert dokumen dalam satu batch.
                 logger.LogInformation("");
                 logger.LogInformation($"Inserting {docsToInsert.Count} documents (BULK)...");
                 
@@ -163,26 +161,26 @@ namespace Jifas.Assistant.KBLoader
                 await context.SaveChangesAsync();
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                logger.LogInformation($"? {docsToInsert.Count} documents inserted in seconds!");
+                logger.LogInformation($"OK: {docsToInsert.Count} documents inserted.");
                 Console.ResetColor();
 
-                // PHASE 2: Document-level embeddings are intentionally skipped.
-                // Retrieval uses chunk-level embeddings in pgvector; embedding full documents is slow and unnecessary.
+                // Embedding dokumen utuh sengaja dilewati.
+                // Retrieval memakai chunk-level embedding di pgvector agar lebih akurat dan ringan.
                 logger.LogInformation("");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("PHASE 2: SKIP DOCUMENT EMBEDDINGS");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("");
                 logger.LogInformation("Document embeddings skipped. Chunk embeddings will be generated in Phase 3.");
 
-                // PHASE 3: Chunk documents
+                // Pecah dokumen menjadi chunk agar RAG bisa mengambil konteks yang spesifik.
                 logger.LogInformation("");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("PHASE 3: CHUNKING DOCUMENTS");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("");
 
-                // Clear existing chunks
+                // Hapus chunk lama agar tidak ada duplicate context.
                 logger.LogInformation("Clearing existing chunks...");
                 var existingChunks = await context.KnowledgeBaseChunks.ToListAsync();
                 if (existingChunks.Any())
@@ -241,11 +239,11 @@ namespace Jifas.Assistant.KBLoader
                                         break;
                                     }
 
-                                    logger.LogWarning($"  ??  Chunk embedding returned empty result (attempt {attempt}/{maxEmbeddingAttempts})");
+                                    logger.LogWarning($"  WARNING: Chunk embedding returned empty result (attempt {attempt}/{maxEmbeddingAttempts})");
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogWarning($"  ??  Chunk embedding failed (attempt {attempt}/{maxEmbeddingAttempts}): {ex.Message}");
+                                    logger.LogWarning($"  WARNING: Chunk embedding failed (attempt {attempt}/{maxEmbeddingAttempts}): {ex.Message}");
                                 }
 
                                 if (attempt < maxEmbeddingAttempts)
@@ -261,14 +259,14 @@ namespace Jifas.Assistant.KBLoader
                         if (docIndex % 5 == 0 || docIndex == allDocuments.Count)
                         {
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            logger.LogInformation($"  [{docIndex}/{allDocuments.Count}] {document.Title} ? {chunks.Count} chunks");
+                            logger.LogInformation($"  [{docIndex}/{allDocuments.Count}] {document.Title} -> {chunks.Count} chunks");
                             Console.ResetColor();
                         }
                     }
                     catch (Exception ex)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        logger.LogError($"              ? Error chunking {document.Title}: {ex.Message}");
+                        logger.LogError($"              ERROR chunking {document.Title}: {ex.Message}");
                         Console.ResetColor();
                     }
                 }
@@ -283,18 +281,18 @@ namespace Jifas.Assistant.KBLoader
                 }
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                logger.LogInformation($"? {chunksToInsert.Count} chunks inserted!");
+                logger.LogInformation($"OK: {chunksToInsert.Count} chunks inserted.");
                 Console.ResetColor();
 
-                // Final Verify
+                // Verifikasi akhir untuk memastikan jumlah data sesuai setelah reindex.
                 var finalDocCount = await context.KnowledgeBaseDocuments.CountAsync();
                 var finalChunkCount = await context.KnowledgeBaseChunks.CountAsync();
                 var finalChunksEmbeddedCount = await context.KnowledgeBaseChunks.CountAsync(c => c.Embedding != null);
                 
                 logger.LogInformation("");
-                logger.LogInformation("???????????????????????????????????????????????????");
-                logger.LogInformation("? KNOWLEDGE BASE LOADING COMPLETE!");
-                logger.LogInformation("???????????????????????????????????????????????????");
+                logger.LogInformation("=================================================");
+                logger.LogInformation("KNOWLEDGE BASE LOADING COMPLETE");
+                logger.LogInformation("=================================================");
                 logger.LogInformation("");
                 logger.LogInformation($"  Documents:         {finalDocCount}");
                 logger.LogInformation("  Doc Embeddings:    skipped");
@@ -302,13 +300,13 @@ namespace Jifas.Assistant.KBLoader
                 logger.LogInformation($"  Chunk Embeddings:  {finalChunksEmbeddedCount}/{finalChunkCount}");
                 logger.LogInformation("");
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                logger.LogInformation("  Ready for RAG queries!");
+                logger.LogInformation("  Ready for RAG queries.");
                 Console.ResetColor();
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"? Fatal Error: {ex.Message}");
+                Console.WriteLine($"Fatal Error: {ex.Message}");
                 Console.WriteLine($"Stack: {ex.StackTrace}");
                 Console.ResetColor();
                 Environment.Exit(1);

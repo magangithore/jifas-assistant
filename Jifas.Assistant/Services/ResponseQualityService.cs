@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -22,7 +22,7 @@ namespace Jifas.Assistant.Services
         public List<string> Issues { get; set; } = new List<string>();
         public List<string> Suggestions { get; set; } = new List<string>();
         public bool ShouldRegenerate { get; set; }
-        public string RegenerationReason { get; set; }
+        public string RegenerationReason { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -33,7 +33,7 @@ namespace Jifas.Assistant.Services
         public double Threshold { get; set; }
         public double CalculatedConfidence { get; set; }
         public bool MeetsThreshold { get; set; }
-        public string Reason { get; set; }
+        public string Reason { get; set; } = string.Empty;
         public Dictionary<string, double> FactorBreakdown { get; set; } = new Dictionary<string, double>();
     }
 
@@ -74,7 +74,7 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Calculate adaptive threshold based on context
         /// </summary>
-        Task<double> CalculateThresholdAsync(string query, IntentType intent, string sessionId = null);
+        Task<double> CalculateThresholdAsync(string query, IntentType intent, string? sessionId = null);
 
         /// <summary>
         /// Calculate confidence score with multiple factors
@@ -304,7 +304,7 @@ namespace Jifas.Assistant.Services
 
             // Structure check
             if (Regex.IsMatch(response, @"\d+\.\s+\w+")) score += 0.15; // Numbered list
-            if (response.Contains("-") || response.Contains("�")) score += 0.05; // Bullets
+            if (response.Contains("-") || response.Contains("•")) score += 0.05; // Bullets
 
             // Paragraph check
             var paragraphCount = response.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -378,7 +378,7 @@ namespace Jifas.Assistant.Services
                 if (responseLower.Contains(indicator))
                     return (true, indicator);
             }
-            return (false, null);
+            return (false, string.Empty);
         }
 
         private bool DetectTemplateResponse(string response)
@@ -412,7 +412,7 @@ namespace Jifas.Assistant.Services
 
         #region Adaptive Confidence
 
-        public async Task<double> CalculateThresholdAsync(string query, IntentType intent, string sessionId = null)
+        public async Task<double> CalculateThresholdAsync(string query, IntentType intent, string? sessionId = null)
         {
             var threshold = BASE_THRESHOLD;
 
