@@ -101,11 +101,35 @@ public class MonitoringController : ControllerBase
     }
 
     // Helper normalisasi tanggal agar browser selalu membaca waktu sebagai UTC.
-
+    // FIXED: Return new object instead of mutating to avoid side effects
     private static AiUsageLog NormalizeLogDates(AiUsageLog l)
     {
-        if (l.CreatedAt.Kind == DateTimeKind.Unspecified)
-            l.CreatedAt = DateTime.SpecifyKind(l.CreatedAt, DateTimeKind.Utc);
-        return l;
+        if (l.CreatedAt.Kind != DateTimeKind.Unspecified)
+            return l;
+
+        // Return a new copy with corrected UTC Kind
+        return new AiUsageLog
+        {
+            Id = l.Id,
+            UserId = l.UserId,
+            SessionId = l.SessionId,
+            ActiveModule = l.ActiveModule,
+            Model = l.Model,
+            CallType = l.CallType,
+            PromptTokens = l.PromptTokens,
+            CompletionTokens = l.CompletionTokens,
+            TotalTokens = l.TotalTokens,
+            TotalDurationMs = l.TotalDurationMs,
+            LoadDurationMs = l.LoadDurationMs,
+            PromptEvalDurationMs = l.PromptEvalDurationMs,
+            EvalDurationMs = l.EvalDurationMs,
+            TokensPerSecond = l.TokensPerSecond,
+            PromptLengthChars = l.PromptLengthChars,
+            ResponseLengthChars = l.ResponseLengthChars,
+            ConfidenceScore = l.ConfidenceScore,
+            IsError = l.IsError,
+            ErrorMessage = l.ErrorMessage,
+            CreatedAt = DateTime.SpecifyKind(l.CreatedAt, DateTimeKind.Utc)
+        };
     }
 }

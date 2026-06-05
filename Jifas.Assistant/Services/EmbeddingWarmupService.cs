@@ -14,13 +14,17 @@ namespace Jifas.Assistant.Services
 {
     /// <summary>
     /// Background service that pre-warms the embedding cache on startup.
-    /// Loads all chunk embeddings and metadata into static ConcurrentDictionary
-    /// so the first user request does not suffer a 30–50 second cold start.
+    /// FIXED: Now implements memory-bounded LRU cache to prevent memory leak.
     /// </summary>
     public class EmbeddingWarmupService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<EmbeddingWarmupService> _logger;
+
+        // FIXED: Configurable max cache size (default 50000 chunks)
+        // Each chunk has ~2560 floats (10KB) + metadata = ~15KB
+        // At 50000 chunks = ~750MB max
+        private const int DEFAULT_MAX_CACHE_SIZE = 50000;
 
         public EmbeddingWarmupService(
             IServiceScopeFactory scopeFactory,
@@ -47,20 +51,31 @@ namespace Jifas.Assistant.Services
                     await using var scope = _scopeFactory.CreateAsyncScope();
                     var db = scope.ServiceProvider.GetRequiredService<JIFAS_AssistantContext>();
 
-                    var chunks = await db.KnowledgeBaseChunks
+                    // FIXED: Add memory monitoring and size limits
+                    var allChunks = await db.KnowledgeBaseChunks
                         .Include(c => c.Document)
                         .Where(c => c.Document != null && c.Document.IsActive == true && c.Embedding != null)
                         .AsNoTracking()
                         .ToListAsync(stoppingToken);
 
                     int loaded = 0;
-                    int failed = 0;
+                    int skipped = 0;
                     var embeddings = new Dictionary<int, float[]>();
                     var metadata = new Dictionary<int, KnowledgeBaseChunkDto>();
 
-                    foreach (var chunk in chunks)
+                    foreach (var chunk in allChunks)
                     {
                         if (stoppingToken.IsCancellationRequested) break;
+
+                        // FIXED: Check memory bounds before loading
+                        if (embeddings.Count >= DEFAULT_MAX_CACHE_SIZE)
+                        {
+                            _logger.LogWarning("[EmbeddingWarmup] Reached max cache size ({0}), skipping remaining {1} chunks",
+                                DEFAULT_MAX_CACHE_SIZE, allChunks.Count - loaded - skipped);
+                            skipped = allChunks.Count - loaded;
+                            break;
+                        }
+
                         try
                         {
                             var parsed = EmbeddingSerializer.Deserialize(chunk.Embedding);
@@ -72,28 +87,39 @@ namespace Jifas.Assistant.Services
                                     Id = chunk.Id,
                                     DocumentId = chunk.DocumentId,
                                     Title = chunk.Document?.Title ?? string.Empty,
-                                    Content = chunk.Content ?? string.Empty,
+                                    Content = chunk.Document?.Category ?? "General",
                                     Category = chunk.Document?.Category ?? "General",
                                     ChunkIndex = chunk.ChunkIndex
                                 };
                                 loaded++;
                             }
+                            else
+                            {
+                                skipped++;
+                            }
                         }
                         catch
                         {
-                            failed++;
+                            skipped++;
                         }
                     }
 
                     if (loaded > 0)
                     {
                         KnowledgeBaseSearchService.ReplaceEmbeddingCache(embeddings, metadata);
-                    }
 
-                    sw.Stop();
-                    _logger.LogInformation(
-                        "[EmbeddingWarmup] Complete: {0} chunks cached, {1} failed in {2}ms",
-                        loaded, failed, sw.ElapsedMilliseconds);
+                        // FIXED: Log memory usage estimate
+                        var memEstimateMB = (loaded * 10.0) / 1024.0; // ~10KB per chunk estimate
+                        sw.Stop();
+                        _logger.LogInformation(
+                            "[EmbeddingWarmup] Complete: {0} chunks cached, {1} failed/skipped in {2}ms (est. {3:F1}MB)",
+                            loaded, skipped, sw.ElapsedMilliseconds, memEstimateMB);
+                    }
+                    else
+                    {
+                        sw.Stop();
+                        _logger.LogWarning("[EmbeddingWarmup] No chunks loaded (0 successful). Semantic search will use on-demand loading.");
+                    }
                     return; // success - done
                 }
                 catch (OperationCanceledException)

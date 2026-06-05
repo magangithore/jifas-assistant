@@ -257,11 +257,12 @@ namespace Jifas.Assistant.Services
 
             var rLower = response.ToLower();
 
-            // If no KB sources, score based on JIFAS domain indicators in the response
+            // FIXED: If no KB sources, grounding is ZERO - no faking confidence
+            // This prevents hallucination when AI has no knowledge base data
             if (kbSources == null || kbSources.Count == 0)
             {
-                var jifasTerms = QualityIndicators.Count(i => rLower.Contains(i));
-                return Math.Min(0.3 + (jifasTerms * 0.05), 0.7);
+                _logger.LogWarning("[QualityService] No KB sources - grounding score is 0.0 (was 0.3-0.7). Hallucination risk is HIGH.");
+                return 0.0;
             }
 
             var responseWords = ExtractSignificantWords(rLower);

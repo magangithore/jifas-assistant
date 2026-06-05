@@ -72,7 +72,9 @@ namespace Jifas.Assistant.Services
             _apiKey = _configuration["Ollama:ApiKey"] ?? string.Empty;
             _model = _configuration["Ollama:Model"] ?? "qwen3:8b";
             _baseUrl = _configuration["Ollama:BaseUrl"] ?? throw new InvalidOperationException("Ollama:BaseUrl configuration is required.");
-            _temperature = _configuration.GetValue<float>("Ollama:Temperature", 0.3f);
+            // FIXED: Lowered temperature from 0.3 to 0.15 to reduce hallucination risk
+            // Higher temperature = more creative/random = more likely to hallucinate
+            _temperature = _configuration.GetValue<float>("Ollama:Temperature", 0.15f);
             _maxOutputTokens = _configuration.GetValue<int>("Ollama:MaxTokens", 2048);
 
             var timeout = _configuration.GetValue<int>("Ollama:TimeoutSeconds", 120);
@@ -148,11 +150,12 @@ namespace Jifas.Assistant.Services
 
         /// <summary>
         /// Memanggil Ollama API dengan retry on error
+        /// FIXED: Now handles 429, 502, 503, 504, and connection errors with exponential backoff + jitter
         /// </summary>
         public async Task<string> CallOllamaApiAsync(string prompt, CancellationToken cancellationToken = default)
         {
-            const int maxRetries = 2;
-            var retryDelaysMs = new[] { 3000, 8000 };
+            const int maxRetries = 3; // Increased from 2
+            var retryDelaysMs = new[] { 3000, 8000, 16000 }; // Exponential backoff
 
             for (int attempt = 0; attempt <= maxRetries; attempt++)
             {
@@ -161,15 +164,43 @@ namespace Jifas.Assistant.Services
                     cancellationToken.ThrowIfCancellationRequested();
                     return await CallOllamaApiInternalAsync(prompt, ct: cancellationToken);
                 }
-                catch (HttpRequestException ex) when (ex.Message.Contains("TooManyRequests") && attempt < maxRetries)
+                catch (HttpRequestException ex) when (IsRetryableError(ex) && attempt < maxRetries)
                 {
-                    var delayMs = retryDelaysMs[attempt];
-                    _logger.LogWarning("[OllamaAIService] Rate limited (429), retry {0}/{1} in {2}ms...", (attempt + 1), maxRetries, delayMs);
+                    // FIXED: Add jitter to prevent thundering herd
+                    var jitter = Random.Shared.Next(0, 1000);
+                    var delayMs = retryDelaysMs[Math.Min(attempt, retryDelaysMs.Length - 1)] + jitter;
+                    _logger.LogWarning("[OllamaAIService] Retryable error ({0}), retry {1}/{2} in {3}ms (with jitter)...",
+                        ex.Message, (attempt + 1), maxRetries, delayMs);
+                    await Task.Delay(delayMs, cancellationToken);
+                }
+                catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested && attempt < maxRetries)
+                {
+                    // Timeout - retry
+                    var delayMs = retryDelaysMs[Math.Min(attempt, retryDelaysMs.Length - 1)];
+                    _logger.LogWarning("[OllamaAIService] Request timeout, retry {0}/{1} in {2}ms...",
+                        (attempt + 1), maxRetries, delayMs);
                     await Task.Delay(delayMs, cancellationToken);
                 }
             }
 
-            throw new HttpRequestException("Ollama API rate limit exceeded after retries");
+            throw new HttpRequestException($"Ollama API failed after {maxRetries + 1} attempts");
+        }
+
+        /// <summary>
+        /// Determines if an HTTP error should trigger a retry
+        /// </summary>
+        private static bool IsRetryableError(HttpRequestException ex)
+        {
+            var message = ex.Message.ToLowerInvariant();
+            // Retry on: 429 (rate limit), 502, 503, 504 (server errors), connection errors
+            return message.Contains("toomanyrequests") ||
+                   message.Contains("429") ||
+                   message.Contains("502") ||
+                   message.Contains("503") ||
+                   message.Contains("504") ||
+                   message.Contains("connection") ||
+                   message.Contains("timeout") ||
+                   message.Contains("unreachable");
         }
 
         private async Task<string> CallOllamaApiInternalAsync(
@@ -212,6 +243,8 @@ namespace Jifas.Assistant.Services
                 messages.Add(new { role = "user", content = prompt });
 
                 // Ollama /api/chat request body
+                // FIXED: Lowered top_p and top_k for more deterministic responses
+                // This reduces hallucination by limiting the model's creative freedom
                 var requestBody = new
                 {
                     model = _model,
@@ -220,8 +253,8 @@ namespace Jifas.Assistant.Services
                     options = new
                     {
                         temperature = _temperature,
-                        top_p = 0.85,
-                        top_k = 40,
+                        top_p = 0.8,   // Reduced from 0.85
+                        top_k = 20,   // Reduced from 40
                         num_predict = maxTokens ?? _maxOutputTokens
                     }
                 };

@@ -26,6 +26,8 @@
 
     <!-- Health Checks -->
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
   </ItemGroup>
 
   <!-- File dokumentasi dan konfigurasi ikut dipublish agar image Docker mudah diaudit. -->

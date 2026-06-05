@@ -4,6 +4,7 @@ param(
     [string]$Question = "Apa itu JIFAS?",
     [string]$OutputDirectory = "reports/stress",
     [int]$TimeoutSeconds = 240,
+    [switch]$RandomQuestions,
     [switch]$SkipWarmup
 )
 
@@ -65,8 +66,61 @@ Write-Host "Starting JIFAS chat stress test: $VirtualUsers virtual users -> $end
 $startedAt = Get-Date
 $jobs = @()
 $warmupResult = $null
+$questionBank = @(
+    "Saya tidak bisa klik tombol approve invoice di halaman approval, apa yang harus dicek?",
+    "Invoice saya statusnya Need Head Approval, langkah berikutnya apa?",
+    "Payment invoice tidak muncul di list pembayaran, kenapa bisa begitu?",
+    "Saya mau cari Daily Cashflow report, menu atau halaman mana yang harus dibuka?",
+    "PUM saya belum bisa direalisasi, apa penyebab umumnya?",
+    "Budget realisasi tidak sesuai angka di report, apa yang perlu dicek?",
+    "Receiving tax approval saya tidak muncul, apa yang harus diperiksa?",
+    "Vendor tidak muncul saat create invoice, kemungkinan masalahnya apa?",
+    "Saya lupa path menu untuk approval over budget, ada di mana?",
+    "Cashbank receive tidak bisa diposting, apa saja validasinya?",
+    "Status invoice sudah approved tapi belum bisa payment, alurnya bagaimana?",
+    "Bagaimana cara melihat inquiry AP untuk vendor tertentu?",
+    "Saya tidak bisa membuka menu PUM, apakah ini role atau company mapping?",
+    "Tombol posting jurnal tidak aktif, apa syarat supaya bisa posting?",
+    "Report Balance Sheet kosong, apa yang perlu dicek dulu?",
+    "Bagaimana cara reverse journal di JIFAS?",
+    "Tax approval invoice tertahan, siapa yang harus approve?",
+    "Payment PUM bedanya dengan payment invoice apa?",
+    "Saya mau lihat saldo buku bank, report apa yang dipakai?",
+    "Approval invoice saya tidak berubah status setelah diklik, apa kemungkinan penyebabnya?",
+    "Budget commited muncul dobel, apa arti commited di JIFAS?",
+    "Saya perlu cek aging AP, menu report mana yang benar?",
+    "Dokumen receiving unidentified RV itu untuk apa?",
+    "COA tidak muncul saat input transaksi, apa penyebabnya?",
+    "Acc period tertutup, efeknya ke transaksi apa?",
+    "Bagaimana cara cek audit trail transaksi finance?",
+    "Invoice approval screen menampilkan Need Tax Approval, artinya apa?",
+    "PUM tax approval perlu dicek dari menu mana?",
+    "Apa bedanya Cashbank Payment dan Payment module?",
+    "Saya ingin tahu alur create invoice dari awal sampai posting.",
+    "Bagaimana cara cek budget card?",
+    "Report Inquiry AR dipakai untuk apa?",
+    "Bagaimana cara melihat riwayat pembayaran vendor?",
+    "Saya tidak bisa memilih company KI, apa kemungkinan penyebabnya?",
+    "Dokumen PPUM realization stuck, apa yang harus dilakukan user?",
+    "Receive tax validasi NPWP gagal, langkah pengecekannya apa?",
+    "Journal memorial digunakan untuk apa?",
+    "Apa arti status Need Head Approval di over budget?",
+    "Bagaimana cara cek cashbank recap?",
+    "Menu master vendor dipakai untuk data apa?",
+    "Saya mau melihat daftar BG payment, menu mana?",
+    "Apa yang harus dilakukan kalau total debit dan credit tidak balance?",
+    "Bagaimana cara cek laporan budget payment?",
+    "Apa fungsi modul Account di JIFAS?",
+    "Saya tidak bisa preview report, apa hal pertama yang dicek?",
+    "Bagaimana cara cek transaksi yang belum diposting?",
+    "Apa fungsi receive of sales?",
+    "Saya mau tahu path menu invoice approval.",
+    "Bagaimana cara cek payment tax?",
+    "Apa itu JIFAS dan modul apa saja yang sering dipakai finance?"
+)
+$effectiveSkipWarmup = $SkipWarmup -or $RandomQuestions
 
-if (-not $SkipWarmup) {
+if (-not $effectiveSkipWarmup) {
     Write-Host "Warming shared response cache before parallel run..."
     $warmupBody = @{
         message = $Question
@@ -126,6 +180,12 @@ if (-not $SkipWarmup) {
 
 for ($i = 1; $i -le $VirtualUsers; $i++) {
     $vu = $i
+    $questionForVu = if ($RandomQuestions) {
+        $questionBank[($vu - 1) % $questionBank.Count]
+    } else {
+        $Question
+    }
+
     $jobs += Start-Job -ScriptBlock {
         param($Endpoint, $Question, $Vu, $RunId, $TimeoutSeconds)
 
@@ -196,7 +256,7 @@ for ($i = 1; $i -le $VirtualUsers; $i++) {
                 error = $_.Exception.Message
             }
         }
-    } -ArgumentList $endpoint, $Question, $vu, $runId, $TimeoutSeconds
+    } -ArgumentList $endpoint, $questionForVu, $vu, $runId, $TimeoutSeconds
 }
 
 $results = Receive-Job -Job $jobs -Wait -AutoRemoveJob
@@ -248,8 +308,8 @@ $sourceStabilityPercent = if ($successCount -eq 0 -or $successfulSourceGroups.Co
 $allContainersHealthy = @($containerHealth | Where-Object {
     $_.status -ne "running" -or ($_.health -ne "healthy" -and $_.health -ne "none")
 }).Count -eq 0
-$warmupOk = $SkipWarmup -or ($warmupResult -and $warmupResult.success -eq $true -and $warmupResult.statusCode -ge 200 -and $warmupResult.statusCode -lt 300)
-$passed = ($serverErrors -eq 0 -and $rateLimited -eq 0 -and $allContainersHealthy -and $warmupOk)
+$warmupOk = $effectiveSkipWarmup -or ($warmupResult -and $warmupResult.success -eq $true -and $warmupResult.statusCode -ge 200 -and $warmupResult.statusCode -lt 300)
+$passed = ($successCount -eq $total -and $serverErrors -eq 0 -and $rateLimited -eq 0 -and $allContainersHealthy -and $warmupOk)
 
 $summary = [pscustomobject]@{
     generatedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
@@ -257,6 +317,7 @@ $summary = [pscustomobject]@{
     baseUrl = $BaseUrl
     endpoint = $endpoint
     question = $Question
+    randomQuestions = [bool]$RandomQuestions
     virtualUsers = $VirtualUsers
     startedAt = $startedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     finishedAt = $finishedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
@@ -313,6 +374,7 @@ Generated: $($summary.generatedAt)
 ## Summary
 
 - Virtual users: $VirtualUsers
+- Random questions: $([bool]$RandomQuestions)
 - Total requests: $total
 - Successful responses: $successCount
 - HTTP 429 while rate limit disabled: $rateLimited
@@ -335,7 +397,7 @@ Generated: $($summary.generatedAt)
 
 ## Warmup
 
-- Enabled: $(-not $SkipWarmup)
+- Enabled: $(-not $effectiveSkipWarmup)
 - Status: $(if ($warmupResult) { $warmupResult.statusCode } else { "skipped" })
 - Success: $(if ($warmupResult) { $warmupResult.success } else { "skipped" })
 - Latency: $(if ($warmupResult) { "$($warmupResult.elapsedMs) ms" } else { "skipped" })
@@ -355,7 +417,7 @@ $containerLines
 
 ## Acceptance
 
-Stress test passes when warmup succeeds, HTTP 5xx is 0, HTTP 429 is 0 while rate limit is disabled, and API/Postgres/Redis containers remain healthy.
+Stress test passes when every request succeeds, warmup succeeds when enabled, HTTP 5xx is 0, HTTP 429 is 0 while rate limit is disabled, and API/Postgres/Redis containers remain healthy.
 
 JSON detail: $jsonPath
 "@
@@ -367,7 +429,7 @@ Write-Host "  $jsonPath"
 Write-Host "  $mdPath"
 
 if (-not $passed) {
-    throw "Stress test failed: warmupOk=$warmupOk, serverErrors5xx=$serverErrors, rateLimited429=$rateLimited, allContainersHealthy=$allContainersHealthy"
+    throw "Stress test failed: success=$successCount/$total, warmupOk=$warmupOk, serverErrors5xx=$serverErrors, rateLimited429=$rateLimited, allContainersHealthy=$allContainersHealthy"
 }
 
 Write-Host "Stress test passed."

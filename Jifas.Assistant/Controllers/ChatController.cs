@@ -22,17 +22,20 @@ namespace Jifas.Assistant.Controllers
         private readonly IChatService _chatService;
         private readonly ILoggerService _loggerService;
         private readonly IHealthCheckService _healthCheckService;
+        private readonly IAssistantCommandService _assistantCommandService;
         private readonly IWebHostEnvironment _environment;
 
         public ChatController(
             IChatService chatService,
             ILoggerService loggerService,
             IHealthCheckService healthCheckService,
+            IAssistantCommandService assistantCommandService,
             IWebHostEnvironment environment)
         {
             _chatService = chatService;
             _loggerService = loggerService;
             _healthCheckService = healthCheckService;
+            _assistantCommandService = assistantCommandService;
             _environment = environment;
         }
 
@@ -121,6 +124,22 @@ namespace Jifas.Assistant.Controllers
                     traceId = HttpContext.TraceIdentifier
                 });
             }
+        }
+
+        /// <summary>
+        /// Daftar kemampuan dan command cepat yang didukung JIFAS Assistant.
+        /// Endpoint ini membantu frontend menampilkan bantuan tanpa hard-code.
+        /// </summary>
+        [HttpGet("capabilities")]
+        [ProducesResponseType(typeof(object), 200)]
+        public IActionResult GetCapabilities()
+        {
+            return Ok(new
+            {
+                timestamp = DateTime.UtcNow,
+                commands = _assistantCommandService.GetSupportedCommands(),
+                capabilities = _assistantCommandService.GetCapabilities()
+            });
         }
 
         /// <summary>

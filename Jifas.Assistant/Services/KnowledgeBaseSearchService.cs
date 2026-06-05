@@ -95,16 +95,18 @@ namespace Jifas.Assistant.Services
                     return new List<KnowledgeBaseChunkDto>();
 
                 // Filter LIKE dijalankan di database agar tidak menarik semua chunk ke memory.
+                // FIXED: Escape special LIKE characters in user input to prevent unexpected results
                 await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
                 var baseQuery = db.KnowledgeBaseChunks
                     .Include(c => c.Document)
                     .Where(c => c.Document != null && c.Document.IsActive == true);
 
                 // Batasi tiga keyword pertama agar query SQL tetap ringan.
+                // FIXED: Escape special characters to prevent LIKE injection
                 var topKeywords = keywords.Take(3).ToArray();
-                var p0 = $"%{topKeywords[0]}%";
-                var p1 = topKeywords.Length > 1 ? $"%{topKeywords[1]}%" : null;
-                var p2 = topKeywords.Length > 2 ? $"%{topKeywords[2]}%" : null;
+                var p0 = $"%{EscapeLikePattern(topKeywords[0])}%";
+                var p1 = topKeywords.Length > 1 ? $"%{EscapeLikePattern(topKeywords[1])}%" : null;
+                var p2 = topKeywords.Length > 2 ? $"%{EscapeLikePattern(topKeywords[2])}%" : null;
 
                 var filteredQuery = baseQuery.Where(c =>
                     (EF.Functions.Like(c.Content, p0) || EF.Functions.Like(c.Document.Title, p0) || EF.Functions.Like(c.Document.Category, p0))

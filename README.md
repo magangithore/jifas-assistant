@@ -73,6 +73,7 @@ jifas-assistant/
 | `OllamaEmbeddingService.cs` | HTTP client ke Ollama untuk embedding KB/query. |
 | `RedisCacheService.cs` | Distributed cache berbasis Redis dengan fallback terkontrol. |
 | `MemoryCacheService.cs` | Cache lokal saat Redis tidak dipakai. |
+| `AssistantCommandService.cs` | Slash command dan capability discovery tanpa memanggil LLM. |
 | `TicketService.cs` | Flow tiket conversational dan integrasi Jira. |
 | `MonitoringService.cs` | Simpan metrik request AI dan data dashboard. |
 | `InputValidator.cs` | Sanitasi dan validasi payload chat. |
@@ -237,6 +238,7 @@ Tiket validasi wajib memakai prefix `[TEST]` dan tidak ditutup otomatis.
 
 - `docs/PRODUCTION_READINESS_REPORT_20260603.md`
 - `docs/JIFAS_AI_ARCHITECTURE.md`
+- `docs/CLAUDE_CODE_REFERENCE_ANALYSIS.md`
 - `docs/POSTGRES_PGVECTOR_RUNBOOK.md`
 - `docs/DOCKER_REDIS_CACHE.md`
 - `docs/AI_QUALITY_RUNBOOK.md`

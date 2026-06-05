@@ -28,6 +28,7 @@ ChatController
     v
 ChatService
     |-- InputValidator
+    |-- AssistantCommandService
     |-- TicketService
     |-- RedisCacheService / MemoryCacheService
     |-- OutOfScopeDetector
@@ -66,17 +67,39 @@ Jira
 1. `ChatController` menerima request dan meneruskan `CancellationToken`.
 2. `ChatService` membuat `CorrelationId` untuk tracing.
 3. `InputValidator` memvalidasi payload sebelum cache, DB, atau LLM dipanggil.
-4. Jika session sedang berada di ticket flow, request langsung diproses oleh `TicketService`.
-5. Jika bukan ticket flow, service mengecek response cache.
-6. `OutOfScopeDetector` menahan pertanyaan di luar konteks JIFAS.
-7. `KnowledgeBaseSearchService` mencari dokumen via keyword + semantic pgvector.
-8. `PromptEngineeringService` membangun prompt berbasis KB dan context halaman.
-9. `OllamaAIService` memanggil Ollama untuk jawaban utama.
-10. Response disimpan ke cache jika aman.
-11. `ChatHistoryService` menyimpan percakapan.
-12. `MonitoringService` mencatat latency, token, cache, status, dan dependency.
+4. `AssistantCommandService` menangani slash command seperti `/help` tanpa cache, KB, atau LLM.
+5. Jika session sedang berada di ticket flow, request langsung diproses oleh `TicketService`.
+6. Jika bukan ticket flow, service mengecek response cache.
+7. `OutOfScopeDetector` menahan pertanyaan di luar konteks JIFAS.
+8. `KnowledgeBaseSearchService` mencari dokumen via keyword + semantic pgvector.
+9. `PromptEngineeringService` membangun prompt berbasis KB dan context halaman.
+10. `OllamaAIService` memanggil Ollama untuk jawaban utama.
+11. Response disimpan ke cache jika aman.
+12. `ChatHistoryService` menyimpan percakapan.
+13. `MonitoringService` mencatat latency, token, cache, status, dan dependency.
 
-## 4. Cache Policy
+## 4. Command dan Capability Layer
+
+Command cepat tersedia melalui pesan chat biasa:
+
+- `/help`
+- `/commands`
+- `/status`
+- `/monitoring`
+- `/ticket`
+- `/kb`
+- `/context`
+- `/scope`
+
+Endpoint capability:
+
+```http
+GET /api/chat/capabilities
+```
+
+Layer ini membantu UI dan user menemukan kemampuan assistant tanpa menambah panggilan LLM.
+
+## 5. Cache Policy
 
 Response cache memakai strategi hybrid:
 
@@ -86,7 +109,7 @@ Response cache memakai strategi hybrid:
 
 Redis adalah cache utama. Jika Redis gagal, request chat utama tidak boleh ikut gagal; aplikasi akan fallback ke memory/no-cache.
 
-## 5. Suggestion Policy
+## 6. Suggestion Policy
 
 Pipeline suggestion LLM terpisah sudah dimatikan.
 
@@ -98,7 +121,7 @@ Alasannya:
 
 Field response `suggestions` tetap ada untuk kompatibilitas frontend lama, tetapi default chat normal adalah list kosong. Lanjutan percakapan harus ditulis natural di dalam `message`.
 
-## 6. Ticket Flow
+## 7. Ticket Flow
 
 `TicketService` menangani percakapan pembuatan tiket:
 
@@ -115,7 +138,7 @@ Automated test tidak membuat tiket real kecuali flag eksplisit dipakai:
 powershell -ExecutionPolicy Bypass -File scripts\Run-FullFeatureSmokeTest.ps1 -CreateRealJiraTicket
 ```
 
-## 7. Database Initialization
+## 8. Database Initialization
 
 Bootstrap PostgreSQL/pgvector berada di:
 
@@ -130,7 +153,7 @@ Startup production harus:
 - Tidak bergantung pada file publish lama.
 - Tidak memakai `EnsureCreated()` sebagai flow utama PostgreSQL.
 
-## 8. Operational Scripts
+## 9. Operational Scripts
 
 | Script | Fungsi |
 |--------|--------|
@@ -140,7 +163,7 @@ Startup production harus:
 | `scripts/Run-ChatStressTest.ps1` | Stress test default 50 virtual users. |
 | `scripts/ReindexKnowledgeBase.ps1` | Reindex dokumen KB ke database/vector store. |
 
-## 9. File yang Tidak Boleh Masuk Source
+## 10. File yang Tidak Boleh Masuk Source
 
 File berikut adalah artifact runtime dan harus di-ignore:
 
@@ -154,7 +177,7 @@ File berikut adalah artifact runtime dan harus di-ignore:
 - `scripts/*_preview.txt`
 - `.env.docker.local`
 
-## 10. Validation Standard
+## 11. Validation Standard
 
 Sebelum dianggap siap:
 
@@ -180,7 +203,7 @@ Acceptance saat rate limit disabled:
 - Monitoring error tidak naik karena suggestion timeout.
 - Cache hit tercatat untuk pertanyaan umum berulang.
 
-## 11. Cara Membaca Monitoring
+## 12. Cara Membaca Monitoring
 
 Dashboard monitoring dipakai untuk melihat:
 
@@ -195,4 +218,3 @@ Dashboard monitoring dipakai untuk melihat:
 - Module paling aktif.
 
 Error monitoring harus merepresentasikan kegagalan utama request atau dependency utama. Test input validation boleh terlihat sebagai `success=false`, tetapi bukan bug server.
-

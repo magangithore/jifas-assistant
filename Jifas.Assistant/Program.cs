@@ -25,6 +25,7 @@ using Jifas.Assistant.Utilities;
 using Jifas.Assistant.Hubs;
 using jifas_assistant.DAL.Models;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using HealthChecks.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -266,6 +267,7 @@ builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
 builder.Services.AddScoped<IKnowledgeBaseContextService, KnowledgeBaseContextService>();
+builder.Services.AddScoped<IAssistantCommandService, AssistantCommandService>();
 
 // Service kualitas jawaban: memahami query, mengecek kualitas response, dan belajar dari percakapan.
 builder.Services.AddScoped<IQueryUnderstandingService, QueryUnderstandingService>();
@@ -288,10 +290,25 @@ builder.Services.AddScoped<IChatService, ChatService>();
 // Warmup embedding saat startup agar pencarian KB pertama tidak terlalu lambat.
 builder.Services.AddHostedService<EmbeddingWarmupService>();
 
-// Health check untuk Docker dan monitoring readiness.
+var ollamaHealthBaseUrl =
+    builder.Configuration["Ollama:BaseUrl"] ??
+    builder.Configuration["Ollama:Url"] ??
+    "http://localhost:11434";
+var ollamaHealthUrl = new Uri(new Uri(ollamaHealthBaseUrl.TrimEnd('/') + "/"), "api/tags");
+
+// Health check untuk dependency utama. URL Ollama mengikuti konfigurasi runtime,
+// bukan localhost container, agar Docker health mencerminkan server AI yang benar.
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<JIFAS_AssistantContext>(
         name: "database",
+        tags: new[] { "ready" })
+    .AddUrlGroup(
+        ollamaHealthUrl,
+        name: "ollama",
+        tags: new[] { "ready" })
+    .AddRedis(
+        redisConnectionString ?? "localhost:6379",
+        name: "redis",
         tags: new[] { "ready" });
 
 // ========================================

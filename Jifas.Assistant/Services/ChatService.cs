@@ -34,6 +34,7 @@ namespace Jifas.Assistant.Services
         private readonly ILocalizationService _localizationService;
         private readonly IConfiguration _configuration;
         private readonly IInputValidator _inputValidator;
+        private readonly IAssistantCommandService _assistantCommandService;
         private readonly IChatHistoryService _chatHistoryService;
         
         // Service kualitas AI: intent detection, validasi jawaban, memori percakapan, dan context packing.
@@ -44,6 +45,7 @@ namespace Jifas.Assistant.Services
         private readonly IAdaptiveContextPackService _contextPackService;
         private readonly IEmbeddingService _embeddingService;
         private readonly ITicketService _ticketService;
+        private readonly IMonitoringService _monitoringService;
 
         private const int MIN_KB_RESULTS_REQUIRED = 1;
         private const int MAX_REGENERATION_ATTEMPTS = 2;
@@ -59,6 +61,7 @@ namespace Jifas.Assistant.Services
             ILocalizationService localizationService,
             IConfiguration configuration,
             IInputValidator inputValidator,
+            IAssistantCommandService assistantCommandService,
             IChatHistoryService chatHistoryService,
             IQueryUnderstandingService queryUnderstanding,
             IResponseQualityService responseQuality,
@@ -66,7 +69,8 @@ namespace Jifas.Assistant.Services
             IUserMemoryService userMemory,
             IAdaptiveContextPackService contextPackService,
             IEmbeddingService embeddingService,
-            ITicketService ticketService)
+            ITicketService ticketService,
+            IMonitoringService monitoringService)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
@@ -78,6 +82,7 @@ namespace Jifas.Assistant.Services
             _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
             _configuration = configuration;
             _inputValidator = inputValidator ?? throw new ArgumentNullException(nameof(inputValidator));
+            _assistantCommandService = assistantCommandService ?? throw new ArgumentNullException(nameof(assistantCommandService));
             _chatHistoryService = chatHistoryService ?? throw new ArgumentNullException(nameof(chatHistoryService));
             _queryUnderstanding = queryUnderstanding ?? throw new ArgumentNullException(nameof(queryUnderstanding));
             _responseQuality = responseQuality ?? throw new ArgumentNullException(nameof(responseQuality));
@@ -86,6 +91,7 @@ namespace Jifas.Assistant.Services
             _contextPackService = contextPackService ?? throw new ArgumentNullException(nameof(contextPackService));
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
+            _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
         }
 
         public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -157,10 +163,27 @@ namespace Jifas.Assistant.Services
                 return response;
             }
 
-            var userMessage = validationResult.Value.Message;
+            var validatedRequest = validationResult.Value;
+            var userMessage = validatedRequest.Message;
 
             try
             {
+                // Command slash seperti /help ditangani cepat tanpa cache, KB, atau LLM.
+                var commandResponse = _assistantCommandService.TryHandleCommand(
+                    userMessage,
+                    validatedRequest,
+                    response.SessionId,
+                    correlationId);
+
+                if (commandResponse != null)
+                {
+                    totalStopwatch.Stop();
+                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    commandResponse.PerformanceMetrics = metrics;
+                    await SaveChatHistoryAsync(commandResponse, userMessage, request, cancellationToken);
+                    return commandResponse;
+                }
+
                 // Ticket flow harus diproses lebih dulu karena user sedang berada di dialog pembuatan tiket.
                 if (_ticketService.IsInTicketFlow(response.SessionId))
                 {
@@ -213,6 +236,7 @@ namespace Jifas.Assistant.Services
                         cachedResponse.PerformanceMetrics.WasCacheLit = true;
                         cachedResponse.PerformanceMetrics.CacheScope = cacheScope;
                         cachedResponse.PerformanceMetrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                        await RecordCacheHitAsync(cachedResponse, request, userMessage, totalStopwatch.ElapsedMilliseconds);
                         _logger.LogInformation($"[ChatService] Response cache HIT - Total: {cachedResponse.PerformanceMetrics.TotalMs}ms | {cachedResponse.PerformanceMetrics.GetSummary()}");
                         return cachedResponse;
                     }
@@ -622,6 +646,45 @@ namespace Jifas.Assistant.Services
                 
                 return response;
             }
+        }
+
+        private async Task RecordCacheHitAsync(ChatResponse cachedResponse, ChatRequest? request, string userMessage, long totalMs)
+        {
+            try
+            {
+                await _monitoringService.RecordAsync(new AiCallMetrics
+                {
+                    UserId = request?.UserId ?? "anonymous",
+                    SessionId = cachedResponse.SessionId,
+                    ActiveModule = request?.Context?.ActiveModule ?? request?.CurrentModule ?? "Unknown",
+                    Model = _configuration["Ollama:Model"] ?? "cache",
+                    CallType = "cache-hit",
+                    PromptTokens = EstimateTokenCount(userMessage),
+                    CompletionTokens = EstimateTokenCount(cachedResponse.Message),
+                    TotalDurationMs = Math.Max(0, totalMs),
+                    LoadDurationMs = 0,
+                    PromptEvalDurationMs = 0,
+                    EvalDurationMs = 0,
+                    PromptLengthChars = userMessage?.Length ?? 0,
+                    ResponseLengthChars = cachedResponse.Message?.Length ?? 0,
+                    ConfidenceScore = cachedResponse.ConfidenceScore,
+                    IsError = !cachedResponse.Success,
+                    ErrorMessage = cachedResponse.Success ? null : "Cached response marked unsuccessful",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Cache-hit monitoring skipped: {ex.Message}");
+            }
+        }
+
+        private static int EstimateTokenCount(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+
+            return Math.Max(1, (int)Math.Ceiling(text.Length / 4.0));
         }
 
         /// <summary>

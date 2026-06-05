@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>JIFAS AI Monitoring</title>
+<title>Monitoring Chatbot JIFAS</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
 <style>
   :root {
-    --bg: #f3f6fb;
+    --bg: #eef3f8;
     --surface: #ffffff;
     --surface-2: #f8fafc;
     --header: rgba(255, 255, 255, 0.96);
@@ -27,19 +27,20 @@
     --red-soft: #feecec;
     --cyan: #0e7490;
     --cyan-soft: #e7f8fc;
-    --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    --shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
     --radius: 8px;
+    --row-hover: rgba(36, 84, 214, 0.08);
   }
 
   body.dark {
-    --bg: #0d111a;
-    --surface: #151b26;
-    --surface-2: #101620;
-    --header: rgba(16, 22, 32, 0.96);
-    --border: #2b3545;
-    --border-strong: #445269;
-    --text: #e5edf7;
-    --muted: #9aa8bc;
+    --bg: #0f141d;
+    --surface: #18202c;
+    --surface-2: #111923;
+    --header: rgba(17, 24, 35, 0.97);
+    --border: #334155;
+    --border-strong: #526174;
+    --text: #f1f5f9;
+    --muted: #b6c2d2;
     --muted-2: #718096;
     --primary: #6ea8fe;
     --primary-soft: #14294c;
@@ -52,6 +53,7 @@
     --cyan: #22d3ee;
     --cyan-soft: #11313a;
     --shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+    --row-hover: rgba(110, 168, 254, 0.12);
   }
 
   * { box-sizing: border-box; }
@@ -61,7 +63,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: "Segoe UI", Arial, system-ui, sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     min-height: 100vh;
     transition: background-color .18s ease, color .18s ease;
   }
@@ -76,9 +78,9 @@
   }
 
   .topbar {
-    max-width: 1680px;
+    max-width: 1480px;
     margin: 0 auto;
-    padding: 16px 28px;
+    padding: 14px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -191,16 +193,16 @@
   }
 
   main {
-    max-width: 1680px;
+    max-width: 1480px;
     margin: 0 auto;
-    padding: 22px 28px 34px;
+    padding: 18px 24px 34px;
   }
 
   .summary-band {
     display: grid;
-    grid-template-columns: minmax(260px, 1.25fr) repeat(3, minmax(170px, 0.75fr));
-    gap: 14px;
-    margin-bottom: 18px;
+    grid-template-columns: minmax(320px, 1.4fr) repeat(3, minmax(180px, 0.75fr));
+    gap: 16px;
+    margin-bottom: 20px;
   }
 
   .panel, .metric-card, .table-card {
@@ -215,7 +217,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 132px;
+    min-height: 124px;
   }
 
   .overview h2 {
@@ -255,10 +257,15 @@
 
   .metric-card {
     padding: 16px;
-    min-height: 132px;
+    min-height: 124px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .metric-card:hover, .panel:hover, .table-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
   }
 
   .metric-label {
@@ -269,7 +276,7 @@
 
   .metric-value {
     margin-top: 10px;
-    font-size: 30px;
+    font-size: 32px;
     line-height: 1;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
@@ -281,13 +288,26 @@
     font-size: 12px;
   }
 
+  .metric-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .metric-trend.ok { color: var(--green); }
+  .metric-trend.warn { color: var(--yellow); }
+  .metric-trend.err { color: var(--red); }
+
   .metric-primary { border-top: 4px solid var(--primary); }
   .metric-green { border-top: 4px solid var(--green); }
   .metric-yellow { border-top: 4px solid var(--yellow); }
   .metric-red { border-top: 4px solid var(--red); }
 
   .section-title {
-    margin: 22px 0 10px;
+    margin: 26px 0 12px;
     display: flex;
     justify-content: space-between;
     align-items: end;
@@ -296,7 +316,7 @@
 
   .section-title h2 {
     margin: 0;
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .section-title span {
@@ -316,34 +336,160 @@
     gap: 14px;
   }
 
+  .trend-grid {
+    grid-template-columns: 1fr;
+  }
+
   .chart-grid-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 14px;
   }
 
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .insight-card {
+    padding: 14px;
+    min-height: 112px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .insight-card h3 {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .insight-value {
+    margin-top: 10px;
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .insight-detail {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .guide-band {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 4px 0 22px;
+  }
+
+  .guide-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+
+  .guide-item strong {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .guide-item span {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .status-list {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px 16px;
+  }
+
+  .status-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+  }
+
+  .status-row strong { font-size: 13px; }
+  .status-row span { color: var(--muted); font-size: 12px; }
+
   .panel-header {
-    padding: 15px 16px 0;
+    padding: 16px 18px 0;
   }
 
   .panel-header h3 {
     margin: 0;
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .panel-header p {
-    margin: 4px 0 0;
+    margin: 6px 0 0;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .chart-summary {
+    margin: 14px 18px 0;
+    padding: 10px 0;
+    display: flex;
+    gap: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chart-summary-item {
+    min-width: 155px;
+    padding: 3px 18px 3px 0;
+    margin-right: 18px;
+    border-right: 1px solid var(--border);
+  }
+
+  .chart-summary-item:last-child { border-right: 0; margin-right: 0; }
+
+  .chart-summary-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+
+  .chart-summary-item strong {
+    display: block;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
   }
 
   .chart-wrap {
     position: relative;
-    height: 220px;
-    padding: 10px 14px 14px;
+    height: 250px;
+    padding: 14px 18px 18px;
   }
 
-  .chart-wrap.tall { height: 300px; }
+  .chart-wrap.tall { height: 310px; }
 
   .empty-note {
     color: var(--muted);
@@ -367,7 +513,7 @@
     gap: 12px;
     margin-bottom: 5px;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .gauge-label strong { color: var(--text); }
@@ -375,7 +521,7 @@
   .gauge-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
 
   .live-feed {
-    height: 156px;
+    height: 180px;
     overflow: auto;
     padding: 12px 14px;
     font-family: "Cascadia Code", Consolas, monospace;
@@ -394,22 +540,47 @@
 
   .table-card { overflow: hidden; }
   .table-header {
-    padding: 15px 16px;
+    padding: 16px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
   }
 
-  .table-header h3 { margin: 0; font-size: 14px; }
+  .table-header h3 { margin: 0; font-size: 15px; }
   .table-header span { color: var(--muted); font-size: 12px; }
-  .table-scroll { overflow-x: auto; }
+  .table-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-input {
+    height: 34px;
+    min-width: 220px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 0 10px;
+    font: inherit;
+    font-size: 13px;
+  }
+
+  .type-filter {
+    height: 34px;
+    min-width: 132px;
+    font-size: 13px;
+  }
+  .table-scroll { overflow: auto; max-height: 620px; }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 980px;
+    min-width: 1080px;
   }
 
   th {
@@ -421,10 +592,13 @@
     font-size: 12px;
     font-weight: 800;
     white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
 
   td {
-    padding: 11px 14px;
+    padding: 13px 14px;
     border-bottom: 1px solid color-mix(in srgb, var(--border) 52%, transparent);
     color: var(--text);
     white-space: nowrap;
@@ -433,7 +607,8 @@
     text-overflow: ellipsis;
   }
 
-  tbody tr:hover td { background: color-mix(in srgb, var(--primary-soft) 55%, transparent); }
+  tbody tr:hover td { background: var(--row-hover); }
+  tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 34%, transparent); }
 
   .badge {
     display: inline-flex;
@@ -447,12 +622,13 @@
 
   .badge-ok { background: var(--green-soft); color: var(--green); }
   .badge-err { background: var(--red-soft); color: var(--red); }
+  .badge-warn { background: var(--yellow-soft); color: var(--yellow); }
   .badge-type { background: var(--primary-soft); color: var(--primary); }
   .mono { font-variant-numeric: tabular-nums; font-family: "Cascadia Code", Consolas, monospace; }
   .muted { color: var(--muted); }
 
   footer {
-    max-width: 1680px;
+    max-width: 1480px;
     margin: 0 auto;
     padding: 0 28px 28px;
     color: var(--muted);
@@ -461,7 +637,7 @@
 
   @media (max-width: 1200px) {
     .summary-band { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-    .kpi-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+    .kpi-grid, .insight-grid, .guide-band { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
     .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
   }
 
@@ -469,7 +645,10 @@
     .topbar { align-items: flex-start; flex-direction: column; padding: 14px 16px; }
     .toolbar { width: 100%; justify-content: flex-start; }
     main { padding: 16px; }
-    .summary-band, .kpi-grid { grid-template-columns: 1fr; }
+    .summary-band, .kpi-grid, .insight-grid, .guide-band { grid-template-columns: 1fr; }
+    .chart-summary { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .chart-summary-item { border-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-right: 0; }
+    .chart-summary-item:last-child { border-bottom: 0; }
     .metric-value { font-size: 26px; }
   }
 </style>
@@ -478,10 +657,10 @@
 <header>
   <div class="topbar">
     <div class="brand">
-      <div class="brand-mark">AI</div>
+      <div class="brand-mark">JF</div>
       <div>
-        <h1>JIFAS AI Monitoring</h1>
-        <div class="subtitle">Dashboard operasional chatbot, performa model, dan penggunaan token</div>
+        <h1>Monitoring Chatbot JIFAS</h1>
+        <div class="subtitle">Status layanan, waktu tunggu user, cache, basis pengetahuan, dan error</div>
       </div>
     </div>
     <div class="toolbar">
@@ -503,28 +682,28 @@
   <section class="summary-band">
     <div class="overview panel">
       <div>
-        <h2>Ringkasan Operasional</h2>
-        <p id="overview-text">Memuat data monitoring dari API JIFAS Assistant.</p>
+        <h2>Ringkasan Layanan</h2>
+        <p id="overview-text">Memuat kondisi terbaru chatbot JIFAS.</p>
       </div>
       <div class="health-row">
         <span id="chip-volume" class="chip">Volume: -</span>
-        <span id="chip-speed" class="chip">Kecepatan: -</span>
+        <span id="chip-speed" class="chip">Waktu tunggu: -</span>
         <span id="chip-error" class="chip">Error: -</span>
       </div>
     </div>
     <div class="metric-card metric-primary">
       <div>
-        <div class="metric-label">Total request AI</div>
+        <div class="metric-label">Total request chatbot</div>
         <div class="metric-value" id="kpi-calls">-</div>
       </div>
       <div class="metric-foot" id="kpi-window">60 menit terakhir</div>
     </div>
     <div class="metric-card metric-green">
       <div>
-        <div class="metric-label">Rata-rata waktu jawab</div>
+        <div class="metric-label">Rata-rata user menunggu</div>
         <div class="metric-value" id="kpi-latency">-</div>
       </div>
-      <div class="metric-foot">Dari request sampai response selesai</div>
+      <div class="metric-foot">Dari pesan dikirim sampai jawaban selesai</div>
     </div>
     <div class="metric-card metric-red">
       <div>
@@ -535,31 +714,77 @@
     </div>
   </section>
 
+  <section class="guide-band" aria-label="Cara membaca dashboard">
+    <div class="guide-item">
+      <strong>Error harus rendah</strong>
+      <span>Kalau error naik, cek backend, Ollama, PostgreSQL, Redis, atau Jira.</span>
+    </div>
+    <div class="guide-item">
+      <strong>P95 = waktu tunggu mayoritas</strong>
+      <span>Angka ini lebih penting dari rata-rata saat ada request yang sangat lambat.</span>
+    </div>
+    <div class="guide-item">
+      <strong>Cache = jawaban cepat</strong>
+      <span>Request cache tidak diproses ulang, biasanya selesai dalam hitungan milidetik.</span>
+    </div>
+    <div class="guide-item">
+      <strong>KB = jawaban dari dokumen</strong>
+      <span>Semakin tinggi, semakin sering chatbot memakai dokumen resmi JIFAS.</span>
+    </div>
+  </section>
+
   <div class="section-title">
-    <h2>Indikator Utama</h2>
-    <span>Angka rata-rata dihitung sesuai rentang waktu yang dipilih.</span>
+    <h2>Yang Perlu Dipantau</h2>
+    <span>Ringkasan cepat untuk membaca kondisi layanan.</span>
+  </div>
+  <section class="insight-grid">
+    <div class="insight-card">
+      <h3>Jawaban cepat</h3>
+      <div class="insight-value" id="insight-cache-hit">-</div>
+      <div class="insight-detail" id="insight-cache-detail">Persentase jawaban yang langsung dari cache.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Jawaban dari KB</h3>
+      <div class="insight-value" id="insight-kb-hit">-</div>
+      <div class="insight-detail" id="insight-kb-detail">Rasio jawaban yang berasal dari KB.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Waktu tunggu p95</h3>
+      <div class="insight-value" id="insight-p95">-</div>
+      <div class="insight-detail" id="insight-p95-detail">95% request selesai di bawah angka ini.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Kondisi layanan</h3>
+      <div class="insight-value" id="insight-runtime">-</div>
+      <div class="insight-detail" id="insight-runtime-detail">Status API monitoring dan koneksi realtime.</div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Beban Sistem</h2>
+    <span>Detail teknis untuk membaca beban model, bukan angka utama untuk user.</span>
   </div>
   <section class="kpi-grid">
     <div class="metric-card">
       <div>
-        <div class="metric-label">Kecepatan generate</div>
+        <div class="metric-label">Kecepatan menulis jawaban</div>
         <div class="metric-value" id="kpi-tps">-</div>
       </div>
       <div class="metric-foot">token per detik</div>
     </div>
     <div class="metric-card">
       <div>
-        <div class="metric-label">Input token rata-rata</div>
+        <div class="metric-label">Beban pertanyaan rata-rata</div>
         <div class="metric-value" id="kpi-prompt-tok">-</div>
       </div>
-      <div class="metric-foot" id="kpi-prompt-sub">- total input token</div>
+      <div class="metric-foot" id="kpi-prompt-sub">- total beban pertanyaan</div>
     </div>
     <div class="metric-card">
       <div>
-        <div class="metric-label">Output token rata-rata</div>
+        <div class="metric-label">Beban jawaban rata-rata</div>
         <div class="metric-value" id="kpi-out-tok">-</div>
       </div>
-      <div class="metric-foot" id="kpi-out-sub">- total output token</div>
+      <div class="metric-foot" id="kpi-out-sub">- total beban jawaban</div>
     </div>
     <div class="metric-card">
       <div>
@@ -571,70 +796,103 @@
   </section>
 
   <div class="section-title">
-    <h2>Tren Waktu</h2>
+    <h2>Tren Request</h2>
     <span id="last-refresh">Belum refresh</span>
   </div>
-  <section class="chart-grid">
+  <section class="chart-grid trend-grid">
     <div class="panel">
       <div class="panel-header">
-        <h3>Jumlah request dan waktu jawab</h3>
-        <p>Bar menunjukkan jumlah request, garis menunjukkan rata-rata durasi dalam detik.</p>
+        <h3>Request masuk dan waktu tunggu</h3>
+        <p>Grafik ini untuk melihat jam ramai dan kapan jawaban mulai lama. Bar biru = jumlah request. Garis hijau = waktu tunggu rata-rata.</p>
       </div>
+      <div id="timeline-summary" class="chart-summary"></div>
       <div class="chart-wrap tall"><canvas id="chart-timeline"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <h3>Penggunaan token</h3>
-        <p>Bar menunjukkan total token yang diproses model pada setiap periode waktu.</p>
+        <h3>Beban sistem teknis</h3>
+        <p>Token adalah ukuran kerja model saat membaca pertanyaan dan menulis jawaban. Dipakai untuk melihat kenapa suatu menit terasa lebih berat.</p>
       </div>
+      <div id="token-summary" class="chart-summary"></div>
       <div class="chart-wrap tall"><canvas id="chart-tokens"></canvas></div>
     </div>
   </section>
 
   <div class="section-title">
-    <h2>Analisis Detail</h2>
-    <span>Dipakai untuk melihat bottleneck, tipe request, dan modul aktif.</span>
+    <h2>Analisis Penyebab Lambat</h2>
+    <span>Dipakai untuk melihat bagian proses yang paling banyak memakan waktu.</span>
   </div>
   <section class="chart-grid-3">
     <div class="panel">
       <div class="panel-header">
-        <h3>Rincian waktu proses</h3>
-        <p>Rata-rata durasi load model, baca prompt, dan generate jawaban dalam detik.</p>
+        <h3>Bagian proses paling lambat</h3>
+        <p>Rata-rata waktu menyiapkan model, membaca pertanyaan, dan menulis jawaban.</p>
       </div>
       <div class="chart-wrap"><canvas id="chart-timing"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <h3>Distribusi tipe request</h3>
-        <p>Perbandingan request chat, suggestion, embedding, atau tipe lain.</p>
+        <h3>Jenis jawaban</h3>
+        <p>Perbandingan jawaban normal, jawaban cepat dari cache, validasi, dan error.</p>
       </div>
       <div class="chart-wrap"><canvas id="chart-calltype"></canvas></div>
     </div>
     <div class="panel">
       <div class="panel-header">
-        <h3>Modul paling aktif</h3>
-        <p>Modul JIFAS yang paling sering memicu request AI.</p>
+        <h3>Modul paling sering ditanya</h3>
+        <p>Modul JIFAS yang paling sering dipakai dalam percakapan chatbot.</p>
       </div>
       <div id="gauge-modules" class="gauge-row"></div>
     </div>
   </section>
 
   <div class="section-title">
-    <h2>Live Event Stream</h2>
-    <span>Event realtime dari SignalR.</span>
+    <h2>Stabilitas</h2>
+    <span>Melihat komposisi sukses/error dan kesiapan layanan.</span>
+  </div>
+  <section class="chart-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Hasil request</h3>
+        <p>Perbandingan request sukses, error, dan validasi terkontrol.</p>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Checklist layanan</h3>
+        <p>Checklist cepat sebelum dan sesudah test banyak user.</p>
+      </div>
+      <div id="runtime-list" class="status-list"></div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Aktivitas Realtime</h2>
+    <span>Event request terbaru dari koneksi realtime.</span>
   </div>
   <section class="panel">
     <div id="live-feed" class="live-feed"><div class="feed-line muted">Menunggu event realtime...</div></div>
   </section>
 
   <div class="section-title">
-    <h2>Log Request Terbaru</h2>
+    <h2>Riwayat Request Terbaru</h2>
     <span>Menampilkan maksimal 200 request terakhir dari rentang terpilih.</span>
   </div>
   <section class="table-card">
     <div class="table-header">
-      <h3>Daftar Request AI</h3>
-      <span id="log-count">0 data</span>
+      <h3>Daftar Request Chatbot</h3>
+      <div class="table-actions">
+        <input id="log-search" class="filter-input" type="search" placeholder="Cari user, modul, atau tipe..." oninput="updateLogFilter()" />
+        <select id="type-filter" class="type-filter" onchange="updateLogFilter()" aria-label="Filter tipe request">
+          <option value="all">Semua tipe</option>
+          <option value="chat">AI</option>
+          <option value="cache-hit">Cache</option>
+          <option value="validation">Validasi</option>
+          <option value="error">Error</option>
+        </select>
+        <span id="log-count">0 data</span>
+      </div>
     </div>
     <div class="table-scroll">
       <table>
@@ -644,11 +902,11 @@
             <th>User</th>
             <th>Modul</th>
             <th>Tipe</th>
-            <th>Input</th>
-            <th>Output</th>
+            <th>Beban tanya</th>
+            <th>Beban jawab</th>
             <th>Durasi</th>
-            <th>Kecepatan</th>
-            <th>Panjang</th>
+            <th>Token/detik</th>
+            <th>Panjang jawaban</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -659,7 +917,7 @@
 </main>
 
 <footer>
-  JIFAS AI Monitoring. Data berasal dari API monitoring JIFAS Assistant dan diperbarui realtime melalui SignalR.
+  Monitoring Chatbot JIFAS. Data berasal dari API monitoring JIFAS Assistant dan diperbarui realtime melalui SignalR.
 </footer>
 
 <script>
@@ -667,6 +925,8 @@ let currentWindow = 60;
 let allLogs = [];
 let charts = {};
 let lastDashboardData = null;
+let logSearchText = '';
+let logTypeFilter = 'all';
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8888' : '';
 const JAKARTA_TZ = 'Asia/Jakarta';
@@ -721,6 +981,27 @@ function fmtCompact(value, digits = 1) {
   return fmtNumber(value, 0);
 }
 
+function fmtWhole(value) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  return fmtNumber(Math.round(Number(value)), 0);
+}
+
+function fmtTokenCount(value) {
+  const rounded = fmtWhole(value);
+  return rounded === '-' ? '-' : `${rounded} token`;
+}
+
+function fmtTokenAxis(value) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  return `${fmtNumber(value, 0)} token`;
+}
+
+function fmtCharacterCount(value) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  const count = Math.max(0, Math.round(Number(value)));
+  return `${fmtNumber(count, 0)} karakter`;
+}
+
 function fmtDuration(ms) {
   if (ms == null || Number.isNaN(Number(ms))) return '-';
   const value = Number(ms);
@@ -729,8 +1010,38 @@ function fmtDuration(ms) {
   return `${fmtNumber(value / 60_000, 1)} mnt`;
 }
 
+function fmtDurationLong(ms) {
+  if (ms == null || Number.isNaN(Number(ms))) return '-';
+  const value = Math.max(0, Math.round(Number(ms)));
+  if (value < 1000) return `${fmtNumber(value, 0)} ms`;
+
+  const totalSeconds = Math.round(value / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes === 0) return `${fmtNumber(seconds, 0)} detik`;
+  if (seconds === 0) return `${fmtNumber(minutes, 0)} menit`;
+  return `${fmtNumber(minutes, 0)} menit ${fmtNumber(seconds, 0)} detik`;
+}
+
 function fmtPercent(value) {
   return `${fmtNumber(value ?? 0, 1)}%`;
+}
+
+function fmtCallType(type) {
+  const key = String(type || 'chat').toLowerCase();
+  const labels = {
+    'chat': 'AI',
+    'cache-hit': 'Cache',
+    'suggestions': 'Saran',
+    'embedding': 'Embedding',
+    'validation': 'Validasi'
+  };
+  return labels[key] || key.replace(/-/g, ' ');
+}
+
+function isCacheHitLog(item) {
+  return String(item?.callType || '').toLowerCase() === 'cache-hit';
 }
 
 function parseUtc(iso) {
@@ -740,15 +1051,32 @@ function parseUtc(iso) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function fmtTime(iso) {
-  const date = parseUtc(iso);
-  if (!date) return '-';
-  return date.toLocaleTimeString('id-ID', {
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function timePartsWib(date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: JAKARTA_TZ,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    timeZone: JAKARTA_TZ
-  });
+    hour12: false
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return {
+    hour: pad2(map.hour || '00'),
+    minute: pad2(map.minute || '00'),
+    second: pad2(map.second || '00')
+  };
+}
+
+function fmtTime(iso) {
+  const date = parseUtc(iso);
+  if (!date) return '-';
+  const time = timePartsWib(date);
+  return `${time.hour}:${time.minute}:${time.second}`;
 }
 
 function fmtDateTime(iso) {
@@ -773,15 +1101,14 @@ function windowLabel() {
 function startClock() {
   const tick = () => {
     const now = new Date();
-    el('wib-clock').textContent = `${now.toLocaleString('id-ID', {
+    const time = timePartsWib(now);
+    const dateText = now.toLocaleDateString('id-ID', {
       timeZone: JAKARTA_TZ,
       day: '2-digit',
       month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })} WIB`;
+      year: 'numeric'
+    });
+    el('wib-clock').textContent = `${dateText}, ${time.hour}:${time.minute}:${time.second} WIB`;
   };
   tick();
   setInterval(tick, 1000);
@@ -843,7 +1170,10 @@ function commonChartOptions(extra = {}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    animation: false,
+    animation: {
+      duration: 420,
+      easing: 'easeOutQuart'
+    },
     ...extra,
     plugins: {
       ...basePlugins,
@@ -865,6 +1195,24 @@ function commonChartOptions(extra = {}) {
   };
 }
 
+function percentile(values, pct) {
+  const nums = values
+    .map(Number)
+    .filter(value => Number.isFinite(value))
+    .sort((a, b) => a - b);
+  if (!nums.length) return 0;
+  const index = Math.ceil((pct / 100) * nums.length) - 1;
+  return nums[Math.min(Math.max(index, 0), nums.length - 1)];
+}
+
+function sumNumbers(values) {
+  return values.reduce((total, value) => total + (Number(value) || 0), 0);
+}
+
+function countBy(logs, predicate) {
+  return logs.reduce((total, item) => total + (predicate(item) ? 1 : 0), 0);
+}
+
 function updateChips(stats) {
   const calls = stats?.totalCalls ?? 0;
   const latency = stats?.avgTotalDurationMs ?? 0;
@@ -872,7 +1220,7 @@ function updateChips(stats) {
   const errorCalls = stats?.errorCalls ?? 0;
 
   el('chip-volume').textContent = `Volume: ${fmtNumber(calls)} request`;
-  el('chip-speed').textContent = `Waktu jawab: ${fmtDuration(latency)}`;
+  el('chip-speed').textContent = `Waktu tunggu: ${fmtDurationLong(latency)}`;
   el('chip-error').textContent = `Error: ${fmtPercent(errorRate)} (${fmtNumber(errorCalls)})`;
 
   el('chip-volume').className = `chip ${calls > 0 ? 'ok' : 'warn'}`;
@@ -888,25 +1236,73 @@ function updateKPIs(stats) {
 
   el('kpi-calls').textContent = fmtNumber(calls);
   el('kpi-window').textContent = windowLabel();
-  el('kpi-latency').textContent = fmtDuration(avgMs);
+  el('kpi-latency').textContent = fmtDurationLong(avgMs);
   el('kpi-errors').textContent = fmtPercent(stats.errorRate ?? 0);
   el('kpi-err-count').textContent = `${fmtNumber(stats.errorCalls ?? 0)} request error`;
   el('kpi-tps').textContent = fmtNumber(stats.avgTokensPerSecond ?? 0, 1);
-  el('kpi-prompt-tok').textContent = fmtCompact(stats.avgPromptTokens ?? 0, 1);
-  el('kpi-prompt-sub').textContent = `${fmtCompact(stats.totalPromptTokens ?? 0, 1)} total input token`;
-  el('kpi-out-tok').textContent = fmtCompact(stats.avgCompletionTokens ?? 0, 1);
-  el('kpi-out-sub').textContent = `${fmtCompact(stats.totalCompletionTokens ?? 0, 1)} total output token`;
-  el('kpi-resp-len').textContent = fmtCompact(stats.avgResponseLengthChars ?? 0, 1);
+  el('kpi-prompt-tok').textContent = fmtWhole(stats.avgPromptTokens ?? 0);
+  el('kpi-prompt-sub').textContent = `${fmtTokenCount(stats.totalPromptTokens ?? 0)} total beban pertanyaan`;
+  el('kpi-out-tok').textContent = fmtWhole(stats.avgCompletionTokens ?? 0);
+  el('kpi-out-sub').textContent = `${fmtTokenCount(stats.totalCompletionTokens ?? 0)} total beban jawaban`;
+  el('kpi-resp-len').textContent = fmtWhole(stats.avgResponseLengthChars ?? 0);
   el('overview-text').textContent = calls > 0
-    ? `Dalam ${windowLabel()}, sistem menerima ${fmtNumber(calls)} request AI. Rata-rata waktu jawab ${fmtDuration(avgMs)}, terakhir ada aktivitas pada ${last}.`
-    : `Belum ada request AI pada ${windowLabel()}. Dashboard akan otomatis terisi saat chatbot digunakan.`;
+    ? `Dalam ${windowLabel()}, chatbot menerima ${fmtNumber(calls)} request. Rata-rata user menunggu ${fmtDurationLong(avgMs)}. Aktivitas terakhir tercatat pada ${last}.`
+    : `Belum ada request chatbot pada ${windowLabel()}. Dashboard akan otomatis terisi saat chatbot digunakan.`;
   updateChips(stats);
+}
+
+function updateInsights(data) {
+  const stats = data?.stats || {};
+  const quality = data?.quality || {};
+  const logs = data?.logs || [];
+  const totalLogs = logs.length;
+  const p95 = percentile(logs.map(item => item.totalDurationMs || 0), 95);
+  const errorCount = countBy(logs, item => item.isError);
+  const successCount = Math.max(0, totalLogs - errorCount);
+  const cacheSampleCount = logs.length;
+  const cacheHitCount = countBy(logs, item => isCacheHitLog(item));
+  const cacheRate = cacheSampleCount > 0 ? (cacheHitCount / cacheSampleCount) * 100 : null;
+  const kbRate = quality.knowledgeBaseHitRate ?? null;
+  const hasRuntimeData = (stats.totalCalls ?? 0) > 0 || totalLogs > 0;
+
+  el('insight-cache-hit').textContent = cacheRate == null ? 'N/A' : fmtPercent(cacheRate);
+  el('insight-cache-detail').textContent = cacheRate == null
+    ? 'Belum ada log terbaru untuk membaca jawaban cepat.'
+    : `${fmtNumber(cacheHitCount)} dari ${fmtNumber(cacheSampleCount)} request terbaru dijawab langsung dari Redis cache.`;
+
+  el('insight-kb-hit').textContent = kbRate == null ? '-' : fmtPercent(kbRate);
+  el('insight-kb-detail').textContent = quality.totalResponses
+    ? `${fmtNumber(quality.knowledgeBaseResponses ?? 0)} dari ${fmtNumber(quality.totalResponses)} jawaban memakai dokumen JIFAS.`
+    : 'Belum ada histori chat pada rentang ini.';
+
+  el('insight-p95').textContent = p95 > 0 ? fmtDurationLong(p95) : '-';
+  el('insight-p95-detail').textContent = totalLogs
+    ? `Dari ${fmtNumber(totalLogs)} log terbaru. Kalau angka ini tinggi, user mulai terasa menunggu.`
+    : 'Belum ada log request untuk menghitung p95.';
+
+  el('insight-runtime').textContent = hasRuntimeData ? 'Aktif' : 'Idle';
+  el('insight-runtime-detail').textContent = `${fmtNumber(successCount)} request sukses, ${fmtNumber(errorCount)} error utama pada log terbaru.`;
 }
 
 function updateTimeline(series) {
   const labels = series.map(p => fmtTime(p.minute));
   const colors = chartColors();
-  const durationSeconds = series.map(p => Math.round((p.avgDurationMs || 0) / 100) / 10);
+  const durationMs = series.map(p => Math.round(p.avgDurationMs || 0));
+  const requestCounts = series.map(p => p.calls || 0);
+  const totalRequests = sumNumbers(requestCounts);
+  const avgWaitMs = durationMs.length ? sumNumbers(durationMs) / durationMs.length : 0;
+  const p95WaitMs = percentile(durationMs, 95);
+  const slowestPoint = series.reduce((slowest, point) => {
+    if (!slowest || (point.avgDurationMs || 0) > (slowest.avgDurationMs || 0)) return point;
+    return slowest;
+  }, null);
+
+  el('timeline-summary').innerHTML = `
+    <div class="chart-summary-item"><span>Total request</span><strong>${fmtNumber(totalRequests)}</strong></div>
+    <div class="chart-summary-item"><span>Rata-rata tunggu</span><strong>${fmtDurationLong(avgWaitMs)}</strong></div>
+    <div class="chart-summary-item"><span>Mayoritas selesai</span><strong>${p95WaitMs ? fmtDurationLong(p95WaitMs) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Menit terlambat</span><strong>${slowestPoint ? fmtTime(slowestPoint.minute) : '-'}</strong></div>
+  `;
 
   makeChart('chart-timeline', {
     type: 'bar',
@@ -914,8 +1310,8 @@ function updateTimeline(series) {
       labels,
       datasets: [
         {
-          label: 'Jumlah request',
-          data: series.map(p => p.calls || 0),
+          label: 'Request masuk',
+          data: requestCounts,
           backgroundColor: alpha(colors.primary, 0.68),
           borderColor: colors.primary,
           borderWidth: 1,
@@ -923,8 +1319,8 @@ function updateTimeline(series) {
           yAxisID: 'y'
         },
         {
-          label: 'Rata-rata durasi (detik)',
-          data: durationSeconds,
+          label: 'Waktu tunggu rata-rata',
+          data: durationMs,
           type: 'line',
           borderColor: colors.green,
           backgroundColor: alpha(colors.green, 0.12),
@@ -942,14 +1338,14 @@ function updateTimeline(series) {
         y: {
           title: { display: true, text: 'Request' },
           beginAtZero: true,
-          ticks: { precision: 0 }
+          ticks: { precision: 0, maxTicksLimit: 6 }
         },
         y1: {
           position: 'right',
-          title: { display: true, text: 'Detik' },
+          title: { display: true, text: 'Waktu tunggu' },
           beginAtZero: true,
           grid: { drawOnChartArea: false },
-          ticks: { callback: value => `${fmtNumber(value, value >= 10 ? 0 : 1)} dtk` }
+          ticks: { callback: value => fmtDurationLong(value), maxTicksLimit: 6 }
         }
       },
       plugins: {
@@ -957,7 +1353,7 @@ function updateTimeline(series) {
         tooltip: {
           callbacks: {
             label: context => {
-              if (context.dataset.yAxisID === 'y1') return `Durasi: ${fmtNumber(context.raw, 1)} detik`;
+              if (context.dataset.yAxisID === 'y1') return `Waktu tunggu: ${fmtDurationLong(context.raw)}`;
               return `Request: ${fmtNumber(context.raw)}`;
             }
           }
@@ -970,14 +1366,30 @@ function updateTimeline(series) {
 function updateTokenChart(series) {
   const labels = series.map(p => fmtTime(p.minute));
   const colors = chartColors();
+  const tokenValues = series.map(p => p.totalTokens || 0);
+  const requestCounts = series.map(p => p.calls || 0);
+  const totalTokens = sumNumbers(tokenValues);
+  const totalRequests = sumNumbers(requestCounts);
+  const avgTokensPerRequest = totalRequests > 0 ? totalTokens / totalRequests : 0;
+  const peakPoint = series.reduce((peak, point) => {
+    if (!peak || (point.totalTokens || 0) > (peak.totalTokens || 0)) return point;
+    return peak;
+  }, null);
+
+  el('token-summary').innerHTML = `
+    <div class="chart-summary-item"><span>Total token</span><strong>${fmtTokenCount(totalTokens)}</strong></div>
+    <div class="chart-summary-item"><span>Per request</span><strong>${totalRequests ? fmtTokenCount(avgTokensPerRequest) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Menit terberat</span><strong>${peakPoint ? fmtTime(peakPoint.minute) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Beban tertinggi</span><strong>${peakPoint ? fmtTokenCount(peakPoint.totalTokens || 0) : '-'}</strong></div>
+  `;
 
   makeChart('chart-tokens', {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'Total token',
-        data: series.map(p => p.totalTokens || 0),
+        label: 'Beban token',
+        data: tokenValues,
         borderColor: colors.yellow,
         backgroundColor: alpha(colors.yellow, 0.58),
         borderWidth: 1,
@@ -987,13 +1399,17 @@ function updateTokenChart(series) {
     options: commonChartOptions({
       scales: {
         x: { ticks: { font: chartFont, maxRotation: 0, maxTicksLimit: 9 }, grid: { display: false } },
-        y: { beginAtZero: true, ticks: { callback: value => fmtCompact(value, 1) } }
+        y: {
+          title: { display: true, text: 'Token' },
+          beginAtZero: true,
+          ticks: { callback: value => fmtTokenAxis(value), maxTicksLimit: 6 }
+        }
       },
       plugins: {
         legend: { labels: { font: chartFont, boxWidth: 12, usePointStyle: true } },
         tooltip: {
           callbacks: {
-            label: context => `Total token: ${fmtNumber(context.raw)}`
+            label: context => `Beban token: ${fmtNumber(context.raw)} token`
           }
         }
       }
@@ -1013,7 +1429,7 @@ function updateTimingChart(logs) {
   makeChart('chart-timing', {
     type: 'bar',
     data: {
-      labels: ['Load model', 'Baca prompt', 'Generate jawaban'],
+      labels: ['Siapkan model', 'Baca pertanyaan', 'Tulis jawaban'],
       datasets: [{
         data: [data.load, data.prompt, data.generate],
         backgroundColor: [colors.primary, colors.cyan, colors.green],
@@ -1043,7 +1459,7 @@ function updateCallTypeChart(logs) {
   const colors = chartColors();
   const counts = {};
   logs.forEach(item => {
-    const type = item.callType || 'chat';
+    const type = fmtCallType(item.callType);
     counts[type] = (counts[type] || 0) + 1;
   });
 
@@ -1065,6 +1481,99 @@ function updateCallTypeChart(logs) {
       plugins: { legend: { position: 'bottom', labels: { font: chartFont, boxWidth: 10, usePointStyle: true } } }
     })
   });
+}
+
+function updateStatusChart(logs) {
+  const colors = chartColors();
+  const errors = countBy(logs, item => item.isError);
+  const validation = countBy(logs, item => (item.callType || '').toLowerCase().includes('validation'));
+  const success = Math.max(0, logs.length - errors - validation);
+  const labels = ['Sukses', 'Error', 'Validasi'];
+  const data = [success, errors, validation];
+
+  makeChart('chart-status', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Jumlah request',
+        data,
+        backgroundColor: [alpha(colors.green, 0.72), alpha(colors.red, 0.72), alpha(colors.yellow, 0.72)],
+        borderColor: [colors.green, colors.red, colors.yellow],
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: commonChartOptions({
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: context => `${context.label}: ${fmtNumber(context.raw)} request`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    })
+  });
+}
+
+function updateRuntimeChecklist(data) {
+  const stats = data?.stats || {};
+  const quality = data?.quality || {};
+  const logs = data?.logs || [];
+  const p95 = percentile(logs.map(item => item.totalDurationMs || 0), 95);
+  const errorRate = stats.errorRate ?? 0;
+  const kbRate = quality.knowledgeBaseHitRate ?? 0;
+  const rows = [
+    {
+      label: 'API monitoring',
+      value: 'HTTP 200',
+      ok: true,
+      note: 'Dashboard berhasil mengambil data.'
+    },
+    {
+      label: 'SignalR realtime',
+      value: el('status-text')?.textContent || '-',
+      ok: !el('status-badge')?.classList.contains('disconnected'),
+      note: 'Aktivitas realtime aktif jika status Live.'
+    },
+    {
+      label: 'Error utama',
+      value: fmtPercent(errorRate),
+      ok: errorRate === 0,
+      warn: errorRate > 0 && errorRate <= 5,
+      note: `${fmtNumber(stats.errorCalls ?? 0)} error dari ${fmtNumber(stats.totalCalls ?? 0)} call.`
+    },
+    {
+      label: 'KB hit',
+      value: kbRate ? fmtPercent(kbRate) : '-',
+      ok: kbRate >= 80,
+      warn: kbRate > 0 && kbRate < 80,
+      note: quality.totalResponses ? 'Dari histori chat pada rentang ini.' : 'Belum ada data quality.'
+    },
+    {
+      label: 'Waktu tunggu p95',
+      value: p95 ? fmtDurationLong(p95) : '-',
+      ok: p95 > 0 && p95 <= 5000,
+      warn: p95 > 5000 && p95 <= 30000,
+      note: logs.length ? `Dari ${fmtNumber(logs.length)} log terbaru.` : 'Belum ada log.'
+    }
+  ];
+
+  el('runtime-list').innerHTML = rows.map(row => {
+    const badgeClass = row.ok ? 'badge-ok' : row.warn ? 'badge-warn' : 'badge-err';
+    const label = row.ok ? 'OK' : row.warn ? 'Perlu pantau' : 'Cek';
+    return `
+      <div class="status-row">
+        <div><strong>${escapeHtml(row.label)}</strong><br><span>${escapeHtml(row.note)}</span></div>
+        <div><span class="badge ${badgeClass}" title="${escapeHtml(row.value)}">${label}: ${escapeHtml(row.value)}</span></div>
+      </div>
+    `;
+  }).join('');
 }
 
 function updateModuleGauges(logs) {
@@ -1104,18 +1613,53 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function getFilteredLogs(logs) {
+  const query = logSearchText.trim().toLowerCase();
+  return logs.filter(item => {
+    const rawType = String(item.callType || 'chat').toLowerCase();
+    const labelType = fmtCallType(rawType).toLowerCase();
+    const matchesType =
+      logTypeFilter === 'all' ||
+      (logTypeFilter === 'error' && item.isError) ||
+      rawType === logTypeFilter ||
+      labelType === logTypeFilter;
+
+    if (!matchesType) return false;
+    if (!query) return true;
+
+    const haystack = [
+      item.userId,
+      item.activeModule,
+      rawType,
+      labelType,
+      item.model,
+      item.errorMessage
+    ].join(' ').toLowerCase();
+
+    return haystack.includes(query);
+  });
+}
+
+function updateLogFilter() {
+  logSearchText = el('log-search')?.value || '';
+  logTypeFilter = el('type-filter')?.value || 'all';
+  renderTable(allLogs);
+}
+
 function renderTable(logs) {
-  el('log-count').textContent = `${fmtNumber(logs.length)} data`;
+  const filtered = getFilteredLogs(logs);
+  el('log-count').textContent = `${fmtNumber(filtered.length)} dari ${fmtNumber(logs.length)} data`;
   const tbody = el('log-tbody');
-  if (!logs.length) {
+  if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="10" class="muted">Belum ada request pada rentang waktu ini.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = logs.slice(0, 200).map(item => {
+  tbody.innerHTML = filtered.slice(0, 200).map(item => {
     const user = item.userId?.trim() || '-';
     const module = item.activeModule || '-';
-    const type = item.callType || 'chat';
+    const rawType = item.callType || 'chat';
+    const type = fmtCallType(rawType);
     const status = item.isError
       ? '<span class="badge badge-err">Error</span>'
       : '<span class="badge badge-ok">Sukses</span>';
@@ -1124,12 +1668,12 @@ function renderTable(logs) {
         <td class="mono">${fmtDateTime(item.createdAt)}</td>
         <td title="${escapeHtml(user)}">${escapeHtml(user)}</td>
         <td title="${escapeHtml(module)}">${escapeHtml(module)}</td>
-        <td><span class="badge badge-type">${escapeHtml(type)}</span></td>
-        <td class="mono">${fmtCompact(item.promptTokens, 1)} token</td>
-        <td class="mono">${fmtCompact(item.completionTokens, 1)} token</td>
-        <td class="mono">${fmtDuration(item.totalDurationMs)}</td>
+        <td><span class="badge badge-type" title="${escapeHtml(rawType)}">${escapeHtml(type)}</span></td>
+        <td class="mono" title="${fmtTokenCount(item.promptTokens)}">${fmtTokenCount(item.promptTokens)}</td>
+        <td class="mono" title="${fmtTokenCount(item.completionTokens)}">${fmtTokenCount(item.completionTokens)}</td>
+        <td class="mono" title="${fmtNumber(item.totalDurationMs ?? 0, 0)} ms">${fmtDurationLong(item.totalDurationMs)}</td>
         <td class="mono">${item.tokensPerSecond > 0 ? `${fmtNumber(item.tokensPerSecond, 1)} token/dtk` : '-'}</td>
-        <td class="mono">${fmtCompact(item.responseLengthChars, 1)} karakter</td>
+        <td class="mono">${fmtCharacterCount(item.responseLengthChars)}</td>
         <td>${status}</td>
       </tr>
     `;
@@ -1149,8 +1693,9 @@ function addFeedLine(metric) {
       <span class="muted">|</span> ${status}
       <span class="muted">| user:</span> ${user}
       <span class="muted">| modul:</span> ${module}
-      <span class="muted">| durasi:</span> ${fmtDuration(metric.totalDurationMs)}
-      <span class="muted">| token:</span> ${fmtCompact((metric.promptTokens || 0) + (metric.completionTokens || 0), 1)}
+      <span class="muted">| tipe:</span> ${escapeHtml(fmtCallType(metric.callType))}
+      <span class="muted">| durasi:</span> ${fmtDurationLong(metric.totalDurationMs)}
+      <span class="muted">| beban:</span> ${fmtTokenCount((metric.promptTokens || 0) + (metric.completionTokens || 0))}
     </div>
   `;
   feed.insertAdjacentHTML('afterbegin', line);
@@ -1160,14 +1705,17 @@ function addFeedLine(metric) {
 function updateAll(data) {
   lastDashboardData = data;
   updateKPIs(data.stats);
+  updateInsights(data);
   updateTimeline(data.timeSeries || []);
   updateTokenChart(data.timeSeries || []);
   allLogs = data.logs || [];
   renderTable(allLogs);
   updateTimingChart(allLogs);
   updateCallTypeChart(allLogs);
+  updateStatusChart(allLogs);
   updateModuleGauges(allLogs);
-  el('last-refresh').textContent = `Terakhir refresh ${new Date().toLocaleTimeString('id-ID', { timeZone: JAKARTA_TZ })} WIB`;
+  updateRuntimeChecklist(data);
+  el('last-refresh').textContent = `Terakhir refresh ${fmtTime(new Date().toISOString())} WIB`;
 }
 
 async function refresh() {
@@ -1202,6 +1750,8 @@ const connection = new signalR.HubConnectionBuilder()
   .withAutomaticReconnect([1000, 3000, 10000])
   .build();
 
+let statsFetchTimeout = null; // FIXED: Debounce timer for stats refresh
+
 connection.on('NewMetric', metric => {
   addFeedLine(metric);
   allLogs.unshift(metric);
@@ -1209,11 +1759,19 @@ connection.on('NewMetric', metric => {
   renderTable(allLogs);
   updateTimingChart(allLogs.slice(0, 50));
   updateCallTypeChart(allLogs);
+  updateStatusChart(allLogs);
   updateModuleGauges(allLogs);
-  fetch(apiUrl(`/api/monitoring/stats?minutes=${currentWindow}`))
-    .then(r => r.ok ? r.json() : null)
-    .then(stats => stats && updateKPIs(stats))
-    .catch(() => {});
+  updateInsights({ ...(lastDashboardData || {}), stats: lastDashboardData?.stats || {}, quality: lastDashboardData?.quality || {}, logs: allLogs });
+  updateRuntimeChecklist({ ...(lastDashboardData || {}), stats: lastDashboardData?.stats || {}, quality: lastDashboardData?.quality || {}, logs: allLogs });
+
+  // FIXED: Debounce stats refresh to prevent API flooding under high load
+  if (statsFetchTimeout) clearTimeout(statsFetchTimeout);
+  statsFetchTimeout = setTimeout(() => {
+    fetch(apiUrl(`/api/monitoring/stats?minutes=${currentWindow}`))
+      .then(r => r.ok ? r.json() : null)
+      .then(stats => stats && updateKPIs(stats))
+      .catch(() => {});
+  }, 2000); // Wait 2 seconds before fetching stats
 });
 
 connection.onreconnecting(() => setDisconnected('Reconnect'));

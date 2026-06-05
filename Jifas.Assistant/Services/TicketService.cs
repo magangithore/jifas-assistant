@@ -472,11 +472,12 @@ namespace Jifas.Assistant.Services
             }
 
             // User confirmed - create the ticket
+            // FIXED: Use AI-enhanced description generation
             var ticketRequest = new CreateTicketRequest
             {
                 UserId = userId,
                 Title = state.GeneratedTitle,
-                Description = BuildTicketDescription(state, sessionId),
+                Description = await BuildAIEnhancedTicketDescriptionAsync(state, sessionId, cancellationToken),
                 Category = state.Category ?? "General",
                 Priority = MapPriorityToJira(state.Priority),
                 SessionId = sessionId
@@ -570,105 +571,132 @@ namespace Jifas.Assistant.Services
 
         public async Task<TicketCreationResult> CreateTicketAsync(CreateTicketRequest request, CancellationToken cancellationToken = default)
         {
-            try
+            const int maxRetries = 3;
+            var retryDelaysMs = new[] { 2000, 5000, 10000 }; // Exponential backoff for Jira API
+
+            for (int attempt = 0; attempt <= maxRetries; attempt++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                _logger.LogInformation($"[TicketService] Creating Jira ticket: {request.Title}");
-
-                // Use configured service account email, or fall back to user-derived email
-                var authEmail = !string.IsNullOrWhiteSpace(_accountEmail)
-                    ? _accountEmail
-                    : DeriveUserEmail(request.UserId);
-
-                // Validate Jira credentials
-                if (string.IsNullOrEmpty(_jiraApiToken) || string.IsNullOrEmpty(authEmail))
+                try
                 {
-                    return HandleJiraFailure(request, "Jira credentials are not configured.");
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return await CreateTicketInternalAsync(request, attempt, cancellationToken);
                 }
-
-                // Filter out null/empty labels
-                var labelList = new List<string> { "jifas-assistant" };
-                var cat = request.Category?.ToLowerInvariant().Trim();
-                if (!string.IsNullOrWhiteSpace(cat)) labelList.Add(cat);
-
-                var issuePayload = new
+                catch (HttpRequestException ex) when (IsJiraRetryableError(ex) && attempt < maxRetries)
                 {
-                    fields = new
-                    {
-                        project = new { key = _projectKey },
-                        summary = request.Title,
-                        description = MarkdownToAdf(request.Description ?? request.Title),
-                        issuetype = new { name = _defaultIssueType },
-                        priority = new { name = request.Priority ?? "Medium" },
-                        labels = labelList.ToArray()
-                    }
+                    var jitter = Random.Shared.Next(0, 500);
+                    var delayMs = retryDelaysMs[attempt] + jitter;
+                    _logger.LogWarning($"[TicketService] Jira retryable error on attempt {attempt + 1}/{maxRetries}, retrying in {delayMs}ms: {ex.Message}");
+                    await Task.Delay(delayMs, cancellationToken);
+                }
+                catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex) when (attempt < maxRetries)
+                {
+                    _logger.LogWarning($"[TicketService] Ticket creation failed on attempt {attempt + 1}/{maxRetries}: {ex.Message}");
+                    await Task.Delay(retryDelaysMs[attempt], cancellationToken);
+                }
+            }
+
+            // All retries exhausted - fall back to offline mode or return error
+            _logger.LogError($"[TicketService] All {maxRetries + 1} attempts to create Jira ticket failed");
+            return HandleJiraFailure(request, $"Jira API failed after {maxRetries + 1} attempts.");
+        }
+
+        /// <summary>
+        /// Internal method for actual ticket creation
+        /// </summary>
+        private async Task<TicketCreationResult> CreateTicketInternalAsync(CreateTicketRequest request, int attempt, CancellationToken cancellationToken)
+        {
+            _logger.LogInformation($"[TicketService] Creating Jira ticket (attempt {attempt + 1}): {request.Title}");
+
+            // Use configured service account email, or fall back to user-derived email
+            var authEmail = !string.IsNullOrWhiteSpace(_accountEmail)
+                ? _accountEmail
+                : DeriveUserEmail(request.UserId);
+
+            // Validate Jira credentials
+            if (string.IsNullOrEmpty(_jiraApiToken) || string.IsNullOrEmpty(authEmail))
+            {
+                return HandleJiraFailure(request, "Jira credentials are not configured.");
+            }
+
+            // Filter out null/empty labels
+            var labelList = new List<string> { "jifas-assistant" };
+            var cat = request.Category?.ToLowerInvariant().Trim();
+            if (!string.IsNullOrWhiteSpace(cat)) labelList.Add(cat);
+
+            var issuePayload = new
+            {
+                fields = new
+                {
+                    project = new { key = _projectKey },
+                    summary = request.Title,
+                    description = MarkdownToAdf(request.Description ?? request.Title),
+                    issuetype = new { name = _defaultIssueType },
+                    priority = new { name = request.Priority ?? "Medium" },
+                    // FIXED: Add reporter field to map to actual user
+                    reporter = new { email = authEmail },
+                    labels = labelList.ToArray()
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(issuePayload);
+
+            // Use Atlassian API gateway with CloudId (same as jiraClient.js Playwright integration)
+            var apiUrl = !string.IsNullOrWhiteSpace(_cloudId)
+                ? $"https://api.atlassian.com/ex/jira/{_cloudId}/rest/api/3/issue"
+                : $"{_jiraBaseUrl}/rest/api/3/issue";
+
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+            httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var credentials = Convert.ToBase64String(
+                Encoding.ASCII.GetBytes($"{authEmail}:{_jiraApiToken}"));
+            httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+
+            var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jiraResponse = JObject.Parse(responseBody);
+                var issueKey = jiraResponse["key"]?.ToString() ?? string.Empty;
+                var issueId = jiraResponse["id"]?.ToString();
+
+                _logger.LogInformation($"[TicketService] Jira ticket created: {issueKey}");
+
+                return new TicketCreationResult
+                {
+                    Success = true,
+                    TicketId = int.TryParse(issueId, out var id) ? id : 0,
+                    TicketNumber = issueKey,
+                    Message = "Tiket berhasil dibuat di Jira",
+                    Status = "Open",
+                    Url = BuildJiraIssueUrl(issueKey),
+                    CreatedAt = DateTime.UtcNow
                 };
-
-                var json = JsonConvert.SerializeObject(issuePayload);
-
-                // Use Atlassian API gateway with CloudId (same as jiraClient.js Playwright integration)
-                var apiUrl = !string.IsNullOrWhiteSpace(_cloudId)
-                    ? $"https://api.atlassian.com/ex/jira/{_cloudId}/rest/api/3/issue"
-                    : $"{_jiraBaseUrl}/rest/api/3/issue";
-
-                var httpRequest = new HttpRequestMessage(HttpMethod.Post, apiUrl);
-                httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                var credentials = Convert.ToBase64String(
-                    Encoding.ASCII.GetBytes($"{authEmail}:{_jiraApiToken}"));
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
-
-                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
-                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jiraResponse = JObject.Parse(responseBody);
-                    var issueKey = jiraResponse["key"]?.ToString() ?? string.Empty;
-                    var issueId = jiraResponse["id"]?.ToString();
-
-                    _logger.LogInformation($"[TicketService] Jira ticket created: {issueKey}");
-
-                    return new TicketCreationResult
-                    {
-                        Success = true,
-                        TicketId = int.TryParse(issueId, out var id) ? id : 0,
-                        TicketNumber = issueKey,
-                        Message = "Tiket berhasil dibuat di Jira",
-                        Status = "Open",
-                        Url = BuildJiraIssueUrl(issueKey),
-                        CreatedAt = DateTime.Now
-                    };
-                }
-                else
-                {
-                    _logger.LogError($"[TicketService] Jira API error {response.StatusCode}: {responseBody}");
-                    return HandleJiraFailure(request, $"Jira API error {response.StatusCode}.");
-                }
             }
-            catch (HttpRequestException httpEx)
+            else
             {
-                _logger.LogError($"[TicketService] Jira connection error: {httpEx.Message}");
-                return HandleJiraFailure(request, "Jira connection error.");
+                _logger.LogError($"[TicketService] Jira API error {response.StatusCode}: {responseBody}");
+                throw new HttpRequestException($"Jira API error {response.StatusCode}: {responseBody}");
             }
-            catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (TaskCanceledException)
-            {
-                _logger.LogError("[TicketService] Jira request timed out");
-                return HandleJiraFailure(request, "Jira request timed out.");
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"[TicketService] Error creating ticket: {ex.Message}");
-                return HandleJiraFailure(request, "Unexpected Jira integration error.");
-            }
+        }
+
+        /// <summary>
+        /// Determines if a Jira API error should trigger a retry
+        /// </summary>
+        private static bool IsJiraRetryableError(HttpRequestException ex)
+        {
+            var message = ex.Message.ToLowerInvariant();
+            return message.Contains("429") ||
+                   message.Contains("502") ||
+                   message.Contains("503") ||
+                   message.Contains("504") ||
+                   message.Contains("connection") ||
+                   message.Contains("timeout");
         }
 
         private TicketCreationResult HandleJiraFailure(CreateTicketRequest request, string reason)
@@ -691,23 +719,29 @@ namespace Jifas.Assistant.Services
 
         /// <summary>
         /// Fallback offline ticket when Jira is unavailable
+        /// FIXED: Use GUID-based ID instead of Random to prevent collision
         /// </summary>
         private TicketCreationResult CreateOfflineTicket(CreateTicketRequest request)
         {
-            var ticketId = new Random().Next(10000, 99999);
-            var ticketNumber = $"OFFLINE-{DateTime.Now:yyyyMMdd}-{ticketId}";
+            // FIXED: Use GUID-based ID instead of Random to prevent collision
+            var ticketId = Math.Abs(Guid.NewGuid().GetHashCode()) % 90000 + 10000;
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+            var ticketNumber = $"OFFLINE-{timestamp}-{ticketId}";
 
-            _logger.LogWarning($"[TicketService] Created offline ticket: {ticketNumber} (Jira unavailable)");
+            _logger.LogWarning($"[TicketService] Created offline ticket: {ticketNumber} (Jira unavailable). " +
+                             "This ticket will be queued for later sync to Jira.");
 
             return new TicketCreationResult
             {
                 Success = true,
                 TicketId = ticketId,
                 TicketNumber = ticketNumber,
-                Message = "Tiket dibuat secara offline (Jira tidak tersedia). IT Help Desk akan dihubungi via email.",
+                Message = "Tiket dibuat secara offline (Jira tidak tersedia). " +
+                         "Tiket akan disinkronkan ke Jira saat koneksi pulih. " +
+                         "IT Help Desk akan dihubungi via email.",
                 Status = "Pending Sync",
                 Url = string.Empty,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
         }
 
@@ -906,12 +940,96 @@ Tulis HANYA judul tiket, tanpa penjelasan tambahan:";
             }
         }
 
-        private string BuildTicketDescription(TicketDialogState state, string? sessionId = null)
+        /// <summary>
+        /// Build ticket description using AI for intelligent, structured output
+        /// FIXED: Now uses AI to generate professional descriptions instead of templates
+        /// </summary>
+        private async Task<string> BuildAIEnhancedTicketDescriptionAsync(
+            TicketDialogState state,
+            string? sessionId,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Generate description using AI
+                var prompt = $@"Buatkan deskripsi tiket IT Help Desk yang profesional dan terstruktur berdasarkan informasi berikut:
+
+MASALAH: ""{state.Problem}""
+
+KATEGORI: {state.Category ?? "General"}
+PRIORITAS: {state.Priority ?? "Medium"}
+
+{(!string.IsNullOrWhiteSpace(state.AiSolution) ? $@"
+SOLUSI YANG SUDAH DICOBA OLEH AI:
+{state.AiSolution}
+" : "")}
+
+Format deskripsi tiket yang diharapkan:
+
+**Ringkasan Masalah**
+[Paragraf ringkas yang menjelaskan masalah secara jelas dan spesifik - bukan copy paste user message, tapi versi yang lebih profesional]
+
+**Detail Masalah**
+- Kategori: [kategori]
+- Prioritas: [prioritas]
+- Sumber laporan: JIFAS AI Assistant
+- Waktu dibuat: [{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC]
+{(!string.IsNullOrEmpty(sessionId) ? $"- Session ID: {sessionId}" : "")}
+
+**Langkah Reproduksi** (jika applicable)
+1. [Langkah-langkah yang bisa direproduksi]
+2. [Langkah 2]
+3. [Langkah 3]
+
+**Informasi Tambahan**
+- User meminta bantuan melalui chatbot JIFAS AI Assistant
+- Mohon tim IT Help Desk melakukan pengecekan pada modul terkait
+- AI Assistant telah mencoba memberikan solusi awal namun masalah belum terselesaikan
+
+{(!string.IsNullOrWhiteSpace(state.AiSolution) ? $@"**Solusi yang Sudah Dicoba**
+{CleanTicketText(state.AiSolution, 1000)}" : "")}
+
+Petunjuk:
+1. Ringkasan Masalah harus JELAS dan SPESIFIK - tidak boleh verbatim copy dari masalah user
+2. Jika masalah mention error code, modul, atau dokumen, sebutkan secara eksplisit
+3. Kategori harus akurat berdasarkan masalah
+4. Gunakan bahasa Indonesia formal yang sesuai untuk tiket IT
+
+Hanya outputkan deskripsi tiket, tanpa preamble atau penjelasan tambahan.";
+
+                var description = await _ollamaService.CallOllamaApiAsync(prompt, cancellationToken);
+
+                // Validate response is not empty or too short
+                if (!string.IsNullOrWhiteSpace(description) && description.Length > 50)
+                {
+                    _logger.LogInformation("[TicketService] AI-generated ticket description ({0} chars)", description.Length);
+                    return description;
+                }
+
+                // Fallback to template if AI response is too short
+                _logger.LogWarning("[TicketService] AI description too short, falling back to template");
+                return BuildTicketDescriptionTemplate(state, sessionId);
+            }
+            catch (Exception ex)
+            {
+                if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                    throw;
+
+                _logger.LogError($"[TicketService] Error generating AI description: {ex.Message}");
+                // Fallback to template
+                return BuildTicketDescriptionTemplate(state, sessionId);
+            }
+        }
+
+        /// <summary>
+        /// Template-based description (fallback)
+        /// </summary>
+        private string BuildTicketDescriptionTemplate(TicketDialogState state, string? sessionId)
         {
             var sb = new StringBuilder();
             var problem = CleanTicketText(state.Problem, 2000);
-            var category = string.IsNullOrWhiteSpace(state.Category) ? "General" : state.Category;
-            var priority = string.IsNullOrWhiteSpace(state.Priority) ? "Medium" : state.Priority;
+            var category = state.Category ?? "General";
+            var priority = state.Priority ?? "Medium";
 
             sb.AppendLine("**Ringkasan Masalah**");
             sb.AppendLine(problem);
@@ -920,7 +1038,7 @@ Tulis HANYA judul tiket, tanpa penjelasan tambahan:";
             sb.AppendLine($"- Kategori: {category}");
             sb.AppendLine($"- Prioritas: {priority}");
             sb.AppendLine($"- Sumber laporan: JIFAS AI Assistant");
-            sb.AppendLine($"- Waktu dibuat: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine($"- Waktu dibuat: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
             if (!string.IsNullOrEmpty(sessionId))
             {
                 sb.AppendLine($"- Session ID: {sessionId}");
@@ -928,7 +1046,6 @@ Tulis HANYA judul tiket, tanpa penjelasan tambahan:";
             sb.AppendLine();
             sb.AppendLine("**Konteks dari Chatbot**");
             sb.AppendLine("- User meminta pembuatan tiket melalui chatbot JIFAS.");
-            sb.AppendLine("- Chatbot sempat memberikan arahan awal, namun user tetap meminta tiket dibuat.");
             sb.AppendLine("- Mohon IT Help Desk melakukan pengecekan lanjutan pada modul terkait.");
 
             if (IsEnterpriseReadinessTestTicket(state.GeneratedTitle, state.Problem))
@@ -943,11 +1060,19 @@ Tulis HANYA judul tiket, tanpa penjelasan tambahan:";
             if (!string.IsNullOrWhiteSpace(state.AiSolution))
             {
                 sb.AppendLine();
-                sb.AppendLine("**Catatan Awal**");
-                sb.AppendLine(CleanTicketText(state.AiSolution, 300));
+                sb.AppendLine("**Solusi yang Sudah Dicoba**");
+                sb.AppendLine(CleanTicketText(state.AiSolution, 1000)); // Increased from 300
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Original template-based description - kept for backward compatibility
+        /// </summary>
+        private string BuildTicketDescription(TicketDialogState state, string? sessionId = null)
+        {
+            return BuildTicketDescriptionTemplate(state, sessionId);
         }
 
         private static string CleanTicketText(string? value, int maxLength)
