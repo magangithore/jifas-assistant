@@ -575,6 +575,35 @@
     min-width: 132px;
     font-size: 13px;
   }
+
+  .table-note {
+    display: none;
+    margin: 0 16px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary-soft) 62%, transparent);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .table-note.show { display: block; }
+
+  .cell-help {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.25;
+  }
+
+  .cell-help small {
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
   .table-scroll { overflow: auto; max-height: 620px; }
 
   table {
@@ -761,8 +790,8 @@
   </section>
 
   <div class="section-title">
-    <h2>Beban Sistem</h2>
-    <span>Detail teknis untuk membaca beban model, bukan angka utama untuk user.</span>
+    <h2>Pemakaian Model</h2>
+    <span>Detail token untuk membaca kerja model saat menjawab request.</span>
   </div>
   <section class="kpi-grid">
     <div class="metric-card">
@@ -774,17 +803,17 @@
     </div>
     <div class="metric-card">
       <div>
-        <div class="metric-label">Beban pertanyaan rata-rata</div>
+        <div class="metric-label">Token pertanyaan rata-rata</div>
         <div class="metric-value" id="kpi-prompt-tok">-</div>
       </div>
-      <div class="metric-foot" id="kpi-prompt-sub">- total beban pertanyaan</div>
+      <div class="metric-foot" id="kpi-prompt-sub">- total token pertanyaan</div>
     </div>
     <div class="metric-card">
       <div>
-        <div class="metric-label">Beban jawaban rata-rata</div>
+        <div class="metric-label">Token jawaban rata-rata</div>
         <div class="metric-value" id="kpi-out-tok">-</div>
       </div>
-      <div class="metric-foot" id="kpi-out-sub">- total beban jawaban</div>
+      <div class="metric-foot" id="kpi-out-sub">- total token jawaban</div>
     </div>
     <div class="metric-card">
       <div>
@@ -810,7 +839,7 @@
     </div>
     <div class="panel">
       <div class="panel-header">
-        <h3>Beban sistem teknis</h3>
+        <h3>Pemakaian token model</h3>
         <p>Token adalah ukuran kerja model saat membaca pertanyaan dan menulis jawaban. Dipakai untuk melihat kenapa suatu menit terasa lebih berat.</p>
       </div>
       <div id="token-summary" class="chart-summary"></div>
@@ -887,13 +916,14 @@
         <select id="type-filter" class="type-filter" onchange="updateLogFilter()" aria-label="Filter tipe request">
           <option value="all">Semua tipe</option>
           <option value="chat">AI</option>
-          <option value="cache-hit">Cache</option>
+          <option value="cache-hit">Jawaban cepat</option>
           <option value="validation">Validasi</option>
           <option value="error">Error</option>
         </select>
         <span id="log-count">0 data</span>
       </div>
     </div>
+    <div id="log-cache-note" class="table-note"></div>
     <div class="table-scroll">
       <table>
         <thead>
@@ -902,11 +932,11 @@
             <th>User</th>
             <th>Modul</th>
             <th>Tipe</th>
-            <th>Beban tanya</th>
-            <th>Beban jawab</th>
+            <th>Pertanyaan</th>
+            <th>Jawaban</th>
             <th>Durasi</th>
-            <th>Token/detik</th>
-            <th>Panjang jawaban</th>
+            <th>Kecepatan AI</th>
+            <th>Panjang</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -1031,8 +1061,8 @@ function fmtPercent(value) {
 function fmtCallType(type) {
   const key = String(type || 'chat').toLowerCase();
   const labels = {
-    'chat': 'AI',
-    'cache-hit': 'Cache',
+    'chat': 'AI generate',
+    'cache-hit': 'Jawaban cepat',
     'suggestions': 'Saran',
     'embedding': 'Embedding',
     'validation': 'Validasi'
@@ -1042,6 +1072,22 @@ function fmtCallType(type) {
 
 function isCacheHitLog(item) {
   return String(item?.callType || '').toLowerCase() === 'cache-hit';
+}
+
+function renderLogTokenCell(item, field) {
+  const value = field === 'prompt' ? item.promptTokens : item.completionTokens;
+  if (!isCacheHitLog(item)) {
+    return `<span class="mono" title="${fmtTokenCount(value)}">${fmtTokenCount(value)}</span>`;
+  }
+
+  const label = field === 'prompt' ? 'Pertanyaan ulang' : 'Dari cache';
+  const hint = field === 'prompt' ? 'Redis hit' : 'tanpa generate AI';
+  return `
+    <span class="cell-help" title="Baris ini dari cache. ${fmtTokenCount(value)} hanya estimasi metadata, bukan token generate baru.">
+      <span>${label}</span>
+      <small>${hint}</small>
+    </span>
+  `;
 }
 
 function parseUtc(iso) {
@@ -1241,9 +1287,9 @@ function updateKPIs(stats) {
   el('kpi-err-count').textContent = `${fmtNumber(stats.errorCalls ?? 0)} request error`;
   el('kpi-tps').textContent = fmtNumber(stats.avgTokensPerSecond ?? 0, 1);
   el('kpi-prompt-tok').textContent = fmtWhole(stats.avgPromptTokens ?? 0);
-  el('kpi-prompt-sub').textContent = `${fmtTokenCount(stats.totalPromptTokens ?? 0)} total beban pertanyaan`;
+  el('kpi-prompt-sub').textContent = `${fmtTokenCount(stats.totalPromptTokens ?? 0)} total token pertanyaan`;
   el('kpi-out-tok').textContent = fmtWhole(stats.avgCompletionTokens ?? 0);
-  el('kpi-out-sub').textContent = `${fmtTokenCount(stats.totalCompletionTokens ?? 0)} total beban jawaban`;
+  el('kpi-out-sub').textContent = `${fmtTokenCount(stats.totalCompletionTokens ?? 0)} total token jawaban`;
   el('kpi-resp-len').textContent = fmtWhole(stats.avgResponseLengthChars ?? 0);
   el('overview-text').textContent = calls > 0
     ? `Dalam ${windowLabel()}, chatbot menerima ${fmtNumber(calls)} request. Rata-rata user menunggu ${fmtDurationLong(avgMs)}. Aktivitas terakhir tercatat pada ${last}.`
@@ -1380,7 +1426,7 @@ function updateTokenChart(series) {
     <div class="chart-summary-item"><span>Total token</span><strong>${fmtTokenCount(totalTokens)}</strong></div>
     <div class="chart-summary-item"><span>Per request</span><strong>${totalRequests ? fmtTokenCount(avgTokensPerRequest) : '-'}</strong></div>
     <div class="chart-summary-item"><span>Menit terberat</span><strong>${peakPoint ? fmtTime(peakPoint.minute) : '-'}</strong></div>
-    <div class="chart-summary-item"><span>Beban tertinggi</span><strong>${peakPoint ? fmtTokenCount(peakPoint.totalTokens || 0) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Token tertinggi</span><strong>${peakPoint ? fmtTokenCount(peakPoint.totalTokens || 0) : '-'}</strong></div>
   `;
 
   makeChart('chart-tokens', {
@@ -1388,7 +1434,7 @@ function updateTokenChart(series) {
     data: {
       labels,
       datasets: [{
-        label: 'Beban token',
+        label: 'Total token',
         data: tokenValues,
         borderColor: colors.yellow,
         backgroundColor: alpha(colors.yellow, 0.58),
@@ -1409,7 +1455,7 @@ function updateTokenChart(series) {
         legend: { labels: { font: chartFont, boxWidth: 12, usePointStyle: true } },
         tooltip: {
           callbacks: {
-            label: context => `Beban token: ${fmtNumber(context.raw)} token`
+            label: context => `Total token: ${fmtNumber(context.raw)} token`
           }
         }
       }
@@ -1649,31 +1695,50 @@ function updateLogFilter() {
 function renderTable(logs) {
   const filtered = getFilteredLogs(logs);
   el('log-count').textContent = `${fmtNumber(filtered.length)} dari ${fmtNumber(logs.length)} data`;
+  const visibleRows = filtered.slice(0, 200);
+  const cacheRows = visibleRows.filter(isCacheHitLog).length;
+  const cacheNote = el('log-cache-note');
+  if (cacheNote) {
+    if (visibleRows.length > 0 && cacheRows === visibleRows.length) {
+      cacheNote.textContent = `${fmtNumber(cacheRows)} data yang tampil adalah jawaban cepat dari Redis cache. Ini biasanya terjadi setelah stress test memakai pertanyaan yang sama, jadi chatbot tidak memanggil AI lagi. Angka token kecil pada baris cache hanya metadata estimasi, bukan kualitas atau panjang jawaban AI baru.`;
+      cacheNote.classList.add('show');
+    } else if (cacheRows > 0) {
+      cacheNote.textContent = `${fmtNumber(cacheRows)} dari ${fmtNumber(visibleRows.length)} data yang tampil dijawab dari cache. Baris "Jawaban cepat" berarti response lama dipakai ulang supaya server lebih ringan.`;
+      cacheNote.classList.add('show');
+    } else {
+      cacheNote.textContent = '';
+      cacheNote.classList.remove('show');
+    }
+  }
   const tbody = el('log-tbody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="10" class="muted">Belum ada request pada rentang waktu ini.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = filtered.slice(0, 200).map(item => {
+  tbody.innerHTML = visibleRows.map(item => {
     const user = item.userId?.trim() || '-';
     const module = item.activeModule || '-';
     const rawType = item.callType || 'chat';
     const type = fmtCallType(rawType);
+    const isCache = isCacheHitLog(item);
     const status = item.isError
       ? '<span class="badge badge-err">Error</span>'
       : '<span class="badge badge-ok">Sukses</span>';
+    const speed = isCache
+      ? '<span class="cell-help" title="Cache hit selesai tanpa proses generate model."><span>Tidak generate</span><small>jawaban dari Redis</small></span>'
+      : (item.tokensPerSecond > 0 ? `${fmtNumber(item.tokensPerSecond, 1)} token/dtk` : '-');
     return `
       <tr>
         <td class="mono">${fmtDateTime(item.createdAt)}</td>
         <td title="${escapeHtml(user)}">${escapeHtml(user)}</td>
         <td title="${escapeHtml(module)}">${escapeHtml(module)}</td>
         <td><span class="badge badge-type" title="${escapeHtml(rawType)}">${escapeHtml(type)}</span></td>
-        <td class="mono" title="${fmtTokenCount(item.promptTokens)}">${fmtTokenCount(item.promptTokens)}</td>
-        <td class="mono" title="${fmtTokenCount(item.completionTokens)}">${fmtTokenCount(item.completionTokens)}</td>
+        <td>${renderLogTokenCell(item, 'prompt')}</td>
+        <td>${renderLogTokenCell(item, 'completion')}</td>
         <td class="mono" title="${fmtNumber(item.totalDurationMs ?? 0, 0)} ms">${fmtDurationLong(item.totalDurationMs)}</td>
-        <td class="mono">${item.tokensPerSecond > 0 ? `${fmtNumber(item.tokensPerSecond, 1)} token/dtk` : '-'}</td>
-        <td class="mono">${fmtCharacterCount(item.responseLengthChars)}</td>
+        <td class="mono">${speed}</td>
+        <td class="mono" title="${isCache ? 'Panjang jawaban cache yang dikirim ke user.' : 'Panjang jawaban AI yang dikirim ke user.'}">${fmtCharacterCount(item.responseLengthChars)}</td>
         <td>${status}</td>
       </tr>
     `;
@@ -1695,7 +1760,7 @@ function addFeedLine(metric) {
       <span class="muted">| modul:</span> ${module}
       <span class="muted">| tipe:</span> ${escapeHtml(fmtCallType(metric.callType))}
       <span class="muted">| durasi:</span> ${fmtDurationLong(metric.totalDurationMs)}
-      <span class="muted">| beban:</span> ${fmtTokenCount((metric.promptTokens || 0) + (metric.completionTokens || 0))}
+      <span class="muted">| token:</span> ${fmtTokenCount((metric.promptTokens || 0) + (metric.completionTokens || 0))}
     </div>
   `;
   feed.insertAdjacentHTML('afterbegin', line);

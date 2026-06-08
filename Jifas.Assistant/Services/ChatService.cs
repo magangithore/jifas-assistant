@@ -1060,7 +1060,8 @@ Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
         }
 
         /// <summary>
-        /// Regenerate response with quality improvements
+        /// Regenerate response with self-correction using enhanced prompt engineering
+        /// ENHANCED: Uses chain-of-thought reasoning and self-correction
         /// </summary>
         private async Task<string> RegenerateImprovedResponseAsync(
             string userQuery,
@@ -1073,32 +1074,66 @@ Jawab dengan mempertimbangkan konteks percakapan sebelumnya.";
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var issues = string.Join(", ", previousQuality.Issues);
-                var kbContext = string.Join("\n\n", kbResults.Take(3).Select(r => 
-                    $"[{r.Title}]\n{r.Content}"));
+                // ENHANCED: Build self-correcting prompt with detailed issue analysis
+                var issuesText = previousQuality.Issues.Any()
+                    ? string.Join("\n", previousQuality.Issues.Select((issue, idx) => $"  {idx + 1}. {issue}"))
+                    : "Tidak ada issue spesifik";
 
-                var prompt = $@"Jawaban sebelumnya untuk pertanyaan ini memiliki masalah: {issues}
+                var kbContext = kbResults.Any()
+                    ? string.Join("\n\n", kbResults.Take(3).Select(r =>
+                        $"[{r.Title}] (Relevansi: {r.Score:P0})\n{r.Content.Substring(0, Math.Min(500, r.Content.Length))}..."))
+                    : "Tidak ada referensi KB tersedia";
 
-Pertanyaan: ""{userQuery}""
-Intent: {intent}
+                // ENHANCED: Detailed self-correction prompt
+                var prompt = $@"PERBAIKI JAWABAN DENGAN SELF-CORRECTION
+=====================================
 
-Informasi Referensi:
+PERTANYAAN USER: ""{userQuery}""
+QUERY TYPE: {intent}
+
+ISSUE YANG TERDETEKSI:
+{issuesText}
+
+SCORE TERKINI:
+- Overall: {previousQuality.OverallScore:P0}
+- Grounding: {previousQuality.GroundingScore:P0}
+- Completeness: {previousQuality.CompletenessScore:P0}
+- Relevance: {previousQuality.RelevanceScore:P0}
+- Clarity: {previousQuality.ClarityScore:P0}
+
+REFERENSI TERSEDIA:
 {kbContext}
 
-Buatlah jawaban yang LEBIH BAIK dengan memperhatikan:
-1. Jawaban harus SPESIFIK dan RELEVAN dengan pertanyaan
-2. Hanya gunakan informasi yang tersedia (no hallucination)
-3. Struktur yang jelas (langkah-langkah jika how-to)
-4. Natural dan mudah dipahami
-5. Minimal 2-3 kalimat untuk konteks yang cukup
+CHAIN-OF-THOUGHT ANALYSIS:
+1. Identifikasi issue utama: {previousQuality.Issues.FirstOrDefault() ?? "Tidak ada"}
+2. Cek apakah jawaban sesuai dengan pertanyaan: {previousQuality.RelevanceScore:P0}
+3. Verifikasi apakah info ada di referensi: {previousQuality.GroundingScore:P0}
+4. Tentukan perbaikan yang diperlukan
 
-Respons langsung:";
+TUGAS PERBAIKI:
+1. Perbaiki bagian yang bermasalah (lihat issue di atas)
+2. Jawab pertanyaan user dengan lebih tepat
+3. Gunakan informasi dari referensi yang tersedia
+4. Untuk HowTo: gunakan langkah bernomor yang jelas
+5. Untuk Troubleshooting: identifikasi root cause dulu
+6. Untuk Explanation: mulai dengan definisi singkat
+7. Natural dan spesifik - bukan template
+8. Jangan menyebut 'Knowledge Base', 'KB', atau istilah internal
+9. Jika informasi kurang: jujur dan sarankan eskalasi
+
+JAWABAN YANG DIPERBAIKI:";
+
+                _logger.LogWarning($"[ChatService] Self-correcting response - Issues: {previousQuality.Issues.Count}");
 
                 return await _ollamaService.CallOllamaApiAsync(prompt, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback to original method
+                if (ex is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                    throw;
+
+                _logger.LogError($"[ChatService] Error in self-correction: {ex.Message}");
+                // Fallback to basic regeneration
                 return await _ollamaService.GenerateResponseAsync(userQuery, kbResults, cancellationToken: cancellationToken);
             }
         }
