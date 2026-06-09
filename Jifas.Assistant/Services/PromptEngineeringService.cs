@@ -744,15 +744,15 @@ Silakan jelaskan lebih detail agar saya dapat memberikan jawaban yang tepat.";
             return queryType switch
             {
                 "HowTo" =>
-$@"INSTRUKSI � PERTANYAAN 'CARA/LANGKAH' ({confidenceNote})
+$@"INSTRUKSI - PERTANYAAN 'CARA/LANGKAH' ({confidenceNote})
 - Berikan langkah bernomor yang jelas dan actionable
 - Gunakan nama tombol/menu JIFAS yang sebenarnya (Save, Submit, Approve, Post, Void, dll)
 - Sebutkan path menu jika diketahui dari referensi
 - Tambahkan catatan/tip penting di akhir jika ada
-- Jangan skip langkah � user mungkin pemula dengan JIFAS",
+- Jangan skip langkah - user mungkin pemula dengan JIFAS",
 
                 "Troubleshooting" =>
-$@"INSTRUKSI � PERTANYAAN MASALAH/ERROR ({confidenceNote})
+$@"INSTRUKSI - PERTANYAAN MASALAH/ERROR ({confidenceNote})
 - Identifikasi dulu kemungkinan penyebab masalah
 - Berikan solusi urut dari paling mudah ke kompleks
 - Jelaskan expected result setelah setiap solusi
@@ -760,7 +760,7 @@ $@"INSTRUKSI � PERTANYAAN MASALAH/ERROR ({confidenceNote})
 - Jangan berasumsi user sudah familiar dengan sistem",
 
                 "Explanation" =>
-$@"INSTRUKSI � PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
+$@"INSTRUKSI - PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
 - Mulai dengan definisi singkat di kalimat pertama
 - Jelaskan peran/fungsinya di sistem JIFAS
 - Hubungkan dengan modul lain jika relevan
@@ -768,28 +768,28 @@ $@"INSTRUKSI � PERTANYAAN DEFINISI/PENJELASAN ({confidenceNote})
 - Berikan contoh konkret dari konteks bisnis JIFAS",
 
                 "Navigation" =>
-$@"INSTRUKSI � PERTANYAAN NAVIGASI/LOKASI MENU ({confidenceNote})
-- Berikan path menu: Modul ? Sub-menu ? Halaman
+$@"INSTRUKSI - PERTANYAAN NAVIGASI/LOKASI MENU ({confidenceNote})
+- Berikan path menu: Modul > Sub-menu > Halaman
 - Sebutkan URL relatif jika diketahui
 - Deskripsikan tampilan/ciri halaman agar mudah dikenali
 - Jika ada prasyarat (login, role, permission), sebutkan",
 
                 "Authorization" =>
-$@"INSTRUKSI � PERTANYAAN ROLE/HAK AKSES ({confidenceNote})
+$@"INSTRUKSI - PERTANYAAN ROLE/HAK AKSES ({confidenceNote})
 - Jelaskan role yang diperlukan: WMTR (IT), USER (umum), USRL (PUM dept-level)
 - Tunjukkan cara request akses jika user tidak punya permission
 - Jelaskan perbedaan antar role jika relevan
 - Eskalasi akses: minta ke admin sistem atau IT Help Desk",
 
                 "Technical" =>
-$@"INSTRUKSI � PERTANYAAN TEKNIS/FIELD ({confidenceNote})
+$@"INSTRUKSI - PERTANYAAN TEKNIS/FIELD ({confidenceNote})
 - Jelaskan field/komponen dengan detail: nama, tipe, validasi, format
 - Berikan contoh input yang valid
 - Hubungkan dengan field/modul terkait
 - Jelaskan konsekuensi jika field tidak diisi atau salah format",
 
                 _ =>
-$@"INSTRUKSI � PERTANYAAN UMUM ({confidenceNote})
+$@"INSTRUKSI - PERTANYAAN UMUM ({confidenceNote})
 - Pahami intent user dan jawab yang paling relevan
 - Strukturkan jawaban dengan jelas menggunakan bullet atau numbering
 - Spesifik tentang fitur/proses JIFAS, hindari jawaban abstrak"

@@ -96,6 +96,8 @@ namespace Jifas.Assistant.Services
         private readonly string _accountEmail;
         private readonly string _emailDomain;
         private readonly string _defaultIssueType;
+        private readonly string _reporterAccountId;
+        private readonly bool _includePriority;
         private readonly bool _enableOfflineFallback;
 
         private const string DIALOG_STATE_PREFIX = "TicketFlow_";
@@ -103,22 +105,24 @@ namespace Jifas.Assistant.Services
 
         #region Confirmation / Rejection patterns
 
+        // Pola konfirmasi: frasa yang menunjukkan user mau proceed dengan tiket
         private static readonly List<string> ConfirmationPatterns = new List<string>
         {
             "ya", "iya", "yak", "yap", "yep", "yes", "ok", "oke", "okay",
-            "boleh", "setuju", "lanjut", "lanjutkan", "buatkan",
+            "boleh", "setuju", "anjut", "lanjutkan", "buatkan",
             "create", "confirm", "sip", "siap", "gas", "ayo",
-            "belum terselesaikan", "belum solved",
+            "ya buatkan", "ya buat", "tolong buat", "buat tiketnya",
+            // Frasa yang menunjukkan MASIH ada masalah (wants ticket)
+            "belum terselesaikan", "belum solved", "belum beres",
             "masih error", "masih bermasalah", "masih gagal",
-            "tetap error", "tetap tidak bisa",
-            "ya buatkan", "ya buat", "tolong buat", "buat tiketnya"
+            "tetap error", "tetap tidak bisa", "tetap bermasalah"
         };
 
         // Konfirmasi pendek hanya berlaku untuk pesan maksimal 4 kata.
         private static readonly HashSet<string> ShortOnlyConfirmations = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "ya", "iya", "yak", "yap", "yep", "yes", "ok", "oke", "okay",
-            "boleh", "setuju", "lanjut", "sip", "siap", "gas", "ayo", "belum", "confirm"
+            "boleh", "setuju", "lanjut", "sip", "siap", "gas", "ayo", "confirm"
         };
 
         private static readonly List<string> RejectionPatterns = new List<string>
@@ -132,7 +136,7 @@ namespace Jifas.Assistant.Services
         // Penolakan satu kata hanya berlaku untuk pesan maksimal 3 kata.
         private static readonly HashSet<string> ShortOnlyRejections = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "tidak", "nggak", "ngga", "gak", "no", "jangan", "batal", "cancel", "sudah", "solved", "beres"
+            "tidak", "nggak", "ngga", "gak", "no", "jangan", "batal", "cancel", "sudah", "solved", "beres", "selesai"
         };
 
         #endregion
@@ -185,6 +189,8 @@ namespace Jifas.Assistant.Services
             _accountEmail = _configuration["Jira:AccountEmail"] ?? "";
             _emailDomain = _configuration["Jira:EmailDomain"] ?? "jababeka.com";
             _defaultIssueType = _configuration["Jira:DefaultIssueType"] ?? "Task";
+            _reporterAccountId = _configuration["Jira:ReporterAccountId"] ?? "";
+            _includePriority = _configuration.GetValue<bool>("Jira:IncludePriority", false);
             _enableOfflineFallback = _configuration.GetValue<bool>("Jira:EnableOfflineFallback", false);
 
             _httpClient.DefaultRequestHeaders.Accept.Add(
@@ -572,7 +578,8 @@ namespace Jifas.Assistant.Services
         public async Task<TicketCreationResult> CreateTicketAsync(CreateTicketRequest request, CancellationToken cancellationToken = default)
         {
             const int maxRetries = 3;
-            var retryDelaysMs = new[] { 2000, 5000, 10000 }; // Exponential backoff for Jira API
+            var retryDelaysMs = new[] { 2000, 5000, 10000 };
+            Exception? lastException = null;
 
             for (int attempt = 0; attempt <= maxRetries; attempt++)
             {
@@ -581,8 +588,15 @@ namespace Jifas.Assistant.Services
                     cancellationToken.ThrowIfCancellationRequested();
                     return await CreateTicketInternalAsync(request, attempt, cancellationToken);
                 }
-                catch (HttpRequestException ex) when (IsJiraRetryableError(ex) && attempt < maxRetries)
+                catch (HttpRequestException ex)
                 {
+                    lastException = ex;
+                    if (!IsJiraRetryableError(ex) || attempt >= maxRetries)
+                    {
+                        _logger.LogError($"[TicketService] Jira non-retryable error on attempt {attempt + 1}: {ex.Message}");
+                        break;
+                    }
+
                     var jitter = Random.Shared.Next(0, 500);
                     var delayMs = retryDelaysMs[attempt] + jitter;
                     _logger.LogWarning($"[TicketService] Jira retryable error on attempt {attempt + 1}/{maxRetries}, retrying in {delayMs}ms: {ex.Message}");
@@ -594,52 +608,63 @@ namespace Jifas.Assistant.Services
                 }
                 catch (Exception ex) when (attempt < maxRetries)
                 {
+                    lastException = ex;
                     _logger.LogWarning($"[TicketService] Ticket creation failed on attempt {attempt + 1}/{maxRetries}: {ex.Message}");
                     await Task.Delay(retryDelaysMs[attempt], cancellationToken);
                 }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    _logger.LogError($"[TicketService] Ticket creation failed on final attempt: {ex.Message}");
+                    break;
+                }
             }
 
-            // All retries exhausted - fall back to offline mode or return error
             _logger.LogError($"[TicketService] All {maxRetries + 1} attempts to create Jira ticket failed");
-            return HandleJiraFailure(request, $"Jira API failed after {maxRetries + 1} attempts.");
+            return HandleJiraFailure(
+                request,
+                $"Jira API failed after {maxRetries + 1} attempts. Last error: {lastException?.Message ?? "unknown error"}");
         }
 
         /// <summary>
-        /// Internal method for actual ticket creation
+        /// Membuat tiket asli ke Jira memakai field yang valid untuk create screen project.
         /// </summary>
         private async Task<TicketCreationResult> CreateTicketInternalAsync(CreateTicketRequest request, int attempt, CancellationToken cancellationToken)
         {
             _logger.LogInformation($"[TicketService] Creating Jira ticket (attempt {attempt + 1}): {request.Title}");
 
-            // Use configured service account email, or fall back to user-derived email
             var authEmail = !string.IsNullOrWhiteSpace(_accountEmail)
                 ? _accountEmail
                 : DeriveUserEmail(request.UserId);
 
-            // Validate Jira credentials
             if (string.IsNullOrEmpty(_jiraApiToken) || string.IsNullOrEmpty(authEmail))
             {
                 return HandleJiraFailure(request, "Jira credentials are not configured.");
             }
 
-            // Filter out null/empty labels
             var labelList = new List<string> { "jifas-assistant" };
             var cat = request.Category?.ToLowerInvariant().Trim();
             if (!string.IsNullOrWhiteSpace(cat)) labelList.Add(cat);
 
+            var reporterAccountId = await ResolveReporterAccountIdAsync(authEmail, cancellationToken);
+            var fields = new Dictionary<string, object?>
+            {
+                ["project"] = new { key = _projectKey },
+                ["summary"] = request.Title,
+                ["description"] = MarkdownToAdf(request.Description ?? request.Title),
+                ["issuetype"] = new { name = _defaultIssueType },
+                ["reporter"] = new { accountId = reporterAccountId },
+                ["labels"] = labelList.ToArray()
+            };
+
+            if (_includePriority && !string.IsNullOrWhiteSpace(request.Priority))
+            {
+                fields["priority"] = new { name = request.Priority };
+            }
+
             var issuePayload = new
             {
-                fields = new
-                {
-                    project = new { key = _projectKey },
-                    summary = request.Title,
-                    description = MarkdownToAdf(request.Description ?? request.Title),
-                    issuetype = new { name = _defaultIssueType },
-                    priority = new { name = request.Priority ?? "Medium" },
-                    // FIXED: Add reporter field to map to actual user
-                    reporter = new { email = authEmail },
-                    labels = labelList.ToArray()
-                }
+                fields
             };
 
             var json = JsonConvert.SerializeObject(issuePayload);
@@ -683,6 +708,41 @@ namespace Jifas.Assistant.Services
                 _logger.LogError($"[TicketService] Jira API error {response.StatusCode}: {responseBody}");
                 throw new HttpRequestException($"Jira API error {response.StatusCode}: {responseBody}");
             }
+        }
+
+        private async Task<string> ResolveReporterAccountIdAsync(string authEmail, CancellationToken cancellationToken)
+        {
+            if (!string.IsNullOrWhiteSpace(_reporterAccountId))
+            {
+                return _reporterAccountId;
+            }
+
+            var apiUrl = !string.IsNullOrWhiteSpace(_cloudId)
+                ? $"https://api.atlassian.com/ex/jira/{_cloudId}/rest/api/3/myself"
+                : $"{_jiraBaseUrl}/rest/api/3/myself";
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            var credentials = Convert.ToBase64String(
+                Encoding.ASCII.GetBytes($"{authEmail}:{_jiraApiToken}"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Jira reporter lookup failed {response.StatusCode}: {responseBody}");
+            }
+
+            var currentUser = JObject.Parse(responseBody);
+            var accountId = currentUser["accountId"]?.ToString();
+
+            if (string.IsNullOrWhiteSpace(accountId))
+            {
+                throw new InvalidOperationException("Jira reporter lookup did not return accountId.");
+            }
+
+            return accountId;
         }
 
         /// <summary>

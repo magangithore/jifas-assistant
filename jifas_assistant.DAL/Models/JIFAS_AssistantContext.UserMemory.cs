@@ -39,5 +39,29 @@ public partial class JIFAS_AssistantContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.Model).HasDefaultValue("qwen3:8b");
         });
+
+        modelBuilder.Entity<LearningCandidate>(entity =>
+        {
+            entity.ToTable("LearningCandidates");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasDefaultValue("NeedsEdit");
+            entity.Property(e => e.Category).HasDefaultValue("AI Learning");
+            entity.Property(e => e.Tags).HasDefaultValue("ai-learning,approved,reviewed");
+            entity.Property(e => e.Frequency).HasDefaultValue(1);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.LastSeenAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(e => e.QuestionHash).HasDatabaseName("IX_LearningCandidates_QuestionHash");
+            entity.HasIndex(e => new { e.Status, e.UpdatedAt }).HasDatabaseName("IX_LearningCandidates_Status_UpdatedAt");
+            entity.HasIndex(e => e.SourceChatHistoryId).HasDatabaseName("IX_LearningCandidates_SourceChatHistoryId");
+        });
+
+        modelBuilder.Entity<LearningCandidateAuditLog>(entity =>
+        {
+            entity.ToTable("LearningCandidateAuditLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.HasIndex(e => new { e.CandidateId, e.CreatedAt }).HasDatabaseName("IX_LearningCandidateAuditLogs_CandidateId_CreatedAt");
+        });
     }
 }

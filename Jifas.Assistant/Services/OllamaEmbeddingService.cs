@@ -56,6 +56,16 @@ namespace Jifas.Assistant.Services
                 var embeddings = await GenerateEmbeddingsAsync(new[] { text }, cancellationToken);
                 return embeddings.FirstOrDefault() ?? Array.Empty<byte>();
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Embedding request cancelled by caller.");
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning($"Embedding request timeout ({_timeoutSeconds}s).");
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError($"Error generating embedding: {ex.Message}");
@@ -139,9 +149,14 @@ namespace Jifas.Assistant.Services
                 _logger.LogError($"HTTP error calling Ollama: {ex.Message}");
                 throw;
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Embedding request cancelled by caller.");
+                throw;
+            }
             catch (OperationCanceledException)
             {
-                _logger.LogError($"Embedding request timeout ({_timeoutSeconds}s)");
+                _logger.LogWarning($"Embedding request timeout ({_timeoutSeconds}s).");
                 throw;
             }
             catch (Exception ex)
@@ -160,6 +175,16 @@ namespace Jifas.Assistant.Services
             {
                 var bytes = await GenerateEmbeddingAsync(text, cancellationToken);
                 return bytes?.ToFloatArray() ?? Array.Empty<float>();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Float embedding request cancelled by caller.");
+                return Array.Empty<float>();
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning($"Float embedding request timeout ({_timeoutSeconds}s).");
+                return Array.Empty<float>();
             }
             catch (Exception ex)
             {

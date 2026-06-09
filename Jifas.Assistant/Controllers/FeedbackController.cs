@@ -9,10 +9,17 @@ namespace Jifas.Assistant.Controllers;
 public class FeedbackController : ControllerBase
 {
     private readonly IFeedbackLearningService _feedbackLearning;
+    private readonly IAiLearningService _aiLearning;
+    private readonly ILoggerService _logger;
 
-    public FeedbackController(IFeedbackLearningService feedbackLearning)
+    public FeedbackController(
+        IFeedbackLearningService feedbackLearning,
+        IAiLearningService aiLearning,
+        ILoggerService logger)
     {
         _feedbackLearning = feedbackLearning;
+        _aiLearning = aiLearning;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -34,7 +41,28 @@ public class FeedbackController : ControllerBase
             Comment = request.Comment ?? string.Empty
         });
 
-        return Ok(new { success = true });
+        LearningCandidateDto? candidate = null;
+        if (request.ChatId.HasValue)
+        {
+            try
+            {
+                candidate = await _aiLearning.CreateCandidateFromFeedbackAsync(
+                    request.ChatId.Value,
+                    request.Rating,
+                    request.Comment);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogWarning("[AiLearning] Feedback saved, but candidate creation failed: {Message}", ex.Message);
+            }
+        }
+
+        return Ok(new
+        {
+            success = true,
+            learningCandidateId = candidate?.Id,
+            learningStatus = candidate?.Status
+        });
     }
 }
 

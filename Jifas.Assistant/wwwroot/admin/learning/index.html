@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JIFAS AI Learning Admin</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-2: #eef3f8;
+      --text: #142033;
+      --muted: #64748b;
+      --line: #d7e0ea;
+      --brand: #2563eb;
+      --brand-2: #0f766e;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --ok: #15803d;
+      --shadow: 0 18px 45px rgba(15, 23, 42, .08);
+    }
+    [data-theme="dark"] {
+      --bg: #0b1220;
+      --panel: #121b2a;
+      --panel-2: #172235;
+      --text: #e6edf7;
+      --muted: #96a6bd;
+      --line: #26354b;
+      --brand: #6ea8ff;
+      --brand-2: #2dd4bf;
+      --warn: #f59e0b;
+      --danger: #f87171;
+      --ok: #4ade80;
+      --shadow: 0 18px 45px rgba(0, 0, 0, .28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 28px;
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--brand);
+      color: white;
+      font-weight: 800;
+    }
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: 20px; }
+    .subtitle { color: var(--muted); font-size: 13px; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .api-base { min-width: 260px; }
+    input, select, textarea, button {
+      font: inherit;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+    }
+    input, select { height: 38px; padding: 0 12px; }
+    textarea { width: 100%; min-height: 140px; padding: 12px; resize: vertical; }
+    button {
+      height: 38px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button.primary { background: var(--brand); border-color: var(--brand); color: white; }
+    button.success { background: var(--ok); border-color: var(--ok); color: white; }
+    button.warning { background: var(--warn); border-color: var(--warn); color: white; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    main { padding: 24px 28px 36px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .stat { padding: 16px; }
+    .stat label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 6px;
+    }
+    .stat strong { display: block; font-size: 26px; line-height: 1; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(420px, 1fr) minmax(440px, .92fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .list { max-height: calc(100vh - 270px); overflow: auto; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+    }
+    .row:hover, .row.active { background: var(--panel-2); }
+    .question {
+      font-weight: 700;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .NeedsEdit { color: var(--warn); }
+    .ReadyForPublish { color: var(--brand); }
+    .Published { color: var(--ok); }
+    .PublishFailed { color: var(--danger); }
+    .detail { padding: 16px; display: grid; gap: 14px; }
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+    .preview {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      white-space: pre-wrap;
+      max-height: 180px;
+      overflow: auto;
+      color: var(--text);
+    }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .notice {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+    }
+    .empty { padding: 24px; color: var(--muted); }
+    @media (max-width: 1100px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .layout { grid-template-columns: 1fr; }
+      .list { max-height: none; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <header>
+    <div class="brand">
+      <div class="logo">AI</div>
+      <div>
+        <h1>JIFAS AI Learning</h1>
+        <div class="subtitle">Kurasi jawaban chatbot sebelum masuk Knowledge Base resmi</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input class="api-base" id="apiBase" placeholder="API base URL">
+      <input id="apiKey" type="password" placeholder="Admin API key">
+      <button id="saveKey">Simpan key</button>
+      <button id="themeToggle">Light mode</button>
+      <button class="primary" id="refreshBtn">Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice" id="notice">Masukkan Admin API key dan pastikan API Base mengarah ke JIFAS Assistant, contoh http://localhost:8888.</div>
+    <section class="stats" id="stats"></section>
+
+    <section class="layout">
+      <div class="card">
+        <div class="panel-head">
+          <div>
+            <h2>Daftar Kandidat</h2>
+            <div class="subtitle">Jawaban buruk masuk edit queue, bukan dihapus.</div>
+          </div>
+          <div class="filters">
+            <select id="statusFilter">
+              <option value="">Semua status</option>
+              <option value="NeedsEdit">NeedsEdit</option>
+              <option value="ReadyForPublish">ReadyForPublish</option>
+              <option value="Published">Published</option>
+              <option value="PublishFailed">PublishFailed</option>
+              <option value="Archived">Archived</option>
+            </select>
+            <input id="searchBox" placeholder="Cari pertanyaan">
+          </div>
+        </div>
+        <div class="panel-head">
+          <div class="actions">
+            <button id="collectBtn">Collect dari chat</button>
+            <button id="publishBtn" class="success">Publish approved</button>
+          </div>
+          <span class="subtitle" id="countLabel">0 data</span>
+        </div>
+        <div class="list" id="candidateList"></div>
+      </div>
+
+      <div class="card">
+        <div class="panel-head">
+          <div>
+            <h2>Editor Knowledge</h2>
+            <div class="subtitle">Edit jawaban final sebelum siap dipublish scheduler.</div>
+          </div>
+          <span class="pill" id="detailStatus">Belum dipilih</span>
+        </div>
+        <div class="detail" id="detailPanel">
+          <div class="empty">Pilih kandidat dari daftar.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = { candidates: [], selected: null };
+    const els = {
+      apiKey: document.getElementById('apiKey'),
+      saveKey: document.getElementById('saveKey'),
+      apiBase: document.getElementById('apiBase'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      collectBtn: document.getElementById('collectBtn'),
+      publishBtn: document.getElementById('publishBtn'),
+      statusFilter: document.getElementById('statusFilter'),
+      searchBox: document.getElementById('searchBox'),
+      stats: document.getElementById('stats'),
+      list: document.getElementById('candidateList'),
+      detail: document.getElementById('detailPanel'),
+      detailStatus: document.getElementById('detailStatus'),
+      notice: document.getElementById('notice'),
+      countLabel: document.getElementById('countLabel'),
+      themeToggle: document.getElementById('themeToggle')
+    };
+
+    function defaultApiBase() {
+      if (location.protocol === 'http:' || location.protocol === 'https:') {
+        return location.origin;
+      }
+      return 'http://localhost:8888';
+    }
+
+    function cleanBaseUrl(value) {
+      return String(value || '').trim().replace(/\/+$/, '');
+    }
+
+    els.apiBase.value = localStorage.getItem('jifas-learning-api-base') || defaultApiBase();
+    els.apiKey.value = localStorage.getItem('jifas-learning-admin-key') || '';
+
+    function headers() {
+      return {
+        'Content-Type': 'application/json',
+        'X-Admin-Api-Key': els.apiKey.value,
+        'X-Admin-User': 'learning-admin-ui'
+      };
+    }
+
+    function setNotice(message, type = '') {
+      els.notice.textContent = message;
+      els.notice.style.color = type === 'error' ? 'var(--danger)' : type === 'ok' ? 'var(--ok)' : 'var(--muted)';
+    }
+
+    function apiUrl(path) {
+      if (/^https?:\/\//i.test(path)) return path;
+      return `${cleanBaseUrl(els.apiBase.value || defaultApiBase())}${path}`;
+    }
+
+    function parseMaybeJson(text) {
+      if (!text) return {};
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { raw: text };
+      }
+    }
+
+    function httpErrorMessage(res, data, target) {
+      const detail = data?.error || data?.message || data?.raw || '';
+      if (res.status === 401 || res.status === 403) {
+        return `HTTP ${res.status}: Admin API key tidak valid atau belum diisi. Cek key di .env.docker.local.`;
+      }
+      if (res.status === 421) {
+        return `HTTP 421: request salah host/protocol. Buka panel dari ${cleanBaseUrl(els.apiBase.value)}/admin/learning/index.html dan hindari file:// atau https kalau server jalan di http.`;
+      }
+      if (res.status === 429) {
+        return `HTTP 429: terlalu banyak request ke backend/upstream. Tunggu beberapa saat dan jangan klik collect/publish berkali-kali.`;
+      }
+      return `HTTP ${res.status} dari ${target}${detail ? `: ${String(detail).slice(0, 260)}` : ''}`;
+    }
+
+    async function api(path, options = {}) {
+      const target = apiUrl(path);
+      let res;
+      try {
+        res = await fetch(target, {
+          ...options,
+          cache: 'no-store',
+          headers: { ...headers(), ...(options.headers || {}) }
+        });
+      } catch (err) {
+        throw new Error(`Tidak bisa terhubung ke ${target}. Pastikan Docker/API JIFAS Assistant sedang hidup.`);
+      }
+
+      const text = await res.text();
+      const data = parseMaybeJson(text);
+      if (!res.ok) throw new Error(httpErrorMessage(res, data, target));
+      return data;
+    }
+
+    function fmtNumber(value) {
+      return new Intl.NumberFormat('id-ID').format(value || 0);
+    }
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    async function loadAll() {
+      try {
+        const query = new URLSearchParams({
+          status: els.statusFilter.value,
+          search: els.searchBox.value,
+          pageSize: '50'
+        });
+        const [stats, candidates] = await Promise.all([
+          api('/api/learning/stats'),
+          api(`/api/learning/candidates?${query}`)
+        ]);
+        renderStats(stats);
+        state.candidates = candidates.items || [];
+        renderList(candidates.total || 0);
+        setNotice('Data learning berhasil dimuat.', 'ok');
+      } catch (err) {
+        setNotice(`Gagal memuat data: ${err.message}`, 'error');
+      }
+    }
+
+    function renderStats(stats) {
+      const cards = [
+        ['Needs Edit', stats.needsEdit],
+        ['Ready Publish', stats.readyForPublish],
+        ['Published', stats.published],
+        ['Failed', stats.publishFailed],
+        ['Archived', stats.archived],
+        ['Published Today', stats.publishedToday]
+      ];
+      els.stats.innerHTML = cards.map(([label, value]) => `
+        <div class="card stat">
+          <label>${label}</label>
+          <strong>${fmtNumber(value)}</strong>
+        </div>`).join('');
+    }
+
+    function renderList(total) {
+      els.countLabel.textContent = `${fmtNumber(state.candidates.length)} dari ${fmtNumber(total)} data`;
+      if (!state.candidates.length) {
+        els.list.innerHTML = '<div class="empty">Belum ada kandidat sesuai filter.</div>';
+        return;
+      }
+      els.list.innerHTML = state.candidates.map(item => `
+        <div class="row ${state.selected?.id === item.id ? 'active' : ''}" data-id="${item.id}">
+          <div>
+            <div class="question">${esc(item.effectiveQuestion || item.originalQuestion)}</div>
+            <div class="meta">
+              <span class="pill ${item.status}">${esc(item.status)}</span>
+              <span>${esc(item.category)}</span>
+              <span>freq ${fmtNumber(item.frequency)}</span>
+              <span>conf ${item.confidenceScore == null ? '-' : Math.round(item.confidenceScore * 100) + '%'}</span>
+              ${item.containsSensitiveData ? '<span class="pill PublishFailed">Sensitive</span>' : ''}
+            </div>
+          </div>
+          <span class="subtitle">#${item.id}</span>
+        </div>`).join('');
+      els.list.querySelectorAll('.row').forEach(row => {
+        row.addEventListener('click', () => selectCandidate(Number(row.dataset.id)));
+      });
+    }
+
+    async function selectCandidate(id) {
+      try {
+        state.selected = await api(`/api/learning/candidates/${id}`);
+        renderDetail();
+        renderList(state.candidates.length);
+      } catch (err) {
+        setNotice(`Gagal membuka kandidat: ${err.message}`, 'error');
+      }
+    }
+
+    function renderDetail() {
+      const item = state.selected;
+      if (!item) return;
+      els.detailStatus.textContent = item.status;
+      els.detailStatus.className = `pill ${item.status}`;
+      els.detail.innerHTML = `
+        <div class="field">
+          <label>Pertanyaan asli</label>
+          <div class="preview">${esc(item.originalQuestion)}</div>
+        </div>
+        <div class="field">
+          <label>Jawaban asli</label>
+          <div class="preview">${esc(item.originalAnswer)}</div>
+        </div>
+        <div class="field">
+          <label>Pertanyaan final <span>boleh dirapikan</span></label>
+          <textarea id="editedQuestion">${esc(item.editedQuestion || item.originalQuestion)}</textarea>
+        </div>
+        <div class="field">
+          <label>Jawaban final <span>wajib bersih dari data sensitif</span></label>
+          <textarea id="editedAnswer" style="min-height:220px">${esc(item.editedAnswer || item.originalAnswer)}</textarea>
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <input id="category" value="${esc(item.category || 'AI Learning')}" style="width:100%">
+        </div>
+        <div class="field">
+          <label>Tags</label>
+          <input id="tags" value="${esc(item.tags || 'ai-learning,approved,reviewed')}" style="width:100%">
+        </div>
+        <div class="field">
+          <label>Catatan review</label>
+          <textarea id="reviewNotes">${esc(item.reviewNotes || '')}</textarea>
+        </div>
+        <div class="meta">
+          <span class="pill">Source: ${esc(item.source || '-')}</span>
+          <span class="pill">Quality: ${item.qualityScore == null ? '-' : Math.round(item.qualityScore * 100) + '%'}</span>
+          <span class="pill">Flags: ${esc(item.flags || '-')}</span>
+          <label class="pill"><input id="containsSensitive" type="checkbox" ${item.containsSensitiveData ? 'checked' : ''}> Sensitive</label>
+        </div>
+        <div class="actions">
+          <button class="primary" id="saveEdit">Simpan Edit</button>
+          <button class="success" id="markReady">Tandai Siap Publish</button>
+          <button class="warning" id="archiveBtn">Arsipkan</button>
+        </div>`;
+      document.getElementById('saveEdit').addEventListener('click', saveEdit);
+      document.getElementById('markReady').addEventListener('click', markReady);
+      document.getElementById('archiveBtn').addEventListener('click', archiveCandidate);
+    }
+
+    function currentEditPayload() {
+      return {
+        editedQuestion: document.getElementById('editedQuestion').value,
+        editedAnswer: document.getElementById('editedAnswer').value,
+        category: document.getElementById('category').value,
+        tags: document.getElementById('tags').value,
+        reviewNotes: document.getElementById('reviewNotes').value,
+        containsSensitiveData: document.getElementById('containsSensitive').checked,
+        sensitiveReason: document.getElementById('containsSensitive').checked ? 'Admin masih menandai jawaban sensitif.' : ''
+      };
+    }
+
+    async function saveEdit() {
+      if (!state.selected) return;
+      try {
+        state.selected = await api(`/api/learning/candidates/${state.selected.id}/edit`, {
+          method: 'PUT',
+          body: JSON.stringify(currentEditPayload())
+        });
+        setNotice('Edit tersimpan.', 'ok');
+        await loadAll();
+        renderDetail();
+      } catch (err) {
+        setNotice(`Gagal simpan edit: ${err.message}`, 'error');
+        throw err;
+      }
+    }
+
+    async function markReady() {
+      if (!state.selected) return;
+      try {
+        await saveEdit();
+        state.selected = await api(`/api/learning/candidates/${state.selected.id}/ready`, { method: 'POST' });
+        setNotice('Kandidat sudah siap dipublish scheduler.', 'ok');
+        await loadAll();
+        renderDetail();
+      } catch (err) {
+        setNotice(`Gagal tandai ready: ${err.message}`, 'error');
+      }
+    }
+
+    async function archiveCandidate() {
+      if (!state.selected) return;
+      try {
+        state.selected = await api(`/api/learning/candidates/${state.selected.id}/archive`, {
+          method: 'POST',
+          body: JSON.stringify({ notes: 'Diarsipkan dari admin panel.' })
+        });
+        setNotice('Kandidat diarsipkan, tidak dihapus.', 'ok');
+        await loadAll();
+        renderDetail();
+      } catch (err) {
+        setNotice(`Gagal arsip: ${err.message}`, 'error');
+      }
+    }
+
+    els.saveKey.addEventListener('click', () => {
+      localStorage.setItem('jifas-learning-api-base', cleanBaseUrl(els.apiBase.value || defaultApiBase()));
+      els.apiBase.value = localStorage.getItem('jifas-learning-api-base');
+      localStorage.setItem('jifas-learning-admin-key', els.apiKey.value);
+      setNotice('API Base dan Admin API key disimpan di browser.', 'ok');
+    });
+    els.refreshBtn.addEventListener('click', loadAll);
+    els.statusFilter.addEventListener('change', loadAll);
+    els.searchBox.addEventListener('input', () => clearTimeout(window.searchTimer) || (window.searchTimer = setTimeout(loadAll, 350)));
+    els.collectBtn.addEventListener('click', async () => {
+      els.collectBtn.disabled = true;
+      try {
+        const result = await api('/api/learning/collect/run', { method: 'POST', body: JSON.stringify({ scanLimit: 250 }) });
+        setNotice(`Collector selesai: ${result.created} baru, ${result.updated} update, ${result.skipped} skip.`, 'ok');
+        await loadAll();
+      } catch (err) {
+        setNotice(`Collector gagal: ${err.message}`, 'error');
+      } finally {
+        els.collectBtn.disabled = false;
+      }
+    });
+    els.publishBtn.addEventListener('click', async () => {
+      els.publishBtn.disabled = true;
+      try {
+        const result = await api('/api/learning/publish/run', { method: 'POST', body: JSON.stringify({ limit: 10 }) });
+        setNotice(`Publish selesai: ${result.published} published, ${result.failed} failed.`, result.failed ? 'error' : 'ok');
+        await loadAll();
+      } catch (err) {
+        setNotice(`Publish gagal: ${err.message}`, 'error');
+      } finally {
+        els.publishBtn.disabled = false;
+      }
+    });
+    els.themeToggle.addEventListener('click', () => {
+      const dark = document.body.dataset.theme === 'dark';
+      document.body.dataset.theme = dark ? 'light' : 'dark';
+      els.themeToggle.textContent = dark ? 'Dark mode' : 'Light mode';
+    });
+
+    loadAll();
+  </script>
+</body>
+</html>

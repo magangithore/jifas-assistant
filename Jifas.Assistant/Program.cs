@@ -274,6 +274,7 @@ builder.Services.AddScoped<IQueryUnderstandingService, QueryUnderstandingService
 builder.Services.AddScoped<IResponseQualityService, ResponseQualityService>();
 builder.Services.AddScoped<IConversationIntelligenceService, ConversationIntelligenceService>();
 builder.Services.AddScoped<IAdaptiveContextPackService, AdaptiveContextPackService>();
+builder.Services.AddScoped<IAiLearningService, AiLearningService>();
 // Interface lama diarahkan ke service baru agar kode existing tetap kompatibel.
 builder.Services.AddScoped<IConversationMemoryService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
 builder.Services.AddScoped<IFeedbackLearningService>(sp => sp.GetRequiredService<IConversationIntelligenceService>());
@@ -289,6 +290,8 @@ builder.Services.AddScoped<IChatService, ChatService>();
 
 // Warmup embedding saat startup agar pencarian KB pertama tidak terlalu lambat.
 builder.Services.AddHostedService<EmbeddingWarmupService>();
+// Scheduler AI Learning memproses kandidat dan publish knowledge approved secara periodik.
+builder.Services.AddHostedService<AiLearningSchedulerService>();
 
 var ollamaHealthBaseUrl =
     builder.Configuration["Ollama:BaseUrl"] ??

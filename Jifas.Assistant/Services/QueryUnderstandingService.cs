@@ -43,7 +43,7 @@ namespace Jifas.Assistant.Services
     }
 
     /// <summary>
-    /// Result dari intent classification
+    /// Result dari intent classification.
     /// </summary>
     public class IntentResult
     {
@@ -53,6 +53,14 @@ namespace Jifas.Assistant.Services
         public List<string> DetectedKeywords { get; set; } = new List<string>();
         public bool RequiresClarification { get; set; }
         public string SuggestedClarification { get; set; } = string.Empty;
+
+        public string PrimaryModule { get; set; } = string.Empty;
+        public string SecondaryModule { get; set; } = string.Empty;
+        public List<string> DetectedEntities { get; set; } = new List<string>();
+        public List<string> KeyActions { get; set; } = new List<string>();
+        public string ComplexityLevel { get; set; } = "Medium";
+        public string ConversationIntent { get; set; } = "NewQuery";
+        public string UrgencyLevel { get; set; } = "Normal";
     }
 
     /// <summary>
@@ -105,6 +113,11 @@ namespace Jifas.Assistant.Services
         /// Extract key terms dari query
         /// </summary>
         List<string> ExtractKeyTerms(string query);
+
+        /// <summary>
+        /// Extract entities dari query, seperti nomor Invoice, RV, PUM, company, dan tanggal.
+        /// </summary>
+        List<string> ExtractEntities(string query);
 
         /// <summary>
         /// Detect if query needs clarification
@@ -200,6 +213,21 @@ namespace Jifas.Assistant.Services
             "do", "does", "did", "will", "would", "could", "should", "may", "might",
             "must", "shall", "can", "need", "tolong", "mohon", "silakan", "please",
             "bantu", "mau", "ingin", "hendak", "gimana", "gmn"
+        };
+
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(150);
+
+        // Pola entity bisnis JIFAS untuk membantu ticket flow, pencarian KB, dan monitoring intent.
+        private static readonly Dictionary<string, List<string>> EntityPatterns = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Invoice", new List<string> { @"\bINV-\d{4}-\d+\b", @"\bINV/\d{2}/\d{4}/\d+\b", @"\binvoice\s*#?\s*\d+" } },
+            { "PUM", new List<string> { @"\bPUM-\d{4}-\d+\b", @"\bpum\s*#?\s*\d+" } },
+            { "RV", new List<string> { @"\bRV-\d{4}-\d+\b", @"\brv\s*#?\s*\d+" } },
+            { "Payment", new List<string> { @"\bPAY-\d{4}-\d+\b", @"\bBG-\d+\b", @"\bbg\s*#?\s*\d+" } },
+            { "SPK", new List<string> { @"\bSPK-\d+\b", @"\bspk\s*#?\s*\d+" } },
+            { "Company", new List<string> { @"\b(KIJ|GBC|MPK|JM|BW|TL|SPPK|JI|ICTEL|NGE|BP|UP|TS|KIK)\b" } },
+            { "Date", new List<string> { @"\b\d{2}/\d{2}/\d{4}\b", @"\b\d{4}-\d{2}-\d{2}\b", @"(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)" } },
+            { "Module", new List<string> { @"\b(invoice|payment|pum|receiving|cashbank|budget|spk|master|report|accounting)\b" } }
         };
 
         // Pattern-based intent detection
@@ -358,7 +386,7 @@ namespace Jifas.Assistant.Services
                 result.IsInScope = await scopeTask;
                 result.Topic = ExtractTopic(query);
 
-                _logger.LogInformation($"[QueryUnderstanding] Query: '{query}' ? Intent: {result.Intent.Intent}, InScope: {result.IsInScope}, Topic: {result.Topic}");
+                _logger.LogInformation($"[QueryUnderstanding] Query: '{query}' -> Intent: {result.Intent.Intent}, InScope: {result.IsInScope}, Topic: {result.Topic}");
 
                 return result;
             }
@@ -453,6 +481,39 @@ namespace Jifas.Assistant.Services
                 .ToList();
         }
 
+        /// <summary>
+        /// Extract entities from query (Invoice numbers, RV, PUM, Company codes, Dates).
+        /// </summary>
+        public List<string> ExtractEntities(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return new List<string>();
+
+            var entities = new List<string>();
+
+            foreach (var entityType in EntityPatterns)
+            {
+                foreach (var pattern in entityType.Value)
+                {
+                    try
+                    {
+                        var matches = Regex.Matches(query, pattern, RegexOptions.IgnoreCase, RegexTimeout);
+                        foreach (Match match in matches)
+                        {
+                            if (!string.IsNullOrEmpty(match.Value) && !entities.Contains(match.Value))
+                                entities.Add(match.Value);
+                        }
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        _logger.LogWarning($"[QueryUnderstanding] Entity regex timeout for pattern '{pattern}'");
+                    }
+                }
+            }
+
+            return entities;
+        }
+
         private List<string> FindSynonyms(string word)
         {
             var synonyms = new List<string>();
@@ -530,15 +591,15 @@ namespace Jifas.Assistant.Services
 
                 // Step 1: Check for greetings/gratitude (fast path)
                 var greetingResult = CheckGreetingOrGratitude(normalizedQuery);
-                if (greetingResult != null) return greetingResult;
+                if (greetingResult != null) return EnrichIntentResult(greetingResult, userQuery);
 
                 // Step 2: Check if out of scope
                 if (!await IsInJifasScopeAsync(userQuery))
-                    return new IntentResult { Intent = IntentType.OutOfScope, Confidence = 0.9, Reason = "Query tidak berkaitan dengan JIFAS" };
+                    return EnrichIntentResult(new IntentResult { Intent = IntentType.OutOfScope, Confidence = 0.9, Reason = "Query tidak berkaitan dengan JIFAS" }, userQuery);
 
                 // Step 3: Pattern-based detection
                 var patternResult = DetectIntentByPattern(normalizedQuery);
-                if (patternResult.Confidence >= 0.7) return patternResult;
+                if (patternResult.Confidence >= 0.7) return EnrichIntentResult(patternResult, userQuery);
 
                 // Step 4: Keyword-based detection
                 var keywordResult = DetectIntentByKeywords(normalizedQuery);
@@ -549,7 +610,7 @@ namespace Jifas.Assistant.Services
                 if (result.RequiresClarification)
                     result.SuggestedClarification = GenerateClarificationSuggestion(userQuery, result);
 
-                return result;
+                return EnrichIntentResult(result, userQuery);
             }
             catch (Exception ex)
             {
@@ -564,10 +625,10 @@ namespace Jifas.Assistant.Services
 
             var normalizedQuery = userQuery.ToLower();
 
-            // Check for out of scope keywords first
+            // Cek kata di luar scope sebagai kata utuh agar "history" tidak terbaca sebagai "story".
             foreach (var keyword in OutOfScopeKeywords)
             {
-                if (normalizedQuery.Contains(keyword))
+                if (ContainsKeywordTerm(normalizedQuery, keyword))
                     return false;
             }
 
@@ -583,6 +644,27 @@ namespace Jifas.Assistant.Services
                 return true;
 
             return await Task.FromResult(true);
+        }
+
+        private static bool ContainsKeywordTerm(string query, string keyword)
+        {
+            if (string.IsNullOrWhiteSpace(query) || string.IsNullOrWhiteSpace(keyword))
+                return false;
+
+            var normalizedKeyword = keyword.ToLowerInvariant().Trim();
+
+            if (normalizedKeyword.Contains(' '))
+                return query.Contains(normalizedKeyword, StringComparison.OrdinalIgnoreCase);
+
+            try
+            {
+                var pattern = $@"(?<![a-z0-9]){Regex.Escape(normalizedKeyword)}(?![a-z0-9])";
+                return Regex.IsMatch(query, pattern, RegexOptions.IgnoreCase, RegexTimeout);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return false;
+            }
         }
 
         public bool NeedsClarification(string userQuery, IntentResult intent)
@@ -690,6 +772,109 @@ namespace Jifas.Assistant.Services
             }
 
             return result;
+        }
+
+        private IntentResult EnrichIntentResult(IntentResult result, string userQuery)
+        {
+            var normalizedQuery = NormalizeQuery(userQuery);
+            var keywords = ExtractKeyTerms(normalizedQuery);
+
+            result.DetectedEntities = ExtractEntities(userQuery);
+            result.KeyActions = ExtractActions(keywords);
+            result.PrimaryModule = DetectPrimaryModule(keywords);
+            result.SecondaryModule = DetectSecondaryModule(keywords, result.PrimaryModule);
+            result.ComplexityLevel = GetComplexityLevel(userQuery, result.DetectedEntities.Count);
+            result.ConversationIntent = DetectConversationIntent(normalizedQuery, result.Intent);
+            result.UrgencyLevel = DetectUrgencyLevel(normalizedQuery);
+
+            foreach (var keyword in keywords)
+            {
+                if (!result.DetectedKeywords.Contains(keyword, StringComparer.OrdinalIgnoreCase))
+                    result.DetectedKeywords.Add(keyword);
+            }
+
+            result.RequiresClarification = NeedsClarification(userQuery, result);
+            if (result.RequiresClarification)
+                result.SuggestedClarification = GenerateClarificationSuggestion(userQuery, result);
+
+            return result;
+        }
+
+        private static List<string> ExtractActions(List<string> keywords)
+        {
+            var actionKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "buat", "create", "tambah", "input", "edit", "update", "hapus", "delete",
+                "lihat", "view", "cari", "search", "approve", "reject", "submit", "posting",
+                "export", "print", "bayar", "payment"
+            };
+
+            return keywords
+                .Where(actionKeywords.Contains)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static string DetectPrimaryModule(List<string> keywords)
+        {
+            var moduleAliases = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Invoice"] = new[] { "invoice", "inv", "tagihan", "faktur" },
+                ["Payment"] = new[] { "payment", "pembayaran", "bayar", "bg", "giro" },
+                ["PUM"] = new[] { "pum", "advance", "kasbon", "settlement" },
+                ["Receiving"] = new[] { "receiving", "rv", "penerimaan" },
+                ["CashBank"] = new[] { "cashbank", "cash", "bank", "kas" },
+                ["Budget"] = new[] { "budget", "anggaran", "overbudget" },
+                ["SPK"] = new[] { "spk", "kontrak" },
+                ["Accounting"] = new[] { "accounting", "jurnal", "ledger", "gl", "posting" },
+                ["Report"] = new[] { "report", "laporan", "cashflow", "inquiry" },
+                ["Master"] = new[] { "master", "vendor", "coa", "company", "division" }
+            };
+
+            return moduleAliases
+                .Select(module => new
+                {
+                    Module = module.Key,
+                    Score = keywords.Count(keyword => module.Value.Contains(keyword, StringComparer.OrdinalIgnoreCase))
+                })
+                .OrderByDescending(item => item.Score)
+                .FirstOrDefault(item => item.Score > 0)?.Module ?? string.Empty;
+        }
+
+        private static string DetectSecondaryModule(List<string> keywords, string primaryModule)
+        {
+            var remainingKeywords = keywords
+                .Where(keyword => !keyword.Equals(primaryModule, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var secondary = DetectPrimaryModule(remainingKeywords);
+            return secondary.Equals(primaryModule, StringComparison.OrdinalIgnoreCase) ? string.Empty : secondary;
+        }
+
+        private static string GetComplexityLevel(string query, int entityCount)
+        {
+            var wordCount = query.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            if (wordCount >= 18 || entityCount >= 3) return "High";
+            if (wordCount <= 6 && entityCount == 0) return "Low";
+            return "Medium";
+        }
+
+        private static string DetectConversationIntent(string normalizedQuery, IntentType intent)
+        {
+            if (intent == IntentType.Greeting) return "Greeting";
+            if (intent == IntentType.Gratitude) return "Gratitude";
+            if (Regex.IsMatch(normalizedQuery, @"\b(lanjut|itu tadi|yang tadi|tersebut|detailnya)\b", RegexOptions.IgnoreCase, RegexTimeout))
+                return "FollowUp";
+            return "NewQuery";
+        }
+
+        private static string DetectUrgencyLevel(string normalizedQuery)
+        {
+            if (Regex.IsMatch(normalizedQuery, @"\b(urgent|segera|penting|produksi|prod|tidak bisa login|down|error terus)\b", RegexOptions.IgnoreCase, RegexTimeout))
+                return "High";
+            if (Regex.IsMatch(normalizedQuery, @"\b(nanti|kalau sempat|tidak urgent)\b", RegexOptions.IgnoreCase, RegexTimeout))
+                return "Low";
+            return "Normal";
         }
 
         private string GenerateClarificationSuggestion(string query, IntentResult intent)

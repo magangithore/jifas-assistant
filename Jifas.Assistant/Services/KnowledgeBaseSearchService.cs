@@ -57,6 +57,13 @@ namespace Jifas.Assistant.Services
             _lastEmbeddingCacheRefreshUtc = DateTime.UtcNow;
         }
 
+        internal static void InvalidateEmbeddingCache()
+        {
+            _embeddingCache = new ConcurrentDictionary<int, float[]>();
+            _metadataCache = new ConcurrentDictionary<int, KnowledgeBaseChunkDto>();
+            _lastEmbeddingCacheRefreshUtc = DateTime.MinValue;
+        }
+
         public KnowledgeBaseSearchService(IDbContextFactory<JIFAS_AssistantContext> dbFactory, ILoggerService logger, ICacheService cacheService)
         {
             _dbFactory = dbFactory;

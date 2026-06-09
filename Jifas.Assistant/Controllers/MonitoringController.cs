@@ -17,10 +17,12 @@ namespace Jifas.Assistant.Controllers;
 public class MonitoringController : ControllerBase
 {
     private readonly IMonitoringService _monitoring;
+    private readonly IAiLearningService _learning;
 
-    public MonitoringController(IMonitoringService monitoring)
+    public MonitoringController(IMonitoringService monitoring, IAiLearningService learning)
     {
         _monitoring = monitoring;
+        _learning = learning;
     }
 
     /// <summary>Aggregated stats for the last N minutes (default 60).</summary>
@@ -78,6 +80,15 @@ public class MonitoringController : ControllerBase
         var logsRaw    = await _monitoring.GetRecentLogsAsync(50);
         var seriesRaw  = await _monitoring.GetTimeSeriesAsync(minutes);
         var qualityRaw = await _monitoring.GetQualityStatsAsync(minutes);
+        LearningStatsDto learning;
+        try
+        {
+            learning = await _learning.GetStatsAsync(HttpContext.RequestAborted);
+        }
+        catch
+        {
+            learning = new LearningStatsDto();
+        }
 
         // Ensure all dates have UTC Kind so JSON serializer emits 'Z'
         var stats = statsRaw.LastCallAt.HasValue && statsRaw.LastCallAt.Value.Kind == DateTimeKind.Unspecified
@@ -97,7 +108,7 @@ public class MonitoringController : ControllerBase
             ? qualityRaw with { LastResponseAt = DateTime.SpecifyKind(qualityRaw.LastResponseAt.Value, DateTimeKind.Utc) }
             : qualityRaw;
 
-        return Ok(new { stats, logs, timeSeries, quality });
+        return Ok(new { stats, logs, timeSeries, quality, learning });
     }
 
     // Helper normalisasi tanggal agar browser selalu membaca waktu sebagai UTC.
