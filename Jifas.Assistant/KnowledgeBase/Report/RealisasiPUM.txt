@@ -1,4 +1,4 @@
-LAPORAN REALISASI PUM (PERTANGGUNGJAWABAN UANG MUKA)
+﻿LAPORAN REALISASI PUM (PERTANGGUNGJAWABAN UANG MUKA)
 
 TUJUAN:
 Memberikan informasi tentang proses realisasi (pertanggungjawaban) dari Uang Muka (PUM/PUM) yang telah diberikan kepada karyawan.
@@ -149,14 +149,14 @@ PEMAHAMAN ISTILAH PENTING:
 
 4. STATUS (POSTED vs UNPOSTED)
    - POSTED: Artinya realisasi (RU) sudah diproses/di-post di sistem akunting
-              → Dokumen sudah lengkap dan valid
-              → Sudah dapat diaudit dan dilaporkan
-              → Proses realisasi sudah SELESAI
+              -> Dokumen sudah lengkap dan valid
+              -> Sudah dapat diaudit dan dilaporkan
+              -> Proses realisasi sudah SELESAI
    
    - UNPOSTED: Artinya realisasi (RU) belum diproses/dipost di sistem akunting
-               → Dokumen mungkin belum lengkap atau masih di-review
-               → Belum bisa dilaporkan secara resmi
-               → Proses realisasi masih PENDING
+               -> Dokumen mungkin belum lengkap atau masih di-review
+               -> Belum bisa dilaporkan secara resmi
+               -> Proses realisasi masih PENDING
 
 5. JUMLAH UANG MUKA (AMOUNT)
    - UMK Amount: Jumlah yang DIKLAIM oleh karyawan
@@ -230,20 +230,20 @@ POSTED STATUS:
 ✓ Biasanya ini adalah status final
 
 UNPOSTED STATUS:
-⚠ Realisasi belum di-post di sistem
-⚠ Dokumen pendukung mungkin belum lengkap
-⚠ Dalam proses review atau approval
-⚠ Belum bisa dilaporkan secara resmi
-⚠ Action: Follow-up untuk completion
+[PERINGATAN] Realisasi belum di-post di sistem
+[PERINGATAN] Dokumen pendukung mungkin belum lengkap
+[PERINGATAN] Dalam proses review atau approval
+[PERINGATAN] Belum bisa dilaporkan secara resmi
+[PERINGATAN] Action: Follow-up untuk completion
 
 CATATAN PENTING:
 
 
 1. Semua field filter harus diisi sebelum search (Company, Status, From, To)
-2. Laporan menampilkan hubungan UMK → PU → RU dalam satu baris
+2. Laporan menampilkan hubungan UMK -> PU -> RU dalam satu baris
 3. Status merujuk pada status REALISASI (RU), bukan UMK atau PU
 4. Satu UMK bisa memiliki satu PU dan satu RU (normal flow)
-5. Bisa juga ada skenario: 1 UMK → Multiple PU atau Multiple RU (cases tertentu)
+5. Bisa juga ada skenario: 1 UMK -> Multiple PU atau Multiple RU (cases tertentu)
 6. Jumlah RU bisa berbeda dari PU (selisih harus dijelaskan)
 7. Untuk perubahan filter, klik search kembali
 8. Laporan dapat diexport untuk analisis dan reporting lanjutan
@@ -312,27 +312,27 @@ TIPS PENGGUNAAN:
 
 SKENARIO UMUM:
 SKENARIO 1: MATCH SEMPURNA (PU Amount = RU Amount)
-Situasi: UMK 5.000.000 → PU 5.000.000 → RU 5.000.000
+Situasi: UMK 5.000.000 -> PU 5.000.000 -> RU 5.000.000
 Status: Posted
 Meaning: Semua uang muka terpakai dengan sempurna
 Action: Proses selesai, tidak ada sisa atau kurang
 
 SKENARIO 2: SISA UANG MUKA (PU Amount > RU Amount)
-Situasi: UMK 5.000.000 → PU 5.000.000 → RU 4.500.000
+Situasi: UMK 5.000.000 -> PU 5.000.000 -> RU 4.500.000
 Sisa: 500.000
 Meaning: Ada sisa uang yang tidak dipertanggungjawabkan
 Action: Karyawan harus kembalikan sisa atau bubuhi penjelasan
 Status typical: Unposted sampai sisa dijelaskan
 
 SKENARIO 3: PENGELUARAN LEBIH (RU Amount > PU Amount)
-Situasi: UMK 5.000.000 → PU 5.000.000 → RU 5.500.000
+Situasi: UMK 5.000.000 -> PU 5.000.000 -> RU 5.500.000
 Kurang: 500.000
 Meaning: Ada pengeluaran tambahan di luar uang muka
 Action: Karyawan ajukan tambahan atau kompensasi
 Status typical: Unposted sampai tambahan dijelaskan/disetujui
 
 SKENARIO 4: BELUM ADA REALISASI (PU ada, RU kosong)
-Situasi: UMK ada → PU ada → RU belum ada
+Situasi: UMK ada -> PU ada -> RU belum ada
 Status: Unposted (karena tidak ada RU)
 Meaning: Uang sudah dicairkan tapi karyawan belum pertanggungjawab
 Action: URGENT - Follow-up karyawan untuk segera buat RU
@@ -381,7 +381,7 @@ Laporan Realisasi PUM berhubungan dengan:
 6. General Ledger - Posting journal entries dari realisasi PUM
 7. Financial Statement - PUM mungkin ditampilkan sebagai prepaid atau asset
 
-TIMELINE NORMAL PROSES UMK → PU → RU:
+TIMELINE NORMAL PROSES UMK -> PU -> RU:
 
 HARI 0-3: PENGAJUAN (UMK)
 - Karyawan ajukan UMK dengan alasan jelas
@@ -409,7 +409,7 @@ HARI 22-28: POSTING & APPROVAL
 - Status: Posted
 - Record payment untuk sisa atau tambahan
 
-TARGET TIMELINE: Max 1 bulan dari UMK → Posted RU
+TARGET TIMELINE: Max 1 bulan dari UMK -> Posted RU
 
 CHECKLIST SEBELUM RU DIPOST:=
 

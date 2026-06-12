@@ -49,8 +49,8 @@ Langkah 3: Memilih COA dari Struktur Pohon
 3. Klik pada baris akun yang ingin ditambahkan ke laporan
 4. Baris yang dipilih akan highlight
 5. Sistem akan memvalidasi:
-   Apakah akun sudah digunakan di baris lain → tidak boleh duplikat
-   Apakah baris laporan memperbolehkan entry ("Fill: Yes") → jika "No", tidak bisa tambah
+   Apakah akun sudah digunakan di baris lain -> tidak boleh duplikat
+   Apakah baris laporan memperbolehkan entry ("Fill: Yes") -> jika "No", tidak bisa tambah
 
 Langkah 4: Menambahkan COA ke Laporan
 1. Setelah memilih baris laporan (Step 2) dan COA dari tree (Step 3)
@@ -186,13 +186,13 @@ Workflow Tipikal Konfigurasi Report
 
 Contoh: Setup Balance Sheet Assets
 
-1. Pilih Laporan: Dropdown Report Name → pilih "Balance Sheet Assets"
+1. Pilih Laporan: Dropdown Report Name -> pilih "Balance Sheet Assets"
    Panel title berubah menjadi "Balance Sheet Assets"
 
-2. Pilih Baris Pertama: Grid COA Description → klik "Current Assets"
+2. Pilih Baris Pertama: Grid COA Description -> klik "Current Assets"
    Baris highlight biru
 
-3. Pilih Akun: Tree COA List → expand ASSETS → expand "Current Assets" → klik "Cash Small"
+3. Pilih Akun: Tree COA List -> expand ASSETS -> expand "Current Assets" -> klik "Cash Small"
    Baris akun highlight
 
 4. Tambah Akun: Klik tombol "Add to selected COA"

@@ -3,44 +3,44 @@ using System;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Interface for caching service
-    /// Abstraction for memory/distributed caching
+    /// Kontrak cache aplikasi.
+    /// Implementasinya bisa memakai memory cache lokal atau distributed cache seperti Redis.
     /// </summary>
     public interface ICacheService
     {
         /// <summary>
-        /// Get value from cache
+        /// Ambil value dari cache.
         /// </summary>
-        /// <typeparam name="T">Type of cached value</typeparam>
-        /// <param name="key">Cache key</param>
-        /// <returns>Cached value or null if not found</returns>
+        /// <typeparam name="T">Tipe data yang disimpan.</typeparam>
+        /// <param name="key">Key cache.</param>
+        /// <returns>Value cache, atau default jika tidak ditemukan.</returns>
         T Get<T>(string key);
 
         /// <summary>
-        /// Set value in cache with expiration
+        /// Simpan value ke cache dengan masa berlaku tertentu.
         /// </summary>
-        /// <typeparam name="T">Type of value to cache</typeparam>
-        /// <param name="key">Cache key</param>
-        /// <param name="value">Value to cache</param>
-        /// <param name="durationMinutes">Cache duration in minutes</param>
+        /// <typeparam name="T">Tipe data yang disimpan.</typeparam>
+        /// <param name="key">Key cache.</param>
+        /// <param name="value">Value yang akan disimpan.</param>
+        /// <param name="durationMinutes">Durasi cache dalam menit.</param>
         void Set<T>(string key, T value, int durationMinutes);
 
         /// <summary>
-        /// Remove item from cache
+        /// Hapus satu item cache.
         /// </summary>
-        /// <param name="key">Cache key to remove</param>
+        /// <param name="key">Key cache yang akan dihapus.</param>
         void Remove(string key);
 
         /// <summary>
-        /// Clear all cache items
+        /// Bersihkan seluruh cache jika provider mendukung.
         /// </summary>
         void Clear();
 
         /// <summary>
-        /// Check if key exists in cache
+        /// Cek apakah key tersedia di cache.
         /// </summary>
-        /// <param name="key">Cache key</param>
-        /// <returns>True if key exists, false otherwise</returns>
+        /// <param name="key">Key cache.</param>
+        /// <returns>True jika key ditemukan.</returns>
         bool Exists(string key);
     }
 }

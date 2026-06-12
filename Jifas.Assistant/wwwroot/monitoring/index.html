@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Monitoring Chatbot JIFAS</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+<style>
+  :root {
+    --bg: #eef3f8;
+    --surface: #ffffff;
+    --surface-2: #f8fafc;
+    --header: rgba(255, 255, 255, 0.96);
+    --border: #d8e0ea;
+    --border-strong: #b8c4d3;
+    --text: #172033;
+    --muted: #64748b;
+    --muted-2: #94a3b8;
+    --primary: #2454d6;
+    --primary-soft: #e8efff;
+    --green: #15803d;
+    --green-soft: #e8f7ee;
+    --yellow: #a16207;
+    --yellow-soft: #fff7df;
+    --red: #b91c1c;
+    --red-soft: #feecec;
+    --cyan: #0e7490;
+    --cyan-soft: #e7f8fc;
+    --shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    --radius: 8px;
+    --row-hover: rgba(36, 84, 214, 0.08);
+  }
+
+  body.dark {
+    --bg: #0f141d;
+    --surface: #18202c;
+    --surface-2: #111923;
+    --header: rgba(17, 24, 35, 0.97);
+    --border: #334155;
+    --border-strong: #526174;
+    --text: #f1f5f9;
+    --muted: #b6c2d2;
+    --muted-2: #718096;
+    --primary: #6ea8fe;
+    --primary-soft: #14294c;
+    --green: #4ade80;
+    --green-soft: #123322;
+    --yellow: #facc15;
+    --yellow-soft: #3a2d0b;
+    --red: #f87171;
+    --red-soft: #3d1518;
+    --cyan: #22d3ee;
+    --cyan-soft: #11313a;
+    --shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+    --row-hover: rgba(110, 168, 254, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Arial, system-ui, sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    transition: background-color .18s ease, color .18s ease;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--header);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+  }
+
+  h1 {
+    font-size: 18px;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .clock {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  select, button {
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 0 12px;
+    font: inherit;
+  }
+
+  .theme-toggle {
+    min-width: 112px;
+    border-color: var(--border);
+    background: var(--surface-2);
+  }
+
+  button {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  button.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  button:hover, select:hover { border-color: var(--primary); }
+
+  .status {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid #b8dfc4;
+    background: var(--green-soft);
+    color: var(--green);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .status.disconnected {
+    border-color: #f2b8b8;
+    background: var(--red-soft);
+    color: var(--red);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  main {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 18px 24px 34px;
+  }
+
+  .summary-band {
+    display: grid;
+    grid-template-columns: minmax(320px, 1.4fr) repeat(3, minmax(180px, 0.75fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .panel, .metric-card, .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .overview {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 124px;
+  }
+
+  .overview h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .overview p {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .health-row {
+    margin-top: 18px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .chip.ok { background: var(--green-soft); border-color: #b8dfc4; color: var(--green); }
+  .chip.warn { background: var(--yellow-soft); border-color: #efd58a; color: var(--yellow); }
+  .chip.err { background: var(--red-soft); border-color: #f2b8b8; color: var(--red); }
+
+  .metric-card {
+    padding: 16px;
+    min-height: 124px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .metric-card:hover, .panel:hover, .table-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+  }
+
+  .metric-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .metric-value {
+    margin-top: 10px;
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-foot {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .metric-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .metric-trend.ok { color: var(--green); }
+  .metric-trend.warn { color: var(--yellow); }
+  .metric-trend.err { color: var(--red); }
+
+  .metric-primary { border-top: 4px solid var(--primary); }
+  .metric-green { border-top: 4px solid var(--green); }
+  .metric-yellow { border-top: 4px solid var(--yellow); }
+  .metric-red { border-top: 4px solid var(--red); }
+
+  .section-title {
+    margin: 26px 0 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+  }
+
+  .section-title h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .section-title span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 14px;
+  }
+
+  .trend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .insight-card {
+    padding: 14px;
+    min-height: 112px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .insight-card h3 {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .insight-value {
+    margin-top: 10px;
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .insight-detail {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .guide-band {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 4px 0 22px;
+  }
+
+  .guide-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+
+  .guide-item strong {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .guide-item span {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .status-list {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px 16px;
+  }
+
+  .status-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+  }
+
+  .status-row strong { font-size: 13px; }
+  .status-row span { color: var(--muted); font-size: 12px; }
+
+  .panel-header {
+    padding: 16px 18px 0;
+  }
+
+  .panel-header h3 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .panel-header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .chart-summary {
+    margin: 14px 18px 0;
+    padding: 10px 0;
+    display: flex;
+    gap: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chart-summary-item {
+    min-width: 155px;
+    padding: 3px 18px 3px 0;
+    margin-right: 18px;
+    border-right: 1px solid var(--border);
+  }
+
+  .chart-summary-item:last-child { border-right: 0; margin-right: 0; }
+
+  .chart-summary-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+
+  .chart-summary-item strong {
+    display: block;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 250px;
+    padding: 14px 18px 18px;
+  }
+
+  .chart-wrap.tall { height: 310px; }
+
+  .empty-note {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 18px;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    border-radius: 7px;
+  }
+
+  .gauge-row {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .gauge-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .gauge-label strong { color: var(--text); }
+  .gauge-track { height: 8px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--border) 50%, transparent); }
+  .gauge-fill { height: 100%; border-radius: 999px; transition: width .3s ease; }
+
+  .live-feed {
+    height: 180px;
+    overflow: auto;
+    padding: 12px 14px;
+    font-family: "Cascadia Code", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    background: #0f172a;
+    color: #cbd5e1;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .feed-line { border-bottom: 1px solid rgba(148, 163, 184, 0.16); padding: 3px 0; }
+  .feed-line .time { color: #93c5fd; }
+  .feed-line .ok { color: #86efac; }
+  .feed-line .err { color: #fca5a5; }
+  .feed-line .muted { color: #94a3b8; }
+
+  .table-card { overflow: hidden; }
+  .table-header {
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .table-header h3 { margin: 0; font-size: 15px; }
+  .table-header span { color: var(--muted); font-size: 12px; }
+  .table-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-input {
+    height: 34px;
+    min-width: 220px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 0 10px;
+    font: inherit;
+    font-size: 13px;
+  }
+
+  .type-filter {
+    height: 34px;
+    min-width: 132px;
+    font-size: 13px;
+  }
+
+  .table-note {
+    display: none;
+    margin: 0 16px 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary-soft) 62%, transparent);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .table-note.show { display: block; }
+
+  .table-scroll { overflow: auto; max-height: 620px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1080px;
+  }
+
+  th {
+    text-align: left;
+    padding: 11px 14px;
+    background: var(--surface-2);
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 52%, transparent);
+    color: var(--text);
+    white-space: nowrap;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  tbody tr:hover td { background: var(--row-hover); }
+  tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 34%, transparent); }
+  tbody tr.cache-row td { background: color-mix(in srgb, var(--cyan-soft) 40%, transparent); }
+  tbody tr.cache-row:hover td { background: color-mix(in srgb, var(--cyan-soft) 60%, transparent); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .badge-ok { background: var(--green-soft); color: var(--green); }
+  .badge-err { background: var(--red-soft); color: var(--red); }
+  .badge-warn { background: var(--yellow-soft); color: var(--yellow); }
+  .badge-type { background: var(--primary-soft); color: var(--primary); }
+  .mono { font-variant-numeric: tabular-nums; font-family: "Cascadia Code", Consolas, monospace; }
+  .muted { color: var(--muted); }
+
+  footer {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 0 28px 28px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  @media (max-width: 1200px) {
+    .summary-band { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+    .kpi-grid, .insight-grid, .guide-band { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+    .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 760px) {
+    .topbar { align-items: flex-start; flex-direction: column; padding: 14px 16px; }
+    .toolbar { width: 100%; justify-content: flex-start; }
+    main { padding: 16px; }
+    .summary-band, .kpi-grid, .insight-grid, .guide-band { grid-template-columns: 1fr; }
+    .chart-summary { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .chart-summary-item { border-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-right: 0; }
+    .chart-summary-item:last-child { border-bottom: 0; }
+    .metric-value { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">JF</div>
+      <div>
+        <h1>Monitoring Chatbot JIFAS</h1>
+        <div class="subtitle">Status layanan, waktu tunggu user, cache, basis pengetahuan, dan error</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span id="wib-clock" class="clock">Memuat waktu WIB...</span>
+      <select id="window-select" onchange="changeWindow(this.value)" aria-label="Rentang waktu">
+        <option value="15">15 menit terakhir</option>
+        <option value="60" selected>60 menit terakhir</option>
+        <option value="360">6 jam terakhir</option>
+        <option value="1440">24 jam terakhir</option>
+      </select>
+      <button id="theme-toggle" class="theme-toggle" type="button" onclick="toggleTheme()">Dark mode</button>
+      <button onclick="refresh()" class="primary">Refresh</button>
+      <div id="status-badge" class="status"><span class="status-dot"></span><span id="status-text">Menghubungkan</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="summary-band">
+    <div class="overview panel">
+      <div>
+        <h2>Ringkasan Layanan</h2>
+        <p id="overview-text">Memuat kondisi terbaru chatbot JIFAS.</p>
+      </div>
+      <div class="health-row">
+        <span id="chip-volume" class="chip">Volume: -</span>
+        <span id="chip-speed" class="chip">Latency: -</span>
+        <span id="chip-error" class="chip">Error: -</span>
+      </div>
+    </div>
+    <div class="metric-card metric-primary">
+      <div>
+        <div class="metric-label">Total request</div>
+        <div class="metric-value" id="kpi-calls">-</div>
+      </div>
+      <div class="metric-foot" id="kpi-window">60 menit terakhir</div>
+    </div>
+    <div class="metric-card metric-green">
+      <div>
+        <div class="metric-label">Avg latency</div>
+        <div class="metric-value" id="kpi-latency">-</div>
+      </div>
+      <div class="metric-foot">Waktu dari kirim sampai dapat jawaban</div>
+    </div>
+    <div class="metric-card metric-red">
+      <div>
+        <div class="metric-label">Error rate</div>
+        <div class="metric-value" id="kpi-errors">-</div>
+      </div>
+      <div class="metric-foot" id="kpi-err-count">- error</div>
+    </div>
+  </section>
+
+  <section class="guide-band" aria-label="Cara membaca dashboard">
+    <div class="guide-item">
+      <strong>Cache = jawaban cepat</strong>
+      <span>Baris berwarna biru muda = jawaban dari Redis. Tidak pakai model AI, token = 0.</span>
+    </div>
+    <div class="guide-item">
+      <strong>P95 latency = target</strong>
+      <span>95% request selesai dalam waktu ini. Kalau tinggi, user mulai terasa menunggu.</span>
+    </div>
+    <div class="guide-item">
+      <strong>Token = kerja model</strong>
+      <span>Input = pertanyaan + konteks. Output = jawaban yang dihasilkan.</span>
+    </div>
+    <div class="guide-item">
+      <strong>Error harus 0%</strong>
+      <span>Kalau error naik, cek Ollama, PostgreSQL, Redis, atau Jira.</span>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Yang Perlu Dipantau</h2>
+    <span>Ringkasan cepat kondisi layanan chatbot.</span>
+  </div>
+  <section class="insight-grid">
+    <div class="insight-card">
+      <h3>Cache hit rate</h3>
+      <div class="insight-value" id="insight-cache-hit">-</div>
+      <div class="insight-detail" id="insight-cache-detail">Persentase request yang langsung dijawab dari cache.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Jawaban dari dokumen</h3>
+      <div class="insight-value" id="insight-kb-hit">-</div>
+      <div class="insight-detail" id="insight-kb-detail">Rasio jawaban yang berdasarkan dokumen JIFAS.</div>
+    </div>
+    <div class="insight-card">
+      <h3>P95 latency</h3>
+      <div class="insight-value" id="insight-p95">-</div>
+      <div class="insight-detail" id="insight-p95-detail">95% request selesai dalam waktu ini.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Status sistem</h3>
+      <div class="insight-value" id="insight-runtime">-</div>
+      <div class="insight-detail" id="insight-runtime-detail">Kondisi API monitoring dan koneksi realtime.</div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Learning Health</h2>
+    <span><a href="/admin/learning/index.html" style="color:var(--primary);font-weight:700;text-decoration:none">Buka panel admin learning</a></span>
+  </div>
+  <section class="insight-grid">
+    <div class="insight-card">
+      <h3>Perlu diedit</h3>
+      <div class="insight-value" id="learning-needs-edit">-</div>
+      <div class="insight-detail">Jawaban kandidat yang perlu dirapikan admin sebelum boleh dipublish.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Siap publish</h3>
+      <div class="insight-value" id="learning-ready">-</div>
+      <div class="insight-detail">Sudah diedit/approved dan menunggu scheduler publish ke KB.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Published hari ini</h3>
+      <div class="insight-value" id="learning-published-today">-</div>
+      <div class="insight-detail">Knowledge baru yang sudah masuk KB dan embedding hari ini.</div>
+    </div>
+    <div class="insight-card">
+      <h3>Publish failed</h3>
+      <div class="insight-value" id="learning-failed">-</div>
+      <div class="insight-detail">Gagal publish, biasanya karena embedding/model/DB perlu dicek.</div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Pemakaian Model AI</h2>
+    <span>Token = satuan kerja model saat membaca pertanyaan dan menulis jawaban.</span>
+  </div>
+  <section class="kpi-grid">
+    <div class="metric-card">
+      <div>
+        <div class="metric-label">Kecepatan AI</div>
+        <div class="metric-value" id="kpi-tps">-</div>
+      </div>
+      <div class="metric-foot">token per detik (token/detik)</div>
+    </div>
+    <div class="metric-card">
+      <div>
+        <div class="metric-label">Input</div>
+        <div class="metric-value" id="kpi-prompt-tok">-</div>
+      </div>
+      <div class="metric-foot" id="kpi-prompt-sub">- total input token</div>
+    </div>
+    <div class="metric-card">
+      <div>
+        <div class="metric-label">Output</div>
+        <div class="metric-value" id="kpi-out-tok">-</div>
+      </div>
+      <div class="metric-foot" id="kpi-out-sub">- total output token</div>
+    </div>
+    <div class="metric-card">
+      <div>
+        <div class="metric-label">Panjang jawaban</div>
+        <div class="metric-value" id="kpi-resp-len">-</div>
+      </div>
+      <div class="metric-foot">karakter per jawaban</div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Tren Request</h2>
+    <span id="last-refresh">Belum refresh</span>
+  </div>
+  <section class="chart-grid trend-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Request dan waktu tunggu</h3>
+        <p>Bar biru = jumlah request. Garis hijau = waktu tunggu rata-rata per menit. Berguna untuk melihat jam ramai.</p>
+      </div>
+      <div id="timeline-summary" class="chart-summary"></div>
+      <div class="chart-wrap tall"><canvas id="chart-timeline"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Penggunaan token</h3>
+        <p>Input + output token per menit. Berguna untuk melihat beban kerja model dan menit terberat.</p>
+      </div>
+      <div id="token-summary" class="chart-summary"></div>
+      <div class="chart-wrap tall"><canvas id="chart-tokens"></canvas></div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Analisis Performa</h2>
+    <span>Melihat bagian proses yang paling banyak memakan waktu.</span>
+  </div>
+  <section class="chart-grid-3">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Waktu proses</h3>
+        <p>Rata-rata waktu: siapkan model, baca pertanyaan, tulis jawaban. Dalam detik.</p>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-timing"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Jenis jawaban</h3>
+        <p>AI = jawaban baru dari model. Cache = jawaban dari Redis. Validasi = input tidak valid. Error = gagal.</p>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-calltype"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Modul terpopuler</h3>
+        <p>Modul JIFAS yang paling sering ditanya user.</p>
+      </div>
+      <div id="gauge-modules" class="gauge-row"></div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Stabilitas</h2>
+    <span>Komposisi sukses/error dan kesiapan layanan.</span>
+  </div>
+  <section class="chart-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Hasil request</h3>
+        <p>OK = jawaban sukses. Error = gagal. Validasi = input tidak valid (expected).</p>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Checklist cepat</h3>
+        <p>Cek ini sebelum dan sesudah test banyak user.</p>
+      </div>
+      <div id="runtime-list" class="status-list"></div>
+    </div>
+  </section>
+
+  <div class="section-title">
+    <h2>Aktivitas Realtime</h2>
+    <span>Event request terbaru dari koneksi realtime.</span>
+  </div>
+  <section class="panel">
+    <div id="live-feed" class="live-feed"><div class="feed-line muted">Menunggu event realtime...</div></div>
+  </section>
+
+  <div class="section-title">
+    <h2>Riwayat Request Terbaru</h2>
+    <span>Menampilkan maksimal 200 request terakhir dari rentang terpilih.</span>
+  </div>
+  <section class="table-card">
+    <div class="table-header">
+      <h3>Daftar Request Chatbot</h3>
+      <div class="table-actions">
+        <input id="log-search" class="filter-input" type="search" placeholder="Cari user, modul, atau tipe..." oninput="updateLogFilter()" />
+        <select id="type-filter" class="type-filter" onchange="updateLogFilter()" aria-label="Filter tipe request">
+          <option value="all">Semua tipe</option>
+          <option value="chat">AI</option>
+          <option value="cache-hit">Cache</option>
+          <option value="validation">Validasi</option>
+          <option value="error">Error</option>
+        </select>
+        <span id="log-count">0 data</span>
+      </div>
+    </div>
+    <div id="log-cache-note" class="table-note"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Waktu</th>
+            <th>User</th>
+            <th>Modul</th>
+            <th>Tipe</th>
+            <th>Input</th>
+            <th>Output</th>
+            <th>Durasi</th>
+            <th>Speed AI</th>
+            <th>Panjang</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Monitoring Chatbot JIFAS. Data berasal dari API monitoring JIFAS Assistant dan diperbarui realtime melalui SignalR.
+</footer>
+
+<script>
+let currentWindow = 60;
+let allLogs = [];
+let charts = {};
+let lastDashboardData = null;
+let logSearchText = '';
+let logTypeFilter = 'all';
+
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8888' : '';
+const JAKARTA_TZ = 'Asia/Jakarta';
+const chartFont = { family: '"Segoe UI", Arial, system-ui, sans-serif', size: 11 };
+
+function apiUrl(path) {
+  return `${API_BASE}${path}`;
+}
+
+function el(id) {
+  return document.getElementById(id);
+}
+
+function cssVar(name) {
+  return getComputedStyle(document.body).getPropertyValue(name).trim();
+}
+
+function alpha(hex, opacity) {
+  const value = hex.replace('#', '');
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+function chartColors() {
+  return {
+    text: cssVar('--muted'),
+    grid: cssVar('--border'),
+    surface: cssVar('--surface'),
+    primary: cssVar('--primary'),
+    green: cssVar('--green'),
+    yellow: cssVar('--yellow'),
+    red: cssVar('--red'),
+    cyan: cssVar('--cyan')
+  };
+}
+
+function fmtNumber(value, digits = 0) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  return Number(value).toLocaleString('id-ID', {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: digits
+  });
+}
+
+function fmtCompact(value, digits = 1) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  const abs = Math.abs(Number(value));
+  if (abs >= 1_000_000) return `${fmtNumber(Number(value) / 1_000_000, digits)} jt`;
+  if (abs >= 1_000) return `${fmtNumber(Number(value) / 1_000, digits)} rb`;
+  return fmtNumber(value, 0);
+}
+
+function fmtWhole(value) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  return fmtNumber(Math.round(Number(value)), 0);
+}
+
+function fmtTokenCount(value) {
+  const rounded = fmtWhole(value);
+  return rounded === '-' ? '-' : `${rounded} token`;
+}
+
+function fmtTokenAxis(value) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  return `${fmtNumber(value, 0)} token`;
+}
+
+function fmtCharacterCount(value) {
+  if (value == null || Number.isNaN(Number(value))) return '-';
+  const count = Math.max(0, Math.round(Number(value)));
+  return `${fmtNumber(count, 0)} karakter`;
+}
+
+function fmtDuration(ms) {
+  if (ms == null || Number.isNaN(Number(ms))) return '-';
+  const value = Number(ms);
+  if (value < 1000) return `${fmtNumber(value, 0)} ms`;
+  if (value < 60_000) return `${fmtNumber(value / 1000, 1)} dtk`;
+  return `${fmtNumber(value / 60_000, 1)} mnt`;
+}
+
+function fmtDurationLong(ms) {
+  if (ms == null || Number.isNaN(Number(ms))) return '-';
+  const value = Math.max(0, Math.round(Number(ms)));
+  if (value < 1000) return `${fmtNumber(value, 0)} ms`;
+
+  const totalSeconds = Math.round(value / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes === 0) return `${fmtNumber(seconds, 0)} detik`;
+  if (seconds === 0) return `${fmtNumber(minutes, 0)} menit`;
+  return `${fmtNumber(minutes, 0)} menit ${fmtNumber(seconds, 0)} detik`;
+}
+
+function fmtPercent(value) {
+  return `${fmtNumber(value ?? 0, 1)}%`;
+}
+
+function fmtCallType(type) {
+  const key = String(type || 'chat').toLowerCase();
+  const labels = {
+    'chat': 'AI generate',
+    'cache-hit': 'Cache',
+    'suggestions': 'Saran',
+    'embedding': 'Embedding',
+    'validation': 'Validasi'
+  };
+  return labels[key] || key.replace(/-/g, ' ');
+}
+
+function isCacheHitLog(item) {
+  return String(item?.callType || '').toLowerCase() === 'cache-hit';
+}
+
+function renderLogTokenCell(item, field) {
+  const value = field === 'prompt' ? item.promptTokens : item.completionTokens;
+  if (!isCacheHitLog(item)) {
+    return `<span class="mono" title="${fmtNumber(value)} token diproses model">${fmtNumber(value)}</span>`;
+  }
+  const textType = field === 'prompt' ? 'baca' : 'tulis';
+  return `<span class="mono" title="Cache tidak pakai model. ${fmtNumber(value)} token estimasi teks ${textType}.">0 <small>(cache)</small></span>`;
+}
+
+function parseUtc(iso) {
+  if (!iso) return null;
+  const text = /(?:Z|[+\-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`;
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function timePartsWib(date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: JAKARTA_TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return {
+    hour: pad2(map.hour || '00'),
+    minute: pad2(map.minute || '00'),
+    second: pad2(map.second || '00')
+  };
+}
+
+function fmtTime(iso) {
+  const date = parseUtc(iso);
+  if (!date) return '-';
+  const time = timePartsWib(date);
+  return `${time.hour}:${time.minute}:${time.second}`;
+}
+
+function fmtDateTime(iso) {
+  const date = parseUtc(iso);
+  if (!date) return '-';
+  return date.toLocaleString('id-ID', {
+    timeZone: JAKARTA_TZ,
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function windowLabel() {
+  if (currentWindow < 60) return `${currentWindow} menit terakhir`;
+  if (currentWindow === 60) return '60 menit terakhir';
+  if (currentWindow < 1440) return `${currentWindow / 60} jam terakhir`;
+  return '24 jam terakhir';
+}
+
+function startClock() {
+  const tick = () => {
+    const now = new Date();
+    const time = timePartsWib(now);
+    const dateText = now.toLocaleDateString('id-ID', {
+      timeZone: JAKARTA_TZ,
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    el('wib-clock').textContent = `${dateText}, ${time.hour}:${time.minute}:${time.second} WIB`;
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
+function setTheme(mode) {
+  const isDark = mode === 'dark';
+  document.body.classList.toggle('dark', isDark);
+  localStorage.setItem('jifas-monitoring-theme', isDark ? 'dark' : 'light');
+  const button = el('theme-toggle');
+  if (button) button.textContent = isDark ? 'Light mode' : 'Dark mode';
+  applyChartDefaults();
+}
+
+function initTheme() {
+  const queryTheme = new URLSearchParams(window.location.search).get('theme');
+  const saved = localStorage.getItem('jifas-monitoring-theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(queryTheme || saved || (prefersDark ? 'dark' : 'light'));
+}
+
+function toggleTheme() {
+  setTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
+  if (lastDashboardData) updateAll(lastDashboardData);
+}
+
+function applyChartDefaults() {
+  const colors = chartColors();
+  Chart.defaults.color = colors.text;
+  Chart.defaults.borderColor = colors.grid;
+  Chart.defaults.font.family = '"Segoe UI", Arial, system-ui, sans-serif';
+}
+
+initTheme();
+
+function makeChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  applyChartDefaults();
+  const canvas = el(id);
+  charts[id] = new Chart(canvas.getContext('2d'), config);
+  return charts[id];
+}
+
+function commonChartOptions(extra = {}) {
+  const colors = chartColors();
+  const basePlugins = {
+    legend: { labels: { font: chartFont, boxWidth: 12, usePointStyle: true } },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      backgroundColor: colors.surface,
+      titleColor: cssVar('--text'),
+      bodyColor: cssVar('--text'),
+      borderColor: colors.grid,
+      borderWidth: 1
+    }
+  };
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 420,
+      easing: 'easeOutQuart'
+    },
+    ...extra,
+    plugins: {
+      ...basePlugins,
+      ...(extra.plugins || {}),
+      legend: {
+        ...basePlugins.legend,
+        ...(extra.plugins?.legend || {}),
+        labels: {
+          ...basePlugins.legend.labels,
+          ...(extra.plugins?.legend?.labels || {})
+        }
+      },
+      tooltip: {
+        ...basePlugins.tooltip,
+        ...(extra.plugins?.tooltip || {}),
+        callbacks: extra.plugins?.tooltip?.callbacks
+      }
+    }
+  };
+}
+
+function percentile(values, pct) {
+  const nums = values
+    .map(Number)
+    .filter(value => Number.isFinite(value))
+    .sort((a, b) => a - b);
+  if (!nums.length) return 0;
+  const index = Math.ceil((pct / 100) * nums.length) - 1;
+  return nums[Math.min(Math.max(index, 0), nums.length - 1)];
+}
+
+function sumNumbers(values) {
+  return values.reduce((total, value) => total + (Number(value) || 0), 0);
+}
+
+function countBy(logs, predicate) {
+  return logs.reduce((total, item) => total + (predicate(item) ? 1 : 0), 0);
+}
+
+function updateChips(stats) {
+  const calls = stats?.totalCalls ?? 0;
+  const latency = stats?.avgTotalDurationMs ?? 0;
+  const errorRate = stats?.errorRate ?? 0;
+  const errorCalls = stats?.errorCalls ?? 0;
+
+  el('chip-volume').textContent = `Volume: ${fmtNumber(calls)} req`;
+  el('chip-speed').textContent = `Latency: ${fmtDurationLong(latency)}`;
+  el('chip-error').textContent = `Error: ${fmtPercent(errorRate)}`;
+
+  el('chip-volume').className = `chip ${calls > 0 ? 'ok' : 'warn'}`;
+  el('chip-speed').className = `chip ${latency > 30000 ? 'warn' : 'ok'}`;
+  el('chip-error').className = `chip ${errorRate > 0 ? 'err' : 'ok'}`;
+}
+
+function updateKPIs(stats) {
+  if (!stats) return;
+  const calls = stats.totalCalls ?? 0;
+  const avgMs = stats.avgTotalDurationMs ?? 0;
+  const last = stats.lastCallAt ? fmtDateTime(stats.lastCallAt) : 'belum ada request';
+
+  el('kpi-calls').textContent = fmtNumber(calls);
+  el('kpi-window').textContent = windowLabel();
+  el('kpi-latency').textContent = fmtDurationLong(avgMs);
+  el('kpi-errors').textContent = fmtPercent(stats.errorRate ?? 0);
+  el('kpi-err-count').textContent = `${fmtNumber(stats.errorCalls ?? 0)} request error`;
+  el('kpi-tps').textContent = fmtNumber(stats.avgTokensPerSecond ?? 0, 1);
+  el('kpi-prompt-tok').textContent = fmtWhole(stats.avgPromptTokens ?? 0);
+  el('kpi-prompt-sub').textContent = `${fmtTokenCount(stats.totalPromptTokens ?? 0)} total`;
+  el('kpi-out-tok').textContent = fmtWhole(stats.avgCompletionTokens ?? 0);
+  el('kpi-out-sub').textContent = `${fmtTokenCount(stats.totalCompletionTokens ?? 0)} total`;
+  el('kpi-resp-len').textContent = fmtWhole(stats.avgResponseLengthChars ?? 0);
+  el('overview-text').textContent = calls > 0
+    ? `Dalam ${windowLabel()}, chatbot menerima ${fmtNumber(calls)} request. Latency rata-rata ${fmtDurationLong(avgMs)}.`
+    : `Belum ada request pada ${windowLabel()}. Dashboard akan terisi otomatis saat chatbot digunakan.`;
+  updateChips(stats);
+}
+
+function updateInsights(data) {
+  const stats = data?.stats || {};
+  const quality = data?.quality || {};
+  const logs = data?.logs || [];
+  const totalLogs = logs.length;
+  const p95 = percentile(logs.map(item => item.totalDurationMs || 0), 95);
+  const errorCount = countBy(logs, item => item.isError);
+  const successCount = Math.max(0, totalLogs - errorCount);
+  const cacheSampleCount = logs.length;
+  const cacheHitCount = countBy(logs, item => isCacheHitLog(item));
+  const cacheRate = cacheSampleCount > 0 ? (cacheHitCount / cacheSampleCount) * 100 : null;
+  const kbRate = quality.knowledgeBaseHitRate ?? null;
+  const hasRuntimeData = (stats.totalCalls ?? 0) > 0 || totalLogs > 0;
+
+  el('insight-cache-hit').textContent = cacheRate == null ? 'N/A' : fmtPercent(cacheRate);
+  el('insight-cache-detail').textContent = cacheRate == null
+    ? 'Belum ada log untuk menghitung cache hit rate.'
+    : `${fmtNumber(cacheHitCount)} dari ${fmtNumber(cacheSampleCount)} request dijawab dari Redis cache.`;
+
+  el('insight-kb-hit').textContent = kbRate == null ? '-' : fmtPercent(kbRate);
+  el('insight-kb-detail').textContent = quality.totalResponses
+    ? `${fmtNumber(quality.knowledgeBaseResponses ?? 0)} dari ${fmtNumber(quality.totalResponses)} jawaban berdasarkan dokumen JIFAS.`
+    : 'Belum ada histori chat.';
+
+  el('insight-p95').textContent = p95 > 0 ? fmtDurationLong(p95) : '-';
+  el('insight-p95-detail').textContent = totalLogs
+    ? `Dari ${fmtNumber(totalLogs)} log terbaru.`
+    : 'Belum ada log untuk menghitung P95.';
+
+  el('insight-runtime').textContent = hasRuntimeData ? 'Aktif' : 'Idle';
+  el('insight-runtime-detail').textContent = `${fmtNumber(successCount)} OK, ${fmtNumber(errorCount)} error pada log terbaru.`;
+}
+
+function updateLearningHealth(learning) {
+  const safe = learning || {};
+  el('learning-needs-edit').textContent = fmtNumber(safe.needsEdit ?? 0);
+  el('learning-ready').textContent = fmtNumber(safe.readyForPublish ?? 0);
+  el('learning-published-today').textContent = fmtNumber(safe.publishedToday ?? 0);
+  el('learning-failed').textContent = fmtNumber(safe.publishFailed ?? 0);
+}
+
+function updateTimeline(series) {
+  const labels = series.map(p => fmtTime(p.minute));
+  const colors = chartColors();
+  const durationMs = series.map(p => Math.round(p.avgDurationMs || 0));
+  const requestCounts = series.map(p => p.calls || 0);
+  const totalRequests = sumNumbers(requestCounts);
+  const avgWaitMs = durationMs.length ? sumNumbers(durationMs) / durationMs.length : 0;
+  const p95WaitMs = percentile(durationMs, 95);
+  const slowestPoint = series.reduce((slowest, point) => {
+    if (!slowest || (point.avgDurationMs || 0) > (slowest.avgDurationMs || 0)) return point;
+    return slowest;
+  }, null);
+
+  el('timeline-summary').innerHTML = `
+    <div class="chart-summary-item"><span>Total request</span><strong>${fmtNumber(totalRequests)}</strong></div>
+    <div class="chart-summary-item"><span>Rata-rata latency</span><strong>${fmtDurationLong(avgWaitMs)}</strong></div>
+    <div class="chart-summary-item"><span>P95 latency</span><strong>${p95WaitMs ? fmtDurationLong(p95WaitMs) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Menit tersibuk</span><strong>${slowestPoint ? fmtTime(slowestPoint.minute) : '-'}</strong></div>
+  `;
+
+  makeChart('chart-timeline', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Request masuk',
+          data: requestCounts,
+          backgroundColor: alpha(colors.primary, 0.68),
+          borderColor: colors.primary,
+          borderWidth: 1,
+          borderRadius: 5,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Waktu tunggu rata-rata',
+          data: durationMs,
+          type: 'line',
+          borderColor: colors.green,
+          backgroundColor: alpha(colors.green, 0.12),
+          tension: 0.22,
+          fill: true,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: commonChartOptions({
+      scales: {
+        x: { ticks: { font: chartFont, maxRotation: 0, maxTicksLimit: 9 }, grid: { display: false } },
+        y: {
+          title: { display: true, text: 'Request' },
+          beginAtZero: true,
+          ticks: { precision: 0, maxTicksLimit: 6 }
+        },
+        y1: {
+          position: 'right',
+          title: { display: true, text: 'Waktu tunggu' },
+          beginAtZero: true,
+          grid: { drawOnChartArea: false },
+          ticks: { callback: value => fmtDurationLong(value), maxTicksLimit: 6 }
+        }
+      },
+      plugins: {
+        legend: { labels: { font: chartFont, boxWidth: 12, usePointStyle: true } },
+        tooltip: {
+          callbacks: {
+            label: context => {
+              if (context.dataset.yAxisID === 'y1') return `Waktu tunggu: ${fmtDurationLong(context.raw)}`;
+              return `Request: ${fmtNumber(context.raw)}`;
+            }
+          }
+        }
+      }
+    })
+  });
+}
+
+function updateTokenChart(series) {
+  const labels = series.map(p => fmtTime(p.minute));
+  const colors = chartColors();
+  const tokenValues = series.map(p => p.totalTokens || 0);
+  const requestCounts = series.map(p => p.calls || 0);
+  const totalTokens = sumNumbers(tokenValues);
+  const totalRequests = sumNumbers(requestCounts);
+  const avgTokensPerRequest = totalRequests > 0 ? totalTokens / totalRequests : 0;
+  const peakPoint = series.reduce((peak, point) => {
+    if (!peak || (point.totalTokens || 0) > (peak.totalTokens || 0)) return point;
+    return peak;
+  }, null);
+
+  el('token-summary').innerHTML = `
+    <div class="chart-summary-item"><span>Total token</span><strong>${fmtTokenCount(totalTokens)}</strong></div>
+    <div class="chart-summary-item"><span>Rata-rata per req</span><strong>${totalRequests ? fmtTokenCount(avgTokensPerRequest) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Menit terberat</span><strong>${peakPoint ? fmtTime(peakPoint.minute) : '-'}</strong></div>
+    <div class="chart-summary-item"><span>Token tertinggi</span><strong>${peakPoint ? fmtTokenCount(peakPoint.totalTokens || 0) : '-'}</strong></div>
+  `;
+
+  makeChart('chart-tokens', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Total token',
+        data: tokenValues,
+        borderColor: colors.yellow,
+        backgroundColor: alpha(colors.yellow, 0.58),
+        borderWidth: 1,
+        borderRadius: 5
+      }]
+    },
+    options: commonChartOptions({
+      scales: {
+        x: { ticks: { font: chartFont, maxRotation: 0, maxTicksLimit: 9 }, grid: { display: false } },
+        y: {
+          title: { display: true, text: 'Token' },
+          beginAtZero: true,
+          ticks: { callback: value => fmtTokenAxis(value), maxTicksLimit: 6 }
+        }
+      },
+      plugins: {
+        legend: { labels: { font: chartFont, boxWidth: 12, usePointStyle: true } },
+        tooltip: {
+          callbacks: {
+            label: context => `Total token: ${fmtNumber(context.raw)} token`
+          }
+        }
+      }
+    })
+  });
+}
+
+function updateTimingChart(logs) {
+  const avg = arr => arr.length ? arr.reduce((sum, item) => sum + item, 0) / arr.length : 0;
+  const data = logs.length ? {
+    load: avg(logs.map(l => l.loadDurationMs || 0)) / 1000,
+    prompt: avg(logs.map(l => l.promptEvalDurationMs || 0)) / 1000,
+    generate: avg(logs.map(l => l.evalDurationMs || 0)) / 1000
+  } : { load: 0, prompt: 0, generate: 0 };
+  const colors = chartColors();
+
+  makeChart('chart-timing', {
+    type: 'bar',
+    data: {
+      labels: ['Siapkan model', 'Baca pertanyaan', 'Tulis jawaban'],
+      datasets: [{
+        data: [data.load, data.prompt, data.generate],
+        backgroundColor: [colors.primary, colors.cyan, colors.green],
+        borderRadius: 6
+      }]
+    },
+    options: commonChartOptions({
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: value => `${fmtNumber(value, value >= 10 ? 0 : 1)} dtk` } },
+        y: { grid: { display: false } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: context => `Rata-rata: ${fmtNumber(context.raw, 2)} detik`
+          }
+        }
+      }
+    })
+  });
+}
+
+function updateCallTypeChart(logs) {
+  const colors = chartColors();
+  const counts = {};
+  logs.forEach(item => {
+    const type = fmtCallType(item.callType);
+    counts[type] = (counts[type] || 0) + 1;
+  });
+
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+  makeChart('chart-calltype', {
+    type: 'doughnut',
+    data: {
+      labels: labels.length ? labels : ['Belum ada data'],
+      datasets: [{
+        data: data.length ? data : [1],
+        backgroundColor: [colors.primary, colors.cyan, colors.green, colors.yellow, colors.red, colors.text],
+        borderWidth: 2,
+        borderColor: colors.surface
+      }]
+    },
+    options: commonChartOptions({
+      cutout: '62%',
+      plugins: { legend: { position: 'bottom', labels: { font: chartFont, boxWidth: 10, usePointStyle: true } } }
+    })
+  });
+}
+
+function updateStatusChart(logs) {
+  const colors = chartColors();
+  const errors = countBy(logs, item => item.isError);
+  const validation = countBy(logs, item => (item.callType || '').toLowerCase().includes('validation'));
+  const success = Math.max(0, logs.length - errors - validation);
+  const labels = ['Sukses', 'Error', 'Validasi'];
+  const data = [success, errors, validation];
+
+  makeChart('chart-status', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Jumlah request',
+        data,
+        backgroundColor: [alpha(colors.green, 0.72), alpha(colors.red, 0.72), alpha(colors.yellow, 0.72)],
+        borderColor: [colors.green, colors.red, colors.yellow],
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: commonChartOptions({
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: context => `${context.label}: ${fmtNumber(context.raw)} request`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
+    })
+  });
+}
+
+function updateRuntimeChecklist(data) {
+  const stats = data?.stats || {};
+  const quality = data?.quality || {};
+  const logs = data?.logs || [];
+  const p95 = percentile(logs.map(item => item.totalDurationMs || 0), 95);
+  const errorRate = stats.errorRate ?? 0;
+  const kbRate = quality.knowledgeBaseHitRate ?? 0;
+  const rows = [
+    {
+      label: 'API monitoring',
+      value: 'HTTP 200',
+      ok: true,
+      note: 'Dashboard berhasil mengambil data.'
+    },
+    {
+      label: 'SignalR realtime',
+      value: el('status-text')?.textContent || '-',
+      ok: !el('status-badge')?.classList.contains('disconnected'),
+      note: 'Aktivitas realtime aktif jika status Live.'
+    },
+    {
+      label: 'Error utama',
+      value: fmtPercent(errorRate),
+      ok: errorRate === 0,
+      warn: errorRate > 0 && errorRate <= 5,
+      note: `${fmtNumber(stats.errorCalls ?? 0)} error dari ${fmtNumber(stats.totalCalls ?? 0)} call.`
+    },
+    {
+      label: 'KB hit',
+      value: kbRate ? fmtPercent(kbRate) : '-',
+      ok: kbRate >= 80,
+      warn: kbRate > 0 && kbRate < 80,
+      note: quality.totalResponses ? 'Dari histori chat pada rentang ini.' : 'Belum ada data quality.'
+    },
+    {
+      label: 'Waktu tunggu p95',
+      value: p95 ? fmtDurationLong(p95) : '-',
+      ok: p95 > 0 && p95 <= 5000,
+      warn: p95 > 5000 && p95 <= 30000,
+      note: logs.length ? `Dari ${fmtNumber(logs.length)} log terbaru.` : 'Belum ada log.'
+    }
+  ];
+
+  el('runtime-list').innerHTML = rows.map(row => {
+    const badgeClass = row.ok ? 'badge-ok' : row.warn ? 'badge-warn' : 'badge-err';
+    const label = row.ok ? 'OK' : row.warn ? 'Perlu pantau' : 'Cek';
+    return `
+      <div class="status-row">
+        <div><strong>${escapeHtml(row.label)}</strong><br><span>${escapeHtml(row.note)}</span></div>
+        <div><span class="badge ${badgeClass}" title="${escapeHtml(row.value)}">${label}: ${escapeHtml(row.value)}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateModuleGauges(logs) {
+  const container = el('gauge-modules');
+  const counts = {};
+  logs.forEach(item => {
+    if (item.activeModule) counts[item.activeModule] = (counts[item.activeModule] || 0) + 1;
+  });
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (!sorted.length) {
+    container.innerHTML = '<div class="empty-note">Belum ada data modul pada rentang waktu ini.</div>';
+    return;
+  }
+
+  const max = sorted[0][1] || 1;
+  const colors = chartColors();
+  const gaugeColors = [colors.primary, colors.cyan, colors.green, colors.yellow, colors.red, colors.text];
+  container.innerHTML = sorted.map(([module, count], index) => {
+    const pct = Math.max(5, Math.round((count / max) * 100));
+    return `
+      <div>
+        <div class="gauge-label"><strong>${escapeHtml(module)}</strong><span>${fmtNumber(count)} request</span></div>
+        <div class="gauge-track"><div class="gauge-fill" style="width:${pct}%;background:${gaugeColors[index % gaugeColors.length]}"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[char]));
+}
+
+function getFilteredLogs(logs) {
+  const query = logSearchText.trim().toLowerCase();
+  return logs.filter(item => {
+    const rawType = String(item.callType || 'chat').toLowerCase();
+    const labelType = fmtCallType(rawType).toLowerCase();
+    const matchesType =
+      logTypeFilter === 'all' ||
+      (logTypeFilter === 'error' && item.isError) ||
+      rawType === logTypeFilter ||
+      labelType === logTypeFilter;
+
+    if (!matchesType) return false;
+    if (!query) return true;
+
+    const haystack = [
+      item.userId,
+      item.activeModule,
+      rawType,
+      labelType,
+      item.model,
+      item.errorMessage
+    ].join(' ').toLowerCase();
+
+    return haystack.includes(query);
+  });
+}
+
+function updateLogFilter() {
+  logSearchText = el('log-search')?.value || '';
+  logTypeFilter = el('type-filter')?.value || 'all';
+  renderTable(allLogs);
+}
+
+function renderTable(logs) {
+  const filtered = getFilteredLogs(logs);
+  el('log-count').textContent = `${fmtNumber(filtered.length)} dari ${fmtNumber(logs.length)} data`;
+  const visibleRows = filtered.slice(0, 200);
+  const cacheRows = visibleRows.filter(isCacheHitLog).length;
+  const cacheNote = el('log-cache-note');
+  if (cacheNote) {
+    if (visibleRows.length > 0 && cacheRows === visibleRows.length) {
+      cacheNote.textContent = `${fmtNumber(cacheRows)} baris ini dari Cache (warna biru muda). Token AI = 0 karena tidak pakai model.`;
+      cacheNote.classList.add('show');
+    } else if (cacheRows > 0) {
+      cacheNote.textContent = `${fmtNumber(cacheRows)} dari ${fmtNumber(visibleRows.length)} baris dari Cache (warna biru muda). Token AI = 0.`;
+      cacheNote.classList.add('show');
+    } else {
+      cacheNote.textContent = '';
+      cacheNote.classList.remove('show');
+    }
+  }
+  const tbody = el('log-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="muted">Belum ada request pada rentang waktu ini.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = visibleRows.map(item => {
+    const user = item.userId?.trim() || '-';
+    const module = item.activeModule || '-';
+    const rawType = item.callType || 'chat';
+    const type = fmtCallType(rawType);
+    const isCache = isCacheHitLog(item);
+    const status = item.isError
+      ? '<span class="badge badge-err">Error</span>'
+      : '<span class="badge badge-ok">OK</span>';
+    const speed = isCache
+      ? '<span title="Cache tidak pakai model.">-</span>'
+      : (item.tokensPerSecond > 0 ? `${fmtNumber(item.tokensPerSecond, 1)} tok/d` : '-');
+    const rowClass = isCache ? 'cache-row' : '';
+    return `
+      <tr class="${rowClass}">
+        <td class="mono">${fmtDateTime(item.createdAt)}</td>
+        <td title="${escapeHtml(user)}">${escapeHtml(user)}</td>
+        <td title="${escapeHtml(module)}">${escapeHtml(module)}</td>
+        <td><span class="badge badge-type" title="${escapeHtml(rawType)}">${escapeHtml(type)}</span></td>
+        <td>${renderLogTokenCell(item, 'prompt')}</td>
+        <td>${renderLogTokenCell(item, 'completion')}</td>
+        <td class="mono" title="${fmtNumber(item.totalDurationMs ?? 0, 0)} ms">${fmtDurationLong(item.totalDurationMs)}</td>
+        <td class="mono">${speed}</td>
+        <td class="mono" title="${isCache ? 'Panjang jawaban cache.' : 'Panjang jawaban AI.'}">${fmtCharacterCount(item.responseLengthChars)}</td>
+        <td>${status}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function addFeedLine(metric) {
+  const feed = el('live-feed');
+  if (feed.children.length === 1 && feed.textContent.includes('Menunggu')) feed.innerHTML = '';
+
+  const status = metric.isError ? '<span class="err">ERROR</span>' : '<span class="ok">SUKSES</span>';
+  const user = escapeHtml(metric.userId || '-');
+  const module = escapeHtml(metric.activeModule || '-');
+  const line = `
+    <div class="feed-line">
+      <span class="time">${fmtTime(metric.createdAt)}</span>
+      <span class="muted">|</span> ${status}
+      <span class="muted">| user:</span> ${user}
+      <span class="muted">| modul:</span> ${module}
+      <span class="muted">| tipe:</span> ${escapeHtml(fmtCallType(metric.callType))}
+      <span class="muted">| durasi:</span> ${fmtDurationLong(metric.totalDurationMs)}
+      <span class="muted">| token:</span> ${fmtTokenCount((metric.promptTokens || 0) + (metric.completionTokens || 0))}
+    </div>
+  `;
+  feed.insertAdjacentHTML('afterbegin', line);
+  while (feed.children.length > 200) feed.removeChild(feed.lastChild);
+}
+
+function updateAll(data) {
+  lastDashboardData = data;
+  updateKPIs(data.stats);
+  updateInsights(data);
+  updateLearningHealth(data.learning);
+  updateTimeline(data.timeSeries || []);
+  updateTokenChart(data.timeSeries || []);
+  allLogs = data.logs || [];
+  renderTable(allLogs);
+  updateTimingChart(allLogs);
+  updateCallTypeChart(allLogs);
+  updateStatusChart(allLogs);
+  updateModuleGauges(allLogs);
+  updateRuntimeChecklist(data);
+  el('last-refresh').textContent = `Terakhir refresh ${fmtTime(new Date().toISOString())} WIB`;
+}
+
+async function refresh() {
+  try {
+    const response = await fetch(apiUrl(`/api/monitoring/all?minutes=${currentWindow}`));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    updateAll(await response.json());
+    setConnected('Live');
+  } catch (error) {
+    console.error('Refresh error:', error);
+    setDisconnected('API error');
+  }
+}
+
+function changeWindow(value) {
+  currentWindow = Number(value);
+  refresh();
+}
+
+function setConnected(text) {
+  el('status-badge').className = 'status';
+  el('status-text').textContent = text;
+}
+
+function setDisconnected(text) {
+  el('status-badge').className = 'status disconnected';
+  el('status-text').textContent = text;
+}
+
+const connection = new signalR.HubConnectionBuilder()
+  .withUrl(apiUrl('/hubs/monitoring'))
+  .withAutomaticReconnect([1000, 3000, 10000])
+  .build();
+
+let statsFetchTimeout = null; // FIXED: Debounce timer for stats refresh
+
+connection.on('NewMetric', metric => {
+  addFeedLine(metric);
+  allLogs.unshift(metric);
+  if (allLogs.length > 500) allLogs.pop();
+  renderTable(allLogs);
+  updateTimingChart(allLogs.slice(0, 50));
+  updateCallTypeChart(allLogs);
+  updateStatusChart(allLogs);
+  updateModuleGauges(allLogs);
+  updateInsights({ ...(lastDashboardData || {}), stats: lastDashboardData?.stats || {}, quality: lastDashboardData?.quality || {}, logs: allLogs });
+  updateLearningHealth(lastDashboardData?.learning);
+  updateRuntimeChecklist({ ...(lastDashboardData || {}), stats: lastDashboardData?.stats || {}, quality: lastDashboardData?.quality || {}, logs: allLogs });
+
+  // FIXED: Debounce stats refresh to prevent API flooding under high load
+  if (statsFetchTimeout) clearTimeout(statsFetchTimeout);
+  statsFetchTimeout = setTimeout(() => {
+    fetch(apiUrl(`/api/monitoring/stats?minutes=${currentWindow}`))
+      .then(r => r.ok ? r.json() : null)
+      .then(stats => stats && updateKPIs(stats))
+      .catch(() => {});
+  }, 2000); // Wait 2 seconds before fetching stats
+});
+
+connection.onreconnecting(() => setDisconnected('Reconnect'));
+connection.onreconnected(() => { setConnected('Live'); refresh(); });
+connection.onclose(() => setDisconnected('Terputus'));
+
+async function startSignalR() {
+  try {
+    await connection.start();
+    setConnected('Live');
+  } catch (error) {
+    console.warn('SignalR unavailable:', error);
+    setDisconnected('SignalR off');
+  }
+}
+
+(async () => {
+  startClock();
+  await Promise.all([refresh(), startSignalR()]);
+  setInterval(refresh, 30_000);
+})();
+</script>
+</body>
+</html>

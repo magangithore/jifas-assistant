@@ -1,4 +1,4 @@
-LAPORAN INQUIRY PUM (DETAIL PENCAIRAN UANG MUKA)
+﻿LAPORAN INQUIRY PUM (DETAIL PENCAIRAN UANG MUKA)
 
 TUJUAN:
 Memberikan informasi DETAIL tentang setiap pencairan (payment) uang muka yang telah dilakukan dari kas/bank.
@@ -191,15 +191,15 @@ PEMAHAMAN ISTILAH PENTING:
 
 9. STATUS (POSTED vs UNPOSTED)
    - POSTED: Transaksi PU sudah diakui dan di-post di sistem akunting
-             → Sudah tercatat di GL (General Ledger)
-             → Dapat dilaporkan dalam financial statements
-             → Proses PU sudah final
+             -> Sudah tercatat di GL (General Ledger)
+             -> Dapat dilaporkan dalam financial statements
+             -> Proses PU sudah final
    
    - UNPOSTED: Transaksi PU belum di-post di sistem akunting
-              → Masih dalam review atau approval
-              → Belum tercatat di GL
-              → Belum bisa dilaporkan secara resmi
-              → Masih PENDING completion
+              -> Masih dalam review atau approval
+              -> Belum tercatat di GL
+              -> Belum bisa dilaporkan secara resmi
+              -> Masih PENDING completion
 
 KEGUNAAN UNTUK FINANCE DAN ACCOUNTING:
 1. TRACKING & VERIFICATION PUM
@@ -264,9 +264,9 @@ Ketika pengguna mengubah status (dengan company yang sama):
 - Akan tampil hanya transaksi dengan status yang dipilih
 
 Contoh:
-- Filter Status = "Posted" → Hanya PU yang sudah di-post yang tampil
-- Filter Status = "Unposted" → Hanya PU yang belum di-post yang tampil
-- Filter Status = "All Status" → Semua PU (posted + unposted) tampil
+- Filter Status = "Posted" -> Hanya PU yang sudah di-post yang tampil
+- Filter Status = "Unposted" -> Hanya PU yang belum di-post yang tampil
+- Filter Status = "All Status" -> Semua PU (posted + unposted) tampil
 
 FITUR PERPINDAHAN PERIODE TANGGAL:
 Ketika pengguna mengubah range periode tanggal:
@@ -469,7 +469,7 @@ Data granular: satu baris = satu transaksi PU
 Column: Doc No, Date, Description, Amount, Creditor, Bank, etc
 
 REALISASI PUM:
-Menampilkan 3-way reconciliation (UMK → PU → RU)
+Menampilkan 3-way reconciliation (UMK -> PU -> RU)
 Focus pada: Apakah sudah dipertanggungjawabkan atau belum
 Gunakan untuk: Tracking PU yang outstanding, matching dengan RU
 Data reconciled: satu baris = UMK + PU + RU matching
@@ -484,7 +484,7 @@ GUNAKAN INQUIRY PUM JIKA BUTUH:
 
 GUNAKAN REALISASI PUM JIKA BUTUH:
 - Status pertanggungjawaban
-- Matching UMK → PU → RU
+- Matching UMK -> PU -> RU
 - Outstanding items
 - Monthly closing monitoring
 

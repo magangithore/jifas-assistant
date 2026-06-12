@@ -1,0 +1,1386 @@
+﻿JIFAS KNOWLEDGE BASE - MODUL PUM
+#Pengajuan Uang Muka, Payment Uang Muka, Realisasi Uang Muka, dan Tax Approval
+
+Dokumen ini dibuat untuk knowledge base AI chatbot JIFAS. Fokus dokumen ini adalah menjelaskan modul PUM dari sisi pengguna, alur bisnis, logika finance, kontrol budget, approval, realisasi, pajak, status dokumen, dan penanganan error. Dokumen ini tidak menjelaskan coding. Tujuannya agar AI chatbot dapat menjawab pertanyaan user dengan bahasa yang mudah dipahami dan dapat mengarahkan masalah teknis ke IT.
+
+--------------------------------------------------------------------------------
+
+1. Ringkasan Modul PUM
+
+PUM adalah singkatan dari Panjar Uang Muka atau Pengajuan Uang Muka. Modul PUM digunakan untuk mengelola uang muka yang diajukan karyawan kepada perusahaan sebelum kegiatan atau pengeluaran dilakukan. Contoh penggunaan PUM adalah perjalanan dinas, kegiatan operasional, pembelian kebutuhan kantor, biaya proyek, biaya representasi, atau kebutuhan bisnis lain yang membutuhkan dana terlebih dahulu.
+
+Dalam JIFAS, PUM tidak hanya mencatat permintaan uang muka. Modul ini juga mengatur approval bertingkat, validasi limit karyawan, validasi budget, pembayaran uang muka, realisasi penggunaan dana, perhitungan pajak pada realisasi, dan penyelesaian sisa atau kekurangan uang muka.
+
+Secara sederhana:
+
+Karyawan mengajukan PUM
+-> Atasan mengecek dan menyetujui
+-> Finance mengecek dan menyetujui
+-> Finance melakukan pembayaran uang muka
+-> Karyawan menggunakan uang muka untuk kegiatan bisnis
+-> Karyawan atau finance membuat realisasi penggunaan uang
+-> Tax mengecek PPN dan PPH jika ada
+-> Finance melakukan checking dan posting
+-> Jika ada sisa uang, sisa dikembalikan ke perusahaan
+-> Jika ada kekurangan, perusahaan dapat memproses pembayaran tambahan
+-> Dokumen selesai dan tercatat untuk accounting
+
+Modul PUM adalah salah satu kontrol utama perusahaan untuk memastikan uang muka karyawan tidak keluar tanpa persetujuan, tidak melebihi limit, sesuai budget, serta memiliki pertanggungjawaban setelah digunakan.
+
+--------------------------------------------------------------------------------
+
+2. Tujuan Bisnis Modul PUM
+
+Modul PUM dibuat untuk:
+
+1. Memberikan proses resmi bagi karyawan untuk meminta uang muka perusahaan.
+2. Memastikan uang muka hanya diberikan untuk kebutuhan bisnis yang jelas.
+3. Membatasi jumlah uang muka berdasarkan limit karyawan.
+4. Mengecek ketersediaan budget berdasarkan COA, divisi, departemen, dan periode.
+5. Memastikan atasan mengetahui dan menyetujui penggunaan dana.
+6. Memastikan finance melakukan validasi sebelum uang dicairkan.
+7. Mencatat pembayaran uang muka agar terhubung ke CashBank.
+8. Mencatat realisasi penggunaan uang secara detail.
+9. Menghitung PPN dan PPH pada realisasi jika ada transaksi yang kena pajak.
+10. Memastikan dokumen realisasi dapat diposting ke accounting.
+11. Menjaga audit trail untuk seluruh proses: create, approve, reject, pay, realize, tax approve, post, dan void.
+
+--------------------------------------------------------------------------------
+
+3. Istilah Penting dalam Modul PUM
+
+#PUM
+PUM adalah uang muka atau panjar yang diberikan perusahaan kepada karyawan sebelum pengeluaran terjadi.
+
+#PPUM
+PPUM adalah dokumen pengajuan PUM. Dokumen ini dibuat saat karyawan mengajukan uang muka. PPUM berisi tanggal, kategori, nama karyawan, limit, atasan, divisi, departemen, deskripsi, attachment, serta detail COA dan nominal.
+
+#UM
+UM adalah nomor Uang Muka. Nomor ini muncul ketika pengajuan PUM sudah disetujui dan masuk tahap pembayaran.
+
+#PU
+PU adalah dokumen pembayaran uang muka atau payment unit. PU biasanya muncul saat uang muka diproses untuk dicairkan.
+
+#RU
+RU adalah Realisasi Uang Muka. RU digunakan untuk mencatat penggunaan aktual dari uang muka yang sudah diterima karyawan.
+
+#Realisasi
+Realisasi adalah proses pertanggungjawaban penggunaan uang muka. Dalam realisasi, karyawan atau finance mencatat uang tersebut dipakai untuk apa, vendor siapa, COA apa, pajak apa, dan berapa nominalnya.
+
+#PUM Limit
+PUM Limit adalah batas maksimal uang muka yang boleh dimiliki atau diajukan oleh seorang karyawan. Jika sisa limit habis, karyawan harus menyelesaikan realisasi terlebih dahulu sebelum membuat pengajuan baru.
+
+#Sisa Limit
+Sisa limit adalah sisa nilai uang muka yang masih dapat diajukan oleh karyawan setelah dikurangi PUM yang masih outstanding.
+
+#Outstanding PUM
+Outstanding PUM adalah uang muka yang sudah diberikan tetapi belum selesai direalisasikan atau belum diselesaikan secara penuh.
+
+#COA
+COA adalah Chart of Account. COA menentukan akun biaya atau akun pengeluaran yang akan dibebankan.
+
+#Budget Status
+Budget Status menunjukkan apakah nominal yang diajukan masih dalam budget atau sudah melewati budget. Status umum adalah OK, Warning, Over Budget, Cross, atau status lain sesuai konfigurasi sistem.
+
+#PPN
+PPN adalah Pajak Pertambahan Nilai. Dalam RU, PPN dihitung dari detail pengeluaran jika tax code yang dipilih mengandung PPN.
+
+#PPH
+PPH adalah Pajak Penghasilan atau withholding tax. Dalam RU, PPH dihitung jika transaksi terkena pemotongan pajak.
+
+#PPH Type
+PPH Type adalah jenis PPH yang digunakan. Jika nilai PPH lebih besar dari 0, PPH Type wajib diisi agar pajak dapat diproses dengan benar.
+
+#Void
+Void adalah pembatalan dokumen. Dokumen tidak dihapus dari sistem, tetapi dibatalkan dengan alasan agar audit trail tetap ada.
+
+#Posting
+Posting adalah proses finalisasi data ke sistem accounting atau general ledger. Setelah posted, dokumen biasanya tidak bisa diedit lagi.
+
+--------------------------------------------------------------------------------
+
+4. Gambaran Besar Flow End-to-End PUM
+
+Flow besar PUM dapat dipahami dalam dua siklus utama.
+
+#Siklus 1: Pengajuan dan Pencairan Uang Muka
+
+1. Karyawan membuat PPUM.
+2. Sistem mengecek data karyawan, head, divisi, department, PUM limit, sisa limit, periode aktif, dan budget.
+3. Karyawan mengisi detail kebutuhan uang muka per COA.
+4. Karyawan submit pengajuan.
+5. Dokumen masuk ke Head Approval.
+6. Head review detail pengajuan, budget, attachment, dan over budget jika ada.
+7. Head approve atau reject.
+8. Jika approve, dokumen masuk ke Finance Approval.
+9. Finance review nominal, budget, status, dan kelayakan pembayaran.
+10. Finance approve, reject, atau void sesuai status.
+11. Jika approve, dokumen menjadi Ready to Pay.
+12. Finance/Treasury membuat pembayaran uang muka.
+13. Uang dicairkan ke karyawan.
+14. Dokumen memiliki nomor UM dan/atau PU.
+
+#Siklus 2: Realisasi dan Penyelesaian Uang Muka
+
+1. Setelah uang diterima dan digunakan, karyawan atau finance membuat RU.
+2. RU mencatat detail penggunaan uang: vendor, deskripsi, divisi, departemen, COA, tax code, amount, PPN, PPH, dan PPH Type.
+3. Sistem menghitung total penggunaan, DPP, PPN, PPH, dan total amount.
+4. Sistem membandingkan realisasi dengan jumlah UM.
+5. Jika realisasi lebih kecil dari UM, sisa uang harus dikembalikan sebagai penerimaan kas atau CashBank Receiving.
+6. Jika realisasi lebih besar dari UM, kekurangan dapat diproses sebagai pembayaran tambahan atau CashBank Payment sesuai kebijakan.
+7. Finance melakukan update dan checking RU.
+8. Jika ada pajak, dokumen masuk ke Tax Approval.
+9. Tax mengecek faktur pajak, bukti potong, NPWP, PPN, PPH, dan koreksi pajak jika diperlukan.
+10. Setelah tax approve, dokumen siap diposting.
+11. Finance/accounting melakukan posting.
+12. Dokumen selesai dan masuk pencatatan accounting.
+
+--------------------------------------------------------------------------------
+
+5. Modul dan Submodul PUM
+
+Modul PUM terdiri dari beberapa area kerja.
+
+#5.1 Pengajuan PUM User
+Digunakan oleh karyawan untuk membuat pengajuan uang muka dan melihat status pengajuannya. Di dalamnya ada tab PPUM dan Realization.
+
+#5.2 Head Approval
+Digunakan oleh atasan atau supervisor untuk mengecek dan menyetujui pengajuan PUM dari timnya.
+
+#5.3 Finance Approval PPUM
+Digunakan oleh finance untuk mengecek pengajuan PUM yang sudah disetujui head, lalu approve, reject, atau void sesuai kondisi.
+
+#5.4 Payment PUM atau Document UM
+Digunakan untuk memproses pembayaran uang muka setelah dokumen Ready to Pay. Proses ini menghubungkan PUM ke pencairan kas/bank.
+
+#5.5 Realization RU
+Digunakan untuk mencatat penggunaan aktual uang muka.
+
+#5.6 Finance Realization
+Digunakan oleh finance untuk update, checking, posting, atau void dokumen RU.
+
+#5.7 Tax Approval RU
+Digunakan oleh tax staff untuk mengecek PPN, PPH, faktur pajak, bukti potong, NPWP, dan tax correction pada dokumen RU.
+
+#5.8 Outstanding View
+Digunakan untuk melihat dokumen PUM atau RU yang masih outstanding dan perlu diproses lebih lanjut.
+
+--------------------------------------------------------------------------------
+
+6. Role dan Hak Akses
+
+Hak akses dapat berbeda tergantung konfigurasi perusahaan. Secara umum:
+
+#USER
+Karyawan biasa. Biasanya hanya dapat membuat pengajuan PUM untuk dirinya sendiri, melihat status pengajuan, melihat detail, dan membuat realisasi jika sudah ada UM yang perlu direalisasi.
+
+#USRL
+User dengan akses lebih luas. Biasanya dapat mengajukan PUM untuk karyawan lain, menambah lebih banyak detail, atau mengatur detail divisi dan department sesuai kebutuhan.
+
+#SPVR
+Supervisor atau role approval. Biasanya dapat melakukan head approval untuk pengajuan yang menjadi tanggung jawabnya.
+
+#FINA
+Finance. Dapat melihat pengajuan, melakukan finance approval, memproses realisasi, checking, payment, dan validasi finance.
+
+#HDFA
+Head Finance. Dapat melakukan approval finance atau approval level lebih tinggi sesuai konfigurasi.
+
+#TAXS
+Tax staff. Dapat mengakses Tax Approval untuk dokumen RU yang membutuhkan validasi pajak.
+
+#WMTR
+Webmaster. Biasanya memiliki akses luas untuk pengecekan, monitoring, atau support.
+
+#FRPT
+Finance Report. Biasanya hanya akses laporan atau monitoring, bukan approval.
+
+Jika user tidak dapat melihat menu atau tombol yang seharusnya, kemungkinan role belum sesuai atau menu access belum dimapping. Untuk kasus ini, AI chatbot harus mengarahkan user ke IT atau administrator JIFAS.
+
+--------------------------------------------------------------------------------
+
+7. Pengajuan PUM atau PPUM
+
+#Fungsi
+
+Pengajuan PUM digunakan untuk membuat permintaan uang muka baru. Dokumen ini adalah titik awal dari proses PUM.
+
+#Kapan Digunakan
+
+Gunakan pengajuan PUM ketika karyawan membutuhkan uang terlebih dahulu untuk kegiatan bisnis. Contoh:
+
+1. Perjalanan dinas.
+2. Kegiatan operasional.
+3. Pembelian kecil yang harus dilakukan segera.
+4. Biaya transport, hotel, konsumsi, atau kebutuhan lapangan.
+5. Kegiatan proyek atau acara yang membutuhkan dana awal.
+
+#Flow Pengajuan PUM
+
+1. User membuka menu PUM.
+2. User masuk ke tab PPUM.
+3. User klik Create PPUM.
+4. Sistem membuka form pengajuan.
+5. User memilih tanggal dokumen.
+6. User memilih PP Type atau kategori pengajuan.
+7. User memilih karyawan penerima uang muka.
+8. Sistem otomatis mengisi kode karyawan, nama atasan, kode atasan, divisi, department, PUM Limit, dan sisa limit.
+9. User mengisi deskripsi pengajuan.
+10. User upload attachment jika diperlukan.
+11. User mengisi detail item pengajuan.
+12. Sistem menghitung total pengajuan.
+13. Sistem mengecek budget dan limit.
+14. User klik Save.
+15. Sistem validasi data.
+16. Jika valid, dokumen tersubmit dan masuk approval head.
+17. Jika tidak valid, sistem menampilkan error yang harus diperbaiki.
+
+#Data Header Pengajuan
+
+Field penting pada header PPUM:
+
+1. Tanggal Dokumen: tanggal pengajuan. Harus berada dalam periode aktif PUM.
+2. PP Type: kategori pengajuan.
+3. Nama Karyawan: karyawan penerima uang muka.
+4. Kode Karyawan: otomatis dari master employee.
+5. Nama Atasan: otomatis dari master employee.
+6. Kode Atasan: otomatis dari master employee.
+7. Divisi: otomatis dari data karyawan.
+8. Department: otomatis dari data karyawan.
+9. PUM Limit: limit uang muka karyawan.
+10. Sisa Limit: sisa limit yang masih dapat digunakan.
+11. Deskripsi: tujuan pengajuan, maksimal mengikuti batas sistem.
+12. File Lampiran: dokumen pendukung, biasanya PDF, JPG, atau PNG.
+
+#Data Detail Pengajuan
+
+Setiap baris detail menggambarkan alokasi uang muka ke budget tertentu.
+
+Field penting:
+
+1. Division: divisi yang akan dibebankan.
+2. Department: department yang akan dibebankan.
+3. COA Code: akun biaya yang digunakan.
+4. Jenis atau Request Type: deskripsi COA.
+5. Amount: nominal yang diajukan pada baris tersebut.
+6. Budget Tersedia: sisa budget untuk COA tersebut.
+7. Status Budget: status budget seperti OK, Warning, atau Over Budget.
+
+#Perbedaan USER dan USRL Saat Membuat PPUM
+
+#USER
+User biasa hanya dapat mengajukan PUM untuk dirinya sendiri. Data head, divisi, dan department otomatis dari profil karyawan. Pada beberapa konfigurasi, USER hanya memiliki satu baris detail default dan tidak bisa tambah atau hapus baris detail.
+
+#USRL
+USRL dapat mengajukan PUM untuk karyawan lain dan lebih fleksibel dalam mengatur baris detail. USRL biasanya dapat menambah atau menghapus detail sesuai kebutuhan.
+
+#Validasi Saat Membuat PPUM
+
+Sistem memvalidasi:
+
+1. Tanggal dokumen wajib diisi.
+2. Tanggal harus berada dalam periode aktif.
+3. PP Type wajib dipilih.
+4. Nama karyawan wajib dipilih.
+5. Karyawan harus memiliki head atau atasan.
+6. Karyawan tidak boleh melewati PUM limit.
+7. Deskripsi wajib diisi.
+8. Detail minimal satu baris.
+9. Division, department, COA, dan amount wajib diisi pada detail.
+10. Amount harus lebih besar dari 0.
+11. Tidak boleh ada detail duplikat yang sama persis.
+12. File upload harus sesuai format dan ukuran sistem.
+13. COA harus tersedia untuk periode, divisi, dan department yang dipilih.
+
+#Error Umum pada PPUM
+
+#Error: Sisa limit habis
+Arti: Karyawan sudah melewati batas limit PUM atau masih memiliki outstanding PUM.
+
+Tindakan user:
+1. Cek apakah masih ada PUM lama yang belum direalisasikan.
+2. Selesaikan realisasi terlebih dahulu.
+3. Jika data limit tidak sesuai, hubungi Finance atau IT untuk pengecekan.
+
+#Error: Karyawan belum mempunyai head name
+Arti: Data atasan pada master employee belum terisi.
+
+Tindakan user:
+1. Hubungi HR/Admin/IT agar data head karyawan diperbarui.
+2. Setelah data diperbaiki, login ulang atau refresh halaman.
+
+#Error: Date must be in range
+Arti: Tanggal dokumen di luar periode aktif PUM.
+
+Tindakan user:
+1. Pilih tanggal dalam periode aktif.
+2. Jika periode aktif belum tersedia, hubungi Finance/Admin/IT.
+
+#Error: Detail amount must be greater than 0 or COA must be selected
+Arti: Ada baris detail yang amount-nya 0 atau COA belum dipilih.
+
+Tindakan user:
+1. Isi COA.
+2. Isi amount lebih besar dari 0.
+3. Hapus baris kosong jika tidak digunakan.
+
+#Error: Duplicate entries detected
+Arti: Ada detail yang sama persis.
+
+Tindakan user:
+1. Hapus salah satu baris duplikat.
+2. Gabungkan nominal jika memang tujuannya sama.
+
+#Error: Please add at least one row
+Arti: Belum ada detail pengajuan.
+
+Tindakan user:
+1. Tambahkan minimal satu baris detail.
+2. Isi semua field wajib.
+
+#Error: Failed to create PUM. Please contact your IT Administrator
+Arti: Kemungkinan ada error server atau API.
+
+Tindakan user:
+1. Jangan membuat ulang berkali-kali sebelum memastikan status.
+2. Screenshot error.
+3. Kirim nomor dokumen jika sudah sempat terbentuk, nama user, waktu kejadian, dan browser ke IT.
+
+--------------------------------------------------------------------------------
+
+8. Head Approval PUM
+
+#Fungsi
+
+Head Approval adalah proses review oleh atasan atau supervisor terhadap pengajuan PUM. Tahap ini memastikan pengajuan sudah sesuai kebutuhan bisnis, nominalnya masuk akal, budgetnya tersedia, dan dokumen pendukungnya cukup.
+
+#Flow Head Approval
+
+1. Head login ke JIFAS.
+2. Head membuka menu Head Approval pada modul PUM.
+3. Sistem menampilkan daftar PPUM yang menunggu approval.
+4. Head memilih salah satu dokumen.
+5. Head membuka detail approval.
+6. Head melihat request detail: nomor PPUM, nama karyawan, tanggal, deskripsi, dan amount.
+7. Head melihat budget information per detail item.
+8. Head membuka lampiran jika diperlukan.
+9. Jika ada over budget, sistem menampilkan peringatan dan checkbox acknowledgement.
+10. Head memutuskan approve atau reject.
+11. Jika approve, dokumen lanjut ke Finance Approval.
+12. Jika reject, dokumen dikembalikan ke requester dengan alasan rejection.
+
+#Apa yang Harus Dicek Head
+
+Head harus mengecek:
+
+1. Apakah tujuan pengajuan jelas.
+2. Apakah karyawan yang mengajukan benar.
+3. Apakah nominal masuk akal.
+4. Apakah COA sesuai dengan kebutuhan.
+5. Apakah budget masih tersedia.
+6. Apakah ada item over budget.
+7. Apakah attachment cukup untuk mendukung pengajuan.
+8. Apakah pengajuan duplikat dengan pengajuan lain.
+9. Apakah pengajuan urgent atau normal.
+
+#Over Budget pada Head Approval
+
+Jika ada item over budget, sistem dapat menampilkan checkbox seperti pernyataan bahwa approver memahami issue over budget dan menyetujui penggunaan budget tersebut.
+
+Logikanya:
+
+1. Sistem mendeteksi item dengan budget tidak OK.
+2. Tombol approve dapat disabled.
+3. Head harus membaca detail budget.
+4. Head mencentang checkbox acknowledgement.
+5. Tombol approve aktif.
+6. Jika head approve, keputusan tersebut tercatat sebagai audit trail.
+
+AI chatbot harus menjelaskan bahwa checkbox ini bukan error. Checkbox ini adalah kontrol internal agar approver sadar bahwa dokumen menggunakan budget yang bermasalah.
+
+#Reject oleh Head
+
+Jika head menolak dokumen, alasan wajib diisi. Alasan rejection harus spesifik agar karyawan dapat memperbaiki pengajuan.
+
+Contoh alasan:
+
+1. Budget tidak tersedia untuk COA ini.
+2. Dokumen pendukung belum lengkap.
+3. Tujuan pengajuan belum jelas.
+4. Nominal terlalu besar dan perlu klarifikasi.
+5. Salah department atau cost center.
+6. Duplikat dengan pengajuan sebelumnya.
+
+#Error Umum Head Approval
+
+#Tombol approve disabled
+Kemungkinan penyebab:
+1. Ada over budget tetapi checkbox belum dicentang.
+2. Status dokumen sudah berubah.
+3. User tidak memiliki authority approval.
+4. Session login expired.
+
+Tindakan:
+1. Jika over budget, centang checkbox setelah review.
+2. Refresh halaman untuk memastikan status terbaru.
+3. Jika tetap disabled padahal seharusnya bisa approve, hubungi IT.
+
+#Detail budget tidak muncul
+Kemungkinan penyebab:
+1. Data budget belum tersinkron.
+2. COA tidak tersedia.
+3. API budget error.
+4. Koneksi bermasalah.
+
+Tindakan:
+1. Refresh halaman.
+2. Coba buka ulang detail.
+3. Jika tetap gagal, hubungi IT dengan nomor PPUM.
+
+#Grid tidak load
+Kemungkinan penyebab:
+1. Tidak ada dokumen pending.
+2. Filter terlalu ketat.
+3. Role tidak sesuai.
+4. API error.
+
+Tindakan:
+1. Reset filter.
+2. Refresh.
+3. Jika masih kosong tetapi seharusnya ada dokumen, hubungi IT/Admin.
+
+--------------------------------------------------------------------------------
+
+9. Finance Approval PPUM
+
+#Fungsi
+
+Finance Approval adalah tahap setelah Head Approval. Finance memastikan pengajuan layak diproses dari sisi keuangan. Finance mengecek nominal, status budget, karyawan penerima, PPUM number, UM number jika sudah ada, serta kelayakan pembayaran.
+
+#Flow Finance Approval PPUM
+
+1. Finance membuka menu PPUM & Realization.
+2. Finance masuk ke tab PPUM.
+3. Sistem menampilkan daftar pengajuan yang membutuhkan finance approval.
+4. Finance filter atau cari dokumen.
+5. Finance membuka detail pengajuan.
+6. Finance review header, employee, category, deskripsi, amount, dan detail item.
+7. Finance mengecek sisa budget per COA.
+8. Finance memilih approve, reject, atau void sesuai status.
+9. Jika approve, dokumen menjadi Ready to Pay.
+10. Jika reject, dokumen menjadi Reject By Finance dan dikembalikan ke user.
+11. Jika void, dokumen dibatalkan dengan alasan.
+
+#Apa yang Dicek Finance
+
+1. Apakah pengajuan sudah disetujui head.
+2. Apakah karyawan benar.
+3. Apakah nominal sesuai policy.
+4. Apakah budget tersedia.
+5. Apakah kategori PUM sesuai.
+6. Apakah attachment cukup.
+7. Apakah tidak ada duplikasi.
+8. Apakah dokumen siap dibayar.
+
+#Approve Finance
+
+Jika finance approve, dokumen akan masuk status Ready to Pay. Artinya pengajuan sudah boleh diproses pencairan uang muka.
+
+#Reject Finance
+
+Jika finance reject, alasan wajib diisi. User harus memperbaiki pengajuan atau membuat pengajuan baru sesuai kebijakan.
+
+#Void UM oleh Finance
+
+Void digunakan untuk membatalkan dokumen UM, terutama jika dokumen sudah masuk Ready to Pay tetapi ternyata tidak perlu dibayar, salah data, atau ada pembatalan dari pihak terkait.
+
+Void harus selalu disertai alasan. Dokumen void tetap tersimpan sebagai audit trail.
+
+#Error Umum Finance Approval
+
+#Cannot continue with empty data
+Arti: data pengajuan tidak ditemukan atau data detail gagal dibaca.
+
+Tindakan:
+1. Refresh halaman.
+2. Pastikan dokumen belum berubah status.
+3. Jika masih error, hubungi IT.
+
+#Cannot continue! Void reason must be filled
+Arti: finance mencoba void tanpa alasan.
+
+Tindakan:
+1. Isi alasan pembatalan.
+2. Gunakan alasan yang jelas dan audit-friendly.
+
+#Request Status error atau server message
+Arti: ada error komunikasi dengan server atau API.
+
+Tindakan:
+1. Screenshot pesan error.
+2. Catat nomor PPUM/UM.
+3. Hubungi IT.
+
+--------------------------------------------------------------------------------
+
+10. Payment PUM dan Document UM
+
+#Fungsi
+
+Payment PUM adalah proses pencairan uang muka kepada karyawan setelah dokumen pengajuan disetujui dan siap dibayar. Pada tahap ini, finance memilih atau mencatat informasi pembayaran seperti bank, cek/BG jika digunakan, nomor PPUM, nomor UM, tanggal, penerima, dan nominal.
+
+#Flow Payment PUM
+
+1. Dokumen PPUM sudah berstatus Ready to Pay.
+2. Finance membuka daftar dokumen UM atau Pay PUM.
+3. Finance memilih dokumen yang akan dibayar.
+4. Sistem menampilkan detail UM: No UM, PPUM No, Pay To, amount, description, status, dan attachment.
+5. Finance membuka form payment.
+6. Finance mengisi atau memilih informasi pembayaran.
+7. Jika menggunakan cek/BG, nomor cek/BG dan bank harus sesuai master.
+8. Finance konfirmasi payment.
+9. Sistem memproses pembayaran dan membuat referensi PU atau dokumen payment.
+10. Setelah berhasil, uang muka dianggap telah dicairkan.
+11. Karyawan dapat membuat realisasi atas UM tersebut.
+
+#Data Penting Payment PUM
+
+1. No Cek/BG jika payment menggunakan cek atau giro.
+2. Kode Bank.
+3. PPUM No.
+4. UM No.
+5. Nama karyawan penerima.
+6. Tanggal dokumen.
+7. Amount.
+8. Currency.
+9. Description.
+10. Attachment jika ada.
+
+#Hubungan Payment PUM dengan CashBank
+
+Payment PUM adalah bagian dari uang keluar perusahaan. Setelah pembayaran diproses, transaksi ini harus berhubungan dengan CashBank atau pencatatan kas/bank. Tujuannya agar uang keluar dari rekening perusahaan tercatat dan dapat diposting ke accounting.
+
+#Error Payment PUM yang Harus ke IT
+
+1. Nomor cek/BG tidak muncul padahal tersedia.
+2. Bank tidak muncul di dropdown.
+3. Dokumen Ready to Pay tidak muncul di Pay PUM.
+4. Payment berhasil tetapi status tidak berubah.
+5. PU number tidak terbentuk.
+6. Error server saat payment.
+7. Data amount berbeda antara PPUM, UM, dan payment.
+
+Untuk kasus ini, user harus mengirimkan nomor PPUM, UM, screenshot, nama bank, waktu kejadian, dan error message ke IT.
+
+--------------------------------------------------------------------------------
+
+11. Realisasi PUM atau RU
+
+#Fungsi
+
+RU adalah proses pertanggungjawaban penggunaan uang muka. Setelah karyawan menerima uang muka dan menjalankan kegiatan, penggunaan uang harus dicatat di JIFAS melalui Realization. Tujuannya agar perusahaan tahu uang dipakai untuk apa, siapa vendornya, apakah ada pajak, apakah ada sisa, dan bagaimana pencatatannya ke accounting.
+
+#Kapan RU Dibuat
+
+RU dibuat setelah UM sudah dibayar atau dicairkan. Jika uang muka belum dibayar, biasanya RU belum bisa dibuat.
+
+#Flow RU oleh User
+
+1. User membuka tab Realization.
+2. User mencari UM yang ingin direalisasikan.
+3. User klik Realization atau action terkait.
+4. Sistem membuka form realisasi.
+5. Sistem menampilkan UM No, PU No, karyawan, due date, currency, rate, UM amount, dan purpose.
+6. User mengisi Realization Date.
+7. User mengisi Ref No jika ada.
+8. User mengisi deskripsi.
+9. User upload bukti jika diperlukan.
+10. User menambah detail pengeluaran.
+11. Untuk setiap detail, user memilih vendor, deskripsi, divisi, department, COA, tax code, amount, dan PPH Type jika ada PPH.
+12. Sistem menghitung DPP, PPN, PPH, dan total amount.
+13. User menyimpan realisasi.
+14. Dokumen masuk ke tahap finance checking atau tax approval sesuai workflow.
+
+#Header RU
+
+Field penting pada RU:
+
+1. UM No: nomor uang muka, read-only.
+2. PU No: nomor pembayaran uang muka, read-only.
+3. Applicant: nama penerima uang muka, read-only.
+4. Due Date: batas waktu realisasi, read-only.
+5. Realization Date: tanggal realisasi, wajib diisi.
+6. Ref No: nomor referensi tambahan, opsional.
+7. Description: deskripsi realisasi, wajib diisi.
+8. Term: syarat atau periode pembayaran jika digunakan.
+9. Currency: mata uang, biasanya read-only.
+10. Rate: kurs, biasanya read-only untuk IDR.
+11. UM Amount: jumlah uang muka yang diterima.
+12. Base Amount: total pengeluaran sebelum pajak.
+13. Total DPP: dasar pengenaan pajak.
+14. Total PPN: total PPN.
+15. Total PPH: total PPH.
+16. Total Amount: total akhir realisasi.
+17. Attachment: bukti transaksi.
+
+#Detail RU
+
+Setiap detail RU menjelaskan satu item penggunaan uang.
+
+Field penting:
+
+1. Vendor: pihak yang menerima pembayaran atau tempat pembelian.
+2. Description: keterangan pengeluaran.
+3. Division: divisi pembebanan biaya.
+4. Department: department pembebanan biaya.
+5. COA Code: akun biaya.
+6. COA Description: deskripsi akun.
+7. Tax Code: kode pajak.
+8. Amount: nominal sebelum pajak.
+9. PPN: dihitung otomatis jika tax code memiliki PPN.
+10. PPH: dihitung otomatis jika tax code memiliki PPH.
+11. PPH Type: wajib jika ada PPH.
+12. Total Amount: Amount + PPN - PPH.
+
+#Perhitungan RU
+
+Formula dasar:
+
+1. PPN = Amount x Persentase PPN.
+2. PPH = Amount x Persentase PPH.
+3. Total Detail = Amount + PPN - PPH.
+4. Base Amount = total semua amount dasar.
+5. Total DPP = total amount yang menjadi dasar pajak.
+6. Total PPN = total semua PPN.
+7. Total PPH = total semua PPH.
+8. Total Amount = Base Amount + Total PPN - Total PPH.
+
+#Sisa atau Kekurangan PUM
+
+Jika total realisasi lebih kecil dari UM Amount, ada sisa PUM yang harus dikembalikan ke perusahaan. Dalam proses bisnis, sisa ini dapat diproses sebagai penerimaan kas atau CashBank Receiving.
+
+Jika total realisasi lebih besar dari UM Amount, ada kekurangan pembayaran. Kekurangan ini dapat diproses sebagai pembayaran tambahan atau CashBank Payment sesuai kebijakan finance.
+
+Jika total realisasi sama dengan UM Amount, PUM selesai tanpa sisa atau kekurangan.
+
+#Due Date Realisasi
+
+Setiap UM dapat memiliki due date untuk realisasi. Jika realisasi terlambat, sistem atau tim finance dapat mengingatkan user. Secara bisnis, realisasi harus dilakukan tepat waktu agar outstanding PUM tidak menumpuk dan limit karyawan dapat kembali tersedia.
+
+#Error Umum RU
+
+#Active period not set atau No active period found
+Arti: periode aktif untuk realisasi belum tersedia.
+
+Tindakan:
+1. Hubungi Finance/Admin/IT.
+2. Jangan memaksa input dengan tanggal lain jika periode memang belum dibuka.
+
+#Please fill all required fields
+Arti: ada field wajib yang kosong.
+
+Tindakan:
+1. Periksa Realization Date.
+2. Periksa Description.
+3. Periksa detail vendor, COA, tax code, amount, dan PPH Type jika ada PPH.
+
+#Cannot continue! Please check item details
+Arti: ada detail yang belum valid.
+
+Tindakan:
+1. Pastikan semua baris detail lengkap.
+2. Hapus baris kosong.
+3. Pastikan amount lebih besar dari 0.
+
+#COA list not available
+Arti: COA tidak muncul atau tidak tersedia untuk kombinasi divisi, department, dan tanggal.
+
+Tindakan:
+1. Pastikan division dan department sudah dipilih.
+2. Pastikan tanggal realisasi benar.
+3. Jika tetap tidak muncul, hubungi IT/Admin Budget.
+
+#Network Error! Please contact your IT Administrator
+Arti: error komunikasi dengan server.
+
+Tindakan:
+1. Screenshot pesan error.
+2. Catat nomor UM/PU/RU.
+3. Hubungi IT.
+
+--------------------------------------------------------------------------------
+
+12. Finance Realization atau Finance RU
+
+#Fungsi
+
+Finance RU digunakan oleh finance untuk memeriksa dokumen realisasi yang dibuat user, melakukan update jika diperlukan, melakukan checking, memproses posting, atau void jika ada kesalahan.
+
+#Flow Finance RU
+
+1. Finance membuka tab Realization.
+2. Finance melihat daftar dokumen RU.
+3. Finance filter berdasarkan tanggal, PPUM No, RU No, PU No, UM No, status, atau deskripsi.
+4. Finance membuka dokumen RU.
+5. Finance review header: UM No, PU No, applicant, due date, realization date, currency, rate, UM amount, base amount, DPP, PPN, PPH, total, dan deskripsi.
+6. Finance review detail pengeluaran.
+7. Finance memastikan vendor, COA, tax code, amount, dan pajak benar.
+8. Jika perlu, finance update data.
+9. Finance melakukan checking.
+10. Jika ada pajak, dokumen dapat masuk ke Tax Approval.
+11. Setelah semua clear, finance atau accounting melakukan posting.
+12. Jika salah fatal, finance melakukan void dengan alasan.
+
+#Status Finance RU
+
+Status dapat bervariasi, tetapi secara umum:
+
+1. Need Checking: dokumen perlu dicek finance.
+2. Need Tax Approval: dokumen perlu approval pajak.
+3. Need Posting: dokumen sudah dicek dan siap posting.
+4. Posted atau Complete: dokumen sudah final.
+5. Void: dokumen dibatalkan.
+6. Rejected: dokumen dikembalikan untuk perbaikan.
+
+#Aturan Editing RU
+
+1. Dokumen yang masih Need Checking biasanya masih dapat di-update.
+2. Dokumen yang sudah checking atau menunggu tax approval dapat dibatasi editnya.
+3. Dokumen yang sudah posted tidak boleh diedit.
+4. Koreksi dokumen posted harus melalui void atau proses koreksi yang disetujui finance/accounting.
+
+#Update, Checking, Posting, Void
+
+#Update
+Digunakan untuk menyimpan perubahan data realisasi sebelum final checking.
+
+#Checking
+Digunakan untuk menyatakan finance sudah memeriksa dokumen dan data sudah benar.
+
+#Posting
+Digunakan untuk mengirim data final ke accounting.
+
+#Void
+Digunakan untuk membatalkan dokumen RU. Void wajib memiliki alasan.
+
+#Error Finance RU
+
+#Tidak bisa checking
+Kemungkinan penyebab:
+1. Data belum di-update.
+2. Detail belum valid.
+3. PPH Type kosong padahal ada PPH.
+4. Status dokumen tidak sesuai.
+5. User tidak memiliki akses.
+
+Tindakan:
+1. Update data terlebih dahulu.
+2. Periksa detail.
+3. Isi PPH Type jika ada PPH.
+4. Refresh untuk memastikan status.
+5. Jika tetap gagal, hubungi IT.
+
+#Tidak bisa posting
+Kemungkinan penyebab:
+1. Tax approval belum selesai.
+2. Dokumen belum checking.
+3. Periode accounting belum aktif.
+4. API posting error.
+5. Role tidak memiliki hak posting.
+
+Tindakan:
+1. Pastikan status sudah benar.
+2. Pastikan tax approval selesai.
+3. Jika error teknis, hubungi IT/Accounting Admin.
+
+#Tidak bisa void
+Kemungkinan penyebab:
+1. Reason kosong.
+2. Status sudah final dan butuh proses khusus.
+3. User tidak memiliki akses.
+4. API error.
+
+Tindakan:
+1. Isi reason yang jelas.
+2. Hubungi finance supervisor jika status final.
+3. Jika tombol error, hubungi IT.
+
+--------------------------------------------------------------------------------
+
+13. Tax Approval RU
+
+#Fungsi
+
+Tax Approval adalah proses review pajak pada dokumen RU. Tax staff memastikan PPN dan PPH sudah benar, NPWP vendor valid, faktur pajak dan bukti potong lengkap, serta koreksi pajak dilakukan jika diperlukan.
+
+Tax Approval biasanya menjadi tahap penting sebelum dokumen RU dapat diposting ke accounting.
+
+#Flow Tax Approval RU
+
+1. Tax staff membuka menu Tax Approval pada modul PUM.
+2. Sistem menampilkan daftar dokumen RU yang membutuhkan approval pajak.
+3. Tax staff memilih dokumen.
+4. Tax staff membuka detail item vendor.
+5. Tax staff masuk ke form approval pajak.
+6. Tax staff review tab Approval.
+7. Jika ada PPN, tax staff membuka tab PPN dan memeriksa faktur pajak.
+8. Jika ada PPH, tax staff membuka tab PPH dan memeriksa bukti potong.
+9. Jika ada nilai pajak yang perlu koreksi, tax staff membuka Tax Correction.
+10. Tax staff menyimpan koreksi jika ada.
+11. Tax staff approve atau reject.
+12. Jika approve, dokumen lanjut ke posting.
+13. Jika reject, dokumen dikembalikan untuk perbaikan.
+
+#Data yang Dicek di Tax Approval
+
+1. Vendor.
+2. NPWP vendor.
+3. WP Address atau alamat wajib pajak.
+4. Ref No.
+5. Tax Code.
+6. PPH Type jika ada PPH.
+7. Currency dan rate.
+8. Total DPP.
+9. Total PPN.
+10. Total PPH.
+11. Status pajak.
+12. Deskripsi item.
+13. Faktur pajak.
+14. Bukti potong.
+15. Attachment pendukung.
+
+#Tab Approval
+
+Tab Approval berisi ringkasan data pajak dan informasi vendor. Tax staff menggunakan tab ini untuk melihat apakah transaksi secara umum sudah benar.
+
+#Tab PPN
+
+Tab PPN digunakan untuk mencatat dan memvalidasi faktur pajak. Data penting:
+
+1. DPP atau tax base.
+2. Total PPN.
+3. WP Name.
+4. NPWP.
+5. WP Address.
+6. Nomor faktur pajak.
+7. Tanggal faktur.
+8. DPP per faktur.
+9. PPN per faktur.
+10. Year dan Period.
+
+#Tab PPH
+
+Tab PPH digunakan untuk mencatat dan memvalidasi bukti potong. Data penting:
+
+1. DPP atau tax base.
+2. Total PPH.
+3. PPH Type.
+4. WP Name.
+5. NPWP.
+6. WP Address.
+7. Form Code.
+8. Tax Invoice atau nomor bukti potong.
+9. Tax RU Date.
+10. DPP.
+11. PPH.
+12. Year dan Period.
+
+#Tax Correction
+
+Tax Correction digunakan saat ada nilai pajak yang perlu disesuaikan. Contoh:
+
+1. PPN perlu pembulatan UP atau DOWN.
+2. PPH perlu pembulatan UP atau DOWN.
+3. Tax Code perlu diganti.
+4. PPH Type perlu diganti.
+5. Nilai hasil kalkulasi perlu disesuaikan dengan dokumen pajak.
+
+Tax Correction harus dilakukan hati-hati karena mempengaruhi pencatatan pajak dan accounting.
+
+#Validasi Tax Approval
+
+Sistem memvalidasi:
+
+1. Jika ada PPH, PPH Type wajib diisi.
+2. Total DPP detail tidak boleh melebihi header.
+3. Total PPN detail tidak boleh melebihi header.
+4. Total PPH detail tidak boleh melebihi header.
+5. Nomor faktur pajak wajib diisi jika menambah detail PPN.
+6. Tanggal faktur harus valid.
+7. Form code dan bukti potong wajib diisi jika menambah detail PPH.
+8. NPWP dan vendor harus valid.
+9. Dokumen yang sudah final tidak bisa diubah.
+
+#Reject oleh Tax
+
+Tax staff dapat reject jika:
+
+1. NPWP tidak sesuai.
+2. Vendor tidak valid.
+3. Faktur pajak tidak lengkap.
+4. Bukti potong tidak lengkap.
+5. PPH Type salah atau kosong.
+6. Perhitungan PPN/PPH salah.
+7. Tax code tidak sesuai jenis transaksi.
+8. Dokumen pendukung tidak cocok.
+
+Alasan reject harus jelas agar finance atau user dapat memperbaiki dokumen.
+
+#Error Umum Tax Approval
+
+#Tab PPN atau PPH tidak muncul
+Arti: dokumen tidak memiliki PPN atau PPH. Ini bisa normal jika tax code tidak memiliki pajak.
+
+Tindakan:
+1. Pastikan memang tidak ada pajak pada detail.
+2. Jika seharusnya ada pajak tetapi tab tidak muncul, hubungi IT atau tax admin.
+
+#Cannot get suggested value for PPN atau PPH
+Arti: sistem gagal menghitung nilai koreksi pajak dari server.
+
+Tindakan:
+1. Coba refresh dan ulangi.
+2. Jika tetap gagal, hubungi IT dengan nomor RU dan detail item.
+
+#PPH Type null
+Arti: ada nilai PPH tetapi PPH Type kosong.
+
+Tindakan:
+1. Isi PPH Type yang benar.
+2. Jika dropdown PPH Type tidak muncul, hubungi IT.
+
+#Total detail cannot more than header
+Arti: total DPP, PPN, atau PPH di detail faktur/bukti potong lebih besar dari total header.
+
+Tindakan:
+1. Kurangi nilai detail.
+2. Sesuaikan dengan nilai header.
+3. Jika header salah, lakukan tax correction atau koordinasi dengan finance.
+
+--------------------------------------------------------------------------------
+
+14. Status Lifecycle PUM
+
+Status dapat berbeda berdasarkan konfigurasi, tetapi AI chatbot harus memahami pola umum berikut.
+
+#Draft
+Dokumen baru dibuat tetapi belum disubmit. User harus melengkapi data dan submit.
+
+#Need Supervisor Approval atau Need Head Approval
+Dokumen sudah disubmit dan menunggu approval atasan.
+
+#Reject By Head
+Atasan menolak dokumen. User perlu melihat alasan rejection dan memperbaiki atau membuat pengajuan baru.
+
+#Need Finance Approval
+Dokumen sudah disetujui head dan menunggu finance approval.
+
+#Reject By Finance
+Finance menolak dokumen. User perlu melihat alasan rejection.
+
+#Ready to Pay
+Semua approval untuk pengajuan sudah selesai. Dokumen siap diproses pembayaran uang muka.
+
+#Paid atau Complete
+Uang muka sudah dibayarkan. User harus membuat realisasi jika dana sudah digunakan.
+
+#Need Realization
+UM sudah diterima dan perlu dipertanggungjawabkan melalui RU.
+
+#RU Need Checking
+Dokumen realisasi perlu dicek finance.
+
+#RU Need Tax Approval
+Dokumen realisasi memiliki pajak dan perlu persetujuan tax.
+
+#RU Need Posting
+Dokumen realisasi sudah valid dan siap diposting.
+
+#Posted
+Dokumen realisasi sudah masuk accounting. Dokumen tidak boleh diedit biasa.
+
+#Void
+Dokumen dibatalkan dengan alasan. Tetap tersimpan untuk audit trail.
+
+#Outstanding
+Ada PUM atau RU yang belum selesai. Biasanya perlu ditindaklanjuti oleh user, finance, atau tax.
+
+--------------------------------------------------------------------------------
+
+15. Hubungan PUM dengan Modul Lain
+
+#Hubungan dengan Budget
+Saat membuat PPUM dan saat approval, sistem mengecek budget berdasarkan COA, divisi, department, dan periode. Jika over budget, approval tetap bisa berjalan tergantung kebijakan, tetapi harus diketahui approver.
+
+#Hubungan dengan CashBank
+Payment PUM adalah uang keluar, sehingga berhubungan dengan CashBank Payment. Jika ada sisa uang muka yang dikembalikan, sisa tersebut berhubungan dengan CashBank Receiving.
+
+#Hubungan dengan Accounting
+RU yang sudah selesai akan diposting ke accounting. COA, DPP, PPN, PPH, dan total amount akan mempengaruhi pencatatan accounting.
+
+#Hubungan dengan Tax
+RU yang memiliki PPN atau PPH harus masuk ke Tax Approval. Tax memastikan data pajak benar sebelum posting.
+
+#Hubungan dengan Master Data
+PUM membutuhkan master employee, master head, master division, master department, master COA, master vendor, master tax, master PPH, master bank, dan active period.
+
+Jika salah satu master data tidak ada atau tidak benar, user akan mengalami error seperti karyawan tidak punya head, COA tidak muncul, vendor tidak muncul, atau tax code tidak bisa dipilih.
+
+--------------------------------------------------------------------------------
+
+16. Validasi Penting Modul PUM
+
+#Validasi Pengajuan PPUM
+
+1. Tanggal wajib diisi.
+2. Tanggal harus dalam periode aktif.
+3. PP Type wajib dipilih.
+4. Karyawan wajib dipilih.
+5. Karyawan harus punya head.
+6. Sisa PUM limit harus tersedia.
+7. Deskripsi wajib diisi.
+8. Detail minimal satu baris.
+9. Division wajib diisi.
+10. Department wajib diisi.
+11. COA wajib diisi.
+12. Amount harus lebih besar dari 0.
+13. Tidak boleh ada detail duplikat.
+14. File harus sesuai format dan ukuran.
+
+#Validasi Head Approval
+
+1. Dokumen harus berstatus Need Head Approval.
+2. Jika over budget, approver harus acknowledge.
+3. Reject reason wajib diisi saat reject.
+4. Approval hanya boleh dilakukan oleh role yang berhak.
+
+#Validasi Finance Approval
+
+1. Dokumen harus sudah approve head.
+2. Budget dan detail harus valid.
+3. Approve mengubah status ke Ready to Pay.
+4. Reject reason wajib diisi saat reject.
+5. Void reason wajib diisi saat void.
+
+#Validasi Payment PUM
+
+1. Dokumen harus Ready to Pay.
+2. Bank atau metode pembayaran harus valid.
+3. Jika cek/BG digunakan, nomor cek/BG harus valid.
+4. Amount harus sesuai dokumen.
+5. Pembayaran harus menghasilkan status atau nomor dokumen yang sesuai.
+
+#Validasi RU
+
+1. UM harus sudah dibayar.
+2. Realization Date wajib diisi.
+3. Tanggal harus dalam periode aktif.
+4. Deskripsi wajib diisi.
+5. Detail pengeluaran wajib ada.
+6. Vendor wajib diisi.
+7. COA wajib diisi.
+8. Tax Code wajib diisi.
+9. Amount harus lebih besar dari 0.
+10. Jika ada PPH, PPH Type wajib diisi.
+11. Total dihitung otomatis dan harus masuk akal dibanding UM Amount.
+12. File pendukung harus sesuai format dan ukuran jika diupload.
+
+#Validasi Tax Approval
+
+1. NPWP vendor harus benar.
+2. Faktur pajak harus lengkap jika ada PPN.
+3. Bukti potong harus lengkap jika ada PPH.
+4. Total detail PPN/PPH tidak boleh lebih besar dari header.
+5. PPH Type wajib jika ada PPH.
+6. Tax correction harus disimpan sebelum approve jika ada perubahan.
+
+--------------------------------------------------------------------------------
+
+17. Error Handling dan Arahan AI Chatbot
+
+AI chatbot harus membedakan antara error yang bisa diselesaikan user dan error yang harus diarahkan ke IT.
+
+#17.1 Error yang Bisa Diselesaikan User
+
+#Field wajib kosong
+Contoh pesan: Please fill all required fields.
+
+Jawaban AI:
+Periksa field wajib seperti tanggal, kategori, karyawan, deskripsi, vendor, COA, tax code, amount, dan PPH Type jika ada PPH. Setelah semua lengkap, coba save lagi.
+
+#Amount 0 atau kosong
+Jawaban AI:
+Isi nominal lebih besar dari 0 pada setiap detail. Jika ada baris kosong, hapus baris tersebut.
+
+#Detail belum ada
+Jawaban AI:
+Tambahkan minimal satu baris detail. PUM tidak bisa disubmit tanpa detail biaya.
+
+#Duplikat detail
+Jawaban AI:
+Hapus salah satu baris yang sama atau gabungkan nominalnya.
+
+#Reject reason kosong
+Jawaban AI:
+Isi alasan rejection dengan jelas. Alasan dibutuhkan untuk audit trail dan agar requester tahu apa yang harus diperbaiki.
+
+#Void reason kosong
+Jawaban AI:
+Isi alasan pembatalan sebelum melanjutkan void.
+
+#Over budget checkbox belum dicentang
+Jawaban AI:
+Jika dokumen over budget dan approver tetap ingin approve, review detail budget terlebih dahulu lalu centang checkbox acknowledgement.
+
+#PPH Type kosong
+Jawaban AI:
+Jika transaksi memiliki PPH, pilih PPH Type yang sesuai. Tanpa PPH Type, dokumen tidak bisa disimpan atau diapprove.
+
+#Detail PPN/PPH melebihi header
+Jawaban AI:
+Sesuaikan DPP, PPN, atau PPH di detail faktur/bukti potong agar totalnya tidak melebihi nilai header.
+
+#File gagal upload karena ukuran/format
+Jawaban AI:
+Gunakan format PDF, JPG, atau PNG sesuai aturan sistem dan pastikan ukuran file tidak melebihi batas upload.
+
+#17.2 Error yang Harus Diarahkan ke IT
+
+Arahkan user ke IT jika terjadi:
+
+1. Grid tidak load padahal filter sudah direset.
+2. Error fetch data.
+3. Network Error.
+4. API request status error.
+5. Active period not set.
+6. No active period found.
+7. COA list not available padahal data sudah benar.
+8. Vendor dropdown tidak muncul.
+9. Karyawan tidak muncul di dropdown.
+10. Data head, divisi, department salah dari master.
+11. PUM limit tidak update padahal realisasi sudah selesai.
+12. Status dokumen tidak berubah setelah approve/payment/posting.
+13. Dokumen Ready to Pay tidak muncul di Pay PUM.
+14. Nomor UM, PU, atau RU tidak terbentuk setelah proses berhasil.
+15. Error saat Tax Correction suggestion value.
+16. Export Excel error berulang.
+17. Button approve/reject/checking/posting tidak muncul padahal role seharusnya punya akses.
+18. Access denied atau menu tidak muncul.
+19. Data amount berbeda antar PPUM, UM, PU, RU, atau payment.
+20. Error server 500, unauthorized 401, atau forbidden 403.
+
+#Data yang Harus Dikirim User ke IT
+
+Jika masalah harus ke IT, minta user menyiapkan:
+
+1. Nama user dan username login.
+2. Company code.
+3. Role yang digunakan.
+4. Nomor dokumen: PPUM No, UM No, PU No, atau RU No.
+5. Nama menu yang dibuka.
+6. Tombol/action yang diklik.
+7. Screenshot error.
+8. Waktu kejadian.
+9. Browser yang digunakan.
+10. Keterangan apakah sudah refresh atau login ulang.
+
+--------------------------------------------------------------------------------
+
+18. Skenario Jawaban AI Chatbot
+
+#User: Saya tidak bisa buat PUM karena limit habis
+
+Jawaban AI:
+Sisa limit PUM kamu kemungkinan sudah 0 karena masih ada uang muka yang belum direalisasikan. Coba cek tab Realization atau daftar PUM outstanding. Jika masih ada UM yang belum dibuat RU, selesaikan realisasi dulu. Jika menurut kamu semua realisasi sudah selesai tetapi limit tetap tidak berubah, hubungi Finance atau IT untuk pengecekan data limit.
+
+#User: Kenapa tombol approve di Head Approval tidak bisa diklik?
+
+Jawaban AI:
+Biasanya tombol approve disabled karena ada item over budget dan checkbox acknowledgement belum dicentang. Buka detail budget dulu, pastikan kamu sudah memahami kondisi over budget, lalu centang checkbox persetujuan. Jika tidak ada over budget tetapi tombol tetap disabled, refresh halaman. Jika masih sama, kemungkinan ada masalah role atau status dokumen, jadi perlu dicek IT.
+
+#User: COA tidak muncul saat membuat PUM
+
+Jawaban AI:
+COA biasanya bergantung pada tanggal dokumen, divisi, department, periode aktif, dan budget. Pastikan tanggal sudah dipilih, divisi dan department sudah benar, lalu coba pilih ulang COA. Jika tetap tidak muncul, kemungkinan COA/budget belum disetup atau ada error master data. Ini perlu dicek oleh Admin Budget atau IT.
+
+#User: Saya sudah approve PUM, tapi dokumennya tidak lanjut
+
+Jawaban AI:
+Cek dulu apakah status dokumen sudah berubah. Jika masih sama setelah refresh, kemungkinan proses approval gagal di backend atau status tidak ter-update. Kirim nomor PPUM, screenshot, waktu approval, dan username ke IT agar dicek log transaksinya.
+
+#User: RU tidak bisa disimpan
+
+Jawaban AI:
+Periksa field wajib di header dan detail. Realization Date dan Description harus terisi. Di detail, vendor, deskripsi, divisi, department, COA, tax code, dan amount wajib diisi. Jika ada PPH, PPH Type juga wajib. Jika error yang muncul adalah Network Error atau active period tidak ada, hubungi IT atau admin.
+
+#User: Apa bedanya PPUM, UM, PU, dan RU?
+
+Jawaban AI:
+PPUM adalah dokumen pengajuan uang muka. UM adalah nomor uang muka setelah pengajuan disetujui. PU adalah dokumen pembayaran uang muka saat dana dicairkan. RU adalah realisasi uang muka, yaitu pertanggungjawaban penggunaan dana setelah uang diterima.
+
+#User: Realisasi lebih kecil dari uang muka, harus bagaimana?
+
+Jawaban AI:
+Jika realisasi lebih kecil dari UM, berarti ada sisa uang muka. Sisa tersebut harus dikembalikan ke perusahaan dan biasanya diproses sebagai penerimaan kas atau CashBank Receiving. Pastikan nominal sisa tetap dicatat walaupun kecil agar UM bisa close dengan benar.
+
+#User: Realisasi lebih besar dari uang muka, harus bagaimana?
+
+Jawaban AI:
+Jika realisasi lebih besar dari UM, berarti ada kekurangan pembayaran. Kekurangan ini perlu diproses sesuai kebijakan finance, biasanya sebagai pembayaran tambahan atau CashBank Payment. Koordinasikan dengan finance agar selisihnya dicatat dengan benar.
+
+#User: PPH Type wajib diisi atau tidak?
+
+Jawaban AI:
+PPH Type wajib diisi jika transaksi memiliki nilai PPH lebih besar dari 0. Jika PPH Type kosong, dokumen tidak bisa disimpan, tidak bisa tax correction, atau tidak bisa approve karena sistem harus tahu jenis PPH yang digunakan.
+
+#User: Kenapa tab PPN atau PPH tidak muncul di Tax Approval?
+
+Jawaban AI:
+Tab PPN atau PPH hanya muncul jika dokumen memiliki pajak tersebut. Jika transaksi menggunakan tax code NT atau tidak ada nilai PPN/PPH, tab bisa tidak muncul dan itu normal. Jika menurut kamu dokumen seharusnya ada pajak tetapi tab tidak muncul, minta Tax atau IT mengecek tax code pada detail RU.
+
+#User: Dokumen sudah posted, bisa diedit?
+
+Jawaban AI:
+Dokumen yang sudah posted tidak boleh diedit langsung karena sudah masuk pencatatan accounting. Jika ada kesalahan, prosesnya harus melalui void atau koreksi sesuai approval finance/accounting, agar audit trail tetap rapi.
+
+--------------------------------------------------------------------------------
+
+19. Best Practice Penggunaan PUM
+
+#Untuk User/Karyawan
+
+1. Buat PUM hanya untuk kebutuhan bisnis yang jelas.
+2. Gunakan deskripsi yang spesifik.
+3. Pilih COA sesuai jenis pengeluaran.
+4. Upload dokumen pendukung jika ada.
+5. Jangan menunda realisasi setelah uang diterima.
+6. Simpan bukti transaksi untuk RU.
+7. Cek status pengajuan secara berkala.
+8. Jika ditolak, baca alasan rejection sebelum membuat pengajuan baru.
+
+#Untuk Head/Supervisor
+
+1. Review tujuan pengajuan, amount, dan budget.
+2. Jangan approve over budget tanpa memahami dampaknya.
+3. Berikan alasan rejection yang jelas.
+4. Prioritaskan pengajuan urgent.
+5. Jangan membiarkan pengajuan pending terlalu lama.
+
+#Untuk Finance
+
+1. Cek data pengajuan secara menyeluruh sebelum approve.
+2. Pastikan budget dan limit masuk akal.
+3. Jangan payment dokumen yang belum Ready to Pay.
+4. Pastikan payment menghasilkan nomor referensi yang benar.
+5. Review realisasi sebelum checking.
+6. Jangan posting RU jika tax approval belum selesai.
+7. Gunakan void dengan alasan yang jelas.
+
+#Untuk Tax
+
+1. Cek NPWP vendor.
+2. Cocokkan faktur pajak dan bukti potong dengan detail transaksi.
+3. Pastikan PPH Type benar.
+4. Gunakan tax correction hanya jika diperlukan.
+5. Reject dengan alasan yang detail jika data pajak belum valid.
+
+#Untuk IT Support
+
+1. Minta user menyertakan nomor dokumen dan screenshot.
+2. Cek role dan menu access jika tombol/menu tidak muncul.
+3. Cek master employee jika head/divisi/department tidak otomatis muncul.
+4. Cek active period jika tanggal tidak bisa dipilih.
+5. Cek budget/COA jika dropdown kosong.
+6. Cek log API jika status tidak berubah setelah action.
+7. Cek integrasi CashBank jika payment tidak membentuk PU atau status payment tidak berubah.
+8. Cek tax correction endpoint jika suggestion value gagal.
+
+--------------------------------------------------------------------------------
+
+20. Ringkasan Flow Sederhana untuk AI
+
+Jika user bertanya tentang PUM, gunakan logika ini:
+
+1. Jika pertanyaannya tentang mengajukan uang muka, arahkan ke PPUM.
+2. Jika pertanyaannya tentang persetujuan atasan, arahkan ke Head Approval.
+3. Jika pertanyaannya tentang finance menyetujui pengajuan, arahkan ke Finance Approval PPUM.
+4. Jika pertanyaannya tentang pencairan uang, arahkan ke Payment PUM atau Doc UM.
+5. Jika pertanyaannya tentang penggunaan uang setelah cair, arahkan ke RU atau Realization.
+6. Jika pertanyaannya tentang pajak pada realisasi, arahkan ke Tax Approval RU.
+7. Jika pertanyaannya tentang sisa uang, arahkan ke CashBank Receiving.
+8. Jika pertanyaannya tentang kekurangan uang, arahkan ke CashBank Payment.
+9. Jika pertanyaannya tentang posting, arahkan ke Finance RU dan Accounting.
+10. Jika error berkaitan dengan akses, data master, API, active period, status tidak berubah, atau dropdown kosong padahal input benar, arahkan ke IT.
+
+--------------------------------------------------------------------------------
+
+21. Knowledge Rules untuk AI Chatbot
+
+1. Jangan menjawab bahwa PUM adalah invoice vendor. PUM adalah uang muka karyawan.
+2. Jelaskan PPUM sebagai pengajuan awal, bukan pembayaran.
+3. Jelaskan UM sebagai uang muka yang sudah disetujui atau siap dibayar.
+4. Jelaskan PU sebagai dokumen pembayaran uang muka.
+5. Jelaskan RU sebagai pertanggungjawaban penggunaan uang muka.
+6. Jika user bertanya kenapa tidak bisa create, cek limit, head, active period, COA, dan required fields.
+7. Jika user bertanya kenapa tidak bisa approve, cek status, role, over budget checkbox, dan session.
+8. Jika user bertanya kenapa tidak bisa realisasi, cek apakah UM sudah dibayar, active period, field wajib, detail, dan tax.
+9. Jika user bertanya tentang pajak, jelaskan PPN, PPH, PPH Type, faktur pajak, bukti potong, dan tax correction.
+10. Jika user bertanya tentang dokumen yang sudah posted, jelaskan bahwa tidak bisa edit langsung dan perlu void/koreksi.
+11. Jika user memberi error teknis seperti Network Error, Error fetch data, active period not set, dropdown tidak load, atau status tidak berubah, arahkan ke IT.
+12. Selalu minta nomor dokumen ketika troubleshooting: PPUM, UM, PU, atau RU.
+13. Jika user bingung status, jelaskan status tersebut sebagai posisi dokumen dalam workflow.
+14. Jika user bertanya apakah dokumen bisa dihapus, jelaskan bahwa sistem finance lebih aman menggunakan void agar audit trail tetap ada.
+15. Jika user bertanya mengapa PUM limit belum kembali, arahkan untuk cek realisasi dan outstanding PUM.
+
+--------------------------------------------------------------------------------
+
+22. Contoh Mapping Masalah ke Solusi
+
+#Masalah: Tidak bisa submit PPUM
+Cek: required fields, detail, amount, COA, duplicate, active period, limit, head.
+Jika semua benar tetapi gagal: IT.
+
+#Masalah: Tidak bisa approve Head
+Cek: over budget checkbox, status dokumen, role.
+Jika tombol tetap disabled: IT.
+
+#Masalah: Tidak bisa approve Finance
+Cek: status dokumen, detail budget, alasan reject/void jika action reject/void.
+Jika server error: IT.
+
+#Masalah: Tidak bisa payment
+Cek: status Ready to Pay, bank, cek/BG, amount.
+Jika dokumen tidak muncul atau PU tidak terbentuk: IT.
+
+#Masalah: Tidak bisa create RU
+Cek: UM sudah paid, active period, header wajib, detail wajib, tax code, PPH Type.
+Jika network error: IT.
+
+#Masalah: Tidak bisa tax approve
+Cek: NPWP, faktur, bukti potong, total detail vs header, PPH Type.
+Jika tax correction tidak menghitung: IT.
+
+#Masalah: Tidak bisa posting
+Cek: status checking, tax approval, periode accounting.
+Jika API posting error: IT.
+
+--------------------------------------------------------------------------------
+
+23. Kesimpulan Modul PUM
+
+Modul PUM adalah sistem kontrol uang muka karyawan di JIFAS. Modul ini mengatur proses dari pengajuan, approval, pencairan, realisasi, pajak, sampai posting accounting. PUM membantu perusahaan memastikan bahwa uang muka diberikan sesuai kebutuhan bisnis, sesuai limit, sesuai budget, disetujui pihak berwenang, dan dipertanggungjawabkan dengan dokumen yang jelas.
+
+Flow utamanya adalah:
+
+PPUM dibuat oleh user
+-> Head Approval
+-> Finance Approval
+-> Ready to Pay
+-> Payment PUM atau UM/PU
+-> Realization RU
+-> Finance Checking
+-> Tax Approval jika ada pajak
+-> Posting
+-> Complete
+
+Jika ada sisa uang, proses dikaitkan dengan CashBank Receiving. Jika ada kekurangan uang, proses dapat dikaitkan dengan CashBank Payment. Jika ada masalah teknis seperti data tidak muncul, status tidak berubah, dropdown tidak load, active period kosong, atau network error, AI chatbot harus mengarahkan user ke IT dengan informasi dokumen lengkap.

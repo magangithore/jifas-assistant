@@ -1,1552 +1,1634 @@
-========================================================================================
-              PANDUAN LENGKAP MODUL AKUNTANSI - SISTEM JIFAS
-        Untuk Tim Accounting, Finance, IT, Support, dan Troubleshooting
-========================================================================================
-
-DAFTAR ISI:
-1. RINGKASAN MODUL
-2. PENCATATAN JURNAL HARIAN
-3. MEMBUAT JURNAL PENYESUAIAN
-4. MEMBUAT JURNAL KAS (CAJE/PAJE)
-5. PENYESUAIAN JURNAL
-6. PEMBATALAN JURNAL
-7. LAPORAN NERACA
-8. LAPORAN NERACA PERCOBAAN
-9. DATA MASTER & REFERENSI
-10. ALUR PROSES AKUNTANSI
-11. VALIDASI & PENGECEKAN
-12. TROUBLESHOOTING & ERROR HANDLING
-13. TIPS & TRIK PENGGUNAAN
-14. QUICK REFERENCE
-15. CATATAN TEKNIS (UNTUK IT/DEVELOPER)
-16. API ENDPOINTS REFERENCE
-17. REVISI & CONTACT
-
-========================================================================================
-                            1. RINGKASAN MODUL
-========================================================================================
-
-DESKRIPSI:
-Modul Akuntansi adalah pusat pencatatan semua transaksi keuangan perusahaan. Dari 
-pencatatan jurnal sehari-hari, penyesuaian, hingga pembuatan laporan keuangan.
-
-UNTUK SIAPA:
-? Tim Accounting: Untuk entry jurnal harian, penyesuaian, laporan
-? Tim Finance: Untuk analisis dan pelaporan keuangan
-? Tim IT/Support: Untuk troubleshooting teknis dan maintenance
-? Auditor: Untuk verifikasi dan audit trail tracking
-
-FITUR UTAMA:
-?? Pencatatan jurnal (Journal Transaction)
-?? Jurnal penyesuaian (Journal Memorial)
-?? Jurnal kas (CAJE/PAJE)
-?? Penyesuaian jurnal (Adjust)
-?? Pembatalan jurnal (Reverse)
-?? Laporan Neraca (Balance Sheet)
-?? Laporan Neraca Percobaan (Trial Balance)
-
-DIMANA LOKASINYA?
-Menu Accounting ? [Sub-menu sesuai kebutuhan]
-
-========================================================================================
-                    2. PENCATATAN JURNAL HARIAN (JOURNAL TRANSACTION)
-========================================================================================
-
-APA ITU?
-Halaman utama untuk melihat dan mengelola semua catatan jurnal harian. Tempat entry 
-pertama sebelum posting ke ledger.
-
-FITUR YANG TERSEDIA:
-- Mencari jurnal yang sudah dicatat
-- Melihat detail transaksi per baris
-- Membuat jurnal baru (penyesuaian, kas masuk/keluar)
-- Mengubah atau menyesuaikan jurnal
-- Membatalkan jurnal yang salah
-- Export data ke Excel
-
-CARA MENGGUNAKAN:
-
-STEP 1: MENCARI JURNAL
-   
-   OPSI A - Cari berdasarkan NOMOR DOKUMEN:
-   • Pilih radio button "Document Number"
-   • Ketik nomor jurnal (contoh: JM-2024-001)
-   • Klik tombol "Preview"
-   
-   OPSI B - Cari berdasarkan TANGGAL:
-   • Pilih radio button "Date Range"
-   • Isi tanggal mulai dan tanggal akhir
-   • Contoh: Dari 01/01/2024 sampai 31/01/2024
-   • Klik tombol "Preview"
-
-STEP 2: FILTER BERDASARKAN STATUS
-
-Klik salah satu status untuk filter:
-
-?? POSTED (Sudah Diposting)
-   Status: Final, tidak bisa diubah
-   Kapan: Setelah approval dari supervisor
-
-?? UNCHECKED (Belum Dicek)
-   Status: Baru dibuat, menunggu review
-   Kapan: Baru entry, belum ada approval
-
-?? CHECKED (Sudah Dicek)
-   Status: Sudah di-review dan OK, siap posting
-   Kapan: Sudah ada approval
-
-?? VOID (Dibatalkan)
-   Status: Ditolak atau dibatalkan
-   Kapan: Ada kesalahan
-
-?? NEED REVERSE
-   Status: Perlu dibatalkan dengan entry sebaliknya
-   Kapan: Koreksi jurnal yang sudah posted
-
-?? NEED COMPLETE VOID
-   Status: Perlu pembatalan penuh
-   Kapan: Jurnal tidak valid
-
-? REMOVED
-   Status: Sudah dihapus
-   Kapan: Jurnal tidak terpakai
-
-STEP 3: LIHAT DATA DALAM TABEL
-
-Kolom-kolom yang ditampilkan:
-
-Nomor Jurnal = Nomor unik setiap jurnal
-Dibuat Oleh = Nama pembuat (untuk tracking)
-Tanggal Update = Kapan terakhir diubah
-Tanggal Jurnal = Tanggal transaksi
-Jumlah = Nominal transaksi (Rp)
-Bank = Nama bank (jika ada)
-Deskripsi = Penjelasan transaksi
-Ref Doc = Dokumen referensi
-Ref Num = Nomor referensi
-Status = Status jurnal saat ini
-
-STEP 4: MELIHAT DETAIL
-
-• Klik tanda "+" di sebelah kiri untuk buka detail
-• Akan muncul tabel berisi akun debit dan kredit
-• Lihat: Divisi, Departemen, Akun, nominal
-
-TOMBOL-TOMBOL YANG TERSEDIA:
-
-?? Create Journal Memorial
-   Gunakan untuk: Adjustment, koreksi, penyesuaian period-end
-
-?? Create Caje/Paje
-   Gunakan untuk: Pencatatan transaksi kas
-
-??? Show All Details
-   Gunakan untuk: Lihat semua detail sekaligus
-
-??? Hide All Details
-   Gunakan untuk: Rapikan tampilan tabel
-
-?? Export to Excel
-   Gunakan untuk: Analisis data, backup, presentasi
-
-TROUBLESHOOTING:
-
-? MASALAH: Tidak melihat jurnal yang dicari
-? SOLUSI:
-  1. Pastikan tanggal pencarian sesuai dengan jurnal
-  2. Coba hapus filter status
-  3. Pastikan klik "Preview" setelah isi tanggal/nomor
-  4. Format tanggal: DD/MM/YYYY
-  5. Jika masih tidak ketemu, tanya supervisor apakah jurnal sudah dibuat
-
-? MASALAH: Tidak bisa mengubah/edit jurnal
-? SOLUSI:
-  1. Jurnal POSTED tidak bisa diubah (sudah final)
-  2. Gunakan tombol "Action" ? "REVERSE" untuk membatalkan
-  3. Atau gunakan "Create Journal Memorial" untuk adjustment
-  4. Hubungi supervisor jika perlu approval
-  5. JANGAN hapus jurnal posted - gunakan REVERSE atau ADJUST
-
-? MASALAH: Jurnal tidak tersimpan
-? SOLUSI:
-  1. Pastikan internet stabil
-  2. Jangan tutup browser sebelum "Saved Successfully" muncul
-  3. Refresh halaman untuk verifikasi
-  4. Jika error, hubungi IT support dengan screenshot
-
-? MASALAH: "Total Debit and Credit must be equal!"
-? SOLUSI:
-  1. INI NORMAL - dalam akuntansi debit HARUS = kredit
-  2. Periksa setiap baris
-  3. Debit total harus sama kredit total
-  4. Gunakan kalkulator
-  5. Contoh benar: Debit Rp 1.000.000 = Kredit Rp 1.000.000
-
-========================================================================================
-                    3. MEMBUAT JURNAL PENYESUAIAN (JOURNAL MEMORIAL)
-========================================================================================
-
-APA ITU & KAPAN DIGUNAKAN?
-Jurnal memorial adalah jurnal untuk transaksi yang tidak melalui proses normal, 
-digunakan untuk:
-- Penyesuaian akhir periode (accrual, depreciation)
-- Koreksi kesalahan pencatatan
-- Jurnal reserve (pembukuan cadangan)
-- Penyesuaian inventory, piutang tak tertagih, dll
-
-CARA MEMBUAT:
-
-LANGKAH 1: Klik tombol "Create Journal Memorial"
-? Form besar akan muncul
-
-LANGKAH 2: ISI DATA HEADER (Bagian Atas)
-
-?? Tanggal (Date) - WAJIB
-   Klik field tanggal, pilih tanggal transaksi
-   Contoh: 31/01/2024 untuk adjustment akhir bulan
-   Sistem membatasi hanya tanggal dalam periode aktif
-
-?? Jumlah (Amount) - OTOMATIS
-   Tidak perlu diisi, otomatis dihitung dari total debit
-   Akan berubah saat menambah/ubah baris
-
-?? Ref Num - OPSIONAL
-   Nomor bukti atau referensi
-   Contoh: Nomor PO, nomor surat perintah
-
-?? Ref Doc - OPSIONAL
-   Nomor dokumen sumber/bukti
-   Contoh: INV-2024-001
-
-?? Deskripsi - WAJIB
-   Penjelasan jurnal dengan jelas
-   Contoh: "Penyesuaian depreciation mesin Januari 2024"
-   Contoh: "Koreksi jurnal gaji double entry Oktober"
-   Harus detail agar mudah ditrack auditor
-
-?? Vendor - HANYA JIKA DIPERLUKAN
-   Hanya tampil jika akun memerlukan vendor
-   Contoh: Hutang Vendor
-   Cari dan pilih dari dropdown
-
-?? Tenant/Customer - HANYA JIKA DIPERLUKAN
-   Hanya tampil jika akun memerlukan tenant/customer
-   Contoh: Piutang Tenant
-   Cari dan pilih dari dropdown
-
-LANGKAH 3: ISI DETAIL BARIS (TABEL BAWAH)
-
-Klik tombol "Request" untuk menambah baris
-
-Untuk setiap baris, isi:
-
-?? Divisi (Div) - WAJIB
-   Pilih kode divisi dari dropdown
-   Contoh: DIV001, DIV002
-
-?? Departemen (Dept) - WAJIB
-   Pilih kode departemen (sesuai divisi)
-   Contoh: ACC, ADM, OPE
-
-?? COA (Chart of Account) - WAJIB
-   Pilih akun yang akan di-debit/kredit
-   Cari dengan kode atau nama
-   Contoh: 5101 Gaji, 1110 Bank, 2111 Hutang
-   PENTING: Sistem otomatis cek jika akun butuh Vendor/Customer
-
-?? Deskripsi COA - OTOMATIS
-   Muncul otomatis sesuai COA
-   Tidak perlu diisi
-
-?? Keterangan - WAJIB
-   Penjelasan untuk baris ini
-   Contoh: "Depreciation mesin produksi"
-   Auto-fill dari header, boleh diubah
-
-?? Object Code - OPSIONAL
-   Klasifikasi detail (Project, Cost Center, Region)
-   Cari dari dropdown
-
-?? Object Deskripsi - OTOMATIS
-   Muncul otomatis sesuai Object Code
-
-?? Debit - Numeric
-   Jumlah sisi debit
-   Contoh: 500000 (untuk Rp 500.000)
-   Hanya isi DEBIT atau KREDIT, tidak keduanya
-   Untuk: ASSET, EXPENSE
-
-?? Kredit - Numeric
-   Jumlah sisi kredit
-   Hanya isi DEBIT atau KREDIT, tidak keduanya
-   Untuk: LIABILITY, INCOME, EQUITY
-
-? Tombol Delete
-   Klik untuk hapus baris dari tabel
-
-LANGKAH 4: PERIKSA KESEIMBANGAN
-
-Lihat bagian kanan:
-- Total Debit = harus sama Total Kredit
-- MERAH = tidak balance
-- HIJAU = sudah balance
-
-CONTOH BENAR:
-Jurnal: Penyesuaian Depreciation Mesin
-?? Baris 1: Exp Depreciation (Debit: 500.000)
-?? Kredit dari Accumulated Depreciation: 500.000
-   Total Debit: 500.000 = Total Kredit: 500.000 ?
-
-CONTOH SALAH:
-?? Baris 1: Exp Depreciation (Debit: 500.000)
-?? Baris 2: Acc Depreciation (Debit: 300.000)
-?? Total Debit: 800.000 ? Total Kredit: 0 ?
-
-LANGKAH 5: SIMPAN JURNAL
-
-Klik tombol "Save"
-? Sistem tanya: "Are you sure to save Journal Memorial?"
-? Klik OK untuk lanjut
-? Jika ada error, pesan akan muncul
-? Jika berhasil, halaman refresh dan jurnal muncul di daftar
-
-VALIDASI SISTEM AKAN CEK:
-? Tanggal diisi
-? Deskripsi diisi (tidak kosong)
-? Minimal 1 baris detail
-? Total Debit = Total Kredit
-? Jumlah > 0
-? Vendor diisi (jika ada)
-? Customer diisi (jika ada)
-
-JIKA ERROR:
-- Pesan merah akan menjelaskan apa yang kurang
-- Contoh: "Vendor must be filled!" atau "Total Debit and Credit must be equal!"
-- Perbaiki sesuai error
-- Coba save lagi
-
-TOMBOL BAWAH:
-? Cancel = Batal (data tidak disimpan)
-? Save = Simpan ke sistem
-
-========================================================================================
-                    4. MEMBUAT JURNAL KAS (CAJE/PAJE)
-========================================================================================
-
-APA ITU & PERBEDAANNYA?
-Jurnal Kas adalah ringkasan transaksi kas masuk/keluar dalam satu periode.
-
-JOURNAL MEMORIAL vs CAJE/PAJE:
-- Journal Memorial: Jurnal penyesuaian, bisa akun apapun
-- CAJE/PAJE: Khusus transaksi kas, lebih spesifik
-
-DIGUNAKAN UNTUK:
-- Kas keluar pembayaran (gaji, supplier, etc)
-- Kas masuk penerimaan (penjualan, piutang, etc)
-- Ringkasan transaksi kas harian
-
-CARA MEMBUAT:
-
-LANGKAH 1: Klik tombol "Create Caje/Paje"
-? Window besar akan muncul
-
-LANGKAH 2: ISI DATA HEADER
-
-?? Tipe Jurnal - WAJIB
-   Pilih dari dropdown (CAJE atau PAJE)
-   CAJE = Kas Keluar
-   PAJE = Kas Masuk
-   Contoh: "Pembayaran Gaji", "Penerimaan Pelanggan"
-
-?? Tanggal - WAJIB
-   Pilih tanggal transaksi kas
-   Contoh: 15/01/2024
-   Rentang: Tidak boleh di luar tahun berjalan (Jan-Des)
-
-?? Jumlah - OTOMATIS
-   Tidak perlu diisi
-   Dihitung otomatis dari total debit
-
-?? Ref Num - OPSIONAL
-   Nomor bukti atau referensi
-   Contoh: Nomor surat perintah
-   Boleh dikosongkan
-
-?? Ref Doc - OPSIONAL
-   Dokumen sumber
-   Contoh: INV-2024-001
-   Boleh dikosongkan
-
-?? Deskripsi - WAJIB
-   Penjelasan jurnal kas
-   Contoh: "Pembayaran gaji karyawan Januari 2024"
-   Contoh: "Penerimaan dari pelanggan PT ABC"
-   Jelaskan lengkap transaksi
-
-LANGKAH 3: ISI DETAIL BARIS
-
-Klik "Request" untuk tambah baris
-
-Isi setiap baris dengan:
-?? Divisi - WAJIB
-?? Departemen - WAJIB
-?? COA - WAJIB (Akun debit/kredit)
-?? Keterangan - WAJIB
-?? Object Code - OPSIONAL
-?? Debit - Nominalnya
-?? Kredit - Nominalnya
-
-PENTING: Total Debit HARUS = Total Kredit
-
-LANGKAH 4: PERIKSA DAN SIMPAN
-
-Pastikan:
-? Tanggal diisi
-? Deskripsi jelas
-? Minimal 1 baris
-? Total Debit = Total Kredit
-? Jumlah > 0
-
-Klik "Save"
-? Konfirmasi: "Are you sure to CREATE Journal Caje/Paje?"
-? Klik OK
-
-JIKA SUKSES: Halaman refresh, jurnal muncul di daftar
-
-TROUBLESHOOTING CAJE/PAJE:
-
-? MASALAH: Tidak bisa save jurnal
-? SOLUSI:
-  1. Pastikan field wajib diisi (tanggal, deskripsi, type)
-  2. Minimal 1 baris detail
-  3. Total Debit = Total Kredit
-  4. Jangan ada baris kosong
-  5. Cek error message, perbaiki sesuai
-
-? MASALAH: Total Debit tidak sama Kredit
-? SOLUSI:
-  1. Ini error normal - WAJIB debit = kredit
-  2. Periksa setiap baris nominal
-  3. Gunakan kalkulator
-  4. Contoh benar: Debit Rp 2.000.000 = Kredit Rp 2.000.000
-
-========================================================================================
-                    5. PENYESUAIAN JURNAL (ADJUST JOURNAL)
-========================================================================================
-
-APA ITU & KAPAN DIGUNAKAN?
-Fitur untuk mengubah/menyesuaikan jurnal yang sudah ada tanpa menghapus yang lama.
-
-DIGUNAKAN UNTUK:
-- Koreksi kesalahan tanpa menghapus jurnal asli
-- Mengubah kolom tertentu (tanggal, jumlah, akun)
-- Membuat audit trail lengkap (track siapa ubah apa kapan)
-
-KAPAN:
-- Ada kesalahan dalam jurnal sebelumnya
-- Ingin ubah akun tanpa delete
-- Ada koreksi dari audit/supervisor
-
-CARA MENGGUNAKAN:
-
-LANGKAH 1: Cari jurnal yang akan disesuaikan
-? Di halaman utama, cari jurnal
-? Klik tombol "Action"
-
-LANGKAH 2: Pilih "ADJUST"
-? Form penyesuaian muncul
-? Ada 2 bagian: Jurnal lama (atas) + Adjustment form (bawah)
-
-BAGIAN ATAS (Jurnal Lama - READ-ONLY):
-Menampilkan data jurnal (tidak bisa diubah):
-- Nomor jurnal
-- Tanggal jurnal
-- Jumlah
-- Deskripsi
-- Ref No
-- Detail baris
-
-BAGIAN BAWAH (Form Adjustment):
-
-?? Tanggal Adjustment - WAJIB
-   Tanggal koreksi dibuat
-   Contoh: 16/01/2024 (jika jurnal lama 15/01/2024)
-
-?? Jumlah - OTOMATIS
-   Dihitung dari detail adjustment
-
-?? Deskripsi - WAJIB
-   Penjelasan mengapa ada adjustment
-   Contoh: "Koreksi akun dari 5101 ke 5102"
-   Contoh: "Adjustment jumlah dari 100rb jadi 150rb"
-
-?? Ref Doc - DISPLAY
-   Menampilkan dokumen referensi asli
-   Tidak bisa diubah
-
-Detail Adjustment Grid:
-- Isi data adjustment setiap baris
-- Minimal 1 baris
-- Total Debit = Total Kredit
-
-LANGKAH 3: SIMPAN ADJUSTMENT
-
-Klik tombol "Save"
-? Sistem membuat jurnal adjustment BARU
-? Jurnal lama TIDAK dihapus
-? Audit trail tercatat: siapa adjust, kapan, apa yang diubah
-
-CONTOH ADJUSTMENT:
-Jurnal Lama: Pembayaran Gaji
-?? Beban Gaji (Debit): 100.000.000
-?? Bank (Kredit): 100.000.000
-
-Adjustment: Koreksi (ternyata 110juta, bukan 100juta)
-?? Beban Gaji (Debit): 10.000.000 (tambahan)
-?? Bank (Kredit): 10.000.000 (tambahan)
-
-HASIL:
-?? Jurnal Asli: 100.000.000 tetap ada (audit trail)
-?? Jurnal Adjustment: 10.000.000 (koreksi)
-   Total jadi: 110.000.000
-
-========================================================================================
-                    6. PEMBATALAN JURNAL (REVERSE JOURNAL)
-========================================================================================
-
-APA ITU & PERBEDAANNYA?
-Fitur untuk membatalkan jurnal dengan membuat entry sebaliknya 
-(debit jadi kredit, kredit jadi debit).
-
-DELETE vs REVERSE:
-DELETE: Menghapus jurnal (tidak ada audit trail) ? JANGAN LAKUKAN
-REVERSE: Entry sebaliknya, jurnal lama tetap ada, ada audit trail ? CARA BENAR
-
-KAPAN DIGUNAKAN:
-- Jurnal sudah posted tapi ternyata kesalahan
-- Ingin batal transaksi dengan catatan baik
-- Ada permintaan batal dari supervisor
-
-CARA MEMBUAT:
-
-LANGKAH 1: Cari jurnal yang akan dibatalkan
-? Di halaman utama, cari jurnal
-? Klik tombol "Action"
-
-LANGKAH 2: Pilih "REVERSE"
-? Form reversal muncul
-
-BAGIAN ATAS (Jurnal Asli):
-Menampilkan jurnal yang akan dibatalkan:
-- Nomor jurnal
-- Tanggal
-- Jumlah
-- Deskripsi
-- Detail baris
-
-BAGIAN BAWAH (Jurnal Reversal):
-
-?? Tanggal Reversal - WAJIB
-   Tanggal pembatalan dibuat
-   Contoh: 16/01/2024 (jika jurnal asli 15/01/2024)
-   Biasanya hari berikutnya atau sama
-
-?? Deskripsi - OPSIONAL
-   Penjelasan pembatalan
-   Contoh: "Reversal of invoice INV-2024-001"
-   Auto-fill: "Reversal of [Deskripsi asli]"
-   Boleh diubah
-
-Detail Reversal Grid:
-- Otomatis entry sebaliknya terbuat
-- Debit ? Kredit, Kredit ? Debit
-- Nominal sama, hanya arah berlawanan
-
-CONTOH REVERSAL:
-Jurnal Asli (15/01/2024):
-?? Bank Debit: 1.000.000
-?? Penjualan Kredit: 1.000.000
-
-Jurnal Reversal (16/01/2024):
-?? Bank Kredit: 1.000.000 (berlawanan)
-?? Penjualan Debit: 1.000.000 (berlawanan)
-
-HASIL:
-?? Jurnal Asli tetap ada (audit trail)
-?? Jurnal Reversal ada sebagai entry berlawanan
-?? Net effect: 1juta masuk - 1juta keluar = 0 (seolah tidak ada)
-
-LANGKAH 3: SIMPAN REVERSAL
-
-Klik "Save"
-? Sistem membuat jurnal reversal BARU
-? Jurnal asli tetap ada status "NEED REVERSE"
-? Audit trail tercatat lengkap
-
-TROUBLESHOOTING REVERSAL:
-
-? MASALAH: Tidak bisa reverse jurnal posted
-? SOLUSI:
-  1. Normal - jurnal posted adalah final
-  2. Reverse adalah cara yang benar membatalkannya
-  3. Hubungi supervisor untuk approval
-  4. JANGAN coba delete manual (cara salah)
-
-========================================================================================
-                    7. LAPORAN NERACA (BALANCE SHEET)
-========================================================================================
-
-APA ITU & FUNGSINYA?
-Laporan Neraca menunjukkan posisi keuangan perusahaan pada tanggal tertentu.
-
-RUMUS: ASET = LIABILITY + EQUITY (HARUS SEIMBANG)
-
-TERDIRI DARI:
-- ASET (Harta): Apa yang dimiliki perusahaan
-- LIABILITY (Hutang): Apa yang dihutang perusahaan
-- EQUITY (Modal): Modal sendiri + Laba
-
-DIMANA?
-Menu Accounting ? Balance Sheet
-
-STRUKTUR NERACA:
-
-ASET (AKTIVA):
-?? Aset Lancar (bisa dicairkan < 1 tahun)
-?  ?? Kas dan Bank: Uang tunai dan bank
-?  ?? Piutang: Uang diterima dari pelanggan
-?  ?? Inventory: Barang disimpan
-?  ?? Aset Lancar Lainnya
-?
-?? Aset Tidak Lancar (aset jangka panjang)
-   ?? Aset Tetap: Tanah, Gedung, Kendaraan, Mesin
-   ?? Akumulasi Depreciation: Pengurangan nilai
-   ?? Aset Tidak Berwujud: Goodwill, Patent
-   ?? Aset Jangka Panjang Lainnya
-
-LIABILITY (PASSIVA/HUTANG):
-?? Hutang Jangka Pendek (< 1 tahun)
-?  ?? Hutang Usaha: Hutang ke supplier
-?  ?? Hutang Gaji: Gaji belum bayar
-?  ?? Hutang Bunga: Bunga belum bayar
-?  ?? Hutang Jangka Pendek Lainnya
-?
-?? Hutang Jangka Panjang (> 1 tahun)
-   ?? Hutang Obligasi
-   ?? Hutang Hipotik
-   ?? Hutang Jangka Panjang Lainnya
-
-EKUITAS (MODAL):
-?? Modal Awal: Modal disetor pemilik
-?? Laba Ditahan: Laba tahun sebelumnya
-?? Laba Tahun Berjalan: Laba/rugi tahun ini
-?? Dividen: Pengambilan laba pemilik
-
-CARA MENGGUNAKAN:
-
-LANGKAH 1: Pilih Parameter
-
-?? Perusahaan
-   Pilih perusahaan yang ingin dilihat
-   Hanya perusahaan yang user akses
-
-?? Periode
-   Isi tanggal awal periode
-   Isi tanggal akhir periode
-   Contoh: 01/01/2024 sampai 31/01/2024
-   Harus: tanggal awal ? tanggal akhir
-
-LANGKAH 2: Klik "Preview" atau "Generate"
-? Sistem membuat laporan neraca
-? Ditampilkan dalam tabel atau visual
-
-LANGKAH 3: LIHAT HASIL
-
-Kolom yang ditampilkan:
-- Kode Akun: Kode perkiraan
-- Nama Akun: Nama lengkap
-- Saldo: Saldo akhir periode (Rp)
-- Perubahan: Perubahan dari periode sebelumnya
-- % Dari Total: Persentase dari total
-
-LANGKAH 4: ANALISIS NERACA
-
-Lihat angka-angka:
-? Total ASET harus = Total (LIABILITY + EQUITY)
-? Jika tidak seimbang = ada error dalam jurnal
-? Bandingkan periode sebelumnya: ada perubahan abnormal?
-
-CONTOH NERACA SEIMBANG:
-
-ASET
-?? Kas: 500.000.000
-?? Piutang: 300.000.000
-?? Tanah: 1.500.000.000
-?? TOTAL ASET: 2.300.000.000
-
-LIABILITY
-?? Hutang Usaha: 500.000.000
-?? TOTAL LIABILITY: 500.000.000
-
-EQUITY
-?? Modal: 1.500.000.000
-?? Laba Ditahan: 200.000.000
-?? Laba Tahun Ini: 100.000.000
-?? TOTAL EQUITY: 1.800.000.000
-
-TOTAL LIABILITY + EQUITY: 500juta + 1.800juta = 2.300juta
-? SEIMBANG (ASET = LIABILITY + EQUITY)
-
-FITUR TAMBAHAN:
-
-?? Export: Unduh ke Excel
-??? Print: Cetak laporan
-?? Comparison: Bandingkan periode lain
-?? Drill Down: Klik akun lihat transaksi detail
-
-TROUBLESHOOTING NERACA:
-
-? MASALAH: Neraca tidak seimbang
-? SOLUSI:
-  1. INI ERROR SERIUS - ada kesalahan jurnal
-  2. Hubungi Accounting Supervisor atau Internal Audit
-  3. Periksa setiap jurnal dalam periode
-  4. Cari jurnal yang tidak balance (debit ? kredit)
-  5. Buat jurnal adjustment untuk perbaikan
-  6. Jangan tutup periode sampai seimbang
-
-? MASALAH: Ada akun nominal besar/aneh
-? SOLUSI:
-  1. Periksa jurnal yang menggunakan akun
-  2. Bandingkan periode sebelumnya (normal berapa?)
-  3. Tanya supervisor atau OB apakah benar
-  4. Jika salah, buat adjustment untuk koreksi
-
-========================================================================================
-                    8. LAPORAN NERACA PERCOBAAN (TRIAL BALANCE)
-========================================================================================
-
-APA ITU & FUNGSINYA?
-Laporan daftar semua akun dengan saldo debit dan kreditnya.
-Digunakan untuk verifikasi: total debit = total kredit?
-
-DIGUNAKAN UNTUK:
-- Memverifikasi total debit = total kredit (cek kesalahan jurnal)
-- Langkah pertama sebelum buat laporan keuangan
-- Jika tidak balance = ada error
-
-BEDANYA DENGAN BALANCE SHEET:
-Trial Balance: Daftar akun dengan saldo debit & kredit (raw data)
-Balance Sheet: Laporan posisi yang sudah dikelompokkan (aset, liability, equity)
-
-DIMANA?
-Menu Accounting ? Trial Balance
-
-CARA MENGGUNAKAN:
-
-LANGKAH 1: Pilih Parameter
-
-?? Perusahaan
-   Pilih perusahaan
-
-?? Periode
-   Tanggal awal periode
-   Tanggal akhir periode
-   Contoh: 01/01/2024 sampai 31/01/2024
-
-LANGKAH 2: Klik "Preview" atau "Generate"
-? Sistem membuat trial balance
-? Daftar semua akun ditampilkan
-
-LANGKAH 3: LIHAT HASIL
-
-Kolom-kolom:
-
-No. = Nomor urut akun (1, 2, 3, dst)
-
-Kode Akun = Kode perkiraan (contoh: 1110, 5101, 2101)
-
-Nama Akun = Nama lengkap perkiraan
-
-Saldo Debit = Jumlah saldo debit akun
-   Hanya akun debit yang muncul di kolom ini
-
-Saldo Kredit = Jumlah saldo kredit akun
-   Hanya akun kredit yang muncul di kolom ini
-
-Saldo Bersih = Debit - Kredit
-   Positif = Debit, Negatif = Kredit
-
-LANGKAH 4: VERIFIKASI KESEIMBANGAN
-
-LIHAT BARIS TOTAL:
-Total Debit = ?
-Total Kredit = ?
-
-? JIKA DEBIT = KREDIT ? TRIAL BALANCE SEIMBANG (NORMAL)
-? JIKA DEBIT ? KREDIT ? ADA ERROR (HARUS DIPERBAIKI)
-
-CONTOH SEIMBANG:
-
-No. | Kode | Nama Akun         | Debit          | Kredit
-----|------|-------------------|----------------|---------------
-1   | 1110 | Bank              | 500.000.000    |
-2   | 1120 | Piutang           | 300.000.000    |
-3   | 2101 | Hutang Usaha      |                | 200.000.000
-4   | 3101 | Modal             |                | 500.000.000
-5   | 5101 | Beban Gaji        | 100.000.000    |
-6   | 4101 | Penjualan         |                | 200.000.000
-----|------|---TOTAL-----------|  900.000.000   | 900.000.000 ?
-
-CONTOH TIDAK SEIMBANG:
-
-No. | Kode | Nama Akun         | Debit          | Kredit
-----|------|-------------------|----------------|---------------
-1   | 1110 | Bank              | 500.000.000    |
-2   | 1120 | Piutang           | 300.000.000    |
-3   | 2101 | Hutang Usaha      |                | 200.000.000
-4   | 3101 | Modal             |                | 500.000.000
-5   | 5101 | Beban Gaji        | 100.000.000    |
-6   | 4101 | Penjualan         |                | 200.000.000
-----|------|---TOTAL-----------|  900.000.000   | 850.000.000 ?
-                                                  (Selisih: 50juta)
-
-LANGKAH 5: JIKA ADA SELISIH
-
-Jika Total Debit ? Total Kredit:
-1. Ada jurnal yang tidak balance
-2. Cek setiap jurnal dalam periode
-3. Cari jurnal yang debit ? kredit
-4. Perbaiki dengan jurnal adjustment
-5. Generate ulang trial balance
-6. Ulangi sampai balance
-
-FITUR TAMBAHAN:
-
-?? Filter: Filter akun berdasarkan tipe
-?? Export: Unduh ke Excel
-??? Print: Cetak laporan
-?? Recalculate: Hitung ulang dari transaksi
-?? Comparison: Bandingkan periode lain
-??? Show Zero Balance: Tampilkan/sembunyikan akun saldo 0
-
-TROUBLESHOOTING TRIAL BALANCE:
-
-? MASALAH: Trial Balance tidak seimbang
-? SOLUSI:
-  1. INI ERROR PENTING - debit harus = kredit
-  2. Lihat besar selisihnya (contoh: 50 juta)
-  3. Cari jurnal yang debit ? kredit
-  4. Periksa setiap baris
-  5. Perbaiki jurnal yang error
-  6. Generate ulang untuk verifikasi
-  7. Jangan lanjut laporan sampai seimbang
-
-? MASALAH: Selisih sangat kecil (100 ribu)
-? SOLUSI:
-  1. Biasanya pembulatan atau kesalahan input
-  2. Cari jurnal terakhir yang dibuat
-  3. Periksa nominalnya, jangan duplikasi
-  4. Search nilai 100.000
-  5. Perbaiki jurnal
-
-? MASALAH: Banyak akun saldo 0
-? SOLUSI:
-  1. NORMAL - akun tanpa transaksi saldo 0
-  2. Bisa di-hide dengan "Show Zero Balance"
-  3. Tidak perlu dikhawatirkan
-
-========================================================================================
-                    9. DATA MASTER & REFERENSI
-========================================================================================
-
-APA ITU "MASTER DATA"?
-Data referensi/dasar untuk pencatatan transaksi. Seperti "kamus" sistem akuntansi.
-
-DAFTAR PERKIRAAN (CHART OF ACCOUNT / COA):
-
-Daftar semua akun di perusahaan. Setiap akun:
-
-Kode Akun
-   Nomor unik, format: angka (1110, 5101, 2101)
-   Struktur: digit pertama = tipe akun
-   • 1xxx = Aset, 2xxx = Liability, 3xxx = Equity
-   • 4xxx = Income, 5xxx = Expense
-
-Nama Akun
-   Nama lengkap akun
-   Contoh: "Bank", "Piutang Usaha", "Gaji dan Upah"
-
-Tipe Akun
-   Header atau Detail
-   Header: Kategori (contoh: "Aset Lancar")
-   Detail: Untuk pencatatan (contoh: "Bank BCA")
-
-Tipe Parties
-   VND (Vendor): Akun butuh isi Vendor
-   TCS (Tenant/Customer): Akun butuh isi Tenant
-   NONE: Akun tidak perlu vendor/tenant
-
-Status
-   Aktif: Bisa digunakan
-   Non-aktif: Tidak bisa digunakan
-
-DIVISI (DIVISION):
-
-Pembagian organisasi/cabang. Setiap divisi:
-
-Kode Divisi
-   Kode unik (DIV001, DIV002)
-
-Nama Divisi
-   Nama lengkap ("Divisi Penjualan", "Divisi Operasional")
-
-Status
-   Aktif atau tidak aktif
-
-DEPARTEMEN (DEPARTMENT):
-
-Bagian dalam divisi. Setiap departemen:
-
-Kode Departemen
-   Kode unik (ACC, ADM, OPE, MKT)
-
-Nama Departemen
-   Contoh: "Accounting", "Administration", "Operations"
-
-Divisi Parent
-   Divisi mana yang "punya" departemen ini
-
-Status
-   Aktif atau tidak aktif
-
-VENDOR (SUPPLIER):
-
-Penyedia/supplier perusahaan. Untuk akun hutang vendor.
-
-Kode Vendor
-   Nomor unik (VND001, VND002)
-
-Nama Vendor
-   Nama perusahaan ("PT ABC Supplies", "Distributor XYZ")
-
-Alamat, Kontak, Bank
-   Data lengkap vendor
-
-TENANT / CUSTOMER (PENYEWA / PELANGGAN):
-
-Penyewa atau pelanggan. Untuk akun piutang.
-
-Kode Tenant
-   Nomor unik (TEN001, TEN002)
-
-Nama Tenant
-   Nama lengkap ("PT Jaya Bersama", "Toko Maju Jaya")
-
-NPWP
-   Nomor Pajak Pebisnis/Pengusaha
-
-OBJECT CODE (KODE OBJEK):
-
-Klasifikasi transaksi lebih detail. Contoh:
-   Region/Lokasi (JKT, DPS, BDG)
-   Project/Proyek (PROJ001, PROJ002)
-   Cost Center (CC-ADM, CC-OPE)
-   Unit/Cabang
-
-========================================================================================
-                    10. ALUR PROSES AKUNTANSI YANG BENAR
-========================================================================================
-
-TAHAP LENGKAP:
-
-TAHAP 1: ENTRY / PENCATATAN
-?? Transaksi terjadi
-?? Accounting Staff membuat jurnal
-?? Status: UNCHECKED
-?? Jurnal disimpan ke sistem
-
-TAHAP 2: REVIEW & APPROVAL
-?? Accounting Manager/Supervisor review jurnal
-?? Periksa kebenaran akun, nominal, deskripsi
-?? Jika OK ? Status: CHECKED
-?? Jika masalah ? Status: NEED ADJUST
-?? Hubungi staff pembuat untuk revisi
-
-TAHAP 3: POSTING
-?? Accounting Manager posting jurnal CHECKED
-?? Status ? POSTED
-?? Jurnal menjadi FINAL, tidak bisa diubah
-?? Data masuk ke buku besar (ledger)
-
-TAHAP 4: PELAPORAN
-?? Generate Trial Balance untuk verifikasi
-?? Generate Balance Sheet untuk laporan posisi
-?? Generate P&L untuk laporan laba-rugi
-?? Review oleh Finance Manager
-
-TAHAP 5: TUTUP PERIODE
-?? Pastikan semua jurnal POSTED
-?? Trial Balance HARUS balance
-?? Archive data periode
-?? Buka periode baru
-
-JIKA ADA KESALAHAN SETELAH POSTING:
-
-? JANGAN: Delete atau ubah jurnal POSTED
-
-? LAKUKAN:
-  1. Buat jurnal ADJUSTMENT untuk koreksi kecil
-  2. Atau buat jurnal REVERSAL jika ingin batal penuh
-  3. Dokumentasikan alasan di deskripsi
-  4. Audit trail akan catat semua perubahan
-
-CONTOH SKENARIO:
-Jurnal Gaji POSTED dengan nominal 100juta
-Ternyata benar 110juta (kurang 10juta)
-
-SOLUSI BENAR:
-1. Buat jurnal ADJUSTMENT: Debit Gaji 10juta, Kredit Bank 10juta
-2. Jangan ubah jurnal posted
-3. Audit trail catat: Jurnal asli + Adjustment
-
-========================================================================================
-                    11. VALIDASI & PENGECEKAN SEBELUM SIMPAN
-========================================================================================
-
-VALIDASI OTOMATIS SISTEM:
-
-Sebelum jurnal bisa disimpan, sistem akan cek:
-
-1. ? TANGGAL HARUS DIISI
-   Error: "Date must be filled!"
-   Solusi: Pastikan tanggal dipilih
-
-2. ? DESKRIPSI HARUS DIISI (TIDAK KOSONG)
-   Error: "Description must be filled!"
-   Solusi: Ketik penjelasan jurnal jelas
-
-3. ? MINIMAL 1 BARIS DETAIL
-   Error: "Detail must have at least 1 row!"
-   Solusi: Tambah minimal 1 baris
-
-4. ? TOTAL DEBIT = TOTAL KREDIT (HARUS BALANCE)
-   Error: "Total Debit and Credit must be equal!"
-   Solusi: Periksa nominalnya, harus seimbang
-   INGAT: Ini BUKAN error, ini WAJIB dalam akuntansi
-
-5. ? JUMLAH > 0 (HARUS ADA NOMINAL)
-   Error: "Total amount must be greater than zero!"
-   Solusi: Pastikan ada nominal diisi
-
-6. ? JIKA ADA FIELD VENDOR, VENDOR HARUS DIISI
-   Error: "Vendor must be filled!"
-   Solusi: Pilih vendor dari dropdown
-
-7. ? JIKA ADA FIELD TENANT/CUSTOMER, HARUS DIISI
-   Error: "Tenant/Customer must be filled!"
-   Solusi: Pilih tenant dari dropdown
-
-CHECKLIST SEBELUM SIMPAN:
-
-? Tanggal dipilih
-? Deskripsi jelas
-? Minimal 1 baris detail
-? Semua field wajib diisi
-? Total Debit = Total Kredit (HIJAU)
-? Vendor diisi (jika ada)
-? Tenant/Customer diisi (jika ada)
-? Tidak ada nomor aneh/sangat besar
-
-Jika semua OK ? BARU KLIK SAVE
-
-========================================================================================
-                    12. TROUBLESHOOTING & ERROR HANDLING
-========================================================================================
-
-ERROR 1: "Total Debit and Credit must be equal!"
-
-? MASALAH:
-   Error paling sering. Artinya: Debit ? Kredit
-
-? CARA MEMPERBAIKI:
-   1. Periksa total debit (semua baris di-debit)
-   2. Periksa total kredit (semua baris di-kredit)
-   3. Hitung lagi dengan kalkulator
-   4. Buat SAMA
-   5. Contoh BENAR:
-      Baris 1: Debit Bank 1.000.000, Kredit Penjualan 1.000.000 ?
-      Atau: Debit Gaji 500.000 + Debit Gaji 500.000 = 1.000.000
-           Kredit Bank 1.000.000 ?
-
-TIPS: Gunakan Excel: =SUM(debit) dan =SUM(kredit)
-
----
-
-ERROR 2: "[Field Name] must be filled!"
-
-? MASALAH:
-   Field wajib kosong
-
-? CARA MEMPERBAIKI:
-   1. Lihat nama field di error
-   2. Cari field di form
-   3. Isi dengan data sesuai
-   4. Field wajib: Date, Description, Detail rows
-   5. Jangan ada yang dikosongkan
-
----
-
-ERROR 3: "Failed, Please fill in the Vendor Code."
-
-? MASALAH:
-   Akun memerlukan vendor, tapi vendor tidak diisi
-
-? CARA MEMPERBAIKI:
-   1. Lihat field "Vendor" di atas form
-   2. Klik dropdown, pilih vendor
-   3. Jika tidak ada vendor sesuai, hubungi supervisor
-   4. Baru simpan lagi
-
----
-
-ERROR 4: "Date must be within active period!"
-
-? MASALAH:
-   Tanggal di luar periode aktif
-
-? CARA MEMPERBAIKI:
-   1. Tanya Accounting Manager periode aktif berapa
-   2. Contoh: Januari 2024 = 01/01/2024 sampai 31/01/2024
-   3. Pilih tanggal dalam rentang
-   4. Jangan tanggal bulan lain
-
----
-
-ERROR 5: "This journal already exists!"
-
-? MASALAH:
-   Nomor jurnal sudah ada (duplikasi)
-
-? CARA MEMPERBAIKI:
-   1. Sistem auto-generate nomor jurnal
-   2. Jangan manual ubah nomor
-   3. Biarkan sistem assign nomor
-   4. Jika masih error, hubungi IT Support
-
----
-
-ERROR SAAT EXPORT/PRINT:
-
-? MASALAH: File tidak bisa diunduh
-? SOLUSI:
-   1. Cek koneksi internet
-   2. Coba browser lain (Chrome, Firefox)
-   3. Clear cache browser
-   4. Jika masih error, hubungi IT Support
-
----
-
-ERROR SAAT SEARCH/FILTER:
-
-? MASALAH: Jurnal tidak ditemukan
-? SOLUSI:
-   1. Tanggal search sesuai dengan jurnal
-   2. Format tanggal: DD/MM/YYYY
-   3. Jika cari nomor, lengkap tanpa spasi
-   4. Klik "Preview" setelah isi filter
-   5. Clear filter dan coba lagi
-
----
-
-ERROR SAAT EDIT/UPDATE:
-
-? MASALAH: Tidak bisa edit jurnal posted
-? SOLUSI:
-   1. NORMAL - jurnal posted tidak bisa diubah
-   2. Gunakan ADJUST atau REVERSE untuk koreksi
-   3. JANGAN delete (cara salah akuntansi)
-   4. Hubungi supervisor untuk approval
-
-========================================================================================
-                    13. TIPS & TRIK PENGGUNAAN
-========================================================================================
-
-TIPS 1: PENCARIAN EFISIEN
-- Tahu nomor jurnal ? "Document Number" search
-- Tidak tahu ? "Date Range" search
-- Kombinasi dengan status filter untuk spesifik
-- Contoh: Cari tanggal 01-31 Januari + Status "UNCHECKED" = jurnal belum dicek
-
-TIPS 2: DESKRIPSI BAIK
-- Deskripsi jelas membantu tracking dan audit
-- BAIK: "Pembayaran gaji karyawan Januari 2024"
-- BURUK: "Gaji"
-- Sertakan: APA, KAPAN, SIAPA
-
-TIPS 3: REFERENSI DOKUMEN
-- Selalu isi Ref Doc atau Ref Num
-- Memudahkan tracking jika ada pertanyaan
-- Audit mudah trace ke bukti asli
-
-TIPS 4: JOURNAL MEMORIAL BENAR
-- Jangan 1 memorial untuk banyak hal
-- 1 memorial = 1 transaksi/adjustment
-- Mudah track, jika error cukup adjust 1
-
-TIPS 5: BACKUP & EXPORT
-- Export data berkala ke Excel (backup)
-- Gunakan untuk analisis dan presentasi
-- Excel lebih mudah dibaca
-
-TIPS 6: KERJASAMA TEAM
-- Buat jurnal, beri tahu supervisor
-- Ada pertanyaan audit, siapkan dokumentasi
-- Ada error, lapor segera ke manager
-
-TIPS 7: DOUBLE-CHECK SEBELUM POSTING
-- Sebelum posting, verifikasi ulang
-- Cek nominal, akun, tanggal
-- Ada keraguan, tanya supervisor dulu
-- Lebih baik aman daripada adjust nanti
-
-TIPS 8: PERIODE-END CLOSING
-- Semua jurnal selesai sebelum closing
-- Trial Balance harus balance
-- Jangan ada journal pending atau error
-- Archive data periode sebelum buka baru
-
-TIPS 9: KOMUNIKASI AUDIT
-- Permintaan audit, bantu dokumentasi
-- Siapkan daftar jurnal per bulan
-- Siapkan backup file Excel
-- Jelaskan setiap jurnal diminta
-
-TIPS 10: LEARNING & IMPROVEMENT
-- Pelajari jumlah jurnal per bulan
-- Identifikasi jurnal yang sering error
-- Training berkala untuk team
-- Update knowledge base fitur baru
-
-========================================================================================
-                    14. QUICK REFERENCE
-========================================================================================
-
-MENU UTAMA:
-?? Journal Transaction: Accounting ? Journal Transaction
-?? Balance Sheet: Accounting ? Balance Sheet
-?? Trial Balance: Accounting ? Trial Balance
-?? Other Reports: Accounting ? Reports
-
-TOMBOL CEPAT:
-?? Preview = Cari jurnal
-?? Create Journal Memorial = Buat penyesuaian
-?? Create Caje/Paje = Buat kas masuk/keluar
-?? Show/Hide Details = Buka/tutup detail
-?? Export Excel = Unduh ke Excel
-
-FIELD WAJIB:
-? Date (Tanggal)
-? Description (Deskripsi)
-? Detail rows (Minimal 1)
-? Total Debit = Total Kredit
-? Vendor (jika field muncul)
-? Tenant/Customer (jika muncul)
-
-CHECKLIST SAVE:
-? Tanggal diisi
-? Deskripsi clear
-? Minimal 1 baris
-? Balance (debit = kredit)
-? Vendor diisi (jika ada)
-? Tenant diisi (jika ada)
-? Tidak ada error
-
-PERLU BANTUAN?
-?? Email IT Support: itsupport@company.com
-?? Email Accounting Manager: accounting@company.com
-?? Telepon Extension: [SESUAIKAN]
-?? Chat/Slack: #accounting-help
-
-========================================================================================
-                    15. CATATAN TEKNIS (UNTUK IT/DEVELOPER)
-========================================================================================
-
-TEKNOLOGI YANG DIGUNAKAN:
-- Framework: .NET Framework 4.8 (ASP.NET MVC)
-- Frontend: HTML5, CSS3, JavaScript
-- UI Framework: Kendo UI (untuk grid, form, dialog)
-- API: RESTful API endpoint
-- Database: [Sesuaikan dengan setup]
-- Authentication: Bearer Token (JWT)
-
-LOKASI FILE PENTING:
-
-View Files:
-?? Jifas.Web\Views\Accounting\
-   ?? JournalTransaction\
-   ?  ?? Index.cshtml (Main view)
-   ?? EditorTemplate\
-   ?  ?? _EditJournal.cshtml
-   ?  ?? _AdjustJournal.cshtml
-   ?  ?? _ReverseJournal.cshtml
-   ?  ?? _CajePajeJournal.cshtml
-   ?? BalanceSheet\
-   ?  ?? Index.cshtml
-   ?? TrialBalance\
-      ?? Index.cshtml
-
-STRUKTUR KENDO GRID:
-
-Grid Configuration:
-- Pagination: Server-side (pageSize: 10)
-- Filtering: Row-based filtering
-- Sorting: Multi-column support
-- Resizable: Column resizing enabled
-- Reorderable: Column reordering enabled
-- Groupable: Data grouping support
-- Column Menu: Filter, sort, hide options
-
-Data Source Configuration:
-- Transport: AJAX requests
-- Read method: GET request
-- Parameterization: querystring
-- Schema: Model dengan fields
-- Error handling: Fallback messages
-
-VALIDASI CLIENT-SIDE:
-
-JavaScript Validation:
-- Input required check
-- Numeric validation
-- Date range validation
-- Debit-Credit balance check
-- Custom validators
-
-Framework: Kendo Validator
-- Real-time validation feedback
-- Error message display
-- Invalid field highlighting
-
-IMPLEMENTASI AUDIT TRAIL:
-
-Field Tracking:
-- Created By: User yang membuat
-- Created Date: Tanggal/waktu dibuat
-- Modified By: User yang mengubah
-- Modified Date: Tanggal/waktu ubah
-- Version: Versi record
-
-Storage:
-- Disimpan di database
-- Used untuk compliance dan audit
-- Queryable untuk history
-
-SECURITY IMPLEMENTATION:
-
-Authorization:
-- Bearer Token validation
-- Role-based access control (RBAC)
-- Permission checking per action
-- Token refresh mechanism
-
-Data Protection:
-- HTTPS encryption in transit
-- Sensitive data logging prevention
-- SQL injection prevention
-- XSS protection
-
-========================================================================================
-                    16. API ENDPOINTS REFERENCE
-========================================================================================
-
-BASE URL: [@ConfigWeb.API_URL]/Accounting/JournalTransaction
-
-JOURNAL TRANSACTION ENDPOINTS:
-
-1. GetJournalList (GET)
-   Purpose: Ambil daftar jurnal
-   Parameters: 
-     - companyCode: Kode perusahaan
-     - dateFrom: Tanggal awal (yyyyMMdd)
-     - dateTo: Tanggal akhir (yyyyMMdd)
-     - docNo: Nomor dokumen
-   Returns: Array of journal objects
-   Authorization: Bearer Token required
-
-2. GetJournalListDetail (GET)
-   Purpose: Ambil detail baris jurnal
-   Parameters:
-     - docNo: Nomor dokumen
-   Returns: Array of detail objects
-   Authorization: Bearer Token required
-
-3. ActionMemorial (POST)
-   Purpose: Buat/Update jurnal memorial
-   Request Body:
-   {
-     "dataHeader": {
-       "action": "S",
-       "companyCode": "string",
-       "docDate": "yyyyMMdd",
-       "docTarget": "string",
-       "refNum": "string",
-       "refDescription": "string",
-       "vendorCode": "string",
-       "tenantCode": "string",
-       "amount": numeric
-     },
-     "dataDetail": [
-       {
-         "companyCode": "string",
-         "divCode": "string",
-         "deptCode": "string",
-         "coaCode": "string",
-         "debit": numeric,
-         "credit": numeric,
-         "description": "string",
-         "objectCode": "string"
-       }
-     ]
-   }
-   Returns: Success message
-   Authorization: Bearer Token required
-
-4. ActionJournalCajePaje (POST)
-   Purpose: Buat jurnal CAJE/PAJE
-   Request Body: Similar structure to ActionMemorial
-   Returns: Success message
-   Authorization: Bearer Token required
-
-5. CheckCoaParties (GET)
-   Purpose: Cek tipe parties untuk COA
-   Parameters:
-     - coaCode: Kode COA
-   Returns: "VND", "TCS", atau "NONE"
-   Authorization: Bearer Token required
-
-6. GetCoaJm (GET)
-   Purpose: Ambil daftar COA untuk journal memorial
-   Returns: Array of COA objects
-   Authorization: Bearer Token required
-
-7. GetObjectJm (GET)
-   Purpose: Ambil daftar object untuk COA
-   Parameters:
-     - companyCode: Kode perusahaan
-     - coaCode: Kode COA
-   Returns: Array of object objects
-   Authorization: Bearer Token required
-
-8. GetFromTo (GET)
-   Purpose: Ambil daftar object From/To
-   Returns: Array dengan obj_cd dan obj_dsc
-   Authorization: Bearer Token required
-
-9. GetJournalStatus (GET)
-   Purpose: Ambil status summary jurnal
-   Parameters:
-     - companyCode: Kode perusahaan
-     - startDate: Tanggal awal (yyyyMMdd)
-     - endDate: Tanggal akhir (yyyyMMdd)
-   Returns: Array dengan action_status dan juml
-   Authorization: Bearer Token required
-
-10. JournalStatus (GET)
-    Purpose: Dashboard API untuk status summary
-    Base URL: [@ConfigWeb.API_URL]/Dashboard/JournalStatus
-    Parameters: companyCode, startDate, endDate
-    Returns: Status summary array
-    Authorization: Bearer Token required
-
-MASTER DATA ENDPOINTS:
-
-1. GetFAVendor (GET)
-   URL: [@ConfigWeb.API_URL]/Master/Vendor/GetFAVendor
-   Returns: Daftar vendor untuk Fixed Asset
-   Authorization: Bearer Token required
-
-2. GetFADebtor (GET)
-   URL: [@ConfigWeb.API_URL]/Master/Vendor/GetFADebtor
-   Returns: Daftar debtor/tenant
-   Authorization: Bearer Token required
-
-3. GetFaDivision (GET)
-   URL: [@ConfigWeb.API_URL]/Master/Division/GetFaDivision
-   Parameters: compCode
-   Returns: Daftar divisi
-   Authorization: Bearer Token required
-
-4. GetFaDepartment (GET)
-   URL: [@ConfigWeb.API_URL]/Master/Department/GetFaDepartment
-   Parameters: compCode, divCode
-   Returns: Daftar departemen
-   Authorization: Bearer Token required
-
-5. GetActivePeriod (GET)
-   URL: [@ConfigWeb.API_URL]/Receive/RV/GetActivePeriod
-   Parameters: compCode
-   Returns: Array dengan start_date dan end_date
-   Authorization: Bearer Token required
-
-6. ListGlType (GET)
-   URL: [@ConfigWeb.API_URL]/Accounting/JournalTransaction/ListGlType
-   Returns: Daftar GL type untuk CAJE/PAJE
-   Authorization: Bearer Token required
-
-ERROR HANDLING PATTERN:
-
-Success Response (200):
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": { /* response data */ }
-}
-
-Error Response (400/500):
-{
-  "success": false,
-  "message": "Error description",
-  "errors": [ /* specific errors */ ]
-}
-
-COMMON HTTP STATUS CODES:
-- 200: OK (Success)
-- 400: Bad Request (Validation error)
-- 401: Unauthorized (Token invalid/expired)
-- 403: Forbidden (Permission denied)
-- 404: Not Found (Resource not found)
-- 500: Internal Server Error
-
-========================================================================================
-                    17. REVISI & CONTACT
-========================================================================================
-
-Dokumen ini dibuat untuk:
-? Tim Accounting - User guide dan proses kerja
-? Tim Finance - Laporan dan analisis
-? Tim IT/Support - Troubleshooting teknis dan API reference
-? Auditor - Audit trail dan compliance
-? Training - User training dan knowledge base
-
-Update Terakhir: [TANGGAL PEMBUATAN]
-
-Jika ada pertanyaan atau perlu update:
-- Hubungi Tim Accounting: accounting@company.com
-- Hubungi IT Support: itsupport@company.com
-- Hubungi Functional Consultant: consultant@company.com
-- Hubungi Developer: development@company.com
-
-DISCLAIMER:
-- Panduan ini dibuat berdasarkan sistem saat ini
-- Fitur dan proses dapat berubah dengan update sistem
-- Selalu confirm dengan manager/supervisor untuk decision kritis
-- Jangan ragu bertanya jika ada yang kurang jelas
-- Report bugs atau improvement ke IT Support dengan detail
-
-VERSION HISTORY:
-v1.0 - Initial release (user guide + technical reference)
-
-========================================================================================
-                        END OF COMPLETE GUIDE
-========================================================================================
+JIFAS Knowledge Base
+
+Dokumen ini adalah knowledge base untuk AI Chatbot JIFAS. Isinya dibuat agar AI memahami logika bisnis, alur kerja, istilah, error handling, dan proses support untuk modul Account dan Accounting. Fokus dokumen ini bukan menjelaskan source code, tetapi menjelaskan cara sistem bekerja dari sisi user, finance, accounting, auditor, dan IT support.
+
+Dokumen ini dapat dipakai untuk RAG, internal chatbot, user guide, training, dan troubleshooting.
+
+Versi: 1.0
+Cakupan utama: Account, Authentication, Authorization, Journal Transaction, Journal Memorial, CAJE PAJE, Adjust Journal, Reverse Journal, Bulk Posting, Balance Sheet, Cash Flow, Profit and Loss, Ledger, Trial Balance, Aging AP, Aging AR, dan Sales Receive.
+
+
+1. Prinsip Jawaban AI Chatbot JIFAS
+
+AI Chatbot JIFAS harus menjawab seperti support internal yang memahami finance dan accounting. Jawaban harus mudah dipahami user biasa, bukan terlalu teknis. Kalau masalah berhubungan dengan hak akses, akun, role, token, server, API, company mapping, menu tidak muncul, atau data tidak bisa dimuat, arahkan user untuk menghubungi IT JIFAS.
+
+AI harus membedakan masalah yang bisa diselesaikan user dan masalah yang harus ditangani IT.
+
+Masalah yang bisa dibantu user:
+- Salah memilih periode laporan.
+- Belum memilih company.
+- Belum klik Preview.
+- Total debit dan credit belum sama.
+- Deskripsi belum diisi.
+- Vendor atau tenant belum dipilih padahal akun membutuhkan party.
+- Belum memilih COA.
+- Belum memilih dokumen sebelum posting.
+- Report kosong karena parameter belum lengkap.
+
+Masalah yang harus diarahkan ke IT:
+- User tidak bisa login padahal username dan password benar.
+- Akun terkunci, tidak aktif, atau password Windows bermasalah.
+- Menu tidak muncul atau access denied.
+- Role, company code, atau menu access salah.
+- Token expired terus menerus.
+- API gagal dimuat, server error, atau data company tidak muncul.
+- Master data vendor, tenant, COA, division, department, atau company tidak tersedia.
+- Active period perusahaan tidak tersedia.
+- Error request failed, unauthorized, forbidden, internal server error.
+- Sistem gagal mengambil data jurnal saat reverse atau adjust.
+- Posting gagal karena error sistem.
+- Send to consolidation gagal karena error sistem.
+
+AI harus selalu meminta informasi penting saat troubleshooting:
+- Username user.
+- Company yang dipilih.
+- Menu yang sedang dibuka.
+- Nomor dokumen atau nomor jurnal.
+- Periode atau tanggal yang digunakan.
+- Screenshot error.
+- Waktu kejadian.
+- Apakah user lain mengalami hal yang sama.
+
+AI tidak boleh menyarankan user mengubah database, menghapus jurnal langsung, mem-bypass approval, atau mengubah data financial tanpa prosedur resmi.
+
+
+2. Gambaran Umum JIFAS
+
+JIFAS adalah Jababeka Integrated Finance and Accounting System. Sistem ini dipakai untuk mengelola proses keuangan internal Jababeka secara terpusat. JIFAS membantu perusahaan mencatat transaksi, melakukan approval, mengontrol budget, memproses pembayaran, mencatat kas dan bank, serta menghasilkan laporan keuangan.
+
+JIFAS dapat dianalogikan sebagai gerbang kontrol keuangan perusahaan. Uang keluar dan uang masuk harus melewati proses pencatatan, verifikasi, approval, dan posting agar data keuangan akurat dan bisa diaudit.
+
+Alur besar uang keluar:
+Kebutuhan divisi masuk ke SPK atau kontrak, lalu invoice vendor diproses, disetujui head, dicek tax, disetujui finance, dibayar, dicatat di cash bank, lalu diposting ke accounting.
+
+Alur besar uang masuk:
+Customer membayar, sales receive dicatat, receiving cash bank dibuat, lalu transaksi diposting ke accounting.
+
+Alur besar uang muka karyawan:
+User mengajukan PUM, head menyetujui, finance dan tax memproses, pembayaran dilakukan, user melakukan settlement, lalu accounting memposting transaksi.
+
+Semua transaksi pada akhirnya bermuara ke accounting report seperti Trial Balance, Balance Sheet, Profit and Loss, Cash Flow, Ledger, dan Aging Report.
+
+
+3. Modul Account
+
+#3.1 Fungsi Modul Account
+
+Modul Account adalah pintu masuk utama ke JIFAS. Semua user harus login sebelum bisa membuka menu JIFAS. Modul ini memastikan hanya user yang memiliki akun, role, company mapping, dan menu access yang benar yang dapat masuk dan menggunakan sistem.
+
+Fungsi utama Account:
+- Memverifikasi identitas user.
+- Mengelola sesi login.
+- Menghubungkan user dengan role dan company.
+- Mengontrol akses menu.
+- Mengamankan data finance dan accounting.
+- Menjadi dasar audit trail karena setiap transaksi harus punya pembuat atau pemroses yang jelas.
+
+
+#3.2 Login
+
+Login adalah proses user masuk ke JIFAS dengan username dan password. Pada lingkungan JIFAS, login umumnya menggunakan akun perusahaan atau akun Windows Active Directory. User tidak membuat akun sendiri seperti aplikasi publik.
+
+Alur login:
+1. User membuka halaman login JIFAS.
+2. User mengisi username.
+3. User mengisi password.
+4. User dapat memilih Remember Me jika ingin sesi login bertahan lebih lama.
+5. User menekan Sign in.
+6. Sistem membersihkan local storage browser untuk membuang cache sesi lama.
+7. Sistem mengirim username dan password ke authentication service.
+8. Jika data benar, sistem membuat sesi login dan token akses.
+9. Sistem memuat role, company, dan menu access user.
+10. User diarahkan ke halaman utama JIFAS.
+
+Jika login gagal, user tetap berada di halaman login dan sistem menampilkan pesan error.
+
+
+#3.3 Local Storage Cleanup Saat Login
+
+Saat halaman login dibuka dan saat tombol Sign in diklik, browser membersihkan local storage. Tujuannya bukan menghapus data transaksi JIFAS, tetapi membersihkan cache pada browser.
+
+Manfaatnya:
+- Menghindari konflik company lama.
+- Menghindari menu lama masih terbaca setelah user berbeda login.
+- Mengurangi risiko data user sebelumnya terbawa di komputer bersama.
+- Memaksa sistem mengambil ulang role, company, dan menu terbaru.
+
+Jika user mengalami menu aneh, company tidak sesuai, atau data tidak berubah setelah ganti user, arahkan user logout dan login ulang. Jika tetap terjadi, arahkan ke IT.
+
+
+#3.4 Remember Me
+
+Remember Me adalah opsi agar sesi login bertahan lebih lama di browser. Jika dipilih, user tidak perlu login ulang terlalu sering. Jika tidak dipilih, sesi akan lebih cepat habis dan user perlu login ulang setelah idle atau browser ditutup.
+
+Jika komputer dipakai bersama, sebaiknya Remember Me tidak digunakan demi keamanan.
+
+
+#3.5 Role dan Hak Akses
+
+Setelah login berhasil, sistem membaca role user. Role menentukan menu yang bisa dibuka dan aksi yang bisa dilakukan.
+
+Contoh role:
+- USER:KI adalah user biasa di perusahaan KI.
+- HEAD:KI adalah head atau atasan di perusahaan KI.
+- FINA:KI adalah staff finance di perusahaan KI.
+- HDFA:KI adalah head finance di perusahaan KI.
+- ACCT:KI adalah staff accounting di perusahaan KI.
+- HDAC:KI adalah head accounting di perusahaan KI.
+- TAXS:KI adalah staff pajak di perusahaan KI.
+- WMTR:RC adalah webmaster untuk perusahaan RC.
+- ADMN:KI adalah admin sistem untuk perusahaan KI.
+
+Format role umumnya berbentuk kode peran dan kode perusahaan. Contoh FINA:KI berarti finance untuk company KI.
+
+Jika user bisa login tetapi menu tidak muncul, atau user tidak bisa membuka menu tertentu, kemungkinan role atau menu access belum sesuai. Ini harus dicek oleh IT atau administrator JIFAS.
+
+
+#3.6 Company Code dan Multi Company
+
+JIFAS dipakai oleh banyak perusahaan dalam grup Jababeka. User biasanya hanya dapat melihat data sesuai company code yang diberikan.
+
+Contoh:
+- User dengan company KI hanya melihat data KI.
+- User dengan company RC hanya melihat data RC.
+- Modul konsolidasi dapat menggabungkan beberapa company, tetapi aksesnya dibatasi.
+
+Jika user merasa data tidak sesuai company atau data company tidak muncul, kemungkinan penyebabnya:
+- User memilih company yang salah.
+- User belum memiliki mapping company.
+- Company code di session browser bermasalah.
+- Hak akses company belum diberikan.
+- API company gagal dimuat.
+
+Jika sudah login ulang tetapi masih salah, arahkan ke IT.
+
+
+#3.7 Forgot Password
+
+Forgot Password dipakai ketika user lupa password. User mengisi email, lalu sistem mengirim link reset password jika email terdaftar.
+
+Alur forgot password:
+1. User memilih Forgot Password.
+2. User mengisi email.
+3. Sistem memvalidasi email.
+4. Jika valid, sistem mengirim email reset.
+5. User membuka email dan klik link reset.
+6. User membuat password baru.
+7. User login kembali.
+
+Jika email reset tidak masuk, user harus cek spam atau junk mail. Jika tetap tidak ada, arahkan ke IT karena bisa jadi email tidak terdaftar, mail server bermasalah, atau akun user dikelola oleh Active Directory sehingga reset tidak melalui halaman JIFAS.
+
+
+#3.8 Reset Password
+
+Reset Password dipakai setelah user menerima link reset. User mengisi email, password baru, dan confirm password.
+
+Validasi umum reset password:
+- Email harus diisi.
+- Password harus diisi.
+- Confirm password harus sama dengan password.
+- Link atau kode reset harus valid.
+- Link reset tidak boleh expired.
+
+Jika link expired, user harus melakukan forgot password ulang. Jika password tetap tidak bisa direset, arahkan ke IT.
+
+
+#3.9 Email Confirmation
+
+Email Confirmation adalah proses memastikan email user benar. Setelah email dikonfirmasi, sistem dapat mengizinkan user login atau menyelesaikan proses akun.
+
+Pada sistem internal perusahaan, fitur ini bisa ada karena template standar ASP.NET, tetapi tidak selalu digunakan sebagai proses utama. Jika user bingung tentang email confirmation, arahkan ke IT untuk memastikan status akun.
+
+
+#3.10 External Login
+
+External Login memungkinkan login menggunakan provider lain seperti Microsoft, Google, atau OAuth provider perusahaan. Jika tidak ada provider yang dikonfigurasi, sistem akan menampilkan bahwa external authentication service belum tersedia.
+
+Jika user memilih external login dan gagal, kemungkinan penyebabnya:
+- Provider belum dikonfigurasi.
+- Akun external tidak terhubung dengan akun JIFAS.
+- Token provider expired.
+- Koneksi provider bermasalah.
+- Akses user belum dimapping.
+
+Solusi: arahkan ke IT JIFAS.
+
+
+#3.11 Two Factor Authentication
+
+Two Factor Authentication atau 2FA adalah verifikasi tambahan setelah password. Sistem dapat meminta user memilih provider, lalu memasukkan kode verifikasi.
+
+Alur 2FA:
+1. User login dengan username dan password.
+2. Sistem meminta kode verifikasi.
+3. User memilih provider verifikasi.
+4. Sistem mengirim kode.
+5. User memasukkan kode.
+6. Jika kode valid, user berhasil login.
+
+Remember Browser dapat dipilih agar browser dipercaya dan tidak selalu meminta kode ulang.
+
+Jika kode salah atau expired, user perlu meminta kode baru. Jika tetap gagal, arahkan ke IT.
+
+
+#3.12 Register User
+
+Register adalah fitur untuk membuat akun baru. Dalam lingkungan internal JIFAS, pembuatan akun biasanya tidak dilakukan bebas oleh user. Akun lebih aman dibuat atau dimapping oleh IT.
+
+Jika user meminta dibuatkan akses JIFAS, AI harus mengarahkan user untuk mengajukan ke IT atau administrator JIFAS dengan informasi:
+- Nama lengkap.
+- Username Windows.
+- Email perusahaan.
+- Company.
+- Role yang dibutuhkan.
+- Menu yang dibutuhkan.
+- Approval dari atasan jika diperlukan.
+
+
+#3.13 Troubleshooting Account
+
+Masalah: Tidak bisa login.
+Kemungkinan penyebab:
+- Username salah.
+- Password salah.
+- Password Windows expired.
+- Akun terkunci.
+- Akun belum dimapping ke JIFAS.
+- Server authentication bermasalah.
+
+Jawaban AI:
+Pastikan username dan password sudah benar. Coba login ulang dan pastikan Caps Lock tidak aktif. Jika akun Windows juga bermasalah atau tetap gagal, hubungi IT JIFAS dengan screenshot error.
+
+Masalah: Menu tidak muncul setelah login.
+Kemungkinan penyebab:
+- Role belum diberikan.
+- Menu access belum dimapping.
+- Company code tidak sesuai.
+- Browser menyimpan sesi lama.
+
+Jawaban AI:
+Logout lalu login ulang. Jika menu tetap tidak muncul, hubungi IT karena kemungkinan hak akses atau role user belum sesuai.
+
+Masalah: Access denied.
+Kemungkinan penyebab:
+- User tidak punya permission untuk menu tersebut.
+- Role tidak cocok dengan menu.
+- Company access tidak sesuai.
+
+Jawaban AI:
+Ini biasanya bukan error input user. Minta user hubungi IT atau administrator JIFAS untuk pengecekan role dan menu access.
+
+Masalah: Session expired atau sering logout.
+Kemungkinan penyebab:
+- Sesi login habis.
+- Token expired.
+- Browser idle terlalu lama.
+- Network atau API bermasalah.
+
+Jawaban AI:
+Coba login ulang. Jika sering terjadi dalam waktu pendek, hubungi IT.
+
+Masalah: Forgot password tidak mengirim email.
+Kemungkinan penyebab:
+- Email salah.
+- Email belum terdaftar.
+- Mail server delay.
+- Akun dikelola oleh Active Directory.
+
+Jawaban AI:
+Cek spam atau junk mail. Jika tidak ada, hubungi IT untuk reset akun.
+
+
+4. Modul Accounting
+
+#4.1 Fungsi Modul Accounting
+
+Modul Accounting adalah pusat pencatatan transaksi keuangan di JIFAS. Semua transaksi yang berasal dari invoice, payment, cash bank, receiving, PUM, sales receive, atau transaksi manual pada akhirnya harus tercermin di jurnal accounting.
+
+Fungsi utama:
+- Mencatat jurnal harian.
+- Membuat jurnal memorial.
+- Membuat jurnal kas CAJE atau PAJE.
+- Menyesuaikan jurnal melalui adjust.
+- Membatalkan jurnal melalui reverse.
+- Melakukan posting ke ledger.
+- Menghasilkan laporan keuangan.
+- Membantu audit trail.
+
+Modul Accounting harus menjaga prinsip double entry. Setiap jurnal harus balance, yaitu total debit sama dengan total credit.
+
+
+#4.2 Prinsip Double Entry
+
+Dalam accounting, setiap transaksi harus memiliki sisi debit dan credit. Total debit harus sama dengan total credit. Jika tidak sama, jurnal tidak boleh disimpan atau tidak boleh diproses lanjut.
+
+Contoh benar:
+Debit Beban Gaji 10.000.000
+Credit Bank 10.000.000
+Total debit 10.000.000 sama dengan total credit 10.000.000.
+
+Contoh salah:
+Debit Beban Gaji 10.000.000
+Credit Bank 9.500.000
+Selisih 500.000. Jurnal tidak balance dan harus diperbaiki.
+
+AI harus menjelaskan bahwa pesan “Total Debit and Credit must be equal” bukan error sistem, tetapi aturan akuntansi yang wajib dipenuhi.
+
+
+#4.3 Status Jurnal
+
+Status jurnal menunjukkan posisi dokumen dalam siklus accounting.
+
+Unchecked adalah jurnal baru atau belum diperiksa.
+Checked adalah jurnal sudah diperiksa dan siap diposting.
+Posted adalah jurnal sudah masuk ledger dan menjadi final.
+Void adalah jurnal dibatalkan.
+Need Reverse adalah jurnal perlu dibuatkan jurnal pembalik.
+Need Complete Void adalah jurnal perlu pembatalan penuh.
+Removed adalah jurnal sudah dihapus atau tidak digunakan lagi.
+
+Aturan penting:
+- Jurnal Posted tidak boleh diubah langsung.
+- Jika jurnal Posted salah, gunakan Adjust atau Reverse.
+- Jangan delete jurnal posted karena audit trail harus tetap ada.
+
+
+#4.4 Master Data Accounting
+
+Master data adalah data referensi yang dipakai semua proses accounting.
+
+Company adalah perusahaan yang sedang diproses datanya.
+COA atau Chart of Account adalah daftar akun accounting.
+Division adalah divisi organisasi.
+Department adalah departemen di dalam divisi.
+Vendor adalah pihak supplier atau creditor.
+Tenant atau Customer adalah pihak debtor atau pelanggan.
+Object Code adalah klasifikasi tambahan seperti project, cost center, region, unit, atau objek biaya.
+GL Type adalah jenis jurnal atau tipe transaksi general ledger.
+Active Period adalah periode accounting yang sedang dibuka.
+
+Jika master data tidak muncul, bukan user yang harus memperbaiki. Arahkan ke Accounting Admin atau IT.
+
+
+#4.5 Active Period
+
+Active Period adalah rentang tanggal yang diperbolehkan untuk input transaksi accounting. Sistem membatasi tanggal jurnal agar hanya berada dalam periode aktif.
+
+Jika muncul pesan bahwa company tidak memiliki active period, artinya periode accounting belum dibuka atau tidak tersedia. User harus menghubungi Accounting Admin atau IT Administrator.
+
+AI harus menjawab:
+Sistem tidak bisa menerima jurnal di luar periode aktif. Silakan konfirmasi periode aktif ke Accounting atau hubungi IT jika periode seharusnya sudah dibuka tetapi tetap tidak muncul.
+
+
+5. Journal Transaction
+
+#5.1 Fungsi Journal Transaction
+
+Journal Transaction adalah halaman utama untuk melihat, mencari, memeriksa, membuat, menyesuaikan, membatalkan, dan mengekspor jurnal. Halaman ini menjadi pusat kerja accounting staff dan accounting supervisor.
+
+User dapat:
+- Mencari jurnal berdasarkan nomor dokumen.
+- Mencari jurnal berdasarkan rentang tanggal.
+- Memfilter berdasarkan status.
+- Melihat detail jurnal.
+- Membuat Journal Memorial.
+- Membuat CAJE atau PAJE.
+- Melakukan Adjust.
+- Melakukan Reverse.
+- Export data ke Excel.
+
+
+#5.2 Cara Mencari Jurnal
+
+Ada dua cara umum mencari jurnal.
+
+Cara pertama adalah mencari berdasarkan Document Number. User memilih filter document number lalu memasukkan nomor jurnal atau nomor dokumen. Cara ini cocok jika user sudah tahu nomor jurnal.
+
+Cara kedua adalah mencari berdasarkan Date Range. User memasukkan tanggal awal dan tanggal akhir, lalu klik Preview. Cara ini cocok jika user hanya tahu periode transaksi.
+
+Jika jurnal tidak muncul:
+- Pastikan tanggal yang dipilih benar.
+- Pastikan nomor dokumen tidak salah ketik.
+- Coba hapus filter status.
+- Klik Preview setelah mengubah parameter.
+- Pastikan company yang dipilih benar.
+- Jika tetap tidak muncul, tanyakan ke accounting supervisor atau IT.
+
+
+#5.3 Data yang Ditampilkan di Journal Transaction
+
+Data utama yang biasa tampil:
+- Doc No atau nomor jurnal.
+- Created By atau pembuat jurnal.
+- Last Update atau tanggal update terakhir.
+- Doc Date atau tanggal jurnal.
+- Amount atau nilai jurnal.
+- Bank jika terkait transaksi bank.
+- Description atau deskripsi.
+- Ref Doc atau dokumen referensi.
+- Ref Num atau nomor referensi.
+- Journal Description.
+- Status.
+- Action.
+
+Detail jurnal berisi:
+- Division.
+- Department.
+- COA.
+- COA Description.
+- Description.
+- Object Code.
+- Object Description.
+- Debit.
+- Credit.
+- From.
+- To.
+- Status.
+
+
+#5.4 Alur Kerja Journal Transaction
+
+1. Accounting staff membuat jurnal.
+2. Sistem memberi status awal seperti Unchecked.
+3. Supervisor atau pihak berwenang memeriksa jurnal.
+4. Jika benar, jurnal menjadi Checked.
+5. Jurnal Checked dapat diposting.
+6. Setelah Posted, jurnal menjadi final dan masuk ledger.
+7. Jika ada kesalahan setelah posted, koreksi dilakukan dengan Adjust atau Reverse.
+
+
+#5.5 Error Handling Journal Transaction
+
+Masalah: Jurnal tidak ketemu.
+Solusi: Periksa company, filter tanggal, nomor dokumen, dan status. Jika tetap tidak ditemukan, hubungi accounting supervisor atau IT.
+
+Masalah: Jurnal tidak bisa diedit.
+Solusi: Jika jurnal sudah Posted, ini normal. Gunakan Adjust atau Reverse sesuai kebutuhan dan ikuti approval internal.
+
+Masalah: Data gagal dimuat.
+Solusi: Login ulang dan cek koneksi. Jika masih gagal, hubungi IT karena kemungkinan API atau token bermasalah.
+
+Masalah: Export tidak bisa.
+Solusi: Pastikan data sudah tampil sebelum export. Jika file tetap gagal diunduh, coba browser lain atau hubungi IT.
+
+
+6. Journal Memorial
+
+#6.1 Fungsi Journal Memorial
+
+Journal Memorial adalah jurnal manual untuk transaksi yang tidak melalui alur operasional normal. Biasanya dipakai untuk adjustment akhir periode, koreksi pembukuan, accrual, depreciation, reserve, dan penyesuaian lain.
+
+Contoh penggunaan:
+- Penyesuaian depreciation akhir bulan.
+- Koreksi akun yang salah.
+- Jurnal accrual biaya.
+- Penyesuaian inventory.
+- Pencadangan piutang tak tertagih.
+
+
+#6.2 Alur Membuat Journal Memorial
+
+1. User membuka Journal Transaction.
+2. User memilih Create Journal Memorial.
+3. Sistem menampilkan form jurnal memorial.
+4. User memilih tanggal sesuai active period.
+5. User mengisi deskripsi.
+6. User dapat mengisi Ref Num dan Ref Doc jika ada.
+7. User memilih vendor atau tenant jika akun membutuhkan party.
+8. User menambahkan detail baris jurnal.
+9. User memilih divisi, departemen, COA, object code jika diperlukan, debit, dan credit.
+10. Sistem menghitung total debit dan credit.
+11. User memastikan total debit sama dengan total credit.
+12. User menekan Save.
+13. Sistem menyimpan jurnal jika semua validasi terpenuhi.
+
+
+#6.3 Field Penting Journal Memorial
+
+Date adalah tanggal jurnal dan wajib diisi.
+Amount dihitung otomatis dari total debit.
+Ref Num adalah nomor referensi, opsional.
+Ref Doc adalah dokumen sumber, opsional.
+Description wajib diisi dan harus jelas.
+Vendor diisi jika akun membutuhkan vendor.
+Tenant atau Customer diisi jika akun membutuhkan tenant atau customer.
+Division wajib pada detail.
+Department wajib pada detail.
+COA wajib pada detail.
+Object Code opsional, tergantung kebutuhan klasifikasi.
+Debit atau Credit diisi sesuai posisi transaksi.
+
+
+#6.4 Validasi Journal Memorial
+
+Sistem mengecek:
+- Date harus diisi.
+- Description harus diisi.
+- Minimal ada satu baris detail.
+- Total debit harus sama dengan total credit.
+- Amount harus lebih besar dari nol.
+- Vendor harus diisi jika COA membutuhkan vendor.
+- Tenant atau customer harus diisi jika COA membutuhkan tenant atau customer.
+- COA harus tersedia.
+- Object Code harus dipilih jika transaksi membutuhkan object.
+
+Jika validasi gagal, sistem menolak save dan menampilkan pesan.
+
+
+#6.5 Error Handling Journal Memorial
+
+Pesan: Total Debit and Credit must be equal.
+Arti: Jurnal belum balance.
+Solusi: Periksa semua nominal debit dan credit sampai totalnya sama.
+
+Pesan: Description must be filled.
+Arti: Deskripsi kosong.
+Solusi: Isi deskripsi yang jelas.
+
+Pesan: Date must be filled.
+Arti: Tanggal belum dipilih.
+Solusi: Pilih tanggal sesuai active period.
+
+Pesan: Total amount must be greater than zero.
+Arti: Tidak ada nominal yang valid.
+Solusi: Isi nominal debit atau credit.
+
+Pesan: Vendor must be filled atau Failed Please fill in the Vendor Code.
+Arti: COA membutuhkan vendor tetapi vendor belum dipilih.
+Solusi: Pilih vendor. Jika vendor tidak ada, hubungi Accounting Admin atau IT.
+
+Pesan: Tenant Customer must be filled atau Failed Please fill in the Tenant Customer Code.
+Arti: COA membutuhkan tenant atau customer tetapi belum dipilih.
+Solusi: Pilih tenant atau customer. Jika tidak tersedia, hubungi Accounting Admin atau IT.
+
+Pesan: Company does not have active period.
+Arti: Tidak ada active period untuk company tersebut.
+Solusi: Hubungi Accounting Admin atau IT Administrator.
+
+
+7. CAJE dan PAJE
+
+#7.1 Fungsi CAJE dan PAJE
+
+CAJE dan PAJE adalah jurnal kas. Modul ini dipakai untuk membuat jurnal yang berkaitan dengan kas masuk atau kas keluar.
+
+CAJE umumnya berkaitan dengan cash adjustment atau cash journal.
+PAJE umumnya berkaitan dengan payment adjustment atau payment journal.
+
+Nama detailnya dapat mengikuti konfigurasi GL Type perusahaan. User memilih tipe jurnal dari daftar GL Type yang tersedia.
+
+
+#7.2 Perbedaan Journal Memorial dan CAJE PAJE
+
+Journal Memorial lebih umum dan dapat dipakai untuk berbagai jurnal penyesuaian.
+CAJE PAJE lebih spesifik untuk transaksi kas atau jurnal dengan GL Type tertentu.
+
+Keduanya tetap memakai prinsip double entry. Total debit harus sama dengan total credit.
+
+
+#7.3 Alur Membuat CAJE PAJE
+
+1. User membuka Journal Transaction.
+2. User memilih Create Caje Paje.
+3. User memilih tipe jurnal atau GL Type.
+4. User memilih tanggal.
+5. User mengisi deskripsi.
+6. User mengisi Ref Num dan Ref Doc jika ada.
+7. User menambahkan detail baris jurnal.
+8. User memilih division, department, COA, object code jika diperlukan, debit, dan credit.
+9. Sistem menghitung total.
+10. User memastikan debit dan credit balance.
+11. User menekan Save.
+12. Sistem menyimpan jurnal jika valid.
+
+
+#7.4 Validasi CAJE PAJE
+
+Sistem mengecek:
+- Tipe jurnal harus dipilih.
+- Date harus diisi.
+- Description harus diisi.
+- Minimal ada satu detail.
+- Total debit sama dengan total credit.
+- Amount lebih besar dari nol.
+- COA tersedia.
+- Division dan department tersedia.
+
+
+#7.5 Error Handling CAJE PAJE
+
+Masalah: Tidak bisa save.
+Solusi: Periksa tipe jurnal, tanggal, deskripsi, detail, COA, dan balance debit credit.
+
+Masalah: COA list not available.
+Solusi: Kemungkinan master COA belum tersedia atau gagal dimuat. Hubungi Accounting Admin atau IT.
+
+Masalah: Please select COA before.
+Solusi: User harus memilih COA sebelum memilih object atau menyimpan detail.
+
+Masalah: Total Debit and Credit must be equal.
+Solusi: Perbaiki nominal hingga total debit sama dengan total credit.
+
+
+8. Adjust Journal
+
+#8.1 Fungsi Adjust Journal
+
+Adjust Journal digunakan untuk melakukan koreksi terhadap jurnal yang sudah ada tanpa menghapus jurnal lama. Tujuannya menjaga audit trail. Adjustment membuat catatan koreksi, sehingga auditor dapat melihat jurnal awal dan jurnal penyesuaiannya.
+
+Adjust digunakan jika:
+- Ada salah akun.
+- Ada selisih nominal.
+- Ada koreksi dari supervisor.
+- Ada kebutuhan menambahkan transaksi koreksi tanpa membatalkan penuh jurnal lama.
+
+
+#8.2 Alur Adjust Journal
+
+1. User mencari jurnal yang perlu disesuaikan.
+2. User memilih action Adjust.
+3. Sistem menampilkan jurnal lama sebagai referensi.
+4. User memilih Adjustment Date.
+5. User mengisi Description.
+6. User mengisi detail adjustment.
+7. Sistem mengecek total debit dan credit.
+8. User menyimpan adjustment.
+9. Sistem membuat jurnal adjustment baru.
+10. Jurnal lama tetap ada.
+
+
+#8.3 Field Penting Adjust Journal
+
+Adjustment Date wajib diisi.
+Description wajib diisi.
+Detail adjustment wajib balance.
+Debit dan credit harus sama totalnya.
+
+
+#8.4 Error Handling Adjust Journal
+
+Pesan: Cannot continue to save. Total Debit and Credit must be equal.
+Solusi: Perbaiki detail adjustment sampai balance.
+
+Pesan: Description must be filled.
+Solusi: Isi alasan adjustment dengan jelas.
+
+Pesan: Date must be filled.
+Solusi: Pilih tanggal adjustment.
+
+Jika data jurnal lama gagal dimuat, arahkan ke IT karena sistem tidak bisa mengambil data jurnal referensi.
+
+
+9. Reverse Journal
+
+#9.1 Fungsi Reverse Journal
+
+Reverse Journal digunakan untuk membatalkan efek jurnal dengan membuat jurnal kebalikan. Debit pada jurnal lama menjadi credit pada jurnal reverse, dan credit pada jurnal lama menjadi debit pada jurnal reverse.
+
+Reverse bukan delete. Reverse adalah cara accounting yang benar untuk membatalkan jurnal yang sudah posted atau tidak boleh diubah langsung.
+
+
+#9.2 Kapan Reverse Digunakan
+
+Reverse digunakan jika:
+- Jurnal posted ternyata salah total.
+- Transaksi harus dibatalkan penuh.
+- Jurnal dibuat ganda.
+- Dokumen sumber ternyata tidak valid.
+- Supervisor meminta pembatalan dengan audit trail.
+
+
+#9.3 Alur Reverse Journal
+
+1. User mencari jurnal yang akan dibalik.
+2. User memilih action Reverse.
+3. Sistem menampilkan data jurnal asli.
+4. User memilih Reverse Date.
+5. Sistem mengisi atau user mengisi Description.
+6. Sistem menampilkan detail jurnal lama.
+7. User mengonfirmasi reverse.
+8. Sistem membuat jurnal reverse baru.
+9. Jurnal asli tetap ada sebagai audit trail.
+10. Net effect accounting menjadi nol.
+
+
+#9.4 Error Handling Reverse Journal
+
+Pesan: Cannot continue to save. Please fill mandatory field before.
+Solusi: Isi Reverse Date dan Description.
+
+Pesan: Cannot get data journal. Please contact your IT Administrator.
+Arti: Sistem gagal mengambil data jurnal referensi.
+Solusi: Hubungi IT Administrator dengan nomor jurnal dan screenshot error.
+
+Pesan: Request failed atau server error.
+Solusi: Hubungi IT karena reverse membutuhkan koneksi API yang valid.
+
+Jika reverse berhasil, sistem menampilkan pesan bahwa Journal Reverse berhasil dibuat.
+
+
+10. Bulk Posting
+
+#10.1 Fungsi Bulk Posting
+
+Bulk Posting digunakan untuk memposting banyak dokumen sekaligus. Fitur ini membantu accounting mempercepat proses posting dari dokumen yang sudah siap diposting.
+
+User dapat melihat daftar dokumen yang tersedia, memilih beberapa dokumen, lalu menekan Posting Selected.
+
+
+#10.2 Alur Bulk Posting
+
+1. User membuka menu Bulk Posting.
+2. Sistem menampilkan daftar dokumen berdasarkan company aktif.
+3. User memilih satu atau beberapa dokumen.
+4. User menekan Posting Selected.
+5. Sistem meminta konfirmasi jumlah item yang akan diposting.
+6. User menyetujui.
+7. Sistem mengirim daftar doc no untuk diposting.
+8. Jika berhasil, sistem menampilkan notifikasi sukses dan grid refresh.
+9. Jika gagal, sistem menampilkan pesan gagal.
+
+
+#10.3 Data yang Ditampilkan di Bulk Posting
+
+Kolom utama:
+- Doc No.
+- Doc Date.
+- Description.
+- Amount.
+- Status.
+
+
+#10.4 Error Handling Bulk Posting
+
+Pesan: Please select at least one item to continue.
+Arti: User belum memilih dokumen.
+Solusi: Pilih minimal satu dokumen sebelum klik Posting Selected.
+
+Pesan mengandung Failed.
+Arti: Proses posting gagal.
+Solusi: Baca pesan error. Jika gagal karena data belum valid, perbaiki dokumen. Jika gagal karena sistem, hubungi IT.
+
+Jika grid kosong:
+- Pastikan company benar.
+- Pastikan ada dokumen yang siap posting.
+- Jika seharusnya ada tetapi tidak muncul, hubungi Accounting Supervisor atau IT.
+
+
+11. Balance Sheet
+
+#11.1 Fungsi Balance Sheet
+
+Balance Sheet adalah laporan posisi keuangan perusahaan pada periode tertentu. Laporan ini menunjukkan aset, kewajiban, dan ekuitas.
+
+Rumus dasar:
+Aset sama dengan Liability ditambah Equity.
+
+Balance Sheet membantu manajemen melihat posisi keuangan perusahaan dan memastikan data accounting sudah benar.
+
+
+#11.2 Parameter Balance Sheet
+
+User harus memilih:
+- Company.
+- Period From.
+- Period To.
+
+Opsi tambahan:
+- Month Period untuk melihat berdasarkan bulan.
+- Ledger untuk melihat detail ledger.
+- With Unposted Journal untuk memasukkan jurnal yang belum posted.
+
+
+#11.3 Alur Balance Sheet
+
+1. User memilih company.
+2. User memilih periode awal dan periode akhir.
+3. User memilih opsi tambahan jika diperlukan.
+4. User klik Preview untuk menampilkan report.
+5. User dapat klik Print untuk mencetak.
+6. Jika Ledger dicentang, sistem menampilkan detail transaksi ledger.
+
+
+#11.4 Detail Ledger Balance Sheet
+
+Kolom detail yang dapat tampil:
+- COA.
+- Doc No.
+- Description.
+- Object.
+- GL Type.
+- Bank Balance.
+- Debit.
+- Credit.
+- Saldo.
+
+
+#11.5 Error Handling Balance Sheet
+
+Pesan: Please select a company.
+Solusi: Pilih company terlebih dahulu.
+
+Pesan: Please select period from.
+Solusi: Pilih tanggal awal periode.
+
+Pesan: Please select period to.
+Solusi: Pilih tanggal akhir periode.
+
+Pesan: Cannot print an empty report.
+Solusi: Klik Preview dulu dan pastikan data muncul sebelum print.
+
+Pesan: Failed to load balance sheet detail.
+Solusi: Login ulang. Jika tetap gagal, hubungi IT.
+
+Jika Balance Sheet tidak balance, ini masalah accounting serius. Arahkan ke Accounting Supervisor atau Internal Audit untuk cek jurnal. IT hanya dilibatkan jika data sistem gagal dimuat atau ada bug.
+
+
+12. Cash Flow
+
+#12.1 Fungsi Cash Flow
+
+Cash Flow adalah laporan arus kas yang menunjukkan pergerakan uang masuk dan uang keluar selama periode tertentu. Laporan ini membantu memahami likuiditas perusahaan.
+
+
+#12.2 Parameter Cash Flow
+
+User memilih:
+- Company.
+- Period From.
+- Period To.
+
+Opsi tambahan:
+- Month Period.
+- Ledger.
+- With Unposted Journal.
+
+Tombol tersedia:
+- Preview.
+- Export Excel.
+- Print.
+
+
+#12.3 Detail Ledger Cash Flow
+
+Kolom detail yang dapat tampil:
+- COA.
+- Doc Date.
+- Doc No.
+- Description.
+- Object.
+- GL Type.
+- Debit.
+- Credit.
+- Saldo.
+
+
+#12.4 Error Handling Cash Flow
+
+Jika report kosong, user harus cek company dan periode. Jika data seharusnya ada tetapi tidak muncul, hubungi IT atau Accounting Supervisor.
+
+Jika gagal export, pastikan data sudah tampil. Jika tetap gagal, hubungi IT.
+
+Jika muncul error loading company atau loading report, kemungkinan API, token, atau koneksi bermasalah. Arahkan ke IT.
+
+
+13. Profit and Loss
+
+#13.1 Fungsi Profit and Loss
+
+Profit and Loss atau PnL adalah laporan laba rugi. Laporan ini menunjukkan pendapatan, biaya, laba, dan rugi perusahaan pada periode tertentu.
+
+PnL membantu manajemen menilai performa operasional perusahaan.
+
+
+#13.2 Parameter Profit and Loss
+
+User memilih:
+- Company.
+- Period From.
+- Period To.
+
+Opsi tambahan:
+- Month Period.
+- Ledger untuk melihat detail.
+
+Tombol tersedia:
+- Preview.
+- Export Excel.
+- Print.
+
+
+#13.3 Detail Ledger Profit and Loss
+
+Kolom detail yang dapat tampil:
+- COA.
+- Doc No.
+- Description.
+- Object.
+- GL Type.
+- Bank Balance.
+- Debit.
+- Credit.
+- Saldo.
+
+
+#13.4 Error Handling Profit and Loss
+
+Pesan: Failed to load profit and loss detail.
+Solusi: Login ulang dan coba lagi. Jika tetap gagal, hubungi IT.
+
+Jika angka PnL terlihat tidak wajar:
+- Cek periode.
+- Cek apakah Month Period aktif.
+- Cek apakah data unposted masuk atau tidak.
+- Cek jurnal pendapatan dan biaya.
+- Jika tetap tidak wajar, eskalasi ke Accounting Supervisor.
+
+
+14. Ledger
+
+#14.1 Fungsi Ledger
+
+Ledger adalah buku besar per akun. Ledger dipakai untuk melihat detail mutasi transaksi pada COA tertentu dalam periode tertentu.
+
+Ledger membantu menjawab pertanyaan seperti:
+- Kenapa saldo akun ini berubah?
+- Transaksi apa saja yang masuk ke akun ini?
+- Dokumen mana yang menyebabkan saldo naik atau turun?
+
+
+#14.2 Parameter Ledger
+
+User harus memilih:
+- Company.
+- COA.
+- Period From.
+- Period To.
+
+Opsi tambahan:
+- With Unposted Journal.
+
+
+#14.3 Alur Ledger
+
+1. User memilih company.
+2. User klik lookup COA.
+3. User memilih satu atau beberapa COA dari tree COA.
+4. User memilih periode awal dan akhir.
+5. User dapat mencentang With Unposted Journal jika ingin memasukkan jurnal belum posted.
+6. User klik Preview.
+7. Sistem menampilkan detail ledger.
+
+
+#14.4 Kolom Ledger
+
+Kolom yang dapat tampil:
+- Doc Date.
+- Doc No.
+- Ref No.
+- Ref Doc.
+- Object Desc.
+- Sub Desc.
+- Description.
+- GL Type.
+- Debit.
+- Credit.
+- Saldo.
+- COA Code.
+- COA Description.
+
+
+#14.5 Error Handling Ledger
+
+Pesan: Please select a company.
+Solusi: Pilih company.
+
+Pesan: Please select at least one COA.
+Solusi: Pilih minimal satu COA.
+
+Pesan: Please select period from.
+Solusi: Pilih tanggal awal.
+
+Pesan: Please select period to.
+Solusi: Pilih tanggal akhir.
+
+Pesan: COA list must be filled.
+Solusi: Pilih COA dari lookup.
+
+Jika COA tidak muncul, arahkan ke Accounting Admin atau IT karena master COA mungkin belum tersedia atau gagal dimuat.
+
+
+15. Trial Balance
+
+#15.1 Fungsi Trial Balance
+
+Trial Balance adalah laporan yang menampilkan saldo semua akun untuk memastikan total debit sama dengan total credit. Trial Balance adalah pengecekan penting sebelum laporan keuangan digunakan.
+
+Trial Balance berisi beginning balance, mutasi debit credit, ending balance, adjustment, dan ending adjust.
+
+
+#15.2 Parameter Trial Balance
+
+User memilih:
+- Company.
+- Period.
+
+Opsi tambahan:
+- Detail Version untuk tampilan detail.
+- WP Version untuk versi working paper.
+
+Tombol tersedia:
+- Preview.
+- Send to Consolidation.
+- Export Excel.
+- Export Excel Detail.
+- Expand dan Collapse jika data berbentuk tree.
+
+
+#15.3 Kolom Trial Balance
+
+Kolom yang dapat tampil:
+- Code.
+- Description.
+- Object Desc.
+- Sub Desc.
+- COA.
+- Beginning Balance Debit.
+- Beginning Balance Credit.
+- Mutasi Debit.
+- Mutasi Credit.
+- Ending Balance Debit.
+- Ending Balance Credit.
+- Adjust Debit.
+- Adjust Credit.
+- Ending Adjust Debit.
+- Ending Adjust Credit.
+
+
+#15.4 Send to Consolidation
+
+Send to Consolidation digunakan untuk mengirim data Trial Balance ke modul konsolidasi. Ini biasanya dilakukan setelah data TB dianggap benar dan siap digabungkan ke laporan grup.
+
+Sebelum send to consolidation:
+- Pastikan company sudah benar.
+- Pastikan period sudah benar.
+- Pastikan data TB sudah dipreview.
+- Pastikan angka sudah direview accounting.
+
+Jika send to consolidation gagal, hubungi IT dan Accounting karena proses ini berkaitan dengan integrasi antar modul.
+
+
+#15.5 Error Handling Trial Balance
+
+Pesan: Please select a company.
+Solusi: Pilih company.
+
+Pesan: Please select a period.
+Solusi: Pilih periode.
+
+Pesan: Can not export empty table.
+Solusi: Klik Preview dulu sampai data tampil.
+
+Pesan: An error occurred while sending data to consolidation.
+Solusi: Hubungi IT dengan company, periode, dan screenshot error.
+
+Jika Trial Balance tidak balance:
+- Ini masalah accounting penting.
+- Jangan lanjut membuat laporan final.
+- Cek jurnal dalam periode tersebut.
+- Cari jurnal yang tidak balance.
+- Buat adjustment jika perlu.
+- Generate ulang TB sampai balance.
+
+
+16. Aging AP
+
+#16.1 Fungsi Aging AP
+
+Aging AP adalah laporan umur hutang atau Account Payable. Laporan ini menunjukkan hutang perusahaan kepada vendor berdasarkan umur jatuh tempo.
+
+AP berarti Account Payable atau hutang usaha.
+
+
+#16.2 Parameter Aging AP
+
+User memilih:
+- Company.
+- Date.
+
+Tombol tersedia:
+- Search.
+- Export.
+
+
+#16.3 Tampilan Aging AP
+
+Aging AP memiliki dua tampilan:
+- Summary Aging AP.
+- Detail Aging AP.
+
+Kolom summary dan detail dapat mencakup:
+- Creditor Name.
+- Data.
+- Description.
+- Doc No.
+- Acc Balance Amount.
+- Current Amount.
+- Over Due 1 sampai 30 hari.
+- Over Due 31 sampai 60 hari.
+- Over Due 61 sampai 90 hari.
+- Over Due 91 sampai 120 hari.
+- Over Due 121 sampai 365 hari.
+- Over Due lebih dari 365 hari.
+
+
+#16.4 Cara Membaca Aging AP
+
+Current Amount adalah hutang yang belum overdue.
+Over Due 1 sampai 30 berarti hutang melewati jatuh tempo sampai 30 hari.
+Over Due lebih dari 365 berarti hutang sangat lama dan perlu perhatian khusus.
+
+Semakin tua umur hutang, semakin penting untuk ditindaklanjuti oleh finance dan accounting.
+
+
+#16.5 Error Handling Aging AP
+
+Pesan: Please fill required field before continue.
+Solusi: Pilih company dan tanggal terlebih dahulu.
+
+Jika data kosong:
+- Pastikan tanggal benar.
+- Pastikan company benar.
+- Pastikan memang ada data hutang pada tanggal tersebut.
+- Jika seharusnya ada tetapi tidak tampil, hubungi IT.
+
+Jika export gagal:
+- Pastikan data sudah tampil.
+- Coba refresh atau login ulang.
+- Jika tetap gagal, hubungi IT.
+
+
+17. Aging AR
+
+#17.1 Fungsi Aging AR
+
+Aging AR adalah laporan umur piutang atau Account Receivable. Laporan ini menunjukkan piutang customer berdasarkan umur jatuh tempo.
+
+AR berarti Account Receivable atau piutang usaha.
+
+
+#17.2 Parameter Aging AR
+
+User memilih:
+- Company.
+- Date.
+
+Tombol tersedia:
+- Search.
+- Export.
+
+
+#17.3 Tampilan Aging AR
+
+Aging AR memiliki dua tampilan:
+- Summary Aging AR.
+- Detail Aging AR.
+
+Kolom dapat mencakup:
+- Debitor Name.
+- Creditor Name pada detail tertentu.
+- Description.
+- Doc No.
+- Acc Balance Amount.
+- Current Amount.
+- Over Due 1 sampai 30 hari.
+- Over Due 31 sampai 60 hari.
+- Over Due 61 sampai 90 hari.
+- Over Due 91 sampai 120 hari.
+- Over Due 121 sampai 365 hari.
+- Over Due lebih dari 365 hari.
+
+
+#17.4 Cara Membaca Aging AR
+
+Current Amount adalah piutang yang belum overdue.
+Over Due 1 sampai 30 berarti piutang baru melewati jatuh tempo.
+Over Due lebih dari 365 berarti piutang sangat lama dan perlu perhatian collection atau manajemen.
+
+Aging AR membantu tim finance melihat customer mana yang perlu ditagih.
+
+
+#17.5 Error Handling Aging AR
+
+Pesan: Please fill required field before continue.
+Solusi: Pilih company dan tanggal.
+
+Jika data kosong:
+- Pastikan company benar.
+- Pastikan tanggal benar.
+- Pastikan piutang memang ada.
+- Jika seharusnya ada tetapi tidak muncul, hubungi IT.
+
+
+18. Sales Receive dan Customer Deposit
+
+#18.1 Fungsi Sales Receive
+
+Sales Receive adalah modul accounting yang berkaitan dengan penerimaan dari customer, customer deposit, dan tindakan lanjutan seperti mark as sales revenue atau cancel purchase.
+
+Modul ini membantu accounting mengelola uang customer yang sudah diterima, melihat history penerimaan, mengalokasikan dana, dan mengubah status penerimaan menjadi revenue jika sudah memenuhi syarat.
+
+
+#18.2 Data Utama Sales Receive
+
+Grid utama menampilkan data seperti:
+- Customer Name.
+- Kav Ref.
+- Total.
+- Last Status.
+- Action.
+
+Action yang tersedia:
+- View History Receive.
+- Mark as Sales Revenue.
+- Cancel Purchase.
+
+
+#18.3 View History Receive
+
+View History Receive digunakan untuk melihat riwayat penerimaan customer atau kavling tertentu.
+
+Data yang ditampilkan:
+- Customer Name.
+- Kav Ref.
+- History penerimaan.
+
+Jika history kosong, cek apakah customer dan kav ref benar. Jika data seharusnya ada tetapi tidak muncul, hubungi IT.
+
+
+#18.4 Mark as Sales Revenue
+
+Mark as Sales Revenue digunakan untuk mengubah customer deposit atau payment received menjadi revenue penjualan.
+
+Alur:
+1. User memilih data customer.
+2. User klik Mark as Sales Revenue.
+3. Sistem menampilkan customer name, kav ref, customer deposit, dan payment received.
+4. User memilih tanggal.
+5. User mengisi funding allocation dalam grid.
+6. User memilih division, department, COA, object code jika diperlukan, debit, dan credit.
+7. Sistem menghitung total funding.
+8. Jika ada sisa, sistem dapat menunjukkan Back to Customer Deposit.
+9. User menekan Save.
+10. Sistem meminta konfirmasi.
+11. Sistem menyimpan mark revenue.
+
+
+#18.5 Cancel Purchase
+
+Cancel Purchase digunakan untuk membatalkan pembelian atau transaksi customer tertentu.
+
+Field penting:
+- Cancellation Date wajib.
+- Cancellation Type wajib.
+- Handover To wajib untuk tipe pembatalan tertentu.
+- Change To wajib untuk tipe pembatalan tertentu.
+- Reason wajib dan maksimal 200 karakter.
+- Funding Allocation wajib.
+
+Alur:
+1. User memilih data customer.
+2. User klik Cancel Purchase.
+3. Sistem menampilkan customer name, kav ref, customer deposit, dan payment received.
+4. User memilih cancellation date.
+5. User memilih cancellation type.
+6. User mengisi handover to atau change to jika field tersebut muncul.
+7. User mengisi reason.
+8. User mengisi funding allocation.
+9. User menekan Save.
+10. Sistem meminta konfirmasi.
+11. Sistem memproses cancellation.
+
+
+#18.6 Funding Allocation
+
+Funding Allocation adalah pembagian nilai transaksi ke akun accounting. Setiap baris allocation harus memiliki divisi, department, COA, deskripsi, debit, dan credit sesuai kebutuhan.
+
+Prinsip tetap sama: debit dan credit harus balance.
+
+Jika total allocation tidak sesuai, user perlu memeriksa nominal.
+
+
+#18.7 Error Handling Sales Receive
+
+Masalah: Tidak bisa mark as revenue.
+Solusi: Pastikan tanggal diisi dan funding allocation sudah lengkap. Jika muncul error dari sistem, hubungi IT dengan customer name dan kav ref.
+
+Masalah: Tidak bisa cancel purchase.
+Solusi: Pastikan cancellation date, cancellation type, reason, dan field tambahan seperti handover to atau change to sudah diisi jika muncul.
+
+Pesan: Characters cannot exceed 200.
+Solusi: Pendekkan reason maksimal 200 karakter.
+
+Masalah: Customer atau kav ref tidak muncul.
+Solusi: Pastikan company benar. Jika data seharusnya ada, hubungi IT.
+
+Masalah: COA, division, atau department tidak muncul di allocation.
+Solusi: Hubungi Accounting Admin atau IT karena master data mungkin belum tersedia.
+
+
+19. Report dan Export
+
+#19.1 Preview
+
+Preview digunakan untuk menampilkan data atau report berdasarkan parameter yang dipilih. User harus mengisi parameter wajib sebelum Preview.
+
+Jika Preview tidak dilakukan, tombol Print atau Export bisa menghasilkan report kosong.
+
+
+#19.2 Print
+
+Print digunakan untuk mencetak report. Jika muncul pesan Cannot print an empty report, artinya report belum berisi data atau belum dipreview.
+
+Solusi: klik Preview terlebih dahulu.
+
+
+#19.3 Export Excel
+
+Export Excel digunakan untuk mengunduh data report atau grid. Jika muncul pesan cannot export empty table, user harus klik Preview atau Search sampai data tampil.
+
+Jika data sudah tampil tetapi export tetap gagal, hubungi IT.
+
+
+20. Error Handling Umum JIFAS Accounting
+
+#20.1 Total Debit and Credit must be equal
+
+Arti: Total debit tidak sama dengan total credit.
+
+Penyelesaian:
+- Hitung ulang total debit.
+- Hitung ulang total credit.
+- Pastikan tidak ada salah input angka.
+- Pastikan angka tidak masuk ke debit dan credit sekaligus pada baris yang sama.
+- Pastikan tidak ada baris kosong.
+- Simpan setelah balance.
+
+Eskalasi ke IT hanya jika angka di layar sudah sama tetapi sistem tetap menolak.
+
+
+#20.2 Date must be filled
+
+Arti: Tanggal wajib belum dipilih.
+
+Penyelesaian:
+- Pilih tanggal.
+- Pastikan tanggal berada dalam active period.
+- Jika tanggal tidak bisa dipilih padahal seharusnya bisa, hubungi IT atau Accounting Admin.
+
+
+#20.3 Description must be filled
+
+Arti: Deskripsi kosong.
+
+Penyelesaian:
+- Isi deskripsi yang menjelaskan transaksi.
+- Gunakan format jelas: jenis transaksi, pihak terkait, periode, dan alasan.
+
+Contoh deskripsi baik:
+Koreksi biaya listrik periode Januari 2026 untuk invoice INV-001.
+
+
+#20.4 Total amount must be greater than zero
+
+Arti: Nominal transaksi belum ada atau masih nol.
+
+Penyelesaian:
+- Isi debit atau credit.
+- Pastikan detail tidak kosong.
+- Periksa format angka.
+
+
+#20.5 Vendor must be filled
+
+Arti: COA yang dipilih membutuhkan vendor.
+
+Penyelesaian:
+- Pilih vendor dari dropdown.
+- Jika vendor tidak ada, hubungi Accounting Admin atau IT untuk pengecekan master vendor.
+
+
+#20.6 Tenant Customer must be filled
+
+Arti: COA yang dipilih membutuhkan tenant atau customer.
+
+Penyelesaian:
+- Pilih tenant atau customer dari dropdown.
+- Jika tidak tersedia, hubungi Accounting Admin atau IT.
+
+
+#20.7 COA list not available
+
+Arti: Daftar akun tidak tersedia.
+
+Penyelesaian:
+- Coba refresh.
+- Login ulang.
+- Pastikan company benar.
+- Jika tetap tidak tersedia, hubungi IT atau Accounting Admin.
+
+
+#20.8 Please select COA before
+
+Arti: User mencoba memilih object atau menyimpan detail sebelum memilih COA.
+
+Penyelesaian:
+- Pilih COA dulu.
+- Setelah COA dipilih, pilih object code jika diperlukan.
+
+
+#20.9 Please fill required field before continue
+
+Arti: Ada field wajib yang belum diisi.
+
+Penyelesaian:
+- Cek company.
+- Cek date atau period.
+- Cek COA.
+- Cek description.
+- Cek detail grid.
+
+
+#20.10 Cannot get data journal. Please contact your IT Administrator
+
+Arti: Sistem gagal mengambil data jurnal yang dibutuhkan untuk proses reverse atau detail.
+
+Penyelesaian:
+- User tidak perlu mencoba berkali-kali.
+- Catat nomor jurnal.
+- Screenshot error.
+- Hubungi IT Administrator.
+
+
+#20.11 Unauthorized atau Forbidden
+
+Arti:
+- Token login tidak valid.
+- Session expired.
+- User tidak punya permission.
+
+Penyelesaian:
+- Login ulang.
+- Jika tetap muncul, hubungi IT untuk pengecekan role dan token.
+
+
+#20.12 Request Failed atau Internal Server Error
+
+Arti:
+- API error.
+- Server error.
+- Koneksi bermasalah.
+- Data input mungkin menyebabkan error backend.
+
+Penyelesaian:
+- Screenshot error.
+- Catat menu, company, periode, dan dokumen.
+- Hubungi IT.
+
+
+21. Kamus Istilah JIFAS
+
+JIFAS adalah Jababeka Integrated Finance and Accounting System.
+AD adalah Active Directory, akun Windows perusahaan.
+API adalah layanan backend yang memproses data dari frontend.
+Token adalah identitas login digital yang dipakai setiap request.
+Session adalah status login aktif user.
+Cookie adalah penyimpanan sesi login di browser.
+Role adalah peran user yang menentukan hak akses.
+Company Code adalah kode perusahaan dalam grup Jababeka.
+Menu Access adalah hak user untuk membuka menu tertentu.
+COA adalah Chart of Account atau daftar akun accounting.
+GL adalah General Ledger atau buku besar.
+GL Type adalah tipe jurnal general ledger.
+AP adalah Account Payable atau hutang usaha.
+AR adalah Account Receivable atau piutang usaha.
+CAJE adalah tipe jurnal kas atau cash adjustment sesuai konfigurasi sistem.
+PAJE adalah tipe jurnal payment atau cash journal sesuai konfigurasi sistem.
+PUM adalah Panjar Uang Muka.
+SPK adalah Surat Perintah Kerja atau kontrak.
+RV adalah Receiving Voucher.
+TB adalah Trial Balance.
+BS adalah Balance Sheet.
+PnL adalah Profit and Loss.
+WP Version adalah versi working paper untuk kebutuhan laporan atau review.
+Object Code adalah kode klasifikasi transaksi seperti project, cost center, unit, atau region.
+Active Period adalah periode accounting yang sedang dibuka.
+Posting adalah proses finalisasi jurnal ke ledger.
+Reverse adalah proses membuat jurnal pembalik.
+Adjust adalah proses membuat jurnal koreksi.
+Void adalah pembatalan dokumen.
+Ledger adalah buku besar detail transaksi per akun.
+Aging adalah laporan umur hutang atau piutang.
+
+
+22. Contoh Tanya Jawab untuk AI Chatbot
+
+Pertanyaan: Saya tidak bisa login JIFAS.
+Jawaban: Coba pastikan username dan password sudah benar serta Caps Lock tidak aktif. Jika akun Windows juga bermasalah atau pesan error tetap muncul, hubungi IT JIFAS karena kemungkinan akun, password, atau akses user perlu dicek.
+
+Pertanyaan: Saya bisa login tapi menu Accounting tidak muncul.
+Jawaban: Kemungkinan role atau menu access belum diberikan. Logout dan login ulang terlebih dahulu. Jika tetap tidak muncul, hubungi IT untuk pengecekan role dan akses menu.
+
+Pertanyaan: Kenapa muncul Total Debit and Credit must be equal?
+Jawaban: Artinya jurnal belum balance. Dalam accounting, total debit harus sama dengan total credit. Periksa semua baris nominal dan pastikan total debit sama dengan total credit sebelum save.
+
+Pertanyaan: Kenapa vendor harus diisi?
+Jawaban: COA yang dipilih membutuhkan vendor sebagai party. Pilih vendor dari dropdown. Jika vendor tidak tersedia, hubungi Accounting Admin atau IT untuk pengecekan master vendor.
+
+Pertanyaan: Kenapa tenant customer harus diisi?
+Jawaban: COA yang dipilih membutuhkan tenant atau customer. Pilih tenant atau customer dari dropdown. Jika tidak ada, hubungi Accounting Admin atau IT.
+
+Pertanyaan: Kenapa jurnal posted tidak bisa diedit?
+Jawaban: Jurnal posted sudah final dan masuk ledger. Untuk koreksi, gunakan Adjust jika hanya perlu koreksi, atau Reverse jika transaksi harus dibatalkan penuh. Jangan menghapus jurnal posted.
+
+Pertanyaan: Apa bedanya Adjust dan Reverse?
+Jawaban: Adjust digunakan untuk membuat koreksi tambahan tanpa membatalkan penuh jurnal lama. Reverse digunakan untuk membuat jurnal kebalikan sehingga efek jurnal lama menjadi nol.
+
+Pertanyaan: Kenapa report kosong?
+Jawaban: Pastikan company dan periode sudah dipilih, lalu klik Preview. Jika data seharusnya ada tetapi tetap kosong, hubungi Accounting Supervisor atau IT.
+
+Pertanyaan: Kenapa tidak bisa export Excel?
+Jawaban: Pastikan data sudah tampil terlebih dahulu. Jika tabel masih kosong, export tidak bisa dilakukan. Jika data sudah tampil tapi export gagal, hubungi IT.
+
+Pertanyaan: Apa itu Aging AP?
+Jawaban: Aging AP adalah laporan umur hutang vendor. Laporan ini membantu finance melihat hutang berdasarkan umur jatuh tempo, misalnya current, overdue 1 sampai 30 hari, dan overdue lebih dari 365 hari.
+
+Pertanyaan: Apa itu Aging AR?
+Jawaban: Aging AR adalah laporan umur piutang customer. Laporan ini membantu finance melihat piutang berdasarkan umur jatuh tempo dan menentukan prioritas penagihan.
+
+Pertanyaan: Kenapa active period tidak tersedia?
+Jawaban: Company tersebut belum memiliki periode accounting aktif atau sistem gagal mengambil data periode. Hubungi Accounting Admin atau IT Administrator.
+
+Pertanyaan: Bulk posting gagal.
+Jawaban: Pastikan dokumen yang dipilih memang siap posting. Jika pesan gagal berasal dari validasi dokumen, perbaiki dokumennya. Jika pesannya berupa server error atau request failed, hubungi IT.
+
+Pertanyaan: Send to consolidation gagal.
+Jawaban: Pastikan company dan period benar, dan Trial Balance sudah dipreview. Jika tetap gagal, hubungi IT karena proses ini melibatkan integrasi consolidation.
+
+Pertanyaan: Cancel Purchase tidak bisa disimpan.
+Jawaban: Pastikan cancellation date, cancellation type, reason, dan funding allocation sudah diisi. Jika field handover to atau change to muncul, field tersebut juga wajib diisi.
+
+Pertanyaan: Mark as Sales Revenue tidak bisa disimpan.
+Jawaban: Pastikan tanggal dan funding allocation sudah lengkap. Jika COA, division, atau department tidak muncul, hubungi Accounting Admin atau IT.
+
+
+23. Panduan Eskalasi ke IT
+
+AI harus menyarankan user mengirim informasi berikut ke IT:
+- Nama user dan username.
+- Company yang dipilih.
+- Menu yang diakses.
+- Nomor dokumen atau jurnal jika ada.
+- Periode atau tanggal yang dipilih.
+- Screenshot error.
+- Waktu kejadian.
+- Browser yang digunakan.
+- Apakah sudah logout dan login ulang.
+- Apakah user lain mengalami masalah yang sama.
+
+Contoh pesan ke IT:
+Saya mengalami error di JIFAS pada menu Journal Transaction. Company KI, nomor jurnal JM-2026-001, periode 01/02/2026 sampai 28/02/2026. Error yang muncul: Cannot get data journal. Saya sudah logout dan login ulang tetapi masih sama. Terlampir screenshot error.
+
+
+24. Batasan Jawaban AI
+
+AI boleh membantu menjelaskan alur, validasi, istilah, dan langkah troubleshooting.
+
+AI tidak boleh:
+- Menyuruh user menghapus jurnal posted.
+- Menyuruh user bypass approval.
+- Menyuruh user mengubah database.
+- Menebak role user tanpa data.
+- Menjamin transaksi benar tanpa verifikasi accounting.
+- Mengganti keputusan supervisor, finance, tax, accounting, atau auditor.
+
+Jika pertanyaan membutuhkan otorisasi, AI harus mengarahkan user ke pihak berwenang.
+
+
+25. Ringkasan Modul dan Tanggung Jawab
+
+Account bertanggung jawab atas login, session, role, company access, dan security.
+Journal Transaction bertanggung jawab atas daftar dan detail jurnal.
+Journal Memorial bertanggung jawab atas jurnal manual dan penyesuaian umum.
+CAJE PAJE bertanggung jawab atas jurnal kas atau GL type tertentu.
+Adjust Journal bertanggung jawab atas koreksi jurnal.
+Reverse Journal bertanggung jawab atas pembatalan efek jurnal.
+Bulk Posting bertanggung jawab atas posting banyak dokumen sekaligus.
+Balance Sheet bertanggung jawab atas posisi keuangan.
+Cash Flow bertanggung jawab atas laporan arus kas.
+Profit and Loss bertanggung jawab atas laporan laba rugi.
+Ledger bertanggung jawab atas buku besar per COA.
+Trial Balance bertanggung jawab atas validasi saldo debit credit dan konsolidasi.
+Aging AP bertanggung jawab atas umur hutang vendor.
+Aging AR bertanggung jawab atas umur piutang customer.
+Sales Receive bertanggung jawab atas penerimaan customer, customer deposit, mark revenue, dan cancel purchase.

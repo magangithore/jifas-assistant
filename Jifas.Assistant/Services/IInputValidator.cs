@@ -4,15 +4,15 @@ using Jifas.Assistant.Models;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Validation result wrapper
+    /// Wrapper hasil validasi input.
     /// </summary>
     public class ValidationResult<T>
     {
         public bool IsValid { get; set; }
         public T Value { get; set; }
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
 
-        public ValidationResult(bool isValid, T value, string errorMessage = null)
+        public ValidationResult(bool isValid, T value, string? errorMessage = null)
         {
             IsValid = isValid;
             Value = value;
@@ -21,13 +21,12 @@ namespace Jifas.Assistant.Services
     }
 
     /// <summary>
-    /// Input validation service for API requests
-    /// Validates and sanitizes all user inputs before processing
-    /// CRITICAL: All user inputs MUST pass through this validator
+    /// Service validasi input API.
+    /// Semua pesan user harus lewat validator ini sebelum masuk cache, KB, atau LLM.
     /// </summary>
     public interface IInputValidator
     {
-        ValidationResult<ChatRequest> ValidateChatRequest(ChatRequest request);
+        ValidationResult<ChatRequest> ValidateChatRequest(ChatRequest? request);
         ValidationResult<string> ValidateMessage(string message);
         ValidationResult<string> ValidateQuery(string query);
         ValidationResult<List<string>> ValidateSuggestions(List<string> suggestions);

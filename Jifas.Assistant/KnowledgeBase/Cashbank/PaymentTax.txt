@@ -1,4 +1,4 @@
-DOKUMENTASI KNOWLEDGE BASE
+﻿DOKUMENTASI KNOWLEDGE BASE
 CB PAYMENT TAX APPROVAL
 
 A. PENGENALAN
@@ -23,9 +23,9 @@ A. PENGENALAN
    - Untuk perhitungan investasi atau biaya operasional dengan pajak
 
 4. Alur Singkat
-   Lihat dokumen pembayaran → Verifikasi detail pembayaran → Periksa perhitungan PPN 
-   → Periksa perhitungan PPH → Lakukan koreksi jika diperlukan → Setujui/Tolak 
-   → Dokumen siap untuk posting/pembukuan
+   Lihat dokumen pembayaran -> Verifikasi detail pembayaran -> Periksa perhitungan PPN 
+   -> Periksa perhitungan PPH -> Lakukan koreksi jika diperlukan -> Setujui/Tolak 
+   -> Dokumen siap untuk posting/pembukuan
 
 
 B. MENU UTAMA - DAFTAR DOKUMEN PAJAK
@@ -81,7 +81,7 @@ B. MENU UTAMA - DAFTAR DOKUMEN PAJAK
 2. Filter dan Pencarian
    - Interface menampilkan default hanya dokumen dengan status "Need Approval"
    - Anda dapat mengklik setiap kolom untuk memfilter data yang spesifik
-   - Contoh: Klik kolom "Tanggal" → pilih tanggal spesifik untuk melihat pembayaran 
+   - Contoh: Klik kolom "Tanggal" -> pilih tanggal spesifik untuk melihat pembayaran 
      pada periode tertentu
 
 3. Ekspor Data
@@ -165,7 +165,7 @@ D. MEMAHAMI DETAIL DOKUMEN PEMBAYARAN
       
    e) TOTAL PPN (Total Value Added Tax)
       - Total PPN yang diperhitungkan = DPP × 10%
-      - Contoh: Jika DPP 100.000.000 → PPN = 10.000.000
+      - Contoh: Jika DPP 100.000.000 -> PPN = 10.000.000
       - Ini adalah pajak pemerintah yang harus disetorkan
       
    f) TOTAL PPH (Total Income Tax)
@@ -318,7 +318,7 @@ F. TAB PPN - VERIFIKASI PAJAK PERTAMBAHAN NILAI
    - Setiap faktur pajak memiliki nomor unik (tidak duplikat)
    - Total baris = Total PPN header
    
-   ✗ TOLAK / MINTA KOREKSI jika:
+   [X] TOLAK / MINTA KOREKSI jika:
    - NPWP belum terdaftar atau berbeda dari master
    - Nama WP tidak konsisten dengan master vendor
    - Faktur pajak ada yang duplikat atau nomor tidak valid
@@ -430,7 +430,7 @@ G. TAB PPH - VERIFIKASI PAJAK PENGHASILAN
    - Total baris = Total PPH header
    - Bukti pemotongan sudah lengkap
    
-   ✗ TOLAK / MINTA KOREKSI jika:
+   [X] TOLAK / MINTA KOREKSI jika:
    - NPWP tidak ada atau berbeda
    - Nama WP tidak sesuai master
    - Tipe PPH tidak appropriate untuk jenis pembayaran

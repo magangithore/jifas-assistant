@@ -1,0 +1,1145 @@
+﻿JIFAS Knowledge Base - Payment Module
+
+Dokumen ini dibuat untuk knowledge base AI chatbot JIFAS agar chatbot memahami modul Payment dari sisi pengguna, alur bisnis, kontrol finance, status dokumen, validasi, troubleshooting, dan kapan masalah harus diarahkan ke IT. Fokus dokumen ini bukan menjelaskan coding, tetapi menjelaskan cara kerja sistem dan logika bisnisnya.
+
+Modul Payment adalah modul yang mengelola pembayaran aktual setelah dokumen sumber selesai melalui proses approval. Dalam JIFAS, pembayaran tidak boleh dibuat secara bebas tanpa dasar dokumen. Payment harus mengacu pada dokumen yang sudah valid, seperti invoice vendor yang sudah siap bayar atau PUM yang sudah siap dicairkan.
+
+Modul Payment terdiri dari tiga area utama:
+
+1. Payment Invoice
+2. Payment PUM
+3. List Cek/BG
+
+Payment Invoice digunakan untuk membayar tagihan vendor atau supplier. Payment PUM digunakan untuk mencairkan uang muka kepada karyawan. List Cek/BG digunakan untuk memantau daftar cek atau bilyet giro yang sudah dibuat di sistem.
+
+
+1. Gambaran Besar Modul Payment
+
+#1.1 Fungsi Utama
+
+Modul Payment berfungsi untuk mencatat dan memproses uang keluar perusahaan berdasarkan dokumen yang sudah melewati approval. Modul ini memastikan bahwa pembayaran memiliki dasar yang jelas, penerima yang valid, bank yang benar, nominal yang sesuai, dan status yang dapat ditelusuri sampai posting.
+
+Fungsi utama modul Payment:
+
+- Membuat dokumen pembayaran invoice vendor.
+- Membuat dokumen pembayaran PUM kepada karyawan.
+- Memilih metode pembayaran seperti cek, BG, transfer, atau metode lain sesuai setting perusahaan.
+- Mencatat nomor Cek/BG jika pembayaran memakai instrumen cek atau bilyet giro.
+- Mengalokasikan pembayaran ke invoice atau UM yang dipilih.
+- Memastikan nominal pembayaran tidak melebihi saldo dokumen sumber.
+- Menjalankan checking bertingkat oleh Finance dan Accounting.
+- Memproses posting pembayaran ke sistem akuntansi.
+- Membatalkan pembayaran melalui proses Void jika terjadi kesalahan.
+- Menyediakan daftar Cek/BG untuk monitoring dan rekonsiliasi.
+
+#1.2 Posisi Payment dalam JIFAS
+
+Payment berada setelah proses approval dokumen sumber.
+
+Untuk invoice:
+
+Invoice Vendor dibuat
+→ Head Approval
+→ Over Budget Approval jika diperlukan
+→ Finance Approval
+→ Tax Approval jika ada pajak
+→ Invoice siap bayar
+→ Payment Invoice dibuat
+→ Finance Checking
+→ Accounting Checking
+→ Posting
+→ Masuk CashBank dan Accounting
+
+Untuk PUM:
+
+Pengajuan PUM dibuat
+→ Head Approval
+→ Finance Approval
+→ Ready To Pay
+→ Payment PUM dibuat
+→ Finance Checking
+→ Accounting Checking
+→ Posting
+→ Uang muka tercatat sebagai UM
+→ Karyawan melakukan realisasi RU
+
+#1.3 Prinsip Kontrol Internal
+
+Modul Payment memiliki kontrol internal yang ketat karena berkaitan langsung dengan uang keluar perusahaan.
+
+Prinsip kontrolnya:
+
+- Tidak ada pembayaran tanpa dokumen sumber.
+- Tidak ada pembayaran tanpa vendor atau karyawan penerima yang valid.
+- Tidak ada pembayaran tanpa bank sumber dana.
+- Jika memakai Cek/BG, nomor Cek/BG harus jelas dan tidak boleh duplikat.
+- Payment Invoice hanya bisa membayar invoice dari vendor yang sama.
+- Payment PUM hanya membayar UM yang memang sudah siap dibayar.
+- Pembayaran yang sudah posted tidak boleh diedit langsung.
+- Kesalahan setelah posting harus ditangani dengan Void atau reversal sesuai kebijakan accounting.
+- Semua perubahan, checking, void, dan posting harus meninggalkan jejak audit.
+
+
+2. Istilah Penting dalam Modul Payment
+
+#Payment
+
+Payment adalah proses pembayaran aktual yang mencatat uang keluar dari bank atau kas perusahaan.
+
+#Payment Invoice
+
+Payment Invoice adalah pembayaran tagihan vendor atau supplier berdasarkan invoice yang sudah disetujui dan masih memiliki outstanding balance.
+
+#Payment Voucher atau PV
+
+PV adalah nomor dokumen pembayaran invoice. PV menjadi identitas pembayaran yang menghubungkan invoice, vendor, bank, metode pembayaran, alokasi, dan status checking.
+
+#Payment PUM
+
+Payment PUM adalah pembayaran uang muka kepada karyawan berdasarkan dokumen UM yang sudah siap bayar.
+
+#PU
+
+PU adalah nomor dokumen pembayaran PUM. PU menjadi bukti bahwa uang muka sudah diproses untuk dibayarkan.
+
+#UM
+
+UM adalah dokumen uang muka yang berasal dari pengajuan PUM yang sudah disetujui.
+
+#Cek/BG
+
+Cek/BG adalah instrumen pembayaran bank. Cek biasanya dapat dicairkan sesuai ketentuan bank, sedangkan BG atau Bilyet Giro adalah instrumen pemindahbukuan dengan tanggal pembayaran dan jatuh tempo.
+
+#Allocation
+
+Allocation adalah jumlah pembayaran yang dialokasikan ke invoice tertentu. Satu PV dapat membayar lebih dari satu invoice selama invoice tersebut berasal dari vendor yang sama dan currency sesuai.
+
+#Outstanding Balance
+
+Outstanding Balance adalah sisa tagihan invoice yang belum dibayar. Allocation tidak boleh melebihi outstanding balance.
+
+#Finance Checking
+
+Finance Checking adalah tahap verifikasi awal oleh Finance. Finance memastikan data pembayaran, vendor, bank, nominal, Cek/BG, dan dokumen sumber sudah benar.
+
+#Accounting Checking
+
+Accounting Checking adalah tahap verifikasi akuntansi. Accounting memastikan pembayaran sudah sesuai pencatatan, cost center, jurnal, pajak, dan kelengkapan dokumen.
+
+#Posting
+
+Posting adalah tahap final untuk mencatat pembayaran ke buku besar atau General Ledger. Setelah posting, dokumen tidak boleh diedit langsung.
+
+#Void
+
+Void adalah pembatalan dokumen pembayaran. Void digunakan jika pembayaran salah, duplikat, atau tidak boleh dilanjutkan. Void wajib memiliki alasan.
+
+#Need Reverse
+
+Need Reverse adalah kondisi ketika pembayaran atau jurnal terkait perlu dibuatkan pembalik karena ada kesalahan setelah posting.
+
+
+3. Role dan Tanggung Jawab
+
+#Finance Staff
+
+Finance Staff membuat payment, memilih dokumen yang akan dibayar, memilih bank, mengisi metode pembayaran, dan melakukan verifikasi awal.
+
+Tanggung jawab Finance Staff:
+
+- Membuat Payment Invoice.
+- Membuat Payment PUM.
+- Memilih invoice atau UM yang akan dibayar.
+- Memastikan vendor atau karyawan penerima benar.
+- Memastikan bank, currency, rate, dan nominal benar.
+- Memastikan nomor Cek/BG valid jika digunakan.
+- Melakukan Finance Checking.
+- Melakukan update jika ada data pembayaran yang salah sebelum posting.
+- Melakukan void jika pembayaran harus dibatalkan.
+
+#Accounting Staff
+
+Accounting Staff melakukan pengecekan dari sisi akuntansi sebelum pembayaran diposting.
+
+Tanggung jawab Accounting Staff:
+
+- Memastikan pembayaran sesuai dokumen sumber.
+- Memastikan COA, cost center, allocation, dan nominal sesuai.
+- Memastikan pajak seperti PPH sudah diperhitungkan benar.
+- Memastikan data siap untuk posting.
+- Mengarahkan koreksi jika ada mismatch.
+
+#Finance Supervisor atau Head Finance
+
+Finance Supervisor atau Head Finance memonitor pembayaran besar, pembayaran menggunakan Cek/BG, payment yang pending, dan kasus khusus seperti void atau posting error.
+
+#IT Support
+
+IT Support menangani error teknis, data tidak muncul, API gagal, nomor dokumen tidak terbentuk, Cek/BG tidak bisa divalidasi, file tidak bisa dibuka, atau status tidak berubah setelah proses berhasil dilakukan.
+
+
+4. Payment Invoice
+
+#4.1 Definisi
+
+Payment Invoice adalah fitur untuk membayar invoice dari vendor atau supplier. Invoice yang dapat dibayar adalah invoice yang sudah melewati approval dan masih memiliki sisa saldo. Fitur ini dapat membayar satu invoice atau beberapa invoice sekaligus, tetapi harus berasal dari vendor yang sama.
+
+Payment Invoice digunakan untuk pembayaran seperti:
+
+- Pembelian barang.
+- Jasa vendor.
+- Kontraktor.
+- Tagihan operasional.
+- Tagihan berdasarkan PO, SPK, BAST, DO, atau dokumen pendukung lain.
+
+#4.2 Tujuan Payment Invoice
+
+Tujuan Payment Invoice:
+
+- Memastikan pembayaran vendor tercatat resmi.
+- Menghubungkan pembayaran dengan invoice yang dibayar.
+- Menjaga agar pembayaran tidak melebihi saldo outstanding invoice.
+- Mencatat metode pembayaran, bank, currency, dan Cek/BG jika ada.
+- Menyediakan workflow checking Finance dan Accounting.
+- Menghasilkan bukti pembayaran atau Payment Voucher.
+- Mendukung laporan kas keluar, cash flow, dan rekonsiliasi bank.
+
+#4.3 Data yang Ditampilkan di Grid Payment Invoice
+
+Grid Payment Invoice menampilkan daftar pembayaran invoice.
+
+Kolom penting:
+
+- Date: tanggal pembayaran dibuat.
+- Invoice No: nomor invoice vendor yang dibayar.
+- PV No: nomor Payment Voucher.
+- Cek/BG No: nomor cek atau bilyet giro jika dipakai.
+- Vendor: nama vendor penerima pembayaran.
+- Description: keterangan pembayaran.
+- Amount: jumlah pembayaran.
+- Currency: mata uang pembayaran.
+- Status: status workflow pembayaran.
+- Action: tombol untuk membuka detail payment.
+
+Grid dapat digunakan untuk search, filter, sorting, pagination, export Excel, dan membuka detail pembayaran.
+
+#4.4 Flow Membuat Payment Invoice
+
+##Tahap 1. Finance membuka menu Payment Invoice
+
+User membuka menu Payment Invoice. Sistem menampilkan daftar payment yang sudah pernah dibuat. Jika user ingin membuat payment baru, user klik Create Payment Invoice.
+
+##Tahap 2. User memilih Payment Method
+
+Payment Method wajib dipilih.
+
+Contoh payment method:
+
+- CEK.
+- BG.
+- Transfer.
+- Tunai.
+- Metode lain sesuai setting perusahaan.
+
+Jika user memilih CEK atau BG, sistem menampilkan field tambahan:
+
+- No Cek/BG.
+- BG Paid Date.
+- BG Due Date.
+
+Jika metode bukan CEK/BG, field Cek/BG tidak wajib.
+
+##Tahap 3. User mengisi tanggal transaksi
+
+Transaction Date wajib diisi. Tanggal ini menjadi tanggal dokumen payment dan acuan currency rate. Jika currency non-IDR, sistem mengambil rate berdasarkan tanggal tersebut.
+
+##Tahap 4. User memilih bank
+
+Bank wajib dipilih. Bank menentukan:
+
+- Rekening sumber pembayaran.
+- Currency pembayaran.
+- Rate jika currency bukan IDR.
+
+Jika bank IDR dipilih, rate otomatis 1. Jika bank non-IDR dipilih, rate akan mengikuti currency rate dan dapat dicek kembali oleh Finance.
+
+##Tahap 5. User memilih vendor
+
+Vendor wajib dipilih. Vendor harus terdaftar di master vendor dan termasuk vendor yang bisa menerima cash out.
+
+Setelah vendor dipilih, sistem menampilkan invoice outstanding milik vendor tersebut yang sesuai dengan currency payment.
+
+Payment Invoice tidak boleh digunakan untuk membayar invoice dari vendor berbeda dalam satu payment. Jika ada invoice dari vendor lain, user harus membuat payment terpisah.
+
+##Tahap 6. User mengisi deskripsi
+
+Description wajib diisi agar pembayaran mudah ditelusuri.
+
+Contoh deskripsi yang baik:
+
+- Pembayaran invoice pembelian material Januari.
+- Pembayaran jasa maintenance gedung sesuai SPK nomor 001.
+- Pembayaran tagihan vendor ABC untuk invoice IVKI26020001.
+
+Deskripsi sebaiknya menjelaskan apa yang dibayar, vendor terkait, dan dokumen referensinya.
+
+##Tahap 7. User mengisi dokumen referensi jika ada
+
+Dokumen referensi bersifat opsional tetapi penting untuk audit trail.
+
+Field referensi:
+
+- PO No.
+- PR No.
+- SPK No.
+- DO No.
+- Receipt No atau Kwt No.
+- Ref No.
+- Hand Over Form atau BAST.
+
+Jika pembayaran terkait kontrak, pekerjaan, pengiriman, atau serah terima, user sebaiknya mengisi referensi tersebut.
+
+##Tahap 8. User memilih invoice yang akan dibayar
+
+Di grid detail, user memilih invoice dengan checkbox. Minimal satu invoice harus dipilih.
+
+Setelah invoice dicentang:
+
+- Allocation dapat diisi atau diubah.
+- Total IV Amount otomatis dihitung.
+- Total PPH otomatis dihitung.
+- Total Allocation Amount otomatis dihitung.
+
+Allocation tidak boleh melebihi outstanding balance invoice.
+
+Jika user uncheck invoice, allocation akan kembali menjadi 0 dan invoice tersebut tidak ikut diproses.
+
+##Tahap 9. User menyimpan Payment Invoice
+
+Sebelum save, sistem melakukan validasi:
+
+- Payment Method wajib diisi.
+- Transaction Date wajib diisi.
+- Bank wajib diisi.
+- Vendor wajib diisi.
+- Description wajib diisi.
+- Jika CEK/BG, nomor Cek/BG, Paid Date, dan Due Date wajib valid.
+- Minimal satu invoice harus dipilih.
+- Allocation harus lebih dari 0.
+- Allocation tidak boleh melebihi outstanding balance.
+- Currency payment harus sesuai dengan invoice yang dipilih.
+- Rate tidak boleh 0 jika currency non-IDR.
+
+Jika valid, sistem membuat PV dan status awal menjadi Need Finance Checking.
+
+#4.5 Flow Finance Checking Payment Invoice
+
+Setelah payment dibuat, status menjadi Need Finance Checking.
+
+Finance melakukan pengecekan:
+
+- Apakah vendor sudah benar.
+- Apakah bank dan currency benar.
+- Apakah nomor Cek/BG benar dan tidak duplikat.
+- Apakah Paid Date dan Due Date benar.
+- Apakah invoice yang dipilih benar.
+- Apakah allocation sesuai nominal yang ingin dibayar.
+- Apakah PPH sesuai dokumen invoice.
+- Apakah deskripsi dan referensi dokumen cukup jelas.
+
+Action yang tersedia:
+
+1. Checking.
+2. Update.
+3. Void.
+
+Jika semua benar, Finance klik Checking. Status lanjut menjadi Need Accounting Checking.
+
+Jika ada data yang salah tetapi masih bisa diperbaiki, Finance klik Update, perbaiki data, lalu simpan. Status tetap dalam proses checking.
+
+Jika payment tidak boleh dilanjutkan, Finance klik Void dan wajib mengisi alasan pembatalan.
+
+#4.6 Flow Accounting Checking Payment Invoice
+
+Setelah Finance Checking selesai, payment masuk ke Need Accounting Checking.
+
+Accounting melakukan pengecekan:
+
+- Apakah jurnal pembayaran sudah benar.
+- Apakah allocation sesuai invoice.
+- Apakah cost center atau departemen sudah benar.
+- Apakah PPH/pajak sudah sesuai.
+- Apakah saldo invoice setelah payment akan benar.
+- Apakah dokumen pendukung lengkap.
+- Apakah vendor dan bank sesuai dengan data master.
+
+Jika benar, Accounting melakukan Update atau Checking sesuai tombol yang tersedia di sistem. Status akan lanjut ke Need Posting atau Complete sesuai konfigurasi.
+
+Jika masih salah, Accounting melakukan update jika masih diperbolehkan, atau meminta Finance melakukan koreksi.
+
+#4.7 Flow Posting Payment Invoice
+
+Setelah Finance dan Accounting selesai checking, payment masuk ke status Need Posting atau Need Accounting Posting.
+
+Pada tahap posting:
+
+- Sistem mencatat pembayaran ke General Ledger.
+- Outstanding invoice dikurangi sesuai allocation.
+- Payment tercatat sebagai uang keluar.
+- Data dapat terhubung ke CashBank dan Accounting.
+- Status berubah menjadi Posted atau Complete.
+
+Setelah posted, data payment tidak boleh diedit langsung. Jika ada kesalahan serius, proses pembatalan harus melalui Void atau reversal sesuai prosedur.
+
+#4.8 Flow Void Payment Invoice
+
+Void digunakan untuk membatalkan payment invoice.
+
+Void digunakan jika:
+
+- Payment dibuat untuk invoice yang salah.
+- Payment duplikat.
+- Vendor salah.
+- Bank salah.
+- Nomor Cek/BG salah dan tidak bisa dikoreksi.
+- Invoice ternyata sudah dibayar dengan metode lain.
+- Payment tidak boleh diproses karena alasan bisnis.
+
+Flow Void:
+
+User membuka detail payment
+→ Klik Void
+→ Sistem meminta alasan pembatalan
+→ User wajib mengisi alasan
+→ Sistem meminta konfirmasi final
+→ Jika dikonfirmasi, status payment menjadi Void
+→ Invoice terkait kembali menjadi unpaid atau outstanding sesuai aturan sistem
+
+Alasan void harus jelas.
+
+Contoh alasan void yang baik:
+
+- Pembayaran duplikat, invoice sudah dibayar melalui PV lain.
+- Nomor Cek/BG salah input.
+- Vendor salah pilih.
+- Payment dibatalkan karena invoice direvisi oleh vendor.
+
+
+5. Payment PUM
+
+#5.1 Definisi
+
+Payment PUM adalah fitur untuk membayar atau mencairkan uang muka kepada karyawan berdasarkan dokumen UM yang sudah disetujui. Payment PUM menghasilkan dokumen pembayaran PU.
+
+Payment PUM digunakan untuk:
+
+- Mencairkan uang muka perjalanan dinas.
+- Mencairkan uang muka operasional.
+- Mencairkan uang muka pembelian kecil.
+- Mencairkan advance payment kepada karyawan sesuai pengajuan.
+
+#5.2 Tujuan Payment PUM
+
+Tujuan Payment PUM:
+
+- Memastikan uang muka hanya dibayarkan untuk UM yang sudah disetujui.
+- Mencatat pencairan UM secara resmi.
+- Menghubungkan UM dengan dokumen PU.
+- Memastikan penerima, bank, metode pembayaran, dan amount benar.
+- Memberi kontrol Finance dan Accounting sebelum posting.
+- Menjadi dasar proses realisasi RU setelah uang muka digunakan.
+
+#5.3 Data yang Ditampilkan di Grid Payment PUM
+
+Grid Payment PUM menampilkan daftar pembayaran PUM.
+
+Kolom penting:
+
+- Date: tanggal pembayaran dibuat.
+- UM No: nomor dokumen uang muka.
+- PU No: nomor dokumen pembayaran PUM.
+- Cek/BG No: nomor Cek/BG jika metode pembayaran memakai cek atau BG.
+- Description: deskripsi pembayaran PUM.
+- Amount: nominal pembayaran.
+- Status: status workflow payment.
+- Action: tombol untuk membuka detail pembayaran.
+
+#5.4 Flow Membuat Payment PUM
+
+##Tahap 1. Finance membuka menu Payment PUM
+
+User membuka menu Payment PUM. Sistem menampilkan daftar PU yang sudah dibuat. User klik Create Payment PUM untuk membuat pembayaran baru.
+
+##Tahap 2. User memilih Payment Method
+
+Payment Method wajib dipilih.
+
+Jika metode CEK/BG, field tambahan muncul:
+
+- No Cek/BG.
+- Paid Date.
+- Due Date.
+
+Jika bukan CEK/BG, field tersebut tidak wajib.
+
+##Tahap 3. User memilih Purpose
+
+Purpose wajib diisi. Purpose menunjukkan tujuan pembayaran PUM. Sistem dapat mengisi Due Days secara otomatis berdasarkan purpose.
+
+Contoh purpose:
+
+- Perjalanan dinas.
+- Operasional.
+- Pembelian kecil.
+- Kebutuhan lain sesuai master.
+
+##Tahap 4. User mengisi tanggal pembayaran
+
+Date wajib diisi. Tanggal pembayaran menjadi tanggal dokumen PU. Sistem menggunakan tanggal ini untuk rate dan periode.
+
+Tanggal harus sesuai aturan periode aktif. Jika tanggal di luar periode, sistem dapat menolak save.
+
+##Tahap 5. User memilih penerima pembayaran
+
+Paid To wajib diisi. Paid To adalah karyawan yang menerima uang muka.
+
+Setelah karyawan dipilih, sistem menampilkan daftar UM yang siap dibayar untuk karyawan tersebut.
+
+##Tahap 6. User memilih bank
+
+Bank wajib dipilih. Untuk Payment PUM, bank umumnya IDR. Currency dan rate terisi otomatis dari bank.
+
+##Tahap 7. User memilih UM yang akan dibayar
+
+Di grid detail, user mencentang UM yang akan dibayar. Minimal satu item harus dipilih.
+
+Setelah item dicentang:
+
+- Total amount otomatis dihitung.
+- Amount di header terisi dari total UM yang dipilih.
+- Item yang tidak dicentang tidak diproses.
+
+##Tahap 8. User menyimpan Payment PUM
+
+Sebelum save, sistem validasi:
+
+- Payment Method wajib diisi.
+- Purpose wajib diisi.
+- Date wajib diisi.
+- Paid To wajib diisi.
+- Bank wajib diisi.
+- Jika CEK/BG, nomor, paid date, dan due date wajib valid.
+- Minimal satu item UM harus dipilih.
+- Amount tidak boleh kosong atau 0.
+
+Jika valid, sistem membuat dokumen PU dan status menjadi Need Finance Checking.
+
+#5.5 Flow Finance Checking Payment PUM
+
+Finance membuka payment PUM dengan status Need Finance Checking.
+
+Finance mengecek:
+
+- Penerima pembayaran benar.
+- UM yang dipilih benar.
+- Amount sesuai UM.
+- Bank benar.
+- Cek/BG benar jika dipakai.
+- Purpose sesuai.
+- Tanggal pembayaran sesuai periode.
+- Deskripsi atau catatan cukup jelas.
+
+Action:
+
+- Checking jika benar.
+- Update jika ada data yang perlu diperbaiki.
+- Void jika payment harus dibatalkan.
+
+Jika Finance klik Checking, status lanjut menjadi Need Accounting Checking.
+
+#5.6 Flow Accounting Checking Payment PUM
+
+Accounting mengecek payment PUM dari sisi akuntansi.
+
+Yang dicek:
+
+- Apakah payment akan membentuk jurnal UM yang benar.
+- Apakah penerima dan amount sesuai dokumen UM.
+- Apakah cost center dan department sesuai.
+- Apakah bank source sudah benar.
+- Apakah dokumen siap posting.
+
+Jika benar, status lanjut ke Need Posting atau Posted sesuai mekanisme sistem.
+
+#5.7 Flow Posting Payment PUM
+
+Setelah posting:
+
+- PU tercatat sebagai pembayaran uang muka.
+- UM dianggap sudah dicairkan.
+- Karyawan dapat melanjutkan realisasi RU sesuai proses PUM.
+- Data payment masuk ke accounting dan cash movement.
+
+Setelah posted, payment tidak dapat diedit langsung. Jika salah, harus menggunakan void atau reversal sesuai prosedur.
+
+#5.8 Flow Void Payment PUM
+
+Void Payment PUM digunakan jika:
+
+- Payment dibuat untuk UM yang salah.
+- Penerima salah.
+- Bank salah.
+- Nomor Cek/BG salah.
+- Payment duplikat.
+- UM tidak jadi dicairkan.
+
+Flow Void:
+
+User buka detail PU
+→ Klik Void
+→ Sistem meminta alasan pembatalan
+→ User mengisi alasan
+→ Sistem meminta konfirmasi final
+→ Status berubah menjadi Void
+→ UM kembali ke status sesuai aturan sistem
+
+Alasan void wajib jelas.
+
+
+6. List Cek/BG
+
+#6.1 Definisi
+
+List Cek/BG adalah halaman monitoring untuk melihat daftar cek dan bilyet giro yang sudah dibuat dalam sistem. Halaman ini bersifat read-only. User tidak membuat atau mengedit Cek/BG di halaman ini.
+
+#6.2 Tujuan List Cek/BG
+
+Tujuan List Cek/BG:
+
+- Memantau semua Cek/BG yang sudah digunakan dalam pembayaran.
+- Mengecek status Cek/BG.
+- Melakukan rekonsiliasi dengan bank.
+- Melihat pembayaran terkait Cek/BG tertentu.
+- Mendukung audit trail pembayaran.
+
+#6.3 Data yang Ditampilkan
+
+Kolom yang ditampilkan:
+
+- Date: tanggal Cek/BG.
+- No Cek/BG: nomor cek atau BG.
+- Bank: bank penerbit.
+- Description: deskripsi pembayaran.
+- Vendor: vendor atau penerima pembayaran.
+- Amount: nominal.
+- Status: status Cek/BG.
+- For Payment: nomor payment atau invoice terkait.
+
+#6.4 Cara Menggunakan List Cek/BG
+
+User dapat:
+
+- Filter berdasarkan tanggal.
+- Filter berdasarkan nomor Cek/BG.
+- Filter berdasarkan bank.
+- Filter berdasarkan vendor.
+- Filter berdasarkan status.
+- Export ke Excel.
+- Menggunakan data untuk rekonsiliasi.
+
+Karena halaman ini read-only, jika ada data salah, user tidak memperbaiki di halaman List Cek/BG. User harus mengecek dokumen payment sumbernya atau menghubungi IT/Finance Admin jika data tidak sinkron.
+
+
+7. Status Lifecycle Modul Payment
+
+#7.1 Draft atau Create
+
+Dokumen payment sedang dibuat dan belum disimpan. Data masih bisa diubah penuh.
+
+#7.2 Need Finance Checking
+
+Payment sudah dibuat dan menunggu pengecekan Finance.
+
+Finance dapat:
+
+- Checking.
+- Update.
+- Void.
+
+#7.3 Need Accounting Checking
+
+Payment sudah dicek Finance dan menunggu Accounting.
+
+Accounting dapat:
+
+- Review.
+- Update jika masih diperbolehkan.
+- Melanjutkan ke posting.
+- Void jika ada kesalahan serius dan status masih memungkinkan.
+
+#7.4 Need Posting
+
+Payment sudah selesai checking dan siap diposting.
+
+Pada tahap ini user harus berhati-hati. Editing sudah sangat terbatas.
+
+#7.5 Need Accounting Posting
+
+Payment menunggu proses posting final oleh Accounting.
+
+#7.6 Posted atau Complete
+
+Payment sudah final. Data tidak boleh diedit. Jika ada kesalahan, gunakan Void atau reversal sesuai prosedur.
+
+#7.7 Need Reverse
+
+Payment atau jurnal terkait perlu pembalik. Biasanya terjadi karena ada kesalahan setelah posting.
+
+Kasus Need Reverse harus ditangani oleh Accounting dan bila status tidak bergerak atau error sistem, harus melibatkan IT.
+
+#7.8 Void
+
+Payment dibatalkan dan tidak dilanjutkan. Void harus memiliki alasan.
+
+
+8. Validasi Penting Modul Payment
+
+#8.1 Validasi Umum
+
+Sebelum payment disimpan, sistem harus memastikan:
+
+- User memiliki akses.
+- Company code user sesuai.
+- Periode accounting aktif.
+- Payment method dipilih.
+- Tanggal payment diisi.
+- Bank dipilih.
+- Currency dan rate valid.
+- Penerima pembayaran valid.
+- Detail payment minimal satu baris.
+- Amount tidak boleh 0.
+- Status dokumen sumber memang siap dibayar.
+
+#8.2 Validasi Payment Invoice
+
+Payment Invoice memiliki validasi khusus:
+
+- Vendor wajib dipilih.
+- Invoice yang ditampilkan harus sesuai vendor.
+- Invoice yang dipilih minimal satu.
+- Allocation wajib lebih dari 0.
+- Allocation tidak boleh melebihi outstanding balance.
+- Invoice harus sesuai currency bank/payment.
+- Satu payment hanya untuk satu vendor.
+- Total Allocation harus sesuai dengan invoice yang dipilih.
+- PPH dan amount harus konsisten.
+
+#8.3 Validasi Payment PUM
+
+Payment PUM memiliki validasi khusus:
+
+- Paid To wajib dipilih.
+- Purpose wajib dipilih.
+- UM yang dipilih minimal satu.
+- Amount otomatis dari UM yang dipilih.
+- UM harus status ready to pay.
+- Bank harus valid.
+- Payment PUM umumnya menggunakan IDR.
+
+#8.4 Validasi Cek/BG
+
+Jika payment method memakai CEK/BG:
+
+- Nomor Cek/BG wajib diisi.
+- Nomor Cek/BG tidak boleh duplikat.
+- Nomor Cek/BG maksimal sesuai aturan sistem.
+- Paid Date wajib diisi.
+- Due Date wajib diisi.
+- Paid Date tidak boleh lebih awal dari tanggal payment.
+- Due Date tidak boleh lebih awal dari Paid Date.
+- Cek/BG harus berasal dari master atau valid menurut sistem.
+
+#8.5 Validasi Void
+
+Sebelum void:
+
+- User harus mengisi alasan void.
+- Alasan tidak boleh kosong.
+- Payment harus berada di status yang masih boleh dibatalkan.
+- Untuk payment yang sudah posted, void harus mengikuti aturan khusus.
+- Jika void gagal, user harus menghubungi IT atau Accounting sesuai error.
+
+
+9. Error Handling untuk User
+
+#9.1 Tidak Bisa Save Payment
+
+Kemungkinan penyebab:
+
+- Field wajib belum diisi.
+- Belum memilih invoice atau UM.
+- Allocation masih 0.
+- Allocation melebihi saldo invoice.
+- Vendor belum dipilih.
+- Bank belum dipilih.
+- Payment method belum dipilih.
+- Rate kosong atau 0.
+- Nomor Cek/BG tidak valid.
+- Tanggal Cek/BG tidak valid.
+
+Solusi user:
+
+- Cek kembali field bertanda wajib.
+- Pastikan minimal satu detail dipilih.
+- Pastikan allocation lebih dari 0.
+- Pastikan allocation tidak melebihi balance.
+- Jika currency non-IDR, pastikan rate terisi.
+- Jika memakai CEK/BG, cek nomor dan tanggalnya.
+
+Jika setelah semua benar masih gagal, arahkan ke IT.
+
+#9.2 Invoice Tidak Muncul Saat Membuat Payment Invoice
+
+Kemungkinan penyebab:
+
+- Vendor belum dipilih.
+- Invoice bukan milik vendor tersebut.
+- Invoice sudah dibayar lunas.
+- Invoice belum mencapai status ready to pay.
+- Currency invoice berbeda dengan currency bank.
+- Filter grid masih aktif.
+- Data belum tersinkron dari modul Invoice.
+
+Solusi user:
+
+- Pilih vendor yang benar.
+- Cek status invoice di modul Invoice.
+- Cek currency bank yang dipilih.
+- Reset filter.
+- Refresh halaman.
+
+Jika invoice sudah ready to pay tapi tetap tidak muncul, hubungi IT.
+
+#9.3 UM Tidak Muncul Saat Membuat Payment PUM
+
+Kemungkinan penyebab:
+
+- Paid To belum dipilih.
+- UM bukan milik karyawan tersebut.
+- UM belum ready to pay.
+- UM sudah pernah dibayar.
+- Filter grid aktif.
+- Data PUM belum sinkron.
+
+Solusi user:
+
+- Pilih karyawan yang benar.
+- Cek status UM di modul PUM.
+- Reset filter dan refresh.
+
+Jika UM sudah ready to pay tapi tetap tidak muncul, hubungi IT.
+
+#9.4 Cek/BG Tidak Bisa Dipakai
+
+Kemungkinan penyebab:
+
+- Nomor Cek/BG sudah pernah digunakan.
+- Nomor tidak terdaftar atau tidak valid.
+- Bank tidak sesuai.
+- Cek/BG sudah status used atau closed.
+- Tanggal Paid Date dan Due Date tidak valid.
+
+Solusi user:
+
+- Gunakan nomor Cek/BG yang benar.
+- Cek List Cek/BG untuk memastikan status.
+- Pastikan bank sesuai.
+- Koreksi tanggal.
+
+Jika nomor sudah benar tapi tetap error, hubungi IT/Finance Admin.
+
+#9.5 Tidak Bisa Checking
+
+Kemungkinan penyebab:
+
+- User tidak punya role checking.
+- Status dokumen sudah berubah.
+- Dokumen belum lengkap.
+- API status update gagal.
+- Token login expired.
+
+Solusi user:
+
+- Refresh halaman.
+- Pastikan dokumen masih status Need Finance Checking atau Need Accounting Checking.
+- Pastikan role user benar.
+- Login ulang jika perlu.
+
+Jika tombol tetap tidak muncul atau action gagal, hubungi IT.
+
+#9.6 Tidak Bisa Void
+
+Kemungkinan penyebab:
+
+- Void reason kosong.
+- Status sudah tidak boleh void.
+- Payment sudah posted dan butuh proses reversal.
+- User tidak punya akses.
+- Backend gagal update status.
+
+Solusi user:
+
+- Isi alasan void dengan jelas.
+- Cek status payment.
+- Koordinasi dengan Accounting jika sudah posted.
+- Hubungi IT jika sistem error.
+
+#9.7 Grid Tidak Loading atau Data Kosong
+
+Kemungkinan penyebab:
+
+- Koneksi bermasalah.
+- Token expired.
+- API tidak merespons.
+- Company code tidak terbaca.
+- Filter terlalu ketat.
+- Role user tidak punya akses.
+
+Solusi user:
+
+- Reset filter.
+- Refresh halaman.
+- Login ulang.
+- Coba browser lain.
+
+Jika tetap kosong padahal seharusnya ada data, hubungi IT.
+
+#9.8 Export Excel Gagal
+
+Kemungkinan penyebab:
+
+- Data terlalu banyak.
+- Server timeout.
+- Browser memblokir download.
+- Koneksi tidak stabil.
+
+Solusi user:
+
+- Filter data dulu berdasarkan tanggal atau status.
+- Coba ulang.
+- Cek folder download.
+- Coba browser lain.
+
+Jika tetap gagal, hubungi IT.
+
+
+10. Error yang Harus Diarahkan ke IT
+
+AI chatbot harus mengarahkan user ke IT jika menemukan kondisi berikut:
+
+- Grid Payment Invoice, Payment PUM, atau List Cek/BG tidak muncul padahal user punya akses.
+- Data invoice ready to pay tidak muncul meskipun status di modul Invoice sudah benar.
+- Data UM ready to pay tidak muncul meskipun status di modul PUM sudah benar.
+- Nomor PV atau PU tidak terbentuk setelah save.
+- Save berhasil tetapi status tidak berubah.
+- Checking berhasil menurut notifikasi tetapi status tetap sama.
+- Void berhasil menurut notifikasi tetapi status tidak berubah.
+- Cek/BG valid tetapi sistem menolak tanpa alasan yang jelas.
+- Currency rate tidak muncul untuk tanggal dan currency yang seharusnya ada.
+- API error seperti Request Status, Status Text, responseText, 401, 403, 404, atau 500.
+- Tombol Action, Update, Checking, atau Void tidak muncul padahal status dan role seharusnya sesuai.
+- File attachment atau bukti pembayaran tidak bisa dibuka.
+- Data List Cek/BG tidak sinkron dengan payment.
+- Ada duplicate PV, PU, atau Cek/BG number.
+- Payment sudah posted tetapi jurnal tidak terbentuk.
+- Payment masuk Need Reverse dan user tidak tahu harus diproses dari mana.
+- User mendapat pesan Failed to create, Failed to update, Failed to check, atau Failed to void.
+
+#Data yang Harus Dikirim ke IT
+
+Jika diarahkan ke IT, chatbot harus meminta user menyiapkan:
+
+- Nama modul: Payment Invoice, Payment PUM, atau List Cek/BG.
+- Nomor PV, PU, UM, Invoice, atau Cek/BG yang bermasalah.
+- Company code.
+- Status dokumen saat ini.
+- Action yang dilakukan: save, update, checking, void, export, atau open detail.
+- Screenshot error.
+- Waktu kejadian.
+- Username user.
+- Browser yang digunakan.
+- Penjelasan singkat langkah yang dilakukan sebelum error.
+
+
+11. Hubungan Payment dengan Modul Lain
+
+#11.1 Hubungan dengan Invoice
+
+Payment Invoice hanya dapat dibuat dari invoice yang sudah siap dibayar. Setelah payment posted, outstanding invoice akan berkurang atau lunas.
+
+#11.2 Hubungan dengan PUM
+
+Payment PUM hanya dapat dibuat dari UM yang sudah siap bayar. Setelah payment posted, UM tercatat sudah dicairkan dan dapat dilanjutkan ke realisasi RU.
+
+#11.3 Hubungan dengan CashBank
+
+Payment adalah sumber data uang keluar yang akan memengaruhi kas dan bank. Setelah payment diposting, cash movement tercatat dalam sistem.
+
+#11.4 Hubungan dengan Accounting
+
+Payment membentuk jurnal pembayaran. Payment yang sudah posted masuk ke General Ledger dan memengaruhi laporan keuangan.
+
+#11.5 Hubungan dengan List Cek/BG
+
+Jika payment menggunakan Cek/BG, nomor Cek/BG akan tercatat dan dapat dimonitor melalui List Cek/BG.
+
+#11.6 Hubungan dengan Dashboard
+
+Status payment dapat muncul dalam dashboard monitoring seperti Payment Invoice, Payment PUM, Need Checking, Ready to Pay, atau Complete.
+
+
+12. Best Practice Penggunaan Payment
+
+#12.1 Untuk Finance
+
+- Pastikan invoice atau UM benar-benar siap dibayar.
+- Jangan membuat payment jika dokumen sumber belum lengkap.
+- Gunakan deskripsi yang jelas.
+- Isi nomor dokumen referensi jika tersedia.
+- Cek nomor Cek/BG sebelum save.
+- Jangan membayar invoice dari vendor berbeda dalam satu PV.
+- Gunakan filter status untuk memprioritaskan Need Finance Checking.
+- Void hanya digunakan jika benar-benar diperlukan dan harus dengan alasan jelas.
+
+#12.2 Untuk Accounting
+
+- Review payment dari sisi jurnal dan cost center.
+- Pastikan bank dan currency sesuai.
+- Pastikan PPH dan allocation tidak salah.
+- Jangan posting jika dokumen pendukung belum lengkap.
+- Jika ada kesalahan setelah posting, gunakan prosedur void/reverse yang benar.
+
+#12.3 Untuk Audit dan Rekonsiliasi
+
+- Export Payment Invoice untuk laporan pembayaran vendor.
+- Export Payment PUM untuk laporan uang muka karyawan.
+- Export List Cek/BG untuk rekonsiliasi bank.
+- Cocokkan nomor Cek/BG dengan laporan bank.
+- Cocokkan PV dengan invoice dan vendor.
+- Cocokkan PU dengan UM dan karyawan penerima.
+
+
+13. Contoh Pertanyaan User dan Jawaban AI Chatbot
+
+#Pertanyaan: Saya tidak bisa save Payment Invoice.
+
+Jawaban yang diharapkan:
+
+Cek dulu field wajib seperti Payment Method, Transaction Date, Bank, Vendor, dan Description. Pastikan minimal satu invoice sudah dicentang dan allocation lebih dari 0. Jika memakai Cek/BG, pastikan nomor Cek/BG, Paid Date, dan Due Date sudah benar. Jika currency bukan IDR, pastikan rate tidak 0. Kalau semua sudah benar tetapi tetap gagal, kirim screenshot error, nomor invoice, vendor, dan waktu kejadian ke IT.
+
+#Pertanyaan: Invoice vendor tidak muncul di detail Payment Invoice.
+
+Jawaban yang diharapkan:
+
+Biasanya invoice tidak muncul karena vendor yang dipilih tidak sesuai, invoice sudah lunas, invoice belum ready to pay, atau currency invoice berbeda dengan bank yang dipilih. Coba reset filter, pilih vendor dan bank yang benar, lalu cek status invoice di modul Invoice. Jika invoice sudah ready to pay tetapi tetap tidak muncul, arahkan ke IT untuk pengecekan data.
+
+#Pertanyaan: Apakah bisa bayar invoice dari beberapa vendor sekaligus?
+
+Jawaban yang diharapkan:
+
+Tidak. Satu Payment Invoice hanya untuk satu vendor. Jika ingin membayar invoice dari vendor berbeda, buat Payment Invoice terpisah untuk masing-masing vendor.
+
+#Pertanyaan: Allocation melebihi balance, harus bagaimana?
+
+Jawaban yang diharapkan:
+
+Allocation tidak boleh melebihi outstanding balance invoice. Cek kolom Local Balance atau Foreign Balance, lalu isi allocation maksimal sebesar saldo yang tersedia. Jika ingin bayar sebagian, isi allocation sesuai jumlah yang ingin dibayar, sisanya tetap menjadi outstanding.
+
+#Pertanyaan: Saya salah membuat Payment PUM.
+
+Jawaban yang diharapkan:
+
+Kalau status masih Need Finance Checking, payment masih bisa diperbaiki lewat Update atau dibatalkan lewat Void. Kalau sudah Posted, data tidak bisa diedit langsung. Koordinasikan dengan Accounting untuk proses Void atau reversal, lalu buat payment baru jika diperlukan.
+
+#Pertanyaan: Nomor Cek/BG tidak bisa dipakai.
+
+Jawaban yang diharapkan:
+
+Cek dulu apakah nomor Cek/BG sudah pernah dipakai di List Cek/BG. Pastikan bank sesuai dan tanggal Paid Date serta Due Date valid. Jika nomor memang benar dan belum digunakan tetapi sistem tetap menolak, hubungi IT/Finance Admin dengan nomor Cek/BG, bank, dan screenshot error.
+
+#Pertanyaan: Payment sudah checking tetapi status tidak berubah.
+
+Jawaban yang diharapkan:
+
+Refresh halaman dan cek ulang statusnya. Jika tetap tidak berubah, kemungkinan ada kendala status update di server. Kirim nomor PV atau PU, status sebelum action, action yang dilakukan, screenshot notifikasi, dan waktu kejadian ke IT.
+
+#Pertanyaan: List Cek/BG hanya untuk lihat saja?
+
+Jawaban yang diharapkan:
+
+Ya. List Cek/BG adalah halaman monitoring read-only untuk melihat cek atau bilyet giro yang sudah tercatat. Untuk membuat pembayaran baru, gunakan Payment Invoice atau Payment PUM, bukan dari List Cek/BG.
+
+
+14. Knowledge Rules untuk AI Chatbot
+
+AI chatbot harus memahami aturan berikut:
+
+1. Payment adalah proses uang keluar yang terjadi setelah approval dokumen sumber selesai.
+2. Payment Invoice membayar invoice vendor dan menghasilkan PV.
+3. Payment PUM membayar uang muka karyawan dan menghasilkan PU.
+4. List Cek/BG hanya halaman monitoring, bukan halaman create/edit payment.
+5. Payment Invoice hanya boleh untuk satu vendor dalam satu dokumen payment.
+6. Payment Invoice dapat membayar lebih dari satu invoice selama vendor dan currency sesuai.
+7. Payment PUM dapat membayar satu atau lebih UM milik karyawan yang dipilih.
+8. Allocation pada Payment Invoice tidak boleh melebihi outstanding balance invoice.
+9. Jika memakai Cek/BG, nomor dan tanggal Cek/BG wajib valid.
+10. Status Need Finance Checking berarti menunggu pengecekan Finance.
+11. Status Need Accounting Checking berarti menunggu pengecekan Accounting.
+12. Status Need Posting berarti payment siap diposting.
+13. Status Posted atau Complete berarti payment final dan tidak bisa diedit langsung.
+14. Status Void berarti payment dibatalkan.
+15. Status Need Reverse berarti perlu proses pembalik oleh Accounting.
+16. Void wajib memiliki alasan.
+17. Error teknis seperti data tidak muncul, status tidak berubah, API error, atau nomor dokumen tidak terbentuk harus diarahkan ke IT.
+18. Untuk masalah bisnis seperti vendor salah, invoice salah, atau payment duplikat, chatbot harus menyarankan Update jika status masih memungkinkan atau Void jika harus dibatalkan.
+19. Untuk masalah setelah posting, chatbot harus menyarankan koordinasi dengan Accounting dan IT jika sistem error.
+20. Chatbot tidak boleh menyarankan user menghapus langsung dokumen payment yang sudah posted.
+
+
+15. Ringkasan Big Picture Payment
+
+Payment adalah modul yang memastikan uang keluar perusahaan tercatat, tervalidasi, dan diposting dengan benar.
+
+Alur utama Payment Invoice:
+
+Invoice Ready To Pay
+→ Create Payment Invoice
+→ Pilih vendor, bank, metode pembayaran, invoice, allocation
+→ Save
+→ Need Finance Checking
+→ Need Accounting Checking
+→ Need Posting
+→ Posted/Complete
+→ Outstanding invoice berkurang atau lunas
+
+Alur utama Payment PUM:
+
+UM Ready To Pay
+→ Create Payment PUM
+→ Pilih karyawan, bank, metode pembayaran, UM
+→ Save
+→ Need Finance Checking
+→ Need Accounting Checking
+→ Need Posting
+→ Posted/Complete
+→ UM tercatat dicairkan dan siap direalisasikan
+
+Alur Cek/BG:
+
+Payment menggunakan CEK/BG
+→ Nomor Cek/BG divalidasi
+→ Payment disimpan
+→ Cek/BG masuk daftar List Cek/BG
+→ Finance/Accounting dapat monitoring dan rekonsiliasi
+
+Modul Payment adalah tahap penting dalam kontrol keuangan JIFAS karena di sinilah dokumen yang sudah disetujui berubah menjadi pembayaran aktual yang memengaruhi kas, bank, dan pembukuan perusahaan.

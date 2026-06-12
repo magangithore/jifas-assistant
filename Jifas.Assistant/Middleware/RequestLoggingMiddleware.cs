@@ -35,6 +35,7 @@ namespace Jifas.Assistant
             if (context.Request.Path.StartsWithSegments("/swagger") || 
                 context.Request.Path.StartsWithSegments("/swagger-ui") ||
                 context.Request.Path.StartsWithSegments("/swagger.json") ||
+                context.Request.Path.StartsWithSegments("/health") ||
                 context.Request.Path == "/" ||
                 context.Request.Path == "/index.html")
             {
@@ -72,7 +73,9 @@ namespace Jifas.Assistant
                         // Log exception dengan context
                         stopwatch.Stop();
                         LogRequestException(context, ex, correlationId, stopwatch.ElapsedMilliseconds, loggerService);
-                        
+
+                        context.Response.Clear();
+
                         // Set error response
                         context.Response.ContentType = "application/json";
                         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -94,6 +97,7 @@ namespace Jifas.Assistant
                         // Copy response back ke original stream
                         try
                         {
+                            context.Response.Body = originalBody;
                             memoryStream.Position = 0;  // Reset position ke awal sebelum copy
                             await memoryStream.CopyToAsync(originalBody);
                         }
@@ -166,7 +170,7 @@ namespace Jifas.Assistant
                 if (request.Method == "POST" || request.Method == "PUT")
                 {
                     var userId = context.User?.Identity?.Name ?? "Unknown";
-                    loggerService?.LogAudit(userId, request.Method, request.Path.Value, correlationId);
+                    loggerService?.LogAudit(userId, request.Method, request.Path.Value ?? string.Empty, correlationId);
                 }
             }
             catch (Exception ex)

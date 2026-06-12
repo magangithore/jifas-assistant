@@ -389,18 +389,18 @@ Fitur-Fitur Head Approval
 Pesan dan Konfirmasi
 
 Pesan Sukses
- "Pengajuan berhasil di-approve" â†’ Approval sukses, lanjut ke tahap berikutnya
- "Pengajuan berhasil di-reject" â†’ Rejection tercatat, karyawan akan dapat notifikasi
+ "Pengajuan berhasil di-approve" -> Approval sukses, lanjut ke tahap berikutnya
+ "Pengajuan berhasil di-reject" -> Rejection tercatat, karyawan akan dapat notifikasi
 
 Pesan Konfirmasi
- "Do you want to APPROVE document [Nomor]?" â†’ Konfirmasi sebelum approve
- "Are you sure want to REJECT document [Nomor] with total amount [Jumlah]?" â†’ Konfirmasi sebelum reject
- "Please enter rejection reason" â†’ Prompt untuk alasan rejection
+ "Do you want to APPROVE document [Nomor]?" -> Konfirmasi sebelum approve
+ "Are you sure want to REJECT document [Nomor] with total amount [Jumlah]?" -> Konfirmasi sebelum reject
+ "Please enter rejection reason" -> Prompt untuk alasan rejection
 
 Pesan Error/Validasi
- "Please complete all required fields" â†’ Ada field yang belum diisi
- "Network Error! Please contact your IT Administrator" â†’ Error koneksi server
- "Budget status cannot be determined" â†’ Error dalam perhitungan budget
+ "Please complete all required fields" -> Ada field yang belum diisi
+ "Network Error! Please contact your IT Administrator" -> Error koneksi server
+ "Budget status cannot be determined" -> Error dalam perhitungan budget
 
 Catatan Tambahan Head Approval
 

@@ -1,4 +1,4 @@
-
+﻿
 MODUL APPROVAL OF UNIDENTIFIED RV - DOKUMENTASI KNOWLEDGE BASE
 
 Dokumentasi ini dirancang untuk staff Finance dan Accounting yang mengelola 
@@ -10,8 +10,8 @@ A. APA ITU UNIDENTIFIED RV DAN KAPAN TERJADI?
 
 UNIDENTIFIED RV adalah dokumen Sales Receive (penerimaan uang) yang:
 - Uang sudah masuk ke rekening bank perusahaan ✓
-- Tapi BELUM TAHU siapa pelanggan/debiturnya ✗
-- Belum bisa dialokasikan ke invoice spesifik ✗
+- Tapi BELUM TAHU siapa pelanggan/debiturnya [X]
+- Belum bisa dialokasikan ke invoice spesifik [X]
 - Menunggu IDENTIFIKASI dan APPROVAL
 
 KAPAN TERJADI UNIDENTIFIED RV?
@@ -92,39 +92,39 @@ SORTING:
 C. ALUR APPROVAL UNIDENTIFIED RV
 
 STEP 1: LIHAT DAFTAR DOKUMEN YANG PERLU APPROVAL
-   ↓
+   v
 STEP 2: BUKA DOKUMEN YANG PALING ATAS (PERLU APPROVAL)
         - Status harus "NEED APPROVAL"
         - Item di grid hanya tampil jika punya status dengan "NEED"
-   ↓
+   v
 STEP 3: CARI INFORMASI IDENTIFIKASI
         Dari mana dapat info pelanggan?
         - Hubungi bagian sales / customer service
         - Cari dari bank statement keterangan transfer
         - Cek dari nomor referensi / kode pembayaran
         - Cross-check dengan database pelanggan
-   ↓
+   v
 STEP 4: IDENTIFIKASI SIAPA PELANGGANNYA
         Tanyakan:
         - Siapa nama pelanggan yang sebenarnya?
         - Untuk invoice/tagihan mana?
         - Berapa nominal yang seharusnya?
         - Apakah ada pajak/potongan?
-   ↓
+   v
 STEP 5: KLIK TOMBOL "APPROVE"
         - Tombol APPROVE hanya aktif untuk dokumen dengan status "NEED APPROVAL"
         - Tombol akan disabled (grayed out) jika status sudah APPROVED/REJECTED
-   ↓
+   v
 STEP 6: KONFIRMASI APPROVAL
         - Dialog akan muncul bertanya konfirmasi
         - Pastikan info yang diidentifikasi sudah benar
         - Klik "OK" untuk lanjut
-   ↓
+   v
 STEP 7: SISTEM PROSES APPROVAL
         - Backend system akan update dokumen
         - Identifikasi customer akan tersimpan
         - Dokumen bisa masuk ke workflow normal RV
-   ↓
+   v
 STEP 8: GRID REFRESH OTOMATIS
         - Daftar akan update
         - Dokumen yang sudah approved akan hilang dari list (karena status bukan "NEED" lagi)
@@ -195,10 +195,10 @@ TAMPILAN TOMBOL:
 KONDISI TOMBOL AKTIF (BISA DIKLIK):Status dokumen = "NEED APPROVAL" (atau mengandung kata "NEED")Dokumen sudah masuk dalam database dengan data validUser punya akses role untuk approve
 
 KONDISI TOMBOL DISABLED (TIDAK BISA DIKLIK):
-✗ Status = "APPROVED" (sudah approval)
-✗ Status = "REJECTED" (sudah ditolak)
-✗ Status = dokumen normal lainnya (bukan NEED approval status)
-✗ User tidak punya role/permission untuk approve
+[X] Status = "APPROVED" (sudah approval)
+[X] Status = "REJECTED" (sudah ditolak)
+[X] Status = dokumen normal lainnya (bukan NEED approval status)
+[X] User tidak punya role/permission untuk approve
 
 TAMPILAN DISABLED:
 - Tombol akan menjadi abu-abu (grayed out)
@@ -243,7 +243,7 @@ F. PROSEDUR APPROVAL STEP-BY-STEP
 
 LANGKAH 1: BUKA MENU APPROVAL UNIDENTIFIED RV
 Login ke sistem JIFAS
-Pergi ke Receiving → Approval of Unidentified RV
+Pergi ke Receiving -> Approval of Unidentified RV
 Grid akan menampilkan daftar dokumen pending
 
 LANGKAH 2: PILIH DOKUMEN YANG PALING PRIORITAS
@@ -318,7 +318,7 @@ Sumber 3: CUSTOMER SERVICE / SALES TEAM
 - Verify nama pelanggan di database
 
 Sumber 4: DATABASE MASTER CUSTOMER
-- Buka Master Data → Customer/Debtor
+- Buka Master Data -> Customer/Debtor
 - Cari berdasarkan nama / kode
 - Verifikasi bank account dan VA
 - Cross-check dengan dokumen unidentified
@@ -340,10 +340,10 @@ DATA YANG HARUS DIVERIFIKASI SEBELUM APPROVE:
 □ Approval dari Atasan - Sudah approve untuk identifikasi ini
 
 JIKA DATA TIDAK LENGKAP:
-→ JANGAN APPROVE dulu
-→ Lanjutkan investigasi
-→ Tanyakan ke finance manager
-→ Atau marking dokumen sebagai "perlu escalation"
+-> JANGAN APPROVE dulu
+-> Lanjutkan investigasi
+-> Tanyakan ke finance manager
+-> Atau marking dokumen sebagai "perlu escalation"
 
 H. VALIDASI & PENGECEKAN SEBELUM APPROVE
 
@@ -351,23 +351,23 @@ VALIDASI OTOMATIS SISTEM:
 
 1. Status Check
 Hanya dokumen dengan status "NEED APPROVAL" bisa di-approve
-   ✗ Dokumen dengan status "APPROVED" sudah tidak perlu approval
-   ✗ Dokumen dengan status "REJECTED" sudah ditolak sebelumnya
+   [X] Dokumen dengan status "APPROVED" sudah tidak perlu approval
+   [X] Dokumen dengan status "REJECTED" sudah ditolak sebelumnya
 
 2. Document Number Check
 DOC_NO harus ada dan tidak kosong
-   ✗ Jika kosong, there's system error, report ke IT
+   [X] Jika kosong, there's system error, report ke IT
 
 3. Authorization Token Check
 User harus punya valid session token
 User harus punya role/permission untuk "Approve Unidentified"
-   ✗ Jika tidak, akan error "Unauthorized"
+   [X] Jika tidak, akan error "Unauthorized"
 
 VALIDASI MANUAL YANG HARUS DILAKUKAN USER:
 
 1. Nominal Match Check
    □ Amount di grid = nominal yang diterima di bank statement
-   □ Jika tidak match → ada kemungkinan dokumentasi yang salah
+   □ Jika tidak match -> ada kemungkinan dokumentasi yang salah
 
 2. Customer Verification
    □ Nama pelanggan sudah dikonfirmasi benar
@@ -390,10 +390,10 @@ VALIDASI MANUAL YANG HARUS DILAKUKAN USER:
    □ Eskalasi jika dokumen sudah sangat lama
 
 JIKA ADA YANG TIDAK COCOK:
-→ JANGAN APPROVE
-→ Hubungi Finance Manager
-→ Dokumentasikan masalah yang ditemukan
-→ Tunggu instruksi lebih lanjut
+-> JANGAN APPROVE
+-> Hubungi Finance Manager
+-> Dokumentasikan masalah yang ditemukan
+-> Tunggu instruksi lebih lanjut
 
 I. ERROR & TROUBLESHOOTING
 
@@ -578,42 +578,42 @@ TIP 8: MONITOR DASHBOARD
 L. ALUR KESELURUHAN UNIDENTIFIED RV
 
 [1] UANG MASUK KE BANK
-        ↓
+        v
 [2] SISTEM TIDAK BISA IDENTIFY CUSTOMER OTOMATIS
-        ↓
+        v
 [3] SYSTEM CREATE UNIDENTIFIED RV DOKUMEN
     Status: "NEED APPROVAL"
-        ↓
+        v
 [4] DOKUMEN MASUK KE APPROVAL QUEUE
     (Di menu "Approval of Unidentified RV")
-        ↓
+        v
 [5] STAFF FINANCE LIHAT DAFTAR PENDING DOCS
-        ↓
+        v
 [6] INVESTIGASI & IDENTIFIKASI CUSTOMER
     - Hubungi Customer Service
     - Cek bank statement
     - Verify dengan database
-        ↓
+        v
 [7] KLIK TOMBOL "APPROVE" DI DOKUMEN
-        ↓
+        v
 [8] CONFIRM DIALOG MUNCUL
     - Double check doc_no dan amount
     - Klik OK untuk confirm
-        ↓
+        v
 [9] SISTEM PROCESS APPROVAL
     - Backend update database
     - Assign customer ke dokumen
     - Update status ke "APPROVED"
-        ↓
+        v
 [10] GRID REFRESH OTOMATIS
     - Dokumen hilang dari pending list
     - Status berubah ke "APPROVED"
     - Ready untuk normal workflow
-        ↓
+        v
 [11] DOKUMEN MASUK NORMAL RV WORKFLOW
-    - Finance checking → Tax approval → Accounting
+    - Finance checking -> Tax approval -> Accounting
     - Sama seperti dokumen RV normal lainnya
-        ↓
+        v
 [12] SELESAI & POSTED
     - Tercatat di General Ledger
     - Part dari financial statements
@@ -625,16 +625,16 @@ Kondisi: Customer belum diketahui
 Status: "NEED APPROVAL" atau "APPROVED" atau "REJECTED"
 Menu khusus: "Approval of Unidentified RV"
 Tombol: APPROVE (untuk identifikasi)
-Workflow: Approval → Identified → Normal RV workflow
+Workflow: Approval -> Identified -> Normal RV workflow
 User yang handle: Finance/Cash Management team
 Focus: Identifikasi customer yang benar
 
 NORMAL RV:
 Kondisi: Customer sudah diketahui dari awal
-Status: NEED CHECKING → NEED TAX → NEED ACCOUNTING → READY/PAID
+Status: NEED CHECKING -> NEED TAX -> NEED ACCOUNTING -> READY/PAID
 Menu: "Receive of Sales"
 Tombol: Edit, Void, Checking, Update, Save
-Workflow: Create → Check → Approve → Post
+Workflow: Create -> Check -> Approve -> Post
 User yang handle: Finance/Accounting team
 Focus: Allocation dan approval workflow
 

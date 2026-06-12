@@ -1,4 +1,4 @@
-LAPORAN BUDGET VERSUS REALISASI (LAPORAN REALISASI BUDGET)
+﻿LAPORAN BUDGET VERSUS REALISASI (LAPORAN REALISASI BUDGET)
 
 TUJUAN:
 Memberikan informasi RINGKASAN perbandingan antara Budget Allocation dengan Realisasi/Pengeluaran Aktual untuk semua account di satu department.
@@ -164,14 +164,14 @@ PEMAHAMAN ISTILAH PENTING:
    - Berarti sudah mengeluarkan lebih banyak dari yang dialokasikan
    - Critical condition - perlu budget top-up atau cost reduction
    - Not allowed tanpa approval khusus
-   - Contoh: Budget 50 juta, tapi real spending 80 juta → Over 30 juta
+   - Contoh: Budget 50 juta, tapi real spending 80 juta -> Over 30 juta
 
 6. UNDER-BUDGET (BELUM MENGGUNAKAN SEMUA BUDGET)
    - Terjadi ketika Real < Budget (Variance positif)
    - Berarti belum mengeluarkan seluruh budget yang dialokasikan
    - Comfortable position - masih ada buffer untuk future spending
    - Bisa digunakan untuk approval transaksi baru dalam periode
-   - Contoh: Budget 100 juta, real spending 60 juta → Sisa 40 juta
+   - Contoh: Budget 100 juta, real spending 60 juta -> Sisa 40 juta
 
 7. REALISASI (ACTUALS)
    - Adalah pengeluaran nyata/faktual yang sudah terjadi
@@ -188,8 +188,8 @@ PEMAHAMAN ISTILAH PENTING:
    - Laporan ini fokus pada REAL (actual cash), bukan commitment
 
 9. EXIT vs ENTRY
-   - Entry Stage: Invoice terima → di-commit (AP recorded)
-   - Exit Stage: Invoice dibayar → di-realisasi (Cash dikeluarkan)
+   - Entry Stage: Invoice terima -> di-commit (AP recorded)
+   - Exit Stage: Invoice dibayar -> di-realisasi (Cash dikeluarkan)
    - Laporan ini tracking EXIT (actual cash out), bukan entry
    - Real = berapa actual cash sudah keluar, bukan berapa AP terima
 
@@ -261,25 +261,25 @@ CARA MEMBACA VARIANCE:
    Berarti: Budget > Real (spending lebih kecil dari budget)
    Status: Comfortable, belum habis budget
    Action: Monitor untuk efficient utilization atau save untuk next period
-   Contoh: Budget 100M, Real 60M → Variance +40M (masih ada 40M)
+   Contoh: Budget 100M, Real 60M -> Variance +40M (masih ada 40M)
 
 2. VARIANCE NEGATIF (DEFICIT / OVER-BUDGET)
    Berarti: Budget < Real (spending lebih besar dari budget)
    Status: Alert/Critical, sudah melampaui budget
    Action: Emergency funding needed atau cost reduction
-   Contoh: Budget 50M, Real 80M → Variance -30M (excess 30M)
+   Contoh: Budget 50M, Real 80M -> Variance -30M (excess 30M)
 
 3. VARIANCE ZERO (EXACT MATCH)
    Berarti: Budget = Real (perfect match)
    Status: Fully utilized, no room for more
    Action: Monitor tight, tidak ada buffer
-   Contoh: Budget 100M, Real 100M → Variance 0
+   Contoh: Budget 100M, Real 100M -> Variance 0
 
 4. VARIANCE TIDAK APPLICABLE (BUDGET = 0)
    Berarti: Account tidak punya allocated budget
    Status: Depends on Real (jika ada real = full amount over-budget)
    Action: Emergency budget allocation needed jika ada spending
-   Contoh: Budget 0, Real 50M → Variance -50M (full amount over)
+   Contoh: Budget 0, Real 50M -> Variance -50M (full amount over)
 
 PERBEDAAN REAL vs COMMITTED:
 
@@ -305,15 +305,15 @@ FITUR CASCADE (DEPENDENT DROPDOWN):
 Setiap dropdown (kecuali Company) akan hanya aktif setelah dropdown sebelumnya dipilih.
 
 Urutan cascade:
-1. Company (mandiri) → aktifkan Division
-2. Division (cascading dari Company) → aktifkan Department
-3. Department (cascading dari Division) → aktif untuk filtering account
+1. Company (mandiri) -> aktifkan Division
+2. Division (cascading dari Company) -> aktifkan Department
+3. Department (cascading dari Division) -> aktif untuk filtering account
 4. From Date & To Date (independent date pickers)
 
 Contoh flow:
-- Pilih Company "KI" → Division dropdown aktif, tampil divisi di KI
-- Pilih Division "HO" → Department dropdown aktif, tampil department di HO
-- Pilih Department "FA" → Display semua account milik FA dengan budget vs real
+- Pilih Company "KI" -> Division dropdown aktif, tampil divisi di KI
+- Pilih Division "HO" -> Department dropdown aktif, tampil department di HO
+- Pilih Department "FA" -> Display semua account milik FA dengan budget vs real
 - Atur From/To date untuk period interest
 - Klik Search
 
@@ -601,7 +601,7 @@ KEYS TO REMEMBER:
 3. Over-budget = negative variance (real > budget)
 4. One row = One account/COA (not one transaction)
 5. Period = Date range (From/To) untuk spending accumulation
-6. Cascade mandatory: Company → Division → Department
+6. Cascade mandatory: Company -> Division -> Department
 7. Budget = Plan, Real = Actual result
 8. Real ≤ Committed (Real = paid portion from Committed)
 9. Negative variance = Priority untuk investigation & action

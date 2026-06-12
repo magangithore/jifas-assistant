@@ -1,4 +1,4 @@
-
+﻿
 MODUL CB PAYMENT (CASHBOOK PAYMENT) - DOKUMENTASI KNOWLEDGE BASE
 
 Dokumentasi ini dirancang untuk staff Finance dan Accounting yang mengelola 
@@ -47,17 +47,17 @@ Akun/COA sudah disiapkan untuk alokasi biaya
 ALUR SINGKAT CB PAYMENT:
 
 [1] Terima invoice/tagihan dari vendor
-        ↓
+        v
 [2] Buat dokumen CB Payment di sistem
-        ↓
+        v
 [3] Isi detail pembayaran: vendor, bank, nominal, COA, pajak
-        ↓
+        v
 [4] Submit untuk approval/checking
-        ↓
+        v
 [5] Ketua Finance checking dan approve dokumen
-        ↓
+        v
 [6] Dokumen siap untuk proses pembayaran ke bank
-        ↓
+        v
 [7] Uang transfer/cek dikeluarkan, posting ke sistem
 
 B. MENU UTAMA - DAFTAR CB PAYMENT
@@ -108,7 +108,7 @@ Form terbagi jadi: Header (informasi utama) dan Detail (alokasi COA)
 
 ---
 
-LANGKAH 2: PILIH JENIS PEMBAYARAN (PAYMENT METHOD)──
+LANGKAH 2: PILIH JENIS PEMBAYARAN (PAYMENT METHOD)-
 
 DROPDOWN: "Payment Method" (wajib diisi)
 
@@ -130,8 +130,8 @@ NON CEK/TRANSFER:
 
 BAGAIMANA MEMILIH?
 
-Jika punya nomor cek → Pilih CEK
-Jika transfer via bank → Pilih NON CEK
+Jika punya nomor cek -> Pilih CEK
+Jika transfer via bank -> Pilih NON CEK
 Jika belum tahu, tanya ke Ketua Finance
 
 LANGKAH 3: ISI BAGIAN HEADER (INFORMASI UTAMA)
@@ -304,7 +304,7 @@ TOTAL DETAIL = 93,500,000 + 6,500,000 = 100,000,000 (cocok dengan BANK AMOUNT)
 ---
 
 LANGKAH 5: REVIEW SEMUA DATA
-────────────────────────────
+-
 
 Sebelum SAVE, pastikan:
 
@@ -319,7 +319,7 @@ Deskripsi cukup jelas untuk reference
 ---
 
 LANGKAH 6: SIMPAN DOKUMEN
-─────────────────────────
+-
 
 1. Klik tombol "SAVE" (Biru) di bawah form
 2. Sistem melakukan validasi:
@@ -448,28 +448,28 @@ STATUS PROGRESSION:
     Checking dilakukan dengan membuka form dan review
     Action: Klik "CHECKING" button untuk approve
 
-        ↓
+        v
 
 [2] NEED ACCOUNTING CHECKING (jika ada pajak)
     Finance sudah checking OK
     Lanjut ke accounting untuk validate pajak
     Action: Accounting staff klik "CHECKING" untuk approve
 
-        ↓
+        v
 
 [3] NEED TAX APPROVAL (jika ada PPN/PPH > 0)
     Accounting sudah validate
     Tax department harus approve perhitungan pajak
     Action: Tax staff approval di menu Tax Approval
 
-        ↓
+        v
 
 [4] NEED CHECK DETAIL / READY TO POST
     Semua approval selesai
     Menunggu cek final detail sebelum posting ke GL
     Action: Ketua Finance final check
 
-        ↓
+        v
 
 [5] COMPLETE / POSTED (Warna Hitam)
     Sudah di-posting ke General Ledger
@@ -505,20 +505,20 @@ SEBELUM SAVE, SISTEM MELAKUKAN VALIDASI OTOMATIS:
 
 VALIDASI FIELD REQUIRED:
 
-✗ Error: "Please fill required field before continue to save!"
+[X] Error: "Please fill required field before continue to save!"
   Penyebab: Ada field wajib yang kosong
   Solusi: Cek field yang bertanda * (required)
 
 VALIDASI CURRENCY RATE:
 
-✗ Error: "Cannot continue to save! Please fill currency rate"
+[X] Error: "Cannot continue to save! Please fill currency rate"
   Penyebab: Currency non-IDR tapi rate masih 0
   Solusi: Isi exchange rate untuk currency yang digunakan
 
 VALIDASI AMOUNT MATCHING:
 
-✗ Error: "Bank amount must be equal with Total Amount"
-  Penyebab: Bank Amount ≠ Total Amount (dengan tolerance)
+[X] Error: "Bank amount must be equal with Total Amount"
+  Penyebab: Bank Amount != Total Amount (dengan tolerance)
   
   Tolerance dihitung:
   1 IDR per item yang ada tax (PPN/PPH) > 0
@@ -533,21 +533,21 @@ VALIDASI AMOUNT MATCHING:
 
 VALIDASI DETAIL:
 
-✗ Error: "Please fill Payment Detail before continue to save!"
+[X] Error: "Please fill Payment Detail before continue to save!"
   Penyebab: Grid detail kosong (0 baris)
   Solusi: Tambah minimal 1 baris detail dengan COA
 
-✗ Error: "Please fill PPH Type before continue to save!"
+[X] Error: "Please fill PPH Type before continue to save!"
   Penyebab: Ada baris dengan PPH > 0 tapi PPH Type kosong
   Solusi: Untuk setiap baris dengan PPH, pilih PPH Type (23, 24, 26, dll)
 
 VALIDASI TANGGAL CEK:
 
-✗ Error: "Paid Date cannot later than Due Date!"
+[X] Error: "Paid Date cannot later than Due Date!"
   Penyebab: Paid Date > Due Date
   Solusi: Sesuaikan tanggal, Paid Date harus ≤ Due Date
 
-✗ Error: "Due Date cannot earlier than Paid Date!"
+[X] Error: "Due Date cannot earlier than Paid Date!"
   Penyebab: Due Date < Paid Date
   Solusi: Sesuaikan, Due Date harus ≥ Paid Date
 
@@ -702,7 +702,7 @@ Detail: Isi dalam USD, tapi tax calculation base dari IDR
 Total Amount (IDR): dihitung di header
 
 Validasi:
-Jika currency ≠ IDR, rate field WAJIB diisi
+Jika currency != IDR, rate field WAJIB diisi
 Rate tidak boleh 0
 Validasi amount SAMA tetap berlaku (nominal USD vs total header)
 
@@ -782,11 +782,11 @@ ERROR 5: "Cannot continue to save! Please fill currency rate"
 - Solusi:
   □ Jika currency IDR: Rate auto-disable, tidak perlu isi
   □ Jika currency USD/JPY/dll: Isi rate sesuai kurs hari
-  □ Contoh: 1 USD = 15,500 IDR → isi 15500
+  □ Contoh: 1 USD = 15,500 IDR -> isi 15500
   □ Cek ke treasury untuk rate resmi perusahaan hari itu
 
 ERROR 6: "Bank amount must be equal with Total Amount"
-- Penyebab: Nominal yang dikeluarkan ≠ total dari detail
+- Penyebab: Nominal yang dikeluarkan != total dari detail
 - Solusi:
   □ Review semua detail line (sum = total)
   □ Pastikan amount per baris sudah benar
@@ -928,8 +928,8 @@ M. KESIMPULAN & CATATAN PENTING
 
 CB PAYMENT adalah dokumen WAJIB untuk setiap pengeluaran uang
 
-Ada WORKFLOW KETAT: Create → Finance Checking → Accounting Check → 
-  Tax Approval → Posting. Jangan skip langkah.
+Ada WORKFLOW KETAT: Create -> Finance Checking -> Accounting Check -> 
+  Tax Approval -> Posting. Jangan skip langkah.
 
 VALIDASI KETAT: Amount harus match, tax harus correct, PPH Type wajib
   jika ada PPH. Ini untuk mencegah error posting ke GL.

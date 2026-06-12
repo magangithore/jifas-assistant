@@ -19,31 +19,31 @@ namespace jifas_assistant.DAL.Models
         /// </summary>
         [Required]
         [MaxLength(100)]
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
 
         /// <summary>
         /// User ID atau identifier
         /// </summary>
         [MaxLength(100)]
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         /// <summary>
         /// User message / pertanyaan
         /// </summary>
         [Required]
-        public string UserMessage { get; set; }
+        public string UserMessage { get; set; } = string.Empty;
 
         /// <summary>
         /// AI response / jawaban
         /// </summary>
         [Required]
-        public string AiResponse { get; set; }
+        public string AiResponse { get; set; } = string.Empty;
 
         /// <summary>
         /// Source dari response (Knowledge Base, Out of Scope, Error, dll)
         /// </summary>
         [MaxLength(100)]
-        public string ResponseSource { get; set; }
+        public string ResponseSource { get; set; } = string.Empty;
 
         /// <summary>
         /// Confidence score dari response (0-1)
@@ -64,7 +64,7 @@ namespace jifas_assistant.DAL.Models
         /// Timestamp ketika chat terjadi
         /// </summary>
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Flag untuk tracking success/failure
@@ -74,6 +74,6 @@ namespace jifas_assistant.DAL.Models
         /// <summary>
         /// Knowledge Base documents yang digunakan (JSON serialized document IDs)
         /// </summary>
-        public string UsedDocumentIds { get; set; }
+        public string? UsedDocumentIds { get; set; }
     }
 }

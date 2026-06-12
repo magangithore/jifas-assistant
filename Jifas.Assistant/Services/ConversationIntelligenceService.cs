@@ -15,20 +15,20 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class ConversationContext
     {
-        public string SessionId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
         public List<ConversationTurn> RecentTurns { get; set; } = new List<ConversationTurn>();
         public List<string> TopicsDiscussed { get; set; } = new List<string>();
-        public string CurrentTopic { get; set; }
+        public string CurrentTopic { get; set; } = string.Empty;
         public bool HasPreviousContext { get; set; }
-        public string FormattedContext { get; set; }
+        public string FormattedContext { get; set; } = string.Empty;
     }
 
     public class ConversationTurn
     {
-        public string UserMessage { get; set; }
-        public string AssistantResponse { get; set; }
+        public string UserMessage { get; set; } = string.Empty;
+        public string AssistantResponse { get; set; } = string.Empty;
         public DateTime Timestamp { get; set; }
-        public string Topic { get; set; }
+        public string Topic { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -37,11 +37,11 @@ namespace Jifas.Assistant.Services
     public class UserFeedbackInput
     {
         public int? ChatId { get; set; }
-        public string SessionId { get; set; }
-        public string MessageId { get; set; }
+        public string SessionId { get; set; } = string.Empty;
+        public string MessageId { get; set; } = string.Empty;
         public int Rating { get; set; }  // 1-5
-        public string Comment { get; set; }
-        public string UserId { get; set; }
+        public string Comment { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class FailurePattern
     {
-        public string QueryPattern { get; set; }
+        public string QueryPattern { get; set; } = string.Empty;
         public int FailureCount { get; set; }
         public List<string> CommonIssues { get; set; } = new List<string>();
         public double AverageRating { get; set; }
@@ -60,9 +60,9 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class SuccessPattern
     {
-        public string QueryType { get; set; }
-        public string Topic { get; set; }
-        public string ResponseStructure { get; set; }
+        public string QueryType { get; set; } = string.Empty;
+        public string Topic { get; set; } = string.Empty;
+        public string ResponseStructure { get; set; } = string.Empty;
         public double AverageRating { get; set; }
         public int UsageCount { get; set; }
     }
@@ -80,7 +80,15 @@ namespace Jifas.Assistant.Services
         Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 5);
         Task<string> GetFormattedContextAsync(string sessionId);
         Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery);
-        string ExtractTopic(string message);
+        string? ExtractTopic(string message);
+
+        /// <summary>
+        /// Compact/summarize an entire session into a structured summary.
+        /// Inspired by Claude Code's compaction system — preserves user intents,
+        /// key decisions, errors, and pending work in a dense format.
+        /// Used for: ticket descriptions, long-session context, handoff to IT.
+        /// </summary>
+        Task<string> CompactSessionAsync(string sessionId, int maxTurns = 20);
     }
 
     /// <summary>
@@ -91,7 +99,7 @@ namespace Jifas.Assistant.Services
     {
         Task RecordFeedbackAsync(UserFeedbackInput feedback);
         Task<List<FailurePattern>> GetFailurePatternsAsync(int top = 10);
-        Task<List<SuccessPattern>> GetSuccessPatternsAsync(string topic = null);
+        Task<List<SuccessPattern>> GetSuccessPatternsAsync(string? topic = null);
         Task<bool> IsKnownFailurePatternAsync(string query);
         Task<List<string>> GetImprovementSuggestionsAsync(string query);
     }
@@ -112,7 +120,7 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public class ConversationIntelligenceService : IConversationIntelligenceService
     {
-        private readonly JIFAS_AssistantContext _db;
+        private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
         private readonly IChatHistoryService _chatHistoryService;
         private readonly ICacheService _cacheService;
         private readonly ILoggerService _logger;
@@ -156,12 +164,12 @@ namespace Jifas.Assistant.Services
         };
 
         public ConversationIntelligenceService(
-            JIFAS_AssistantContext db,
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory,
             IChatHistoryService chatHistoryService,
             ICacheService cacheService,
             ILoggerService logger)
         {
-            _db = db;
+            _dbFactory = dbFactory;
             _chatHistoryService = chatHistoryService;
             _cacheService = cacheService;
             _logger = logger;
@@ -205,7 +213,7 @@ namespace Jifas.Assistant.Services
                         UserMessage = h.UserMessage,
                         AssistantResponse = TruncateResponse(h.AiResponse, 300),
                         Timestamp = h.CreatedAt,
-                        Topic = ExtractTopic(h.UserMessage)
+                        Topic = ExtractTopic(h.UserMessage) ?? string.Empty
                     })
                     .Take(maxTurns)
                     .ToList();
@@ -213,7 +221,7 @@ namespace Jifas.Assistant.Services
                 context.RecentTurns = turns;
                 context.HasPreviousContext = turns.Count > 0;
                 context.TopicsDiscussed = turns.Select(t => t.Topic).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
-                context.CurrentTopic = turns.LastOrDefault()?.Topic;
+                context.CurrentTopic = turns.LastOrDefault()?.Topic ?? string.Empty;
                 context.FormattedContext = FormatContext(turns);
 
                 // Cache for 30 minutes
@@ -233,7 +241,7 @@ namespace Jifas.Assistant.Services
         public async Task<string> GetFormattedContextAsync(string sessionId)
         {
             var context = await BuildContextAsync(sessionId);
-            return context.FormattedContext;
+            return context.FormattedContext ?? string.Empty;
         }
 
         public async Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery)
@@ -291,7 +299,7 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public string ExtractTopic(string message)
+        public string? ExtractTopic(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
                 return null;
@@ -315,24 +323,40 @@ namespace Jifas.Assistant.Services
         private string FormatContext(List<ConversationTurn> turns)
         {
             if (turns == null || turns.Count == 0)
-                return null;
+                return string.Empty;
 
             var contextBuilder = new StringBuilder();
             contextBuilder.AppendLine("=== KONTEKS PERCAKAPAN SEBELUMNYA ===");
-            contextBuilder.AppendLine("(Gunakan konteks ini untuk memahami referensi dan follow-up questions)");
+
+            // Section 1: Topics discussed (structured overview)
+            var topics = turns.Select(t => t.Topic)
+                .Where(t => !string.IsNullOrEmpty(t) && t != "General")
+                .Distinct().ToList();
+            if (topics.Count > 0)
+                contextBuilder.AppendLine($"Topik yang dibahas: {string.Join(", ", topics)}");
+
+            // Section 2: Conversation intent history
+            var lastTurn = turns.LastOrDefault();
+            if (lastTurn != null)
+                contextBuilder.AppendLine($"Topik terakhir: {lastTurn.Topic ?? "General"}");
+
             contextBuilder.AppendLine();
 
+            // Section 3: Conversation turns (most recent)
+            contextBuilder.AppendLine("Percakapan terkini:");
             foreach (var turn in turns.TakeLast(MEMORY_WINDOW))
             {
                 contextBuilder.AppendLine($"User: {turn.UserMessage}");
-                contextBuilder.AppendLine($"Assistant: {turn.AssistantResponse}");
+                contextBuilder.AppendLine($"AI: {turn.AssistantResponse}");
                 contextBuilder.AppendLine();
             }
 
             contextBuilder.AppendLine("=== AKHIR KONTEKS ===");
             contextBuilder.AppendLine();
-            contextBuilder.AppendLine("INSTRUKSI: Jika pertanyaan saat ini merujuk ke percakapan sebelumnya (menggunakan kata 'itu', 'ini', 'tersebut', dll), " +
-                "hubungkan dengan konteks di atas untuk memberikan jawaban yang koheren.");
+            contextBuilder.AppendLine("INSTRUKSI KONTEKS:");
+            contextBuilder.AppendLine("- Jika user merujuk 'itu', 'ini', 'tersebut', 'tadi' → hubungkan dengan konteks di atas.");
+            contextBuilder.AppendLine("- Jika user bertanya hal baru → jawab tanpa memaksakan hubungan ke konteks sebelumnya.");
+            contextBuilder.AppendLine("- Jika user minta klarifikasi → berikan detail lebih dalam dari topik sebelumnya.");
 
             var formatted = contextBuilder.ToString();
 
@@ -367,6 +391,70 @@ namespace Jifas.Assistant.Services
             return truncated.Trim() + "...";
         }
 
+        /// <summary>
+        /// Compact/summarize the entire session conversation into a structured summary.
+        /// Inspired by Claude Code's compaction system — preserves user intents,
+        /// key decisions, errors/issues, and context in a dense format.
+        /// </summary>
+        public async Task<string> CompactSessionAsync(string sessionId, int maxTurns = 20)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(sessionId))
+                    return string.Empty;
+
+                var history = await _chatHistoryService.GetSessionHistoryAsync(sessionId, maxTurns);
+                if (history == null || history.Count == 0)
+                    return string.Empty;
+
+                var turns = history
+                    .OrderBy(h => h.CreatedAt)
+                    .Select(h => new ConversationTurn
+                    {
+                        UserMessage = h.UserMessage,
+                        AssistantResponse = TruncateResponse(h.AiResponse, 500),
+                        Timestamp = h.CreatedAt,
+                        Topic = ExtractTopic(h.UserMessage) ?? string.Empty
+                    })
+                    .ToList();
+
+                // Build structured summary (deterministic, no AI call needed)
+                var sb = new StringBuilder();
+
+                // 1. Topics discussed
+                var topics = turns.Select(t => t.Topic)
+                    .Where(t => !string.IsNullOrEmpty(t) && t != "General")
+                    .Distinct().ToList();
+                if (topics.Count > 0)
+                    sb.AppendLine($"Topik: {string.Join(", ", topics)}");
+
+                // 2. User's messages (the core problems/questions)
+                sb.AppendLine();
+                sb.AppendLine("Kronologi percakapan:");
+                foreach (var turn in turns)
+                {
+                    sb.AppendLine($"- [{turn.Timestamp:HH:mm}] User: {turn.UserMessage}");
+                    if (!string.IsNullOrEmpty(turn.AssistantResponse))
+                        sb.AppendLine($"  AI: {turn.AssistantResponse}");
+                }
+
+                // 3. Detect unresolved issues
+                var lastUserMsg = turns.LastOrDefault()?.UserMessage?.ToLowerInvariant() ?? "";
+                var hasUnresolved = lastUserMsg.Contains("error") || lastUserMsg.Contains("gagal") ||
+                                    lastUserMsg.Contains("masalah") || lastUserMsg.Contains("tidak bisa") ||
+                                    lastUserMsg.Contains("tiket");
+                if (hasUnresolved)
+                    sb.AppendLine("\nStatus: Masalah belum sepenuhnya terselesaikan");
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"[ConversationMemory] Error compacting session: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
         #endregion
 
         #region Feedback Learning Methods
@@ -392,8 +480,11 @@ namespace Jifas.Assistant.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _db.UserFeedbacks.Add(userFeedback);
-                await _db.SaveChangesAsync();
+                await using (var db = await _dbFactory.CreateDbContextAsync())
+                {
+                    db.UserFeedbacks.Add(userFeedback);
+                    await db.SaveChangesAsync();
+                }
 
                 // Process feedback for learning
                 await ProcessFeedbackForLearningAsync(feedback);
@@ -419,11 +510,12 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Query poor-rated feedbacks with their chat IDs
-                var poorFeedbacks = await _db.UserFeedbacks
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var poorFeedbacks = await db.UserFeedbacks
                     .Where(f => f.Rating != null && f.Rating <= POOR_RATING && f.ChatId != null)
                     .OrderByDescending(f => f.CreatedAt)
                     .Take(100)
-                    .Select(f => f.ChatId.Value)
+                    .Select(f => f.ChatId.GetValueOrDefault())
                     .ToListAsync();
 
                 if (poorFeedbacks.Count == 0)
@@ -432,7 +524,7 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Get related chat history by matching with ChatId
-                var failedChats = await _db.ChatHistories
+                var failedChats = await db.ChatHistories
                     .Where(ch => poorFeedbacks.Contains(ch.Id))
                     .ToListAsync();
 
@@ -451,7 +543,7 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public async Task<List<SuccessPattern>> GetSuccessPatternsAsync(string topic = null)
+        public async Task<List<SuccessPattern>> GetSuccessPatternsAsync(string? topic = null)
         {
             try
             {
@@ -464,11 +556,12 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Query good-rated feedbacks
-                var goodFeedbacks = await _db.UserFeedbacks
+                await using var db = await _dbFactory.CreateDbContextAsync();
+                var goodFeedbacks = await db.UserFeedbacks
                     .Where(f => f.Rating != null && f.Rating >= GOOD_RATING && f.ChatId != null)
                     .OrderByDescending(f => f.CreatedAt)
                     .Take(100)
-                    .Select(f => f.ChatId.Value)
+                    .Select(f => f.ChatId.GetValueOrDefault())
                     .ToListAsync();
 
                 if (goodFeedbacks.Count == 0)
@@ -477,7 +570,7 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Get related chat history
-                var successChats = await _db.ChatHistories
+                var successChats = await db.ChatHistories
                     .Where(ch => goodFeedbacks.Contains(ch.Id) && ch.Success == true)
                     .ToListAsync();
 
@@ -570,7 +663,8 @@ namespace Jifas.Assistant.Services
                 // For poor ratings, flag for review
                 if (feedback.Rating <= POOR_RATING && feedback.ChatId.HasValue)
                 {
-                    var chatHistory = await _db.ChatHistories
+                    await using var db = await _dbFactory.CreateDbContextAsync();
+                    var chatHistory = await db.ChatHistories
                         .Where(ch => ch.Id == feedback.ChatId.Value)
                         .FirstOrDefaultAsync();
 
@@ -634,7 +728,7 @@ namespace Jifas.Assistant.Services
                 .ToList();
         }
 
-        private List<SuccessPattern> AnalyzeSuccessPatterns(List<ChatHistory> successChats, string filterTopic)
+        private List<SuccessPattern> AnalyzeSuccessPatterns(List<ChatHistory> successChats, string? filterTopic)
         {
             var patterns = new Dictionary<string, SuccessPattern>();
 
@@ -703,7 +797,7 @@ namespace Jifas.Assistant.Services
 
             if (response.Contains("1.") || response.Contains("1)"))
                 return "Numbered Steps";
-            if (response.Contains("-") || response.Contains("�"))
+            if (response.Contains("-") || response.Contains("�"))
                 return "Bullet Points";
             if (response.Contains(":\n"))
                 return "Labeled Sections";

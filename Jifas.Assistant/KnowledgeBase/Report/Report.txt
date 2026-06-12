@@ -1,0 +1,1257 @@
+﻿JIFAS Knowledge Base - Modul Report
+
+Dokumen ini dibuat sebagai knowledge base untuk AI Chatbot JIFAS agar memahami modul Report dari sisi user, business process, flow penggunaan, makna data, validasi, troubleshooting, dan eskalasi ke IT. Fokus dokumen ini bukan source code, tetapi logika bisnis dan cara membaca laporan di JIFAS.
+
+Modul Report adalah pusat informasi untuk melihat data keuangan yang sudah diproses dari modul lain seperti Invoice, PUM, Payment, Receiving, CashBank, Budget, dan Accounting. Report tidak digunakan untuk membuat transaksi baru. Report digunakan untuk monitoring, inquiry, audit, rekonsiliasi, tracking budget, cash flow, dan pengambilan keputusan finance.
+
+
+
+1. Gambaran Besar Modul Report
+
+Modul Report menyediakan berbagai laporan keuangan dan operasional finance dalam bentuk report viewer. User memilih parameter seperti company, bank, divisi, department, COA, status, tanggal, periode, atau rate. Setelah tombol Search diklik, sistem mengambil data dari database JIFAS dan menampilkan hasil dalam format laporan siap cetak, export, atau digunakan untuk analisis.
+
+Secara sederhana:
+
+Report adalah kaca pembesar untuk melihat apa yang sudah terjadi di JIFAS.
+
+Jika Invoice dibuat, Payment diproses, PUM dicairkan, Receiving dicatat, atau CashBank diposting, maka data tersebut dapat ditelusuri melalui modul Report sesuai jenis laporannya.
+
+Modul Report membantu user menjawab pertanyaan seperti:
+
+- Tagihan vendor mana saja yang sudah tercatat sebagai hutang?
+- Piutang customer mana saja yang sudah tercatat?
+- Pembayaran kas/bank apa saja yang sudah terjadi?
+- Uang muka karyawan mana yang sudah cair dan mana yang sudah direalisasi?
+- Saldo bank menurut sistem dan bank seperti apa?
+- Budget department masih cukup atau sudah over budget?
+- Komitmen budget sudah berubah menjadi realisasi pembayaran atau belum?
+- Cash flow harian sesuai budget atau tidak?
+- Deposito aktif perusahaan apa saja?
+
+
+
+2. Tujuan Bisnis Modul Report
+
+Tujuan utama modul Report adalah:
+
+1. Menyediakan data keuangan yang rapi untuk monitoring harian.
+2. Membantu Finance dan Accounting melakukan rekonsiliasi transaksi.
+3. Membantu manajemen melihat posisi budget, committed, realisasi, variance, dan cash flow.
+4. Menyediakan inquiry detail untuk AP, AR, CB, dan PUM.
+5. Membantu tracking dokumen dari proses awal hingga posting.
+6. Membantu audit trail karena laporan menunjukkan dokumen, tanggal, vendor/customer, bank, amount, dan status.
+7. Membantu month-end closing dan year-end closing.
+8. Membantu menemukan selisih, transaksi pending, posting belum selesai, atau transaksi yang salah parameter.
+
+Report bukan sumber input transaksi. Report hanya membaca dan menampilkan data yang sudah dibuat di modul lain. Jika data di laporan salah, biasanya sumber perbaikannya ada di dokumen transaksi asal seperti Invoice, Payment, PUM, Receiving, CashBank, atau Accounting.
+
+
+
+3. Cara Umum Menggunakan Modul Report
+
+Flow umum hampir semua laporan:
+
+1. User membuka menu Report yang diinginkan.
+2. Sistem menampilkan form filter di bagian atas.
+3. User memilih parameter wajib.
+4. User klik tombol Search.
+5. Sistem memvalidasi parameter.
+6. Sistem menampilkan loading indicator.
+7. Sistem mengambil data dari database.
+8. Report viewer menampilkan laporan dengan header, periode, tanggal cetak, waktu cetak, dan detail data.
+9. User dapat membaca, print, export, atau menggunakan hasilnya untuk analisis.
+
+Parameter umum yang sering muncul:
+
+- Company: perusahaan yang ingin dilihat datanya.
+- Status: All Status, Posted, atau Unposted.
+- Bank: rekening bank yang ingin dilihat.
+- Division: divisi yang ingin dianalisis.
+- Department: department/cost center.
+- COA Code: kode budget/account tertentu.
+- From: tanggal awal periode.
+- To: tanggal akhir periode.
+- Date: tanggal posisi laporan.
+- Rate: kurs yang dipakai untuk konversi foreign currency.
+- Period: bulan/periode laporan.
+
+
+
+4. Prinsip Hak Akses dan Multi Company
+
+Setiap report mengikuti company access user. User hanya boleh melihat data perusahaan yang sesuai dengan aksesnya. Jika user memilih company tertentu, laporan hanya menampilkan transaksi dari company tersebut.
+
+Untuk report yang memiliki filter Division dan Department, pilihan Division akan mengikuti Company yang dipilih, lalu pilihan Department akan mengikuti Division yang dipilih. Untuk report yang memiliki COA Code, pilihan COA akan mengikuti Company, Division, dan Department.
+
+Untuk report yang memiliki filter Bank, pilihan Bank akan mengikuti Company yang dipilih. Jika bank tidak muncul, kemungkinan bank belum aktif, bank tidak terdaftar untuk company tersebut, atau user tidak memiliki akses.
+
+Jika user merasa data company/bank/divisi tidak muncul padahal seharusnya ada, arahkan ke IT atau Master Data administrator untuk pengecekan mapping access, master company, master bank, master division, master department, atau master COA.
+
+
+
+5. Konsep Posted dan Unposted
+
+Beberapa laporan menggunakan filter status:
+
+- All Status: menampilkan semua data, baik yang sudah posted maupun belum posted.
+- Posted: menampilkan dokumen yang sudah masuk pembukuan atau sudah diakui sistem.
+- Unposted: menampilkan dokumen yang masih proses, belum selesai, atau belum diposting.
+
+Makna posted berbeda tergantung report:
+
+- Inquiry AP: invoice vendor sudah diakui sebagai hutang.
+- Inquiry AR: invoice customer sudah diakui sebagai piutang.
+- Inquiry CB: payment/cashbook sudah tercatat sebagai transaksi kas/bank.
+- Inquiry PUM: pencairan uang muka sudah tercatat.
+- Realisasi PUM: realisasi uang muka sudah diproses.
+
+Jika user mencari transaksi tetapi tidak muncul, minta user cek status filter terlebih dahulu. Banyak kasus data tidak muncul karena user memilih Posted padahal dokumen masih Unposted, atau sebaliknya.
+
+
+
+6. Kategori Besar Report dalam JIFAS
+
+Modul Report dapat dikelompokkan menjadi beberapa area besar:
+
+1. Inquiry Report
+   - Inquiry AP
+   - Inquiry AR
+   - Inquiry CB
+   - Inquiry PUM
+
+2. PUM Report
+   - Realisasi PUM
+
+3. Bank dan CashBank Report
+   - Saldo Buku Bank
+   - Cashbank Detail Daily
+   - Cashbank Daily atau Cashbank Recap
+
+4. Budget Report
+   - Budget Card
+   - Budget vs Committed
+   - Budget vs Realization
+   - Budget Payment Daily
+   - Budget Receive Daily
+   - Committed vs Realization
+
+5. Cash Flow Report
+   - Inquiry Daily Cash Flow
+   - Inquiry Daily Cash Flow Detail
+
+6. Investment / Deposit Report
+   - Deposito Aktif
+
+
+
+BAGIAN A - INQUIRY REPORT
+
+Inquiry Report digunakan untuk menelusuri transaksi detail. Report ini menjawab pertanyaan siapa, kapan, dokumen apa, bank apa, amount berapa, statusnya apa, dan terkait vendor/customer mana.
+
+
+
+7. Inquiry AP - Accounts Payable Inquiry
+
+7.1 Fungsi
+
+Inquiry AP digunakan untuk melihat detail hutang perusahaan kepada vendor atau supplier. Laporan ini menampilkan invoice pembelian atau tagihan vendor yang tercatat sebagai AP.
+
+AP berarti Accounts Payable, yaitu hutang perusahaan kepada vendor.
+
+Laporan ini digunakan oleh Finance dan Accounting untuk:
+
+- Tracking tagihan vendor.
+- Melihat invoice yang sudah posted atau belum posted.
+- Memeriksa nilai DPP, PPN, PPH, dan total IDR.
+- Melihat vendor, bank tujuan pembayaran, nomor faktur, dan referensi.
+- Menyiapkan pembayaran vendor.
+- Mendukung audit hutang dan rekonsiliasi AP.
+
+7.2 Flow Inquiry AP
+
+1. User membuka Report Inquiry AP.
+2. User memilih Company.
+3. User memilih Status: All Status, Posted, atau Unposted.
+4. User memilih tanggal From dan To.
+5. User klik Search.
+6. Sistem menampilkan invoice AP sesuai filter.
+7. User membaca detail invoice, vendor, pajak, bank, dan total.
+
+7.3 Data yang Ditampilkan
+
+Laporan menampilkan:
+
+- Company atau Comp.
+- Doc No.
+- Date.
+- Description.
+- Currency.
+- Amount.
+- DPP.
+- Total IDR.
+- PPN.
+- PPH.
+- No Faktur.
+- Bank.
+- Creditor atau Vendor.
+- Reference.
+- No BP atau bukti penerimaan.
+
+7.4 Cara Membaca
+
+Jika status Posted dipilih, laporan menunjukkan invoice vendor yang sudah diakui sebagai hutang. Jika Unposted dipilih, laporan menunjukkan invoice yang masih pending atau belum final.
+
+Jika user mencari invoice vendor tetapi tidak muncul:
+
+1. Pastikan company benar.
+2. Pastikan periode tanggal mencakup tanggal invoice.
+3. Coba pilih All Status.
+4. Pastikan invoice sudah dibuat di modul Invoice/Receiving.
+5. Pastikan dokumen tidak void atau reject.
+6. Jika tetap tidak muncul, hubungi IT dengan nomor dokumen dan screenshot filter.
+
+7.5 Hubungan dengan Modul Lain
+
+Inquiry AP mengambil data dari proses invoice vendor, receiving, payment, dan accounting posting. Jika data AP salah, sumber koreksi biasanya ada di dokumen Invoice atau Accounting posting, bukan langsung di report.
+
+
+
+8. Inquiry AR - Accounts Receivable Inquiry
+
+8.1 Fungsi
+
+Inquiry AR digunakan untuk melihat detail piutang perusahaan kepada customer atau debtor. Laporan ini menampilkan invoice penjualan atau transaksi penerimaan yang menjadi AR.
+
+AR berarti Accounts Receivable, yaitu piutang perusahaan kepada customer.
+
+Laporan ini digunakan untuk:
+
+- Tracking piutang customer.
+- Melihat invoice customer yang sudah posted atau belum posted.
+- Memeriksa PPN, PPH, amount, dan total IDR.
+- Melihat bank penerima dan nama debtor.
+- Mendukung collection dan rekonsiliasi piutang.
+
+8.2 Flow Inquiry AR
+
+1. User membuka Report Inquiry AR.
+2. User memilih Company.
+3. User memilih Status: All Status, Posted, atau Unposted.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan transaksi AR sesuai filter.
+7. User menganalisis customer, amount, pajak, dan status.
+
+8.3 Data yang Ditampilkan
+
+Laporan menampilkan:
+
+- Company.
+- Doc No.
+- Date.
+- Description.
+- Currency.
+- Amount.
+- Total IDR.
+- PPN.
+- PPH.
+- Bank.
+- Debtor.
+- Amount dalam currency awal jika ada.
+
+8.4 Cara Membaca
+
+Jika customer sudah bayar tetapi AR masih muncul, kemungkinan pembayaran belum dialokasikan atau RV belum posted. Cek modul Receiving/Sales Receive dan CashBank.
+
+Jika invoice customer tidak muncul:
+
+1. Cek company.
+2. Cek status filter.
+3. Cek periode tanggal.
+4. Cek apakah transaksi sudah masuk Sales Receive atau RV.
+5. Cek apakah dokumen masih Unposted.
+6. Jika data tetap tidak muncul, hubungi IT.
+
+
+
+9. Inquiry CB - Cash Book Inquiry
+
+9.1 Fungsi
+
+Inquiry CB digunakan untuk melihat detail transaksi pembayaran atau pengeluaran kas/bank yang sudah tercatat di sistem. CB berarti Cash Book atau CashBank.
+
+Laporan ini digunakan untuk:
+
+- Tracking voucher pembayaran.
+- Melihat pembayaran vendor, PUM, atau transaksi cash out lain.
+- Memeriksa bank pengeluaran.
+- Memeriksa penerima pembayaran.
+- Mengetahui apakah transaksi sudah posted atau belum.
+- Mendukung kontrol kas dan rekonsiliasi bank.
+
+9.2 Flow Inquiry CB
+
+1. User membuka Report Inquiry CB.
+2. User memilih Company.
+3. User memilih Status.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan transaksi payment/cashbook sesuai filter.
+
+9.3 Data yang Ditampilkan
+
+- Company.
+- Doc No.
+- Date.
+- Description.
+- Currency.
+- Amount.
+- Total IDR.
+- Bank.
+- Creditor.
+- Debtor jika ada.
+
+9.4 Cara Membaca
+
+Inquiry CB fokus pada transaksi kas/bank keluar. Jika user ingin melihat pembayaran tertentu, gunakan Doc No, tanggal, bank, atau creditor sebagai acuan.
+
+Jika data tidak cocok dengan Payment module, cek apakah dokumen Payment sudah posted. Jika masih Need Finance Checking, Need Accounting Checking, atau Need Posting, kemungkinan muncul di Unposted atau belum masuk report tertentu.
+
+
+
+10. Inquiry PUM - Detail Pencairan Uang Muka
+
+10.1 Fungsi
+
+Inquiry PUM digunakan untuk melihat detail pencairan uang muka atau PU. Laporan ini fokus pada uang yang sudah dicairkan dari bank/kas kepada karyawan atau pihak penerima uang muka.
+
+Laporan ini digunakan untuk:
+
+- Tracking pencairan PUM.
+- Melihat PU No, tanggal pencairan, bank, amount, dan creditor.
+- Memastikan uang muka sudah keluar dari bank yang benar.
+- Mendukung follow-up realisasi PUM.
+
+10.2 Flow Inquiry PUM
+
+1. User membuka Report Inquiry PUM.
+2. User memilih Company.
+3. User memilih Status.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan daftar PU sesuai filter.
+
+10.3 Data yang Ditampilkan
+
+- Company.
+- Doc No atau PU No.
+- Date.
+- Description.
+- Currency.
+- Amount.
+- Bank.
+- Total IDR.
+- Creditor atau penerima uang muka.
+
+10.4 Cara Membaca
+
+Inquiry PUM bukan laporan pengajuan PUM awal. Laporan ini fokus pada pencairan atau payment uang muka. Jika user mencari PPUM tetapi tidak muncul, cek apakah PPUM sudah sampai tahap PU/Payment PUM.
+
+
+
+BAGIAN B - PUM REPORT
+
+11. Realisasi PUM
+
+11.1 Fungsi
+
+Laporan Realisasi PUM digunakan untuk melihat hubungan antara pengajuan uang muka, pencairan uang muka, dan realisasi atau pertanggungjawaban uang muka.
+
+Laporan ini membantu Finance mengetahui:
+
+- Uang muka mana yang sudah diajukan.
+- Uang muka mana yang sudah dicairkan.
+- Uang muka mana yang sudah direalisasikan.
+- Mana yang masih pending realisasi.
+- Apakah total realisasi sesuai dengan total PU/UM.
+
+11.2 Konsep UMK, PU, dan RU
+
+Dalam laporan Realisasi PUM terdapat tiga kelompok data utama:
+
+1. UMK atau UM: dokumen pengajuan awal uang muka.
+2. PU: dokumen pencairan/pembayaran uang muka dari kas/bank.
+3. RU: dokumen realisasi uang muka atau pertanggungjawaban penggunaan dana.
+
+Flow besar:
+
+PPUM atau UMK dibuat
+lalu Head/Finance approve
+lalu PU dicairkan
+lalu user membuat RU
+lalu Finance/Tax/Accounting memeriksa RU
+lalu RU posted atau selesai.
+
+11.3 Flow Laporan Realisasi PUM
+
+1. User membuka Report Realisasi PUM.
+2. User memilih Company.
+3. User memilih Status.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan data UMK, PU, dan RU dalam satu tampilan.
+7. User membandingkan mana yang sudah cair dan mana yang sudah realisasi.
+
+11.4 Cara Membaca
+
+Jika UMK dan PU ada tetapi RU kosong, berarti uang muka sudah dicairkan tetapi belum dipertanggungjawabkan.
+
+Jika RU ada tetapi status Unposted, berarti realisasi sudah dibuat tetapi belum selesai proses approval/posting.
+
+Jika user merasa sudah realisasi tetapi laporan belum update:
+
+1. Cek status RU di modul PUM.
+2. Pastikan RU sudah posted jika filter laporan adalah Posted.
+3. Coba All Status.
+4. Jika masih tidak muncul, hubungi IT.
+
+
+
+BAGIAN C - BANK DAN CASHBANK REPORT
+
+12. Saldo Buku Bank
+
+12.1 Fungsi
+
+Saldo Buku Bank digunakan untuk melihat pergerakan saldo menurut bank statement. Laporan ini menunjukkan transaksi bank dan running balance dari sisi bank.
+
+Laporan ini penting untuk rekonsiliasi bank karena menjadi pembanding antara saldo menurut bank dan saldo menurut sistem JIFAS.
+
+12.2 Flow Saldo Buku Bank
+
+1. User membuka Report Saldo Buku Bank.
+2. User memilih Company.
+3. User memilih Bank.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan mutasi bank dan running balance.
+
+12.3 Data yang Ditampilkan
+
+- Tanggal transaksi bank.
+- No Bukti.
+- No Cek/Giro.
+- Referensi.
+- Keterangan.
+- Mutasi Debit.
+- Mutasi Kredit.
+- Saldo atau running balance.
+
+12.4 Cara Membaca
+
+Saldo Buku Bank adalah posisi menurut bank. Jika jumlah tidak sama dengan CashBank di sistem, lakukan bank reconciliation.
+
+Penyebab umum selisih:
+
+- Transaksi sudah ada di bank tetapi belum diinput di JIFAS.
+- Transaksi sudah diinput di JIFAS tetapi belum muncul di bank statement.
+- Salah tanggal transaksi.
+- Salah bank.
+- Salah amount.
+- Biaya bank belum dicatat.
+- Cek/BG belum cair.
+
+Jika selisih tidak bisa dijelaskan, eskalasi ke Finance Supervisor atau IT dengan periode, bank, dan screenshot.
+
+
+
+13. Cashbank Detail Daily
+
+13.1 Fungsi
+
+Cashbank Detail Daily menampilkan rincian transaksi kas/bank harian secara line-by-line. Setiap baris merepresentasikan satu transaksi yang memengaruhi saldo kas/bank.
+
+Laporan ini digunakan untuk:
+
+- Tracing transaksi detail.
+- Melihat debit dan kredit per dokumen.
+- Mengecek nomor bukti dan referensi.
+- Melihat running balance harian.
+- Rekonsiliasi dengan saldo bank.
+
+13.2 Flow Cashbank Detail Daily
+
+1. User membuka Report Cashbank Detail Daily.
+2. User memilih Company.
+3. User memilih Bank.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan rincian transaksi kas/bank.
+
+13.3 Data yang Ditampilkan
+
+- Tanggal.
+- No Bukti.
+- No Cek/Giro.
+- Referensi.
+- Keterangan.
+- Mutasi Debit.
+- Mutasi Kredit.
+- Running Balance.
+
+13.4 Cara Membaca
+
+Debit biasanya menunjukkan pengeluaran atau pengurangan saldo. Kredit biasanya menunjukkan penerimaan atau penambahan saldo. Namun interpretasi debit/kredit harus mengikuti format laporan dan jenis rekening.
+
+Jika user mencari transaksi tetapi tidak muncul, cek bank, periode tanggal, dan status posting dokumen sumber.
+
+
+
+14. Cashbank Daily / Cashbank Recap
+
+14.1 Fungsi
+
+Cashbank Daily atau Cashbank Recap menampilkan rekap saldo kas dan buku bank harian. Laporan ini bukan hanya detail transaksi, tetapi rekap posisi saldo awal, mutasi, dan saldo akhir.
+
+Laporan ini digunakan untuk:
+
+- Monitoring saldo bank harian.
+- Melihat saldo awal bulan.
+- Melihat total mutasi debit dan kredit.
+- Melihat saldo akhir.
+- Melihat posisi IDR dan foreign currency.
+- Rekonsiliasi kas/bank.
+
+14.2 Flow Cashbank Daily
+
+1. User membuka Report Cashbank Daily.
+2. User memilih Company.
+3. User memilih Bank.
+4. Sistem otomatis mengisi nomor rekening bank.
+5. User mengisi Rate jika diperlukan.
+6. User memilih From dan To.
+7. User klik Search.
+8. Sistem menampilkan rekap saldo kas/bank.
+
+14.3 Parameter Khusus Rate
+
+Rate digunakan untuk konversi saldo foreign currency ke IDR. Default rate dapat muncul di sistem, tetapi user dapat mengubahnya sesuai kebutuhan laporan.
+
+Jika rate salah, hasil konversi IDR akan salah. Jika user ragu rate mana yang digunakan, arahkan untuk konfirmasi ke Finance/Treasury.
+
+
+
+BAGIAN D - BUDGET REPORT
+
+Budget Report digunakan untuk melihat budget allocation, committed, realization, variance, dan posisi budget department. Report ini sangat penting untuk budget control.
+
+Istilah penting:
+
+- Budget: dana yang direncanakan atau dialokasikan.
+- Committed: dana yang sudah menjadi komitmen, biasanya karena invoice/PUM/dokumen sudah dibuat dan mengikat budget.
+- Realization atau Real: dana yang sudah benar-benar terealisasi sebagai pembayaran/pengeluaran aktual.
+- Variance: selisih antara budget dengan committed atau real.
+- Balance: sisa budget setelah dikurangi pemakaian.
+- COA Code: kode akun yang dipakai untuk budget.
+
+
+
+15. Budget Card
+
+15.1 Fungsi
+
+Budget Card adalah kartu anggaran detail untuk satu COA pada satu department dan tanggal tertentu. Laporan ini menunjukkan semua transaksi yang memengaruhi budget account tersebut beserta running balance.
+
+Budget Card digunakan untuk:
+
+- Melihat detail penggunaan budget per COA.
+- Menelusuri dokumen apa saja yang membuat budget berkurang.
+- Melihat transaksi invoice, PUM, CB, atau budget adjustment yang masuk ke COA tersebut.
+- Melihat saldo budget running.
+- Investigasi kenapa budget menjadi minus atau over budget.
+
+15.2 Flow Budget Card
+
+1. User membuka Report Budget Card.
+2. User memilih Company.
+3. User memilih Division.
+4. User memilih Department.
+5. User memilih COA Code.
+6. User memilih Date.
+7. User klik Search.
+8. Sistem menampilkan Budget Card untuk COA tersebut.
+
+15.3 Data yang Ditampilkan
+
+- Doc Date.
+- Doc No.
+- Description.
+- Budget.
+- Committed.
+- Balance.
+
+Budget Card bersifat detail dan running. Balance menunjukkan posisi setelah transaksi berjalan.
+
+15.4 Cara Membaca
+
+Jika balance negatif, artinya committed lebih besar dari budget yang tersedia. Ini indikasi over budget.
+
+Jika ada transaksi yang tidak dikenali, cek Doc No tersebut di modul asal:
+
+- IV biasanya dari Invoice.
+- UM/PPUM/PU/RU biasanya dari PUM.
+- PV/RV biasanya dari Payment/CashBank/Receiving.
+- Journal atau adjustment berasal dari Accounting.
+
+
+
+16. Budget versus Committed
+
+16.1 Fungsi
+
+Budget vs Committed adalah laporan ringkasan yang membandingkan budget allocation dengan dana yang sudah menjadi komitmen.
+
+Laporan ini digunakan untuk:
+
+- Melihat budget setiap COA dalam satu department.
+- Melihat total committed.
+- Melihat variance budget vs committed.
+- Menemukan account yang sudah over budget.
+- Membantu approval budget exception.
+
+16.2 Flow Budget vs Committed
+
+1. User membuka Report Budget vs Committed.
+2. User memilih Company.
+3. User memilih Division.
+4. User memilih Department.
+5. User memilih From dan To.
+6. User klik Search.
+7. Sistem menampilkan semua COA di department tersebut.
+
+16.3 Data yang Ditampilkan
+
+- Budget Code.
+- Description.
+- Budget.
+- Committed.
+- Variance.
+
+Formula umum:
+
+Variance = Budget - Committed
+
+Jika variance positif, budget masih tersedia. Jika variance negatif, committed sudah melebihi budget.
+
+
+
+17. Budget versus Realization
+
+17.1 Fungsi
+
+Budget vs Realization membandingkan budget allocation dengan realisasi aktual. Realisasi adalah pengeluaran yang benar-benar sudah terjadi, bukan hanya komitmen.
+
+Laporan ini digunakan untuk:
+
+- Melihat actual spending per COA.
+- Membandingkan rencana budget dengan realisasi aktual.
+- Menilai efisiensi penggunaan budget.
+- Menemukan account dengan realisasi melebihi budget.
+
+17.2 Flow Budget vs Realization
+
+1. User membuka Report Budget vs Realization.
+2. User memilih Company.
+3. User memilih Division.
+4. User memilih Department.
+5. User memilih From dan To.
+6. User klik Search.
+7. Sistem menampilkan budget, real, dan variance.
+
+17.3 Formula
+
+Variance = Budget - Real
+
+Jika variance negatif, realisasi aktual sudah melebihi budget.
+
+17.4 Perbedaan dengan Budget vs Committed
+
+Budget vs Committed melihat komitmen yang sudah dibuat, meskipun belum dibayar.
+
+Budget vs Realization melihat pengeluaran aktual yang sudah terjadi.
+
+Contoh:
+
+- Invoice vendor sudah dibuat tetapi belum dibayar: masuk committed.
+- Invoice vendor sudah dibayar/posting: masuk realization.
+
+
+
+18. Budget Payment Daily
+
+18.1 Fungsi
+
+Budget Payment Daily menampilkan pengeluaran budget harian berdasarkan company, bank, dan periode tanggal. Laporan ini membantu Finance memonitor payment/pengeluaran sehari-hari.
+
+18.2 Flow Budget Payment Daily
+
+1. User membuka Report Budget Payment Daily.
+2. User memilih Company.
+3. User memilih Bank.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan detail pengeluaran budget harian.
+
+18.3 Kapan Dipakai
+
+Gunakan laporan ini untuk:
+
+- Melihat pembayaran harian dari bank tertentu.
+- Membuat laporan pengeluaran harian.
+- Mencocokkan payment dengan bank.
+- Audit pengeluaran harian.
+
+
+
+19. Budget Receive Daily
+
+19.1 Fungsi
+
+Budget Receive Daily menampilkan penerimaan budget harian berdasarkan company, bank, dan periode tanggal. Laporan ini membantu monitoring uang masuk atau receiving harian.
+
+19.2 Flow Budget Receive Daily
+
+1. User membuka Report Budget Receive Daily.
+2. User memilih Company.
+3. User memilih Bank.
+4. User memilih From dan To.
+5. User klik Search.
+6. Sistem menampilkan detail penerimaan budget harian.
+
+19.3 Kapan Dipakai
+
+Gunakan laporan ini untuk:
+
+- Melihat penerimaan harian dari bank tertentu.
+- Membuat laporan uang masuk harian.
+- Mencocokkan RV/Receiving dengan bank.
+- Audit penerimaan harian.
+
+
+
+20. Committed versus Realization
+
+20.1 Fungsi
+
+Committed vs Realization membandingkan dana yang sudah menjadi komitmen dengan dana yang sudah benar-benar terealisasi/dibayarkan.
+
+Laporan ini menunjukkan gap antara saat transaksi menjadi kewajiban dan saat transaksi benar-benar dibayar.
+
+20.2 Flow Committed vs Realization
+
+1. User membuka Report Committed vs Realization.
+2. User memilih Company.
+3. User memilih Division.
+4. User memilih Department.
+5. User memilih From dan To.
+6. User klik Search.
+7. Sistem menampilkan committed, real, dan variance per COA.
+
+20.3 Formula
+
+Variance = Committed - Real
+
+Jika variance positif, berarti masih ada commitment yang belum menjadi realisasi pembayaran.
+
+Jika variance negatif, berarti ada kondisi tidak normal atau timing data yang perlu diperiksa.
+
+20.4 Kapan Dipakai
+
+Gunakan laporan ini untuk:
+
+- Melihat AP yang sudah committed tetapi belum dibayar.
+- Melihat payment execution.
+- Menganalisis timing cash flow.
+- Menemukan bottleneck pembayaran.
+
+
+
+BAGIAN E - DAILY CASH FLOW
+
+21. Inquiry Daily Cash Flow
+
+21.1 Fungsi
+
+Inquiry Daily Cash Flow menampilkan aliran kas harian dalam dua sudut pandang:
+
+1. Summary: perbandingan Budget vs Actual per akun cash flow.
+2. Detail: rincian transaksi per division, department, dan COA.
+
+Laporan ini digunakan untuk memantau apakah penerimaan dan pengeluaran kas sesuai dengan budget.
+
+21.2 Flow Daily Cash Flow
+
+1. User membuka Inquiry Daily Cash Flow.
+2. User memilih Company.
+3. User memilih Division atau All Division.
+4. User memilih From dan To.
+5. User mengisi kurs akhir bulan jika perlu.
+6. User mengisi kurs akhir bulan berjalan jika perlu.
+7. User klik Search.
+8. Sistem menampilkan tab Daily Cash Flow dan Daily Cash Flow Detail.
+9. User dapat export summary dan detail ke Excel.
+
+21.3 Summary Columns
+
+- Description.
+- Budget Amt.
+- Actual Amt.
+- Budget Acuan.
+- Actual Acuan.
+
+21.4 Detail Columns
+
+- Cash flow account atau cf_code.
+- Division.
+- Department.
+- COA.
+- COA description.
+- Actual Amount.
+
+21.5 Cara Membaca
+
+Budget Amt adalah rencana cash flow. Actual Amt adalah realisasi kas yang terjadi. Budget Acuan dan Actual Acuan adalah nilai kumulatif atau running reference.
+
+Jika Actual lebih besar dari Budget, user perlu cek transaksi detail yang menyebabkan selisih. Gunakan tab detail untuk melihat department dan COA terkait.
+
+
+
+BAGIAN F - DEPOSITO
+
+22. Deposito Aktif
+
+22.1 Fungsi
+
+Deposito Aktif menampilkan daftar deposito perusahaan yang masih aktif pada periode tertentu. Laporan ini digunakan untuk monitoring dana yang ditempatkan di bank dan belum jatuh tempo.
+
+22.2 Flow Deposito Aktif
+
+1. User membuka Report Deposito Aktif.
+2. User memilih Company.
+3. User memilih Period atau bulan.
+4. User klik Search.
+5. Sistem menampilkan daftar deposito aktif.
+
+22.3 Data yang Ditampilkan
+
+- No.
+- Nama Bank.
+- No Deposito.
+- Periode Deposito.
+- Mata Uang.
+- Nilai Mula Uang.
+- Nilai Dalam Forex.
+- Nilai Regulis atau nilai final.
+
+22.4 Cara Membaca
+
+Jika deposito muncul di laporan, artinya deposito tersebut masih aktif dalam periode yang dipilih. Jika deposito tidak muncul, cek apakah sudah jatuh tempo, period yang dipilih salah, atau company salah.
+
+
+
+BAGIAN G - VALIDASI UMUM REPORT
+
+23. Validasi Parameter
+
+Sebelum Search, user harus memastikan parameter wajib sudah terisi.
+
+Validasi umum:
+
+1. Company wajib dipilih.
+2. Bank wajib dipilih untuk laporan bank/cashbank/payment/receive daily.
+3. Division wajib dipilih untuk laporan budget dan cash flow.
+4. Department wajib dipilih untuk laporan budget tertentu.
+5. COA wajib dipilih untuk Budget Card.
+6. From dan To wajib dipilih untuk laporan periode.
+7. From tidak boleh lebih besar dari To.
+8. Rate harus masuk akal jika laporan membutuhkan konversi currency.
+9. Period wajib dipilih untuk Deposito Aktif.
+10. Status wajib dipilih untuk Inquiry report jika tersedia.
+
+Jika field wajib kosong, laporan tidak boleh diproses karena hasilnya bisa salah atau terlalu besar.
+
+
+
+24. Validasi Data yang Sering Membuat Laporan Kosong
+
+Jika laporan kosong, jangan langsung anggap sistem error. Cek hal berikut:
+
+1. Company sudah benar atau belum.
+2. Status Posted/Unposted sudah sesuai.
+3. Tanggal From-To mencakup dokumen yang dicari.
+4. Bank yang dipilih benar.
+5. Division dan Department benar.
+6. COA yang dipilih benar.
+7. Dokumen sumber sudah posted atau belum.
+8. Dokumen sumber mungkin masih rejected, void, removed, atau pending.
+9. User mungkin tidak punya akses company tertentu.
+10. Data master bank/division/department/COA belum aktif.
+
+Jika setelah pengecekan data tetap kosong padahal seharusnya ada, arahkan ke IT.
+
+
+
+BAGIAN H - ERROR HANDLING DAN ESKALASI KE IT
+
+25. Error yang Bisa Ditangani User
+
+25.1 Laporan Kosong
+
+Yang harus dilakukan user:
+
+1. Klik Search ulang.
+2. Reset filter.
+3. Pilih All Status.
+4. Perluas range tanggal.
+5. Cek company dan bank.
+6. Cek division, department, dan COA.
+7. Pastikan dokumen sumber sudah ada dan sudah diproses.
+
+25.2 Tanggal Salah
+
+Jika data tidak muncul karena periode salah, user harus ubah From dan To. Pastikan From lebih kecil atau sama dengan To.
+
+25.3 Bank Tidak Muncul
+
+User harus memilih Company dulu. Bank biasanya cascade dari company. Jika tetap tidak muncul, bisa karena bank belum terdaftar/aktif atau tidak ada akses.
+
+25.4 Division/Department/COA Tidak Muncul
+
+Pilih Company terlebih dahulu, lalu Division, lalu Department. COA biasanya baru muncul setelah Department dipilih.
+
+25.5 Report Lambat
+
+User dapat mempersempit periode tanggal, memilih bank tertentu, memilih department tertentu, atau membatasi status. Jika masih lambat, arahkan ke IT.
+
+
+
+26. Error yang Harus Diarahkan ke IT
+
+Masalah berikut harus diarahkan ke IT:
+
+1. Tombol Search tidak merespons.
+2. Loading tidak selesai lebih dari wajar.
+3. Report viewer blank padahal filter sudah benar.
+4. Error server, API error, atau request failed.
+5. Company tidak muncul padahal user punya akses.
+6. Bank tidak muncul padahal master bank aktif.
+7. Division, Department, atau COA tidak muncul padahal datanya ada.
+8. Data report tidak sama dengan dokumen sumber setelah dicek.
+9. Export PDF/Excel gagal.
+10. Laporan print rusak atau layout terpotong.
+11. Tanggal hasil report berbeda dari filter.
+12. Total report tidak sesuai dengan modul transaksi.
+13. Rate tidak terbaca atau konversi currency salah.
+14. Report menampilkan data company lain.
+15. Unauthorized atau session expired berulang.
+
+Data yang Harus Dikirim ke IT
+
+Minta user menyiapkan:
+
+- Nama report yang dibuka.
+- Company yang dipilih.
+- Bank jika ada.
+- Division dan Department jika ada.
+- COA Code jika ada.
+- Status filter.
+- From dan To atau Date/Period.
+- Rate jika laporan menggunakan rate.
+- Screenshot filter.
+- Screenshot error.
+- Contoh nomor dokumen yang seharusnya muncul.
+- Waktu kejadian.
+- Browser yang digunakan.
+- Username login.
+
+AI chatbot harus mengarahkan user ke IT jika masalah menyangkut data tidak sinkron, API, akses, master data, report viewer, export, atau error teknis.
+
+
+
+BAGIAN I - BEST PRACTICE PENGGUNAAN REPORT
+
+27. Best Practice untuk User Finance dan Accounting
+
+1. Selalu cek company terlebih dahulu.
+2. Gunakan periode tanggal yang tidak terlalu besar agar report cepat muncul.
+3. Untuk mencari dokumen tertentu, gunakan periode tanggal sekitar tanggal dokumen tersebut.
+4. Gunakan All Status jika belum yakin dokumen sudah posted atau belum.
+5. Untuk rekonsiliasi bank, gunakan kombinasi Saldo Buku Bank, Cashbank Detail Daily, dan Cashbank Daily.
+6. Untuk budget control, gunakan Budget Card untuk detail dan Budget vs Committed/Realization untuk summary.
+7. Untuk monitoring PUM, gunakan Inquiry PUM dan Realisasi PUM secara bersamaan.
+8. Untuk collection, gunakan Inquiry AR.
+9. Untuk hutang vendor, gunakan Inquiry AP.
+10. Export laporan jika perlu audit atau perbandingan manual di Excel.
+
+
+
+28. Best Practice Month-End Closing
+
+Saat month-end closing, report yang biasanya dicek:
+
+1. Inquiry AP untuk memastikan invoice vendor sudah tercatat.
+2. Inquiry AR untuk memastikan invoice customer sudah tercatat.
+3. Inquiry CB untuk memastikan payment sudah masuk cashbook.
+4. Inquiry PUM untuk cek pencairan uang muka.
+5. Realisasi PUM untuk cek uang muka yang belum dipertanggungjawabkan.
+6. Saldo Buku Bank dan Cashbank Detail Daily untuk rekonsiliasi bank.
+7. Budget Card dan Budget vs Realization untuk cek posisi budget.
+8. Daily Cash Flow untuk melihat cash movement.
+9. Deposito Aktif untuk posisi dana deposito.
+
+Jika ada dokumen penting belum muncul di report closing, cek status dokumen sumber. Kemungkinan masih Unposted, Need Checking, Need Approval, Need Posting, atau Void.
+
+
+
+BAGIAN J - HUBUNGAN REPORT DENGAN MODUL LAIN
+
+29. Mapping Report ke Modul Sumber
+
+Inquiry AP mengambil data dari:
+
+- Invoice vendor.
+- Receiving/IK.
+- Tax approval.
+- Accounting posting.
+
+Inquiry AR mengambil data dari:
+
+- Sales Receive.
+- Receiving/RV.
+- Customer invoice.
+- Accounting posting.
+
+Inquiry CB mengambil data dari:
+
+- Payment Invoice.
+- Payment PUM.
+- CashBank Payment.
+- Transfer bank.
+- Accounting posting.
+
+Inquiry PUM dan Realisasi PUM mengambil data dari:
+
+- Pengajuan PUM.
+- Payment PUM.
+- Realisasi RU.
+- Tax Approval RU.
+- Posting PUM/RU.
+
+Budget Report mengambil data dari:
+
+- Master budget.
+- COA.
+- Invoice detail.
+- PUM detail.
+- Payment/Receiving.
+- Accounting realization.
+
+Bank dan Cashbank Report mengambil data dari:
+
+- Bank master.
+- CashBank transaction.
+- Payment.
+- Receiving.
+- Bank statement.
+
+Daily Cash Flow mengambil data dari:
+
+- Cash flow setup.
+- Budget cash flow.
+- Actual payment and receiving.
+- Currency rate.
+
+Deposito Aktif mengambil data dari:
+
+- Master deposito.
+- Bank placement.
+- Period/status deposito.
+
+
+
+BAGIAN K - CONTOH PERTANYAAN USER DAN JAWABAN AI
+
+30. Contoh Q&A untuk AI Chatbot
+
+Q: Saya mau lihat hutang vendor yang sudah tercatat, report mana?
+
+Gunakan Report Inquiry AP. Pilih company, pilih status Posted jika ingin melihat invoice yang sudah diakui sebagai hutang, lalu tentukan From dan To.
+
+Q: Saya cari invoice vendor tapi tidak muncul di Inquiry AP.
+
+Coba pilih All Status, perluas tanggal, dan pastikan company benar. Jika masih tidak muncul, cek status invoice di modul Invoice. Jika invoice masih Need Approval atau belum posted, mungkin belum tampil sebagai Posted.
+
+Q: Saya mau lihat piutang customer.
+
+Gunakan Report Inquiry AR. Pilih company, status, dan periode. Laporan ini menampilkan transaksi AR/customer invoice.
+
+Q: Saya mau lihat pembayaran yang keluar dari bank tertentu.
+
+Gunakan Cashbank Detail Daily atau Inquiry CB. Jika ingin detail line-by-line per bank, gunakan Cashbank Detail Daily. Jika ingin inquiry voucher payment, gunakan Inquiry CB.
+
+Q: Saya mau rekonsiliasi bank, report apa yang dipakai?
+
+Gunakan Saldo Buku Bank untuk posisi menurut bank, lalu bandingkan dengan Cashbank Detail Daily atau Cashbank Daily untuk posisi menurut sistem.
+
+Q: Saya mau cek sisa budget satu COA.
+
+Gunakan Budget Card. Pilih Company, Division, Department, COA Code, dan Date. Laporan akan menampilkan budget, committed, dan balance berjalan.
+
+Q: Apa bedanya Budget vs Committed dan Budget vs Realization?
+
+Budget vs Committed membandingkan budget dengan komitmen yang sudah dibuat. Budget vs Realization membandingkan budget dengan realisasi aktual yang sudah terjadi.
+
+Q: Apa arti variance negatif?
+
+Variance negatif berarti pemakaian lebih besar dari budget. Untuk Budget vs Committed, committed melebihi budget. Untuk Budget vs Realization, realisasi aktual melebihi budget.
+
+Q: PUM sudah cair tapi belum ada pertanggungjawaban, cek di mana?
+
+Gunakan Report Realisasi PUM. Jika PU sudah ada tetapi RU kosong atau belum posted, berarti uang muka belum selesai dipertanggungjawabkan.
+
+Q: Report kosong terus.
+
+Cek company, status, tanggal, bank/division/department/COA. Coba All Status dan perluas periode. Jika tetap kosong padahal dokumen sumber ada, hubungi IT.
+
+Q: Tombol Search loading terus.
+
+Coba refresh browser dan kecilkan periode tanggal. Jika tetap loading, hubungi IT dengan screenshot filter dan waktu kejadian.
+
+Q: Export Excel/PDF gagal.
+
+Coba ulang dengan periode lebih kecil. Jika tetap gagal, hubungi IT karena kemungkinan report viewer atau server export bermasalah.
+
+
+
+BAGIAN L - KNOWLEDGE RULES UNTUK AI CHATBOT
+
+31. Aturan Pemahaman AI untuk Modul Report
+
+AI chatbot harus memahami aturan berikut:
+
+1. Report hanya menampilkan data, bukan membuat transaksi.
+2. Jika data report salah, sumber masalah biasanya ada di dokumen transaksi asal atau posting, bukan di report itu sendiri.
+3. Selalu tanyakan nama report, company, periode, dan status filter jika user bertanya laporan kosong.
+4. Untuk report bank, tanyakan bank yang dipilih.
+5. Untuk report budget, tanyakan division, department, dan COA.
+6. Untuk report yang memakai status, coba All Status jika data tidak muncul.
+7. Posted berarti data sudah final/masuk pembukuan; Unposted berarti belum final atau masih pending.
+8. Variance negatif adalah indikasi over budget atau kondisi tidak normal yang harus dianalisis.
+9. Inquiry AP berkaitan dengan hutang vendor.
+10. Inquiry AR berkaitan dengan piutang customer.
+11. Inquiry CB berkaitan dengan pembayaran/cashbook.
+12. Inquiry PUM berkaitan dengan pencairan uang muka.
+13. Realisasi PUM berkaitan dengan pertanggungjawaban uang muka.
+14. Saldo Buku Bank adalah posisi menurut bank statement.
+15. Cashbank Detail Daily adalah transaksi detail menurut sistem.
+16. Budget Card adalah detail satu COA.
+17. Budget vs Committed adalah ringkasan budget dibanding komitmen.
+18. Budget vs Realization adalah ringkasan budget dibanding realisasi aktual.
+19. Committed vs Realization menunjukkan gap antara commitment dan payment actual.
+20. Daily Cash Flow menunjukkan budget vs actual cash flow.
+21. Deposito Aktif menunjukkan deposito yang masih aktif pada periode tertentu.
+22. Jika user mengalami unauthorized, dropdown tidak muncul, export gagal, loading tidak selesai, atau data company lain muncul, arahkan ke IT.
+23. Jika user menanyakan perbaikan angka di report, arahkan untuk cek dokumen sumber terlebih dahulu.
+24. Jika user menanyakan report untuk audit, sarankan export ke Excel/PDF dan gunakan filter periode yang jelas.
+
+
+
+BAGIAN M - RINGKASAN FLOW SEMUA REPORT
+
+32. Flow Inquiry AP/AR/CB/PUM
+
+Pilih Company
+lalu pilih Status
+lalu pilih From dan To
+lalu Search
+lalu baca transaksi detail
+lalu export jika perlu.
+
+33. Flow Realisasi PUM
+
+Pilih Company
+lalu pilih Status
+lalu pilih From dan To
+lalu Search
+lalu cek hubungan UMK, PU, dan RU
+lalu follow-up jika RU belum ada atau belum posted.
+
+34. Flow Saldo Buku Bank / Cashbank Detail / Cashbank Daily
+
+Pilih Company
+lalu pilih Bank
+lalu pilih From dan To
+lalu isi Rate jika ada
+lalu Search
+lalu cek mutasi debit/kredit dan saldo.
+
+35. Flow Budget Card
+
+Pilih Company
+lalu pilih Division
+lalu pilih Department
+lalu pilih COA Code
+lalu pilih Date
+lalu Search
+lalu cek Budget, Committed, dan Balance.
+
+36. Flow Budget Summary
+
+Pilih Company
+lalu pilih Division
+lalu pilih Department
+lalu pilih From dan To
+lalu Search
+lalu cek Budget, Committed/Real, dan Variance.
+
+37. Flow Budget Payment/Receive Daily
+
+Pilih Company
+lalu pilih Bank
+lalu pilih From dan To
+lalu Search
+lalu cek transaksi harian payment atau receive.
+
+38. Flow Daily Cash Flow
+
+Pilih Company
+lalu pilih Division atau All Division
+lalu pilih From dan To
+lalu isi kurs jika diperlukan
+lalu Search
+lalu cek Summary dan Detail.
+
+39. Flow Deposito Aktif
+
+Pilih Company
+lalu pilih Period
+lalu Search
+lalu cek daftar deposito aktif.
+
+
+
+40. Kesimpulan
+
+Modul Report JIFAS adalah pusat monitoring dan analisis data keuangan. Report membantu user melihat transaksi AP, AR, CB, PUM, bank, budget, cash flow, dan deposito dalam bentuk laporan yang bisa difilter dan diexport.
+
+Hal terpenting yang harus dipahami AI chatbot:
+
+- Report adalah modul baca data, bukan modul input transaksi.
+- Parameter filter menentukan data yang muncul.
+- Posted dan Unposted sangat memengaruhi hasil.
+- Company, Bank, Division, Department, dan COA harus sesuai akses dan master data.
+- Data kosong belum tentu error; bisa karena filter salah atau dokumen sumber belum posted.
+- Error teknis, dropdown tidak muncul, data tidak sinkron, export gagal, dan loading stuck harus diarahkan ke IT.
+- Untuk memperbaiki angka report, cek dokumen sumber di modul asal.
+
+Dengan knowledge base ini, AI chatbot JIFAS harus mampu menjelaskan fungsi report, membantu user memilih report yang tepat, membaca hasil laporan, memahami variance/budget/cashbank, dan memberikan arahan troubleshooting yang aman dan sesuai business process JIFAS.

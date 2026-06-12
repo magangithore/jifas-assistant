@@ -78,7 +78,7 @@ Langkah 2: Memfilter dan Mencari Pengajuan
 
 1. Gunakan kolom filter pada setiap header kolom grid
 2. Filter yang tersedia:
-   Berdasarkan Tanggal: Klik pada kolom "Date" â†’ pilih tanggal menggunakan date picker
+   Berdasarkan Tanggal: Klik pada kolom "Date" -> pilih tanggal menggunakan date picker
    Berdasarkan Nomor Dokumen: Ketik nomor PPUM pada kolom "Document No"
    Berdasarkan Nomor UM: Ketik nomor UM pada kolom "UM No"
    Berdasarkan Kategori: Pilih kategori dari dropdown list
@@ -476,12 +476,12 @@ Langkah 6: Menghitung dan Validasi Pajak Otomatis
 Sistem akan secara otomatis:
 
 1. Menghitung PPN berdasarkan tax code:
-   Tax code dengan PPN 10% â†’ PPN = Amount Ã— 10%
-   Tax code dengan PPN 0% â†’ PPN = 0
+   Tax code dengan PPN 10% -> PPN = Amount × 10%
+   Tax code dengan PPN 0% -> PPN = 0
 
 2. Menghitung PPH berdasarkan tax code:
-   Tax code dengan PPH 1% â†’ PPH = Amount Ã— 1%
-   Tax code dengan PPH 1.5% â†’ PPH = Amount Ã— 1.5%
+   Tax code dengan PPH 1% -> PPH = Amount × 1%
+   Tax code dengan PPH 1.5% -> PPH = Amount × 1.5%
 
 3. Menghitung Total Amount untuk setiap item:
    Total = Amount + PPN - PPH
@@ -793,7 +793,7 @@ Fitur-fitur
  Hitam: Dokumen yang sudah selesai (COMPLETE) atau dibatalkan (VOID)
 
 2. Cascade Dropdown
- Division â†’ Department â†’ COA: Saat Anda memilih Division, daftar Department yang ditampilkan hanya yang sesuai dengan Division tersebut. Begitu juga saat pilih Department, COA yang ditampilkan hanya yang valid untuk departemen itu.
+ Division -> Department -> COA: Saat Anda memilih Division, daftar Department yang ditampilkan hanya yang sesuai dengan Division tersebut. Begitu juga saat pilih Department, COA yang ditampilkan hanya yang valid untuk departemen itu.
  Ini memastikan pengeluaran dicatat ke tempat yang tepat
 
 3. Auto-Calculation Pajak
@@ -836,8 +836,8 @@ Sebelum update/checking/posting, sistem validate:
 
 10. Status Progression
 Dokumen mengalami progression status:
-1. NEED CHECKING â†’ (klik Checking) â†’ NEED POSTING REALIZATION
-2. NEED POSTING REALIZATION â†’ (klik Posting) â†’ COMPLETE atau NEED ACCOUNTING CHECKING
+1. NEED CHECKING -> (klik Checking) -> NEED POSTING REALIZATION
+2. NEED POSTING REALIZATION -> (klik Posting) -> COMPLETE atau NEED ACCOUNTING CHECKING
 3. Di setiap tahap bisa ditekan tombol Void untuk membatalkan
 
 Pesan dan Konfirmasi
@@ -877,12 +877,12 @@ Perhitungan dan Validasi
 Formula Perhitungan:
 
 1. PPN (Pajak Pertambahan Nilai):
-   PPN = Amount Ã— Persentase PPN
-   Contoh: Rp 1.000.000 Ã— 10% = Rp 100.000
+   PPN = Amount × Persentase PPN
+   Contoh: Rp 1.000.000 × 10% = Rp 100.000
 
 2. PPH (Pajak Penghasilan):
-   PPH = Amount Ã— Persentase PPH
-   Contoh: Rp 1.000.000 Ã— 1% = Rp 10.000
+   PPH = Amount × Persentase PPH
+   Contoh: Rp 1.000.000 × 1% = Rp 10.000
 
 3. DPP (Dasar Pengenaan Pajak):
    DPP = Total semua Amount yang ada PPN
@@ -929,7 +929,7 @@ Simbol: $
 Keterangan: US Dollar
 
 Mata Uang: EUR
-Simbol: â‚¬
+Simbol: €
 Keterangan: Euro
 
 Mata Uang: SGD
@@ -941,16 +941,16 @@ Simbol: A$
 Keterangan: Australian Dollar
 
 Mata Uang: JPY
-Simbol: Â¥
+Simbol: ¥
 Keterangan: Japanese Yen
 
 
 Skenario Khusus
 
 Skenario 1: Multiple Item dengan Tax Code Berbeda
- Item 1: Vendor A, Amount Rp 1.000.000, Tax Code PPN 10% PPH 1% â†’ Total: Rp 1.090.000
- Item 2: Vendor B, Amount Rp 500.000, Tax Code PPN 0% PPH 0% â†’ Total: Rp 500.000
- Item 3: Vendor C, Amount Rp 2.000.000, Tax Code PPN 10% PPH 1.5% â†’ Total: Rp 2.170.000
+ Item 1: Vendor A, Amount Rp 1.000.000, Tax Code PPN 10% PPH 1% -> Total: Rp 1.090.000
+ Item 2: Vendor B, Amount Rp 500.000, Tax Code PPN 0% PPH 0% -> Total: Rp 500.000
+ Item 3: Vendor C, Amount Rp 2.000.000, Tax Code PPN 10% PPH 1.5% -> Total: Rp 2.170.000
  Grand Total: Rp 3.760.000
  DPP: Rp 3.000.000 (item 1 + item 3)
 
@@ -1061,8 +1061,8 @@ Tab PPUM (Finance Approval): Decision approval
 Tab Realization (RU): Record expenses
 
 Aspek: Status Progress
-Tab PPUM (Finance Approval): Need Approval â†’ Ready to Pay â†’ (Reject)
-Tab Realization (RU): Need Checking â†’ Need Posting â†’ Complete
+Tab PPUM (Finance Approval): Need Approval -> Ready to Pay -> (Reject)
+Tab Realization (RU): Need Checking -> Need Posting -> Complete
 
 Aspek: Timing
 Tab PPUM (Finance Approval): Dilakukan sebelum pembayaran UM

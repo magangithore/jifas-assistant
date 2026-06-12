@@ -9,6 +9,9 @@
 
   <ItemGroup>
     <!-- Entity Framework Core -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
       <PrivateAssets>all</PrivateAssets>
@@ -21,9 +24,16 @@
     </PackageReference>
 
     <!-- API & Documentation -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
 
     <!-- JSON Serialization -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.7" />
 
@@ -42,6 +52,9 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
 
     <!-- Health Checks -->
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Uris" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.7" />
 
     <!-- DependencyInjection -->
@@ -68,17 +81,15 @@
     <Compile Remove="Configuration\ConfigurationUsageExamples.cs" />
   </ItemGroup>
 
-  <!-- Include Documentation & Configuration Files -->
+  <!-- File dokumentasi dan konfigurasi ikut dipublish agar image Docker mudah diaudit. -->
   <ItemGroup>
     <None Include="README.md" />
     <None Include="..\docker-compose.yml" Link="docker-compose.yml" />
     <None Include="..\Dockerfile" Link="Dockerfile" />
+    <Content Include="Database\Initialize-PostgresPgvector.sql" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\jifas_assistant.DAL\jifas_assistant.DAL.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-MODUL TAX APPROVAL (PERSETUJUAN PAJAK) - DOKUMENTASI KNOWLEDGE BASE
+﻿MODUL TAX APPROVAL (PERSETUJUAN PAJAK) - DOKUMENTASI KNOWLEDGE BASE
 
 Dokumentasi ini dirancang untuk staff Finance dan Accounting yang mengelola 
 proses persetujuan pajak untuk dokumen Invoice (IK) dan Sales Receive (RV).
@@ -27,13 +27,13 @@ Sistem memerlukan persetujuan dari Tax Department untuk:
 ALUR SINGKAT TAX APPROVAL:
 
 [1] Dokumen IK/RV dibuat dengan data pajak awal
-        ↓
+        v
 [2] Masuk ke menu Tax Approval untuk verifikasi
-        ↓
+        v
 [3] Tax Staff periksa dan approve/reject/lakukan tax correction
-        ↓
+        v
 [4] Jika approved, dokumen lanjut ke tahap akuntansi
-        ↓
+        v
 [5] Jika rejected, dokumen kembali ke pembuat untuk diperbaiki
 
 B. MENU UTAMA - 3 TAB UTAMA
@@ -106,7 +106,7 @@ C. ALUR APPROVAL PAJAK - STEP BY STEP
 
 LANGKAH 1: BUKA MENU TAX APPROVAL
 Login ke sistem JIFAS
-Buka menu Receiving → Tax Approval
+Buka menu Receiving -> Tax Approval
 Pilih tab yang ingin dikerja (IK, RV, atau Invoice Slip)
 
 LANGKAH 2: LIHAT DAFTAR DOKUMEN YANG PERLU APPROVAL
@@ -124,7 +124,7 @@ Sistem akan menampilkan form dengan beberapa bagian:
    - Tab "PPN N0" (detail pajak PPN khusus jika ada)
    - Tab "PPH" (detail pajak PPH jika ada)
 
-LANGKAH 4: REVIEW DATA DI TAB APPROVAL (TAB PERTAMA)──────
+LANGKAH 4: REVIEW DATA DI TAB APPROVAL (TAB PERTAMA)-
 Form terbagi jadi 2 bagian: Kiri dan Kanan
 
 BAGIAN KIRI - INFORMASI DOKUMEN:
@@ -184,7 +184,7 @@ NILAI YANG HARUS DIPERHATIKAN:
 ✓ NPWP harus valid dan lengkap (format: XX.XXX.XXX.X-XXX.XXX)
 ✓ WP Name dan Address harus terisi
 
-LANGKAH 6: REVIEW DATA PPH (JIKA ADA - TAB PPH)──
+LANGKAH 6: REVIEW DATA PPH (JIKA ADA - TAB PPH)-
 Jika dokumen ada komponen PPH, tab "PPH" akan menampilkan:
 
 HEADER INFO:
@@ -215,12 +215,12 @@ VALIDASI YANG HARUS DIPERHATIKAN:
 ✓ WP Name dan Address harus terisi lengkap
 
 LANGKAH 7: LAKUKAN APPROVAL ATAU REJECTION
-──────────────────────────────────────────
+-
 
 Di bagian bawah form, ada 3 tombol utama:
 
 TOMBOL 1: "TAX CORRECTION" (Biru)
-────────────────────────────────
+-
 Fungsi: Lakukan koreksi perhitungan pajak (rounding, adjustment)
 Kapan digunakan: Jika ada selisih perhitungan atau perlu adjustment rounding
 
@@ -243,7 +243,7 @@ Validasi dalam Tax Correction:
 ---
 
 TOMBOL 2: "APPROVE" (Hijau)
-────────────────────────────
+-
 Fungsi: Setujui dokumen dan pajak yang tercatat
 Status setelah: Dokumen berubah ke status APPROVED atau lanjut ke tahap berikutnya
 
@@ -269,7 +269,7 @@ TIPS SEBELUM APPROVE:
 ---
 
 TOMBOL 3: "REJECT" (Merah)
-──────────────────────────
+-
 Fungsi: Menolak dokumen karena ada masalah/kesalahan yang perlu diperbaiki
 Status setelah: Dokumen kembali ke pembuat dengan catatan alasan penolakan
 
@@ -288,13 +288,13 @@ Proses Rejection:
 9. Email notifikasi dikirim ke pembuat dokumen dengan alasan
 
 ALASAN REJECTION YANG SERING:
-✗ Perhitungan PPN tidak sesuai dengan rate yang berlaku
-✗ NPWP tidak lengkap atau tidak valid (harus 15 digit)
-✗ Nama Wajib Pajak tidak sesuai dengan NPWP
-✗ Alamat WP tidak lengkap
-✗ PPH Type tidak dipilih atau tidak sesuai
-✗ DPP atau Tax Base calculation tidak valid
-✗ Currency Rate tidak sesuai dengan kurs berlaku
+[X] Perhitungan PPN tidak sesuai dengan rate yang berlaku
+[X] NPWP tidak lengkap atau tidak valid (harus 15 digit)
+[X] Nama Wajib Pajak tidak sesuai dengan NPWP
+[X] Alamat WP tidak lengkap
+[X] PPH Type tidak dipilih atau tidak sesuai
+[X] DPP atau Tax Base calculation tidak valid
+[X] Currency Rate tidak sesuai dengan kurs berlaku
 
 D. TAB KHUSUS: INVOICE SLIP / FAKTUR PAJAK
 
@@ -442,27 +442,27 @@ VALIDASI PPN:
 
 1. NPWP Check
    ✓ Format NPWP harus 15 digit: XX.XXX.XXX.X-XXX.XXX
-   ✗ Error jika NPWP kurang dari 15 digit atau format salah
+   [X] Error jika NPWP kurang dari 15 digit atau format salah
    
 2. WP Name Check
    ✓ Nama Wajib Pajak harus terisi
-   ✗ Error jika kosong atau hanya karakter spasi
+   [X] Error jika kosong atau hanya karakter spasi
    
 3. WP Address Check
    ✓ Alamat WP harus lengkap (minimal 10 karakter)
-   ✗ Error jika kosong atau alamat tidak jelas
+   [X] Error jika kosong atau alamat tidak jelas
    
 4. DPP vs Tax Invoice Detail
    ✓ Total DPP dari detail faktur HARUS ≤ DPP header
-   ✗ Error jika total detail > header (tidak balance)
+   [X] Error jika total detail > header (tidak balance)
    
 5. PPN vs Tax Invoice Detail
    ✓ Total PPN dari detail faktur HARUS ≤ PPN header
-   ✗ Error jika total detail > header (tidak balance)
+   [X] Error jika total detail > header (tidak balance)
    
 6. PPN Calculation
    ✓ PPN harus sesuai dengan rate yang berlaku (10% atau 0% untuk NT)
-   ✗ Error jika PPN tidak cocok perhitungan
+   [X] Error jika PPN tidak cocok perhitungan
 
 ---
 
@@ -470,11 +470,11 @@ VALIDASI PPH:
 
 1. Form Code Check
    ✓ Kode form SPT harus valid (contoh: 1721-A1, 1721-A2)
-   ✗ Error jika kode tidak valid atau tidak terdaftar
+   [X] Error jika kode tidak valid atau tidak terdaftar
    
 2. PPH Type Check
    ✓ Jika ada komponen PPH, HARUS ada PPH Type yang dipilih
-   ✗ Error: "PPH Type cannot be NULL" jika ada PPH tapi tipe belum dipilih
+   [X] Error: "PPH Type cannot be NULL" jika ada PPH tapi tipe belum dipilih
    
 3. NPWP Check (sama seperti PPN)
    
@@ -482,7 +482,7 @@ VALIDASI PPH:
 
 5. PPH vs Detail Check
    ✓ Total PPH dari detail HARUS ≤ PPH header
-   ✗ Error jika tidak balance
+   [X] Error jika tidak balance
 
 ---
 
@@ -523,14 +523,14 @@ Window baru akan muncul dengan grid detail untuk koreksi
    Tax Code: Jenis pajak di item ini
    DPP: Dasar pengenaan pajak (tidak bisa edit)
    PPN Section:
-   │  Existing: PPN lama yang saat ini terpakai
-   │  Round: Pilihan pembulatan (UP/DOWN)
-   │  Correction: Nilai PPN yang sudah dikkoreksi
+   |  Existing: PPN lama yang saat ini terpakai
+   |  Round: Pilihan pembulatan (UP/DOWN)
+   |  Correction: Nilai PPN yang sudah dikkoreksi
    PPH Section:
-   │  Existing: PPH lama
-   │  Round: Pilihan pembulatan (UP/DOWN)
-   │  Correction: Nilai PPH yang sudah dikoreksi
-   │  PPH Type: Jenis PPH yang digunakan
+   |  Existing: PPH lama
+   |  Round: Pilihan pembulatan (UP/DOWN)
+   |  Correction: Nilai PPH yang sudah dikoreksi
+   |  PPH Type: Jenis PPH yang digunakan
 (item detail lainnya)
 
 4. UNTUK SETIAP ITEM YANG PERLU KOREKSI:
@@ -650,11 +650,11 @@ I. ALUR KESELURUHAN TAX APPROVAL
     Data invoice/penerimaan sudah lengkap
     Perhitungan pajak dibuat secara otomatis
     Status awal: NEED CHECKING atau NEED APPROVAL
-        ↓
+        v
 [2] DOKUMEN MASUK KE TAX APPROVAL QUEUE
     Sistem set status: NEED APPROVAL
     Dokumen tampil di grid tax approval
-        ↓
+        v
 [3] TAX STAFF BUKA DOKUMEN DI FORM APPROVAL
     Review data di tab "Approval"
     Review data pajak di tab "PPN" dan "PPH" (jika ada)
@@ -663,7 +663,7 @@ I. ALUR KESELURUHAN TAX APPROVAL
        - WP Name dan Address lengkap?
        - Perhitungan PPN/PPH sesuai?
        - DPP cocok dengan detail?
-        ↓
+        v
 [4] DECISION: KETIGA PILIHAN
 
     PILIHAN A: APPROVE (SETUJU)

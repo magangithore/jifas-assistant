@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,32 +9,37 @@ namespace Jifas.Assistant.Services
     #region Models
 
     /// <summary>
-    /// Result dari quality validation
+    /// Result dari quality validation dengan scoring per faktor.
     /// </summary>
     public class QualityValidationResult
     {
         public bool IsValid { get; set; }
         public double OverallScore { get; set; }
         public double GroundingScore { get; set; }
+        public double FactualityScore { get; set; }
         public double CompletenessScore { get; set; }
         public double RelevanceScore { get; set; }
         public double ClarityScore { get; set; }
+        public double CoherenceScore { get; set; }
         public List<string> Issues { get; set; } = new List<string>();
         public List<string> Suggestions { get; set; } = new List<string>();
         public bool ShouldRegenerate { get; set; }
-        public string RegenerationReason { get; set; }
+        public string RegenerationReason { get; set; } = string.Empty;
+        public Dictionary<string, double> FactorScores { get; set; } = new Dictionary<string, double>();
     }
 
     /// <summary>
-    /// Confidence calculation result
+    /// Confidence calculation result dengan detail faktor penilaian.
     /// </summary>
     public class ConfidenceResult
     {
         public double Threshold { get; set; }
         public double CalculatedConfidence { get; set; }
         public bool MeetsThreshold { get; set; }
-        public string Reason { get; set; }
+        public string Reason { get; set; } = string.Empty;
         public Dictionary<string, double> FactorBreakdown { get; set; } = new Dictionary<string, double>();
+        public string ConfidenceLevel { get; set; } = "RENDAH";
+        public List<string> UncertaintyFactors { get; set; } = new List<string>();
     }
 
     #endregion
@@ -74,7 +79,7 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Calculate adaptive threshold based on context
         /// </summary>
-        Task<double> CalculateThresholdAsync(string query, IntentType intent, string sessionId = null);
+        Task<double> CalculateThresholdAsync(string query, IntentType intent, string? sessionId = null);
 
         /// <summary>
         /// Calculate confidence score with multiple factors
@@ -120,19 +125,41 @@ namespace Jifas.Assistant.Services
 
         #region Static Data
 
+        // Frasa yang sering menandakan jawaban tidak benar-benar bersandar pada KB.
         private static readonly List<string> HallucinationIndicators = new List<string>
         {
             "menurut sumber", "berdasarkan informasi umum", "pada umumnya",
             "kemungkinan besar", "saya pikir", "mungkin saja", "bisa jadi",
-            "according to", "generally speaking", "i think", "perhaps"
+            "according to", "generally speaking", "i think", "perhaps",
+            "secara umum", "umumnya", "biasanya", "normalnya",
+            "sepertinya", "kelihatannya",
+            "dapat diperkirakan", "secara default", "standarnya"
         };
 
+        // Istilah domain yang membantu mengecek keterkaitan jawaban dengan JIFAS.
         private static readonly List<string> QualityIndicators = new List<string>
         {
             "langkah", "step", "pertama", "kedua", "ketiga",
             "menu", "klik", "pilih", "masuk ke", "buka",
             "jifas", "invoice", "payment", "budget", "pum",
-            "approval", "submit", "save"
+            "approval", "submit", "save", "draft", "posted",
+            "module", "modul", "halaman", "page",
+            "need approval", "void", "confirmed"
+        };
+
+        // Frasa yang memberi sinyal jawaban punya rujukan/prosedur yang jelas.
+        private static readonly List<string> ConfidencePhrases = new List<string>
+        {
+            "berdasarkan", "sesuai dengan", "menurut dokumentasi",
+            "sesuai prosedur", "dapat dilakukan dengan", "langkah-langkah",
+            "sesuai modul", "dalam sistem jifas"
+        };
+
+        // Frasa kehati-hatian yang wajar saat KB tidak cukup kuat.
+        private static readonly List<string> UncertaintyMarkers = new List<string>
+        {
+            "mungkin", "bisa", "mungkin saja", "kemungkinan",
+            "sepertinya", "dapat", "perlu dicek", "hubungi it"
         };
 
         private static readonly string[] TemplatePatterns = new[]
@@ -190,22 +217,37 @@ namespace Jifas.Assistant.Services
                     return result;
                 }
 
-                // Calculate individual scores
+                // Hitung skor dari beberapa faktor supaya quality gate tidak hanya bergantung pada similarity KB.
                 result.GroundingScore = CalculateGroundingScore(response, kbSources);
+                result.FactualityScore = CalculateFactualityScore(response, kbSources);
                 result.CompletenessScore = CalculateCompletenessScore(response, userQuery);
                 result.RelevanceScore = CalculateRelevanceScore(response, userQuery);
                 result.ClarityScore = CalculateClarityScore(response);
+                result.CoherenceScore = CalculateCoherenceScore(response);
 
-                // Calculate overall score (weighted average)
+                // Simpan skor per faktor untuk debugging dan monitoring.
+                result.FactorScores["Grounding"] = result.GroundingScore;
+                result.FactorScores["Factuality"] = result.FactualityScore;
+                result.FactorScores["Completeness"] = result.CompletenessScore;
+                result.FactorScores["Relevance"] = result.RelevanceScore;
+                result.FactorScores["Clarity"] = result.ClarityScore;
+                result.FactorScores["Coherence"] = result.CoherenceScore;
+
+                // Bobot: Grounding(25%) + Factuality(20%) + Relevance(20%) + Completeness(15%) + Clarity(10%) + Coherence(10%).
                 result.OverallScore =
-                    (result.GroundingScore * 0.35) +
-                    (result.RelevanceScore * 0.30) +
-                    (result.CompletenessScore * 0.20) +
-                    (result.ClarityScore * 0.15);
+                    (result.GroundingScore * 0.25) +
+                    (result.FactualityScore * 0.20) +
+                    (result.RelevanceScore * 0.20) +
+                    (result.CompletenessScore * 0.15) +
+                    (result.ClarityScore * 0.10) +
+                    (result.CoherenceScore * 0.10);
 
                 // Identify issues
                 if (result.GroundingScore < MIN_GROUNDING_SCORE)
                     result.Issues.Add($"Response mungkin mengandung informasi di luar KB (Grounding: {result.GroundingScore:P0})");
+
+                if (result.FactualityScore < 0.5)
+                    result.Issues.Add($"Response mungkin tidak akurat (Factuality: {result.FactualityScore:P0})");
 
                 if (result.CompletenessScore < 0.5)
                 {
@@ -215,6 +257,12 @@ namespace Jifas.Assistant.Services
 
                 if (result.RelevanceScore < 0.5)
                     result.Issues.Add("Response kurang relevan dengan pertanyaan user");
+
+                if (result.CoherenceScore < 0.5)
+                {
+                    result.Issues.Add("Response kurang terstruktur atau logis");
+                    result.Suggestions.Add("Susun jawaban dengan alur yang lebih jelas");
+                }
 
                 if (DetectTemplateResponse(response))
                 {
@@ -228,19 +276,21 @@ namespace Jifas.Assistant.Services
                 {
                     result.Issues.Add($"Potential hallucination: {hallucinationCheck.indicator}");
                     result.GroundingScore *= 0.7;
+                    result.FactualityScore *= 0.7;
                 }
 
                 // Determine validity
                 result.IsValid = result.OverallScore >= MIN_OVERALL_SCORE && result.Issues.Count <= 2;
 
                 // Determine regeneration need
-                if (result.OverallScore < 0.35 || result.GroundingScore < 0.3)
+                if (result.OverallScore < 0.4 || result.GroundingScore < 0.3 || result.FactualityScore < 0.4)
                 {
                     result.ShouldRegenerate = true;
-                    result.RegenerationReason = $"Low quality score: {result.OverallScore:P0}";
+                    result.RegenerationReason = $"Low quality: Overall={result.OverallScore:P0}, Grounding={result.GroundingScore:P0}, Factuality={result.FactualityScore:P0}";
                 }
 
-                _logger.LogInformation($"[QualityService] Validation - Overall: {result.OverallScore:P0}, Grounding: {result.GroundingScore:P0}, Valid: {result.IsValid}");
+                _logger.LogInformation($"[QualityService] Validation - Overall: {result.OverallScore:P0}, " +
+                    $"Grounding: {result.GroundingScore:P0}, Factuality: {result.FactualityScore:P0}, Valid: {result.IsValid}");
 
                 return await Task.FromResult(result);
             }
@@ -253,11 +303,19 @@ namespace Jifas.Assistant.Services
 
         public double CalculateGroundingScore(string response, List<KnowledgeBaseResult> kbSources)
         {
-            if (kbSources == null || kbSources.Count == 0) return 0.3;
             if (string.IsNullOrWhiteSpace(response)) return 0;
 
-            var responseLower = response.ToLower();
-            var responseWords = ExtractSignificantWords(responseLower);
+            var rLower = response.ToLower();
+
+            // FIXED: If no KB sources, grounding is ZERO - no faking confidence
+            // This prevents hallucination when AI has no knowledge base data
+            if (kbSources == null || kbSources.Count == 0)
+            {
+                _logger.LogWarning("[QualityService] No KB sources - grounding score is 0.0 (was 0.3-0.7). Hallucination risk is HIGH.");
+                return 0.0;
+            }
+
+            var responseWords = ExtractSignificantWords(rLower);
             var kbContent = string.Join(" ", kbSources.Select(s => s.Content.ToLower()));
             var kbWords = ExtractSignificantWords(kbContent);
 
@@ -272,7 +330,7 @@ namespace Jifas.Assistant.Services
             var qualityBonus = 0.0;
             foreach (var indicator in QualityIndicators)
             {
-                if (responseLower.Contains(indicator) && kbContent.Contains(indicator))
+                if (rLower.Contains(indicator) && kbContent.Contains(indicator))
                     qualityBonus += 0.05;
             }
 
@@ -297,7 +355,7 @@ namespace Jifas.Assistant.Services
 
             // Structure check
             if (Regex.IsMatch(response, @"\d+\.\s+\w+")) score += 0.15; // Numbered list
-            if (response.Contains("-") || response.Contains("�")) score += 0.05; // Bullets
+            if (response.Contains("-") || response.Contains("•")) score += 0.05; // Bullets
 
             // Paragraph check
             var paragraphCount = response.Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -363,6 +421,120 @@ namespace Jifas.Assistant.Services
             return Math.Max(0, Math.Min(score, 1.0));
         }
 
+        /// <summary>
+        /// Calculate coherence score dari alur, konsistensi istilah, repetisi, dan panjang jawaban.
+        /// Score dimulai dari 0.5 sebagai baseline netral, lalu disesuaikan berdasarkan fitur kualitas.
+        /// </summary>
+        public double CalculateCoherenceScore(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response)) return 0;
+
+            var score = 0.6; // Baseline netral untuk jawaban valid
+            var responseLower = response.ToLowerInvariant();
+
+            // Check 1: Logical flow indicators - baik untuk how-to/troubleshooting
+            var flowIndicators = new[] { "kemudian", "selanjutnya", "lalu", "setelah itu", "langkah", "pertama", "kedua", "pertama-tama", "terakhir" };
+            var flowCount = flowIndicators.Count(i => responseLower.Contains(i));
+            if (flowCount >= 3) score += 0.2;
+            else if (flowCount >= 2) score += 0.15;
+            else if (flowCount == 1) score += 0.08;
+
+            // Check 2: Consistent terminology - fokus pada JIFAS domain terms
+            var jifasTerms = new[] { "invoice", "payment", "pum", "approval", "budget", "cashbank", "receiving", "posting" };
+            var mentionedTerms = jifasTerms.Count(t => responseLower.Contains(t));
+            // Ideal: 1-3 istilah JIFAS, tidak kurang (kurangnya konteks) tidak lebih (terlalu banyak topik)
+            if (mentionedTerms >= 1 && mentionedTerms <= 4) score += 0.12;
+            else if (mentionedTerms > 4) score += 0.05; // Masih ok tapi mulai terlalu banyak topik
+
+            // Check 3: No repetition - hitung kata yang diulang
+            var words = responseLower.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var wordCounts = words.GroupBy(w => w).Select(g => g.Count()).OrderByDescending(c => c).Take(3).ToList();
+            var maxRepetitionRatio = wordCounts.Count > 0 ? wordCounts[0] / (double)Math.Max(1, words.Length) : 0;
+            if (maxRepetitionRatio > 0.25) score -= 0.25; // Terlalu banyak pengulangan kata
+            else if (maxRepetitionRatio > 0.15) score -= 0.1;
+            else if (maxRepetitionRatio < 0.05) score += 0.08; // Vocabulary cukup beragam
+
+            // Check 4: Sentence structure - tidak hanya satu kalimat pendek
+            var sentences = response.Split(new[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
+            var uniqueSentences = sentences.Select(s => s.Trim().ToLowerInvariant()).Distinct().Count();
+            var sentenceCount = sentences.Length;
+            if (sentenceCount >= 3 && uniqueSentences >= 3) score += 0.1; // Jawaban terstruktur
+            else if (sentenceCount >= 2 && uniqueSentences >= 2) score += 0.05;
+
+            // Check 5: Appropriate length - tidak terlalu pendek atau terlalu panjang
+            if (response.Length >= 80 && response.Length <= 1500) score += 0.08;
+            else if (response.Length >= 50 && response.Length <= 2500) score += 0.03;
+
+            // Check 6: Natural ending - ada transitional phrase yang natural
+            var endingPhrases = new[] { "silakan", "hubungi", "jika ada", "mohon", "terima kasih", "coba", "langkah selanjutnya", "demikian" };
+            var hasEnding = endingPhrases.Any(e => responseLower.Contains(e));
+            if (hasEnding) score += 0.05;
+
+            return Math.Max(0, Math.Min(1.0, score));
+        }
+
+        /// <summary>
+        /// Calculate factuality score berdasarkan konsistensi istilah jawaban terhadap KB.
+        /// </summary>
+        public double CalculateFactualityScore(string response, List<KnowledgeBaseResult> kbSources)
+        {
+            if (string.IsNullOrWhiteSpace(response)) return 0;
+
+            var responseLower = response.ToLowerInvariant();
+            var score = 0.5; // Baseline netral
+
+            // No KB sources - be cautious but not overly penalizing
+            if (kbSources == null || kbSources.Count == 0)
+            {
+                // Check for hallucination indicators
+                var hCount = HallucinationIndicators.Count(i => responseLower.Contains(i));
+                if (hCount >= 2)
+                    return 0.15; // Multiple certainty hedges = high risk
+                else if (hCount == 1)
+                    return 0.35; // One hedge = moderate risk
+
+                // Check for uncertainty markers (shows AI is being careful)
+                var uCount = UncertaintyMarkers.Count(i => responseLower.Contains(i));
+                if (uCount >= 3)
+                    return 0.55; // Good - showing uncertainty appropriately
+                else if (uCount >= 1)
+                    return 0.5; // Normal cautious response
+
+                // No KB, no hedges, no uncertainty markers - rely on response structure
+                if (response.Length >= 100)
+                    return 0.45; // Longer structured response without hedges
+                return 0.3; // Short response without KB verification
+            }
+
+            var kbContent = string.Join(" ", kbSources.Select(s => s.Content.ToLowerInvariant()));
+
+            // Count verifiable claims
+            var jifasTerms = QualityIndicators.Count(term => responseLower.Contains(term));
+
+            // Calculate factual consistency
+            var confirmedTerms = QualityIndicators.Count(term =>
+                responseLower.Contains(term) && kbContent.Contains(term));
+
+            var consistencyRatio = jifasTerms > 0
+                ? confirmedTerms / (double)jifasTerms
+                : 0.5;
+
+            // Penalize hallucination indicators
+            var hCount2 = HallucinationIndicators.Count(i => responseLower.Contains(i));
+            var hallucPenalty = Math.Min(hCount2 * 0.15, 0.5);
+
+            // Add confidence phrase bonus
+            var confBonus = ConfidencePhrases.Count(p => responseLower.Contains(p)) * 0.05;
+
+            score = consistencyRatio - hallucPenalty + confBonus;
+
+            // Bonus untuk response yang mention istilah JIFAS yang ada di KB
+            if (jifasTerms >= 3 && confirmedTerms >= 2)
+                score += 0.1;
+
+            return Math.Max(0, Math.Min(1.0, score));
+        }
+
         private (bool hasIndicators, string indicator) CheckForHallucination(string response)
         {
             var responseLower = response.ToLower();
@@ -371,7 +543,7 @@ namespace Jifas.Assistant.Services
                 if (responseLower.Contains(indicator))
                     return (true, indicator);
             }
-            return (false, null);
+            return (false, string.Empty);
         }
 
         private bool DetectTemplateResponse(string response)
@@ -405,7 +577,7 @@ namespace Jifas.Assistant.Services
 
         #region Adaptive Confidence
 
-        public async Task<double> CalculateThresholdAsync(string query, IntentType intent, string sessionId = null)
+        public async Task<double> CalculateThresholdAsync(string query, IntentType intent, string? sessionId = null)
         {
             var threshold = BASE_THRESHOLD;
 
@@ -439,9 +611,13 @@ namespace Jifas.Assistant.Services
             {
                 if (kbResults == null || kbResults.Count == 0)
                 {
-                    result.CalculatedConfidence = 0;
-                    result.MeetsThreshold = false;
-                    result.Reason = "No KB results";
+                    // No KB results, but AI has system knowledge - give a moderate base confidence
+                    // so the system still generates a response from its domain knowledge
+                    result.CalculatedConfidence = 0.35;
+                    result.MeetsThreshold = false; // Will use fallback path but still calls AI
+                    result.Reason = "No KB results - using system knowledge";
+                    result.ConfidenceLevel = "RENDAH";
+                    result.UncertaintyFactors.Add("Tidak ada hasil KB yang bisa dipakai sebagai rujukan");
                     return result;
                 }
 
@@ -495,6 +671,14 @@ namespace Jifas.Assistant.Services
 
                 result.CalculatedConfidence = Math.Min(confidence, 1.0);
                 result.MeetsThreshold = result.CalculatedConfidence >= baseThreshold;
+                result.ConfidenceLevel = GetConfidenceLevel(result.CalculatedConfidence);
+
+                if (maxScore < 0.6)
+                    result.UncertaintyFactors.Add("Skor tertinggi KB masih rendah");
+                if (keywordScore < 0.4)
+                    result.UncertaintyFactors.Add("Keyword pertanyaan kurang cocok dengan isi KB");
+                if (uniqueDocs <= 1 && topResults.Count > 1)
+                    result.UncertaintyFactors.Add("Hasil KB kurang beragam");
 
                 return result;
             }
@@ -503,6 +687,8 @@ namespace Jifas.Assistant.Services
                 _logger.LogError($"[QualityService] Confidence error: {ex.Message}");
                 result.CalculatedConfidence = 0.4;
                 result.MeetsThreshold = false;
+                result.ConfidenceLevel = "RENDAH";
+                result.UncertaintyFactors.Add("Confidence calculation error");
                 return result;
             }
         }
@@ -519,6 +705,13 @@ namespace Jifas.Assistant.Services
             }
 
             return false;
+        }
+
+        private static string GetConfidenceLevel(double confidence)
+        {
+            if (confidence >= 0.8) return "TINGGI";
+            if (confidence >= 0.55) return "SEDANG";
+            return "RENDAH";
         }
 
         private double GetIntentAdjustment(IntentType intent)

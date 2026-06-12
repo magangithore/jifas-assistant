@@ -1,20 +1,37 @@
-﻿Apa itu Modul Master
+﻿Modul Master Data — Overview
+==============================
 
-Modul Master adalah pusat master data yang menyimpan informasi inti secara konsisten, valid, dan stabil untuk seluruh modul operasional JIFAS. Contoh data yang dikelola antara lain company, division, department, employees, vendor, COA, budget, account period, list COA, report setup, dan roles.
+Modul Master adalah pusat referensi data yang menyimpan informasi inti secara konsisten,
+valid, dan stabil untuk seluruh modul operasional JIFAS.
 
-Manfaat Modul Master
+Data yang dikelola di modul ini menjadi fondasi bagi semua transaksi di Invoice, PUM,
+Receiving, Payment, Accounting, dan Report.
 
-Mencegah duplikasi data dengan satu sumber kebenaran untuk referensi utama.
-Menjamin efisiensi proses dengan menyediakan data master yang selalu tersedia dan tervalidasi.
-Menjaga akurasi transaksi operasional pada seluruh modul JIFAS.
+Sub-modul Master Data:
+- Company       : Data perusahaan dan entitas bisnis (lihat Company.txt)
+- Employee      : Data karyawan pengguna sistem (lihat Employee.txt)
+- Vendor        : Data supplier/rekanan bisnis (lihat Vendor.txt)
+- Division      : Struktur divisi organisasi (lihat Division.txt)
+- Department    : Struktur departemen (lihat Departement.txt)
+- COA           : Chart of Accounts / kode akun keuangan (lihat COA.txt)
+- Account Period: Buka/tutup periode akuntansi (lihat AccPeriod.txt)
+- List COA      : Tampilan daftar COA aktif (lihat ListCoa.txt)
+- Report Setup  : Mapping COA ke template laporan (lihat ReportSetup.txt)
+- Budget        : Anggaran per COA/departemen (lihat Budget.txt)
+- Roles         : Hak akses dan otorisasi user (lihat Roles.txt)
 
-Role Terkait
+Manfaat Modul Master:
+- Mencegah duplikasi data — satu sumber kebenaran untuk referensi utama
+- Menjamin efisiensi proses — data master selalu tersedia dan tervalidasi
+- Menjaga akurasi transaksi operasional di seluruh modul JIFAS
 
-WMTR (Webmaster) hanya diberikan kepada tim IT sehingga dapat mengelola konfigurasi teknis data master.
-Pengguna lain seperti USER akan terbatas sesuai peran modul masing-masing.
+Hak Akses:
+- WMTR (Webmaster) : Akses penuh — hanya diberikan ke tim IT
+- USER             : Terbatas sesuai peran modul masing-masing
+- USRL             : Seperti USER, tapi bisa pilih dept/divisi lain saat PUM
 
-Catatan Tambahan
-
-Role USRL memiliki akses untuk memilih department/divisi saat membuat PUM/PD (Pengajuan Umum/ Pengajuan Dana), sedangkan USER tidak.
-
-
+Catatan penting:
+- Pastikan semua master data sudah lengkap sebelum mulai input transaksi
+- COA yang sudah dipakai dalam transaksi tidak bisa dihapus
+- Perubahan master data bisa berdampak pada laporan keuangan
+- Hubungi IT Help Desk (it@jababeka.com) jika butuh tambah/ubah data master

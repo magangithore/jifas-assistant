@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace jifas_assistant.DAL.Models;
 
@@ -29,29 +30,28 @@ public partial class JIFAS_AssistantContext : DbContext
 
     public virtual DbSet<UserFeedbacks> UserFeedbacks { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=JIFAS_Assistant;Integrated Security=True;Encrypt=True");
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("vector");
+
         modelBuilder.Entity<Chats>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Chats__3214EC07DE4EBD06");
 
             entity.Property(e => e.Confidence).HasDefaultValue(0.0);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.IsOutOfScope).HasDefaultValue(false);
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<KnowledgeBaseChunks>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Knowledg__3214EC07BF6E8A6E");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.EmbeddingVector).HasColumnType("vector(2560)");
             entity.Property(e => e.EmbeddingDimensions).HasDefaultValue(0);
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.HasOne(d => d.Document).WithMany(p => p.KnowledgeBaseChunks).HasConstraintName("FK__Knowledge__Docum__5441852A");
         });
@@ -60,12 +60,12 @@ public partial class JIFAS_AssistantContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Knowledg__3214EC07AB333E08");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.CreatedBy).HasDefaultValue("System");
             entity.Property(e => e.EmbeddingDimensions).HasDefaultValue(0);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.RelevanceScore).HasDefaultValue(1.0);
-            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UpdatedBy).HasDefaultValue("System");
             entity.Property(e => e.ViewCount).HasDefaultValue(0);
         });
@@ -74,14 +74,14 @@ public partial class JIFAS_AssistantContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Metrics__3214EC0736A55D0F");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<UserFeedbacks>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__UserFeed__3214EC074580AE2D");
 
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         OnModelCreatingPartial(modelBuilder);

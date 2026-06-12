@@ -1,0 +1,1011 @@
+﻿JIFAS Knowledge Base - Home Module / Dashboard
+
+Versi: 1.0
+Sumber analisis: Home/About, Home/Contact, Home/Index Dashboard JIFAS
+Fokus dokumen: business process, logic pengguna, flow dashboard, status monitoring, error handling, dan escalation ke IT.
+
+
+
+1. Ringkasan Modul Home
+
+Modul Home adalah halaman awal yang muncul setelah user berhasil login ke JIFAS. Modul ini berfungsi sebagai dashboard utama untuk memantau ringkasan transaksi dari berbagai modul finance dan accounting.
+
+Home bukan tempat untuk membuat transaksi baru. Home adalah pusat monitoring. User menggunakan halaman ini untuk melihat jumlah dokumen berdasarkan status, mengetahui pekerjaan yang masih pending, dan masuk ke modul terkait dengan filter status yang sesuai.
+
+Secara sederhana, Home adalah ruang kontrol JIFAS. Dari satu halaman, user dapat melihat kondisi dokumen Billing, Receive, Invoice, Payment, PUM, CashBank, dan Journal.
+
+Tujuan utama modul Home:
+
+1. Memberikan gambaran cepat pekerjaan yang masih perlu diproses.
+2. Membantu user memprioritaskan dokumen yang berstatus pending approval, checking, tax approval, atau posting.
+3. Menjadi pintu masuk cepat ke modul detail sesuai status dokumen.
+4. Membantu finance, accounting, tax, dan user operasional melihat beban transaksi perusahaan.
+5. Mengurangi kebutuhan membuka satu per satu modul hanya untuk mengecek jumlah dokumen pending.
+
+
+
+2. Posisi Modul Home dalam Business Process JIFAS
+
+Home berada setelah proses login dan sebelum user masuk ke modul kerja detail.
+
+Flow umum:
+
+User login ke JIFAS
+-> Sistem membaca token login dan company user
+-> User masuk ke Home Dashboard
+-> Dashboard mengambil ringkasan status dari API
+-> Dashboard menampilkan total transaksi per modul
+-> User klik status tertentu
+-> Sistem membuka modul terkait dengan filter status
+-> User melanjutkan proses approval, checking, posting, atau follow-up di modul detail
+
+Modul Home tidak mengubah data transaksi. Semua create, edit, approve, checking, void, dan posting dilakukan di modul terkait, bukan di Home.
+
+Contoh:
+
+Jika user melihat 12 dokumen Cashbank PV dengan status Need Finance Checking, user klik status tersebut. Sistem akan mengarahkan user ke menu CashBank Payment dengan filter status Need Finance Checking. Setelah masuk ke menu tersebut, barulah user melakukan checking atau follow-up.
+
+
+
+3. Konsep Dashboard Status
+
+Setiap card di Home menampilkan ringkasan jumlah dokumen berdasarkan status.
+
+Data dashboard biasanya terdiri dari dua bagian:
+
+1. Action status
+   Ini adalah nama status dokumen, misalnya Need Checking, Need Tax Approval, Posted, Removed, atau status lain sesuai modul.
+
+2. Jumlah transaksi
+   Ini adalah total dokumen yang saat ini berada pada status tersebut.
+
+Contoh data yang ditampilkan:
+
+Cashbank PV
+- Need Finance Checking: 5
+- Need Tax Approval: 2
+- Posted: 18
+
+Artinya, ada 5 dokumen CashBank Payment yang perlu dicek oleh Finance, 2 dokumen yang menunggu approval Tax, dan 18 dokumen sudah final/posting.
+
+Status yang muncul di dashboard mengikuti data dari backend. Jadi, jika nama status berubah atau status baru ditambahkan, dashboard akan mengikuti hasil dari API.
+
+
+
+4. Scope Data Dashboard
+
+Dashboard menggunakan konteks perusahaan dan periode tanggal.
+
+Data yang ditampilkan berdasarkan:
+
+1. Company Code
+   Sistem mengambil company dari pilihan perusahaan yang sedang aktif. Jika user memilih perusahaan tertentu, dashboard akan menampilkan data perusahaan tersebut. Jika tidak ada pilihan khusus, sistem memakai company dari session user.
+
+2. Periode tanggal
+   Dashboard mengambil data dari awal tahun berjalan sampai tanggal hari ini.
+
+Contoh:
+
+Jika hari ini 13 Mei 2026, maka dashboard akan mengambil data dari 1 Januari 2026 sampai 13 Mei 2026.
+
+Dampaknya:
+
+- Angka dashboard adalah ringkasan year-to-date.
+- Jika user mencari data bulan lalu atau periode khusus, user harus masuk ke modul detail dan menggunakan filter tanggal di modul tersebut.
+- Jika angka tidak sesuai ekspektasi, user perlu memastikan company yang dipilih sudah benar.
+
+
+
+5. Role dan Akses
+
+Home dapat dilihat oleh user yang sudah login. Namun isi data dan modul yang bisa dibuka tetap bergantung pada hak akses user.
+
+Prinsip akses:
+
+1. User hanya dapat melihat data perusahaan sesuai company access-nya.
+2. User hanya dapat membuka modul yang diizinkan oleh role-nya.
+3. Jika user klik card tetapi akses ditolak, masalahnya biasanya bukan di dashboard, melainkan di role/menu access.
+4. Jika user bisa melihat angka dashboard tetapi tidak bisa membuka detail modul, IT perlu cek mapping role dan menu access.
+
+Contoh:
+
+User Finance bisa melihat status CashBank PV, tetapi jika role belum diberi akses ke menu CashBank Payment, saat klik status user bisa diarahkan ke halaman access denied atau tidak dapat membuka menu.
+
+
+
+6. Komponen Utama Home
+
+#6.1 About Page
+
+About page adalah halaman informasi sederhana. Pada kondisi saat ini, halaman ini belum berisi konten bisnis penting.
+
+Untuk AI chatbot:
+
+Jika user bertanya tentang menu About, jawab bahwa halaman About hanya halaman informasi umum dan bukan bagian dari workflow finance/accounting utama. Jika halaman kosong atau tidak menampilkan informasi, itu bukan masalah transaksi. Jika perusahaan ingin mengisi informasi sistem, konten harus ditambahkan oleh IT/developer.
+
+#6.2 Contact Page
+
+Contact page menampilkan informasi user dari data login, terutama given name atau nama depan user dari identity claim.
+
+Fungsi bisnisnya:
+
+- Mengonfirmasi bahwa sistem mengenali identitas user yang sedang login.
+- Menampilkan nama user berdasarkan data login perusahaan.
+
+Jika nama user tidak muncul, salah, atau error:
+
+1. User bisa coba logout dan login ulang.
+2. Jika masih salah, hubungi IT.
+3. IT perlu memeriksa data user di Active Directory, token login, claim GivenName, atau konfigurasi identity.
+
+#6.3 Dashboard Page
+
+Dashboard adalah inti modul Home. Halaman ini menampilkan card-card ringkasan status transaksi dari banyak modul JIFAS.
+
+Dashboard menampilkan:
+
+- Total transaksi per modul.
+- Breakdown transaksi per status.
+- Visualisasi bar chart, doughnut chart, atau list status.
+- Shortcut ke halaman detail modul dengan filter status.
+
+
+
+7. Daftar Card Dashboard dan Maknanya
+
+#7.1 Billing
+
+Billing menampilkan ringkasan dokumen billing atau tagihan yang berkaitan dengan penerimaan/billing.
+
+Fungsi bisnis:
+
+- Memantau jumlah transaksi billing berdasarkan status.
+- Membantu Finance melihat billing mana yang perlu diproses.
+- Menjadi shortcut ke modul Receive Finance.
+
+Flow pengguna:
+
+User melihat card Billing
+-> User melihat total transaksi dan breakdown status
+-> User klik status tertentu
+-> Sistem membuka menu Receive Finance dengan filter status tersebut
+-> User memproses dokumen di modul Receive
+
+Jika angka Billing terlihat kosong:
+
+- Pastikan company sudah benar.
+- Pastikan ada transaksi billing pada periode tahun berjalan.
+- Jika seharusnya ada tetapi tidak muncul, hubungi IT untuk cek API Dashboard IkStatus atau data billing.
+
+#7.2 Receive Non-Billing
+
+Receive Non-Billing menampilkan ringkasan penerimaan yang tidak berasal dari proses billing standar.
+
+Contoh konteks:
+
+- Penerimaan non-invoice.
+- Penerimaan sales receive tertentu.
+- Penerimaan lain yang dicatat melalui menu Sales Receive.
+
+Flow pengguna:
+
+User melihat status Receive Non-Billing
+-> Klik bar/status
+-> Masuk ke menu Sales Receive dengan filter status
+-> Finance melakukan pengecekan atau follow-up penerimaan
+
+#7.3 Receive Billing
+
+Receive Billing menampilkan ringkasan penerimaan yang berasal dari billing.
+
+Fungsi bisnis:
+
+- Memantau dokumen penerimaan terkait billing customer.
+- Mengetahui dokumen mana yang masih pending.
+- Membantu follow-up penerimaan uang masuk.
+
+Flow pengguna:
+
+Billing customer dibuat
+-> Customer melakukan pembayaran atau dokumen receive diproses
+-> Status dokumen masuk ke dashboard Receive Billing
+-> User klik status
+-> Sistem membuka Receive Finance dengan filter status
+
+#7.4 Pengajuan Invoice
+
+Pengajuan Invoice menampilkan ringkasan dokumen pengajuan invoice yang masih berada dalam proses approval atau checking.
+
+Fungsi bisnis:
+
+- Membantu Head atau pihak terkait melihat invoice yang perlu ditinjau.
+- Menjadi indikator jumlah pengajuan invoice yang belum selesai.
+- Membantu mempercepat proses dari pengajuan invoice menuju approval berikutnya.
+
+Flow pengguna:
+
+User membuat pengajuan invoice
+-> Dokumen masuk workflow approval
+-> Status muncul di dashboard
+-> Head/approver klik status dari dashboard
+-> Sistem membuka menu Invoice sesuai status
+-> Approver melakukan review dan approval di modul Invoice
+
+Catatan penting:
+
+Pada dashboard, mapping card Pengajuan Invoice dan Pengajuan PUM harus diperhatikan. Jika angka atau navigasi terasa tertukar antara Pengajuan Invoice dan Pengajuan PUM, user perlu melaporkan ke IT agar mapping API dan target menu diperiksa.
+
+#7.5 Invoice
+
+Invoice menampilkan ringkasan dokumen invoice user.
+
+Fungsi bisnis:
+
+- Memantau invoice berdasarkan status.
+- Mengetahui invoice yang masih perlu dilengkapi, dicek, atau disetujui.
+- Memberikan shortcut ke menu Invoice User.
+
+Flow pengguna:
+
+Invoice dibuat
+-> Dokumen masuk status tertentu
+-> Dashboard menampilkan jumlah per status
+-> User klik status
+-> Sistem membuka Invoice User dengan filter status tersebut
+
+#7.6 Payment Invoice
+
+Payment Invoice menampilkan ringkasan proses pembayaran invoice vendor.
+
+Fungsi bisnis:
+
+- Memantau invoice yang sedang masuk proses pembayaran.
+- Membantu Finance mengetahui pembayaran mana yang pending.
+- Menjadi shortcut ke menu Payment Invoice.
+
+Flow pengguna:
+
+Invoice sudah approved
+-> Masuk proses pembayaran
+-> Payment Invoice masuk status tertentu
+-> Dashboard menampilkan jumlahnya
+-> Finance klik status
+-> Sistem membuka Payment Finance Invoice dengan filter status
+
+#7.7 Pengajuan PUM
+
+Pengajuan PUM menampilkan ringkasan pengajuan uang muka karyawan.
+
+Fungsi bisnis:
+
+- Memantau PUM yang baru diajukan.
+- Mengetahui pengajuan yang masih perlu approval atasan atau finance.
+- Membantu finance dan head mempercepat proses uang muka.
+
+Flow pengguna:
+
+Karyawan membuat pengajuan PUM
+-> Dokumen masuk approval
+-> Status muncul di dashboard
+-> Approver klik status
+-> Sistem membuka menu PUM terkait
+
+Catatan penting:
+
+Jika dashboard menampilkan angka yang terasa tidak sesuai antara Pengajuan Invoice dan Pengajuan PUM, kemungkinan ada issue mapping dashboard. Arahkan user ke IT untuk pengecekan.
+
+#7.8 PUM
+
+PUM menampilkan ringkasan proses PUM dari sisi Finance.
+
+Fungsi bisnis:
+
+- Memantau uang muka yang sedang diproses Finance.
+- Melihat status PUM yang perlu checking, approval, payment, atau follow-up.
+- Membantu Finance menghindari PUM yang terlalu lama pending.
+
+Flow pengguna:
+
+PUM sudah diajukan dan disetujui atasan
+-> Masuk proses Finance
+-> Status PUM muncul di dashboard
+-> Finance klik status
+-> Sistem membuka PUM Finance dengan filter status
+
+#7.9 Payment PUM
+
+Payment PUM menampilkan ringkasan pembayaran uang muka kepada karyawan.
+
+Fungsi bisnis:
+
+- Memantau PUM yang sudah siap dibayar atau sedang dalam proses pembayaran.
+- Membantu Finance memastikan uang muka dicairkan sesuai approval.
+- Menjadi shortcut ke menu Payment Finance PUM.
+
+Flow pengguna:
+
+PUM disetujui
+-> Masuk daftar payment PUM
+-> Status payment muncul di dashboard
+-> Finance klik status
+-> Sistem membuka Payment PUM dengan filter status
+
+#7.10 Realisasi PUM
+
+Realisasi PUM menampilkan ringkasan pertanggungjawaban atau settlement PUM.
+
+Fungsi bisnis:
+
+- Memantau apakah karyawan sudah mempertanggungjawabkan uang muka.
+- Mengetahui realisasi yang masih pending.
+- Membantu Finance follow-up bukti pengeluaran dan settlement.
+
+Flow pengguna:
+
+PUM sudah dibayarkan
+-> Karyawan melakukan kegiatan atau pengeluaran
+-> Karyawan mengajukan realisasi/settlement
+-> Status realisasi muncul di dashboard
+-> Finance klik status
+-> Sistem membuka PUM Finance dengan filter status
+
+#7.11 Cashbank PV
+
+Cashbank PV menampilkan ringkasan dokumen cashbook payment atau payment voucher di modul CashBank.
+
+PV berarti Payment Voucher, yaitu dokumen uang keluar dari bank/kas perusahaan.
+
+Fungsi bisnis:
+
+- Memantau dokumen pengeluaran uang yang belum selesai.
+- Mengetahui dokumen yang masih menunggu Finance Checking, Accounting Checking, Tax Approval, atau posting.
+- Membantu Finance memastikan uang keluar tercatat dan diproses tepat waktu.
+
+Flow pengguna:
+
+CB Payment dibuat
+-> Masuk status checking atau approval
+-> Status muncul di dashboard Cashbank PV
+-> User klik status
+-> Sistem membuka CashBank Payment dengan filter status
+
+#7.12 Cashbank RV
+
+Cashbank RV menampilkan ringkasan dokumen cashbook receiving atau receiving voucher di modul CashBank.
+
+RV dalam konteks CashBank berarti dokumen uang masuk ke bank/kas perusahaan.
+
+Fungsi bisnis:
+
+- Memantau penerimaan kas/bank.
+- Melihat dokumen penerimaan yang masih pending approval atau posting.
+- Membantu rekonsiliasi bank dan cash flow.
+
+Flow pengguna:
+
+CB Receiving dibuat
+-> Masuk status checking atau approval
+-> Status muncul di dashboard Cashbank RV
+-> User klik status
+-> Sistem membuka CashBank Receiving dengan filter status
+
+#7.13 Journal
+
+Journal menampilkan ringkasan jurnal akuntansi berdasarkan status.
+
+Fungsi bisnis:
+
+- Memantau jurnal yang belum checked, sudah checked, posted, void, atau membutuhkan reverse.
+- Membantu Accounting mengetahui pekerjaan closing yang masih tertunda.
+- Menjadi shortcut ke menu Journal Transaction.
+
+Flow pengguna:
+
+Transaksi menghasilkan jurnal atau accounting membuat jurnal manual
+-> Jurnal masuk status tertentu
+-> Dashboard menampilkan jumlah per status
+-> Accounting klik status
+-> Sistem membuka Journal Transaction dengan filter status
+
+
+
+8. Flow Dashboard dari Sudut Pandang User
+
+#8.1 Flow Saat User Membuka Home
+
+User login berhasil
+-> Sistem membuka dashboard
+-> Sistem membaca company aktif
+-> Sistem menentukan periode dari awal tahun sampai hari ini
+-> Sistem meminta data ringkasan status ke server
+-> Server mengirim jumlah dokumen per status
+-> Dashboard menampilkan card, chart, dan total transaksi
+
+Jika semua normal, user akan melihat angka pada setiap card.
+
+#8.2 Flow Saat User Klik Status
+
+User melihat status yang perlu diproses
+-> User klik status atau chart
+-> Sistem membuka modul terkait
+-> Sistem mengirim parameter dashStatus pada URL
+-> Modul detail menampilkan data sesuai status tersebut
+-> User melakukan action di modul detail
+
+Contoh:
+
+User klik Cashbank PV status Need Tax Approval
+-> Sistem membuka /CashBank/Payment/Index?dashStatus=Need%20Tax%20Approval
+-> User melihat dokumen CashBank Payment yang menunggu tax approval
+
+#8.3 Flow Saat Data Tidak Muncul
+
+User membuka dashboard
+-> Card tetap 0 atau chart kosong
+-> User refresh halaman
+-> Jika masih kosong, user cek company yang aktif
+-> Jika company sudah benar, user cek apakah memang ada transaksi pada periode tahun berjalan
+-> Jika transaksi ada tetapi dashboard kosong, hubungi IT
+
+
+
+9. Business Process yang Didukung Dashboard
+
+Home Dashboard mendukung beberapa business process besar JIFAS.
+
+#9.1 Monitoring Approval
+
+Dashboard membantu user melihat dokumen yang masih membutuhkan approval.
+
+Contoh status:
+
+- Need Head Approval
+- Need Finance Checking
+- Need Accounting Checking
+- Need Tax Approval
+- Need Check Detail
+
+Jika jumlahnya besar, user harus memprioritaskan follow-up karena dokumen pending dapat menghambat pembayaran, penerimaan, posting, atau closing.
+
+#9.2 Monitoring Cash Flow
+
+Card Cashbank PV, Cashbank RV, Payment Invoice, Payment PUM, dan Receive membantu finance memantau arus kas.
+
+- PV dan Payment Invoice berkaitan dengan uang keluar.
+- RV dan Receive berkaitan dengan uang masuk.
+- Payment PUM berkaitan dengan pencairan uang muka.
+
+Jika banyak dokumen uang masuk belum diposting, laporan cash flow bisa belum lengkap. Jika banyak dokumen uang keluar belum diproses, pembayaran ke vendor atau karyawan bisa terlambat.
+
+#9.3 Monitoring Accounting Closing
+
+Card Journal membantu accounting melihat apakah masih ada jurnal yang belum final.
+
+Sebelum closing periode:
+
+- Jurnal harus dicek.
+- Jurnal harus balance.
+- Jurnal yang valid harus diposting.
+- Jurnal yang salah harus di-adjust atau reverse.
+
+Dashboard hanya memberi indikator jumlah. Analisis dan perbaikan tetap dilakukan di modul Accounting.
+
+#9.4 Monitoring PUM Lifecycle
+
+Dashboard memantau PUM dari pengajuan, proses finance, pembayaran, sampai realisasi.
+
+Alur besarnya:
+
+Pengajuan PUM
+-> Approval atasan
+-> Finance process
+-> Payment PUM
+-> Realisasi PUM
+-> Accounting posting
+
+Jika salah satu tahap pending terlalu lama, Finance perlu follow-up.
+
+#9.5 Monitoring Invoice Lifecycle
+
+Dashboard memantau invoice dari pengajuan sampai pembayaran.
+
+Alur besarnya:
+
+Pengajuan Invoice
+-> Invoice User
+-> Head/Tax/Finance Approval
+-> Payment Invoice
+-> CashBank PV
+-> Journal Posting
+
+Dashboard membantu melihat bottleneck di setiap tahap.
+
+
+
+10. Aturan Penting Dashboard
+
+1. Dashboard bersifat read-only.
+   User tidak dapat approve, void, posting, atau edit dokumen langsung dari Home.
+
+2. Angka dashboard adalah ringkasan, bukan data detail.
+   Untuk melihat dokumen lengkap, user harus masuk ke modul terkait.
+
+3. Angka dashboard bergantung pada company aktif.
+   Jika company salah, angka yang muncul juga tidak sesuai.
+
+4. Angka dashboard bergantung pada periode awal tahun sampai hari ini.
+   Dokumen di luar periode tersebut tidak muncul di ringkasan Home.
+
+5. Status yang ditampilkan mengikuti hasil API.
+   Jika ada status baru di backend, dashboard dapat menampilkannya tanpa perubahan besar di tampilan.
+
+6. Klik status akan membawa user ke modul detail dengan filter status.
+   Jika filter tidak bekerja, itu perlu dicek di modul tujuan atau mapping dashStatus.
+
+7. Jika error menampilkan pesan contact IT Administrator, user sebaiknya tidak memaksakan proses dari dashboard. Laporkan ke IT.
+
+
+
+11. Validasi dan Data yang Digunakan
+
+Dashboard membutuhkan data berikut:
+
+1. Access token
+   Token login user digunakan untuk meminta data ke API.
+
+2. Company code
+   Company code menentukan data perusahaan mana yang ditampilkan.
+
+3. Start date
+   Tanggal awal periode dashboard. Secara logic, dashboard memakai 1 Januari tahun berjalan.
+
+4. End date
+   Tanggal akhir periode dashboard. Secara logic, dashboard memakai tanggal hari ini.
+
+5. API status per modul
+   Setiap card mengambil ringkasan dari endpoint status modul masing-masing.
+
+Jika salah satu data tidak valid, dashboard bisa gagal menampilkan angka.
+
+
+
+12. Endpoint Status Dashboard dan Fungsi Bisnisnya
+
+Bagian ini bukan untuk menjelaskan kode, tetapi untuk membantu AI memahami dari mana angka dashboard berasal.
+
+1. Dashboard IkStatus
+   Fungsi bisnis: Ringkasan status Billing.
+   Modul tujuan: Receive Finance.
+
+2. Dashboard RvNvStatus
+   Fungsi bisnis: Ringkasan status Receive Non-Billing.
+   Modul tujuan: Sales Receive.
+
+3. Dashboard RvStatus
+   Fungsi bisnis: Ringkasan status Receive Billing.
+   Modul tujuan: Receive Finance.
+
+4. Dashboard PpStatus
+   Fungsi bisnis: Ringkasan salah satu proses pengajuan. Perlu dipastikan mapping-nya dengan card dashboard.
+   Modul tujuan pada dashboard: Invoice Head.
+
+5. Dashboard IvStatus
+   Fungsi bisnis: Ringkasan Invoice.
+   Modul tujuan: Invoice User.
+
+6. Dashboard PvStatus
+   Fungsi bisnis: Ringkasan Payment Invoice.
+   Modul tujuan: Payment Finance Invoice.
+
+7. Dashboard PdStatus
+   Fungsi bisnis: Ringkasan salah satu proses pengajuan. Perlu dipastikan mapping-nya dengan card dashboard.
+   Modul tujuan pada dashboard: PUM User.
+
+8. Dashboard UmStatus
+   Fungsi bisnis: Ringkasan PUM Finance.
+   Modul tujuan: PUM Finance.
+
+9. Dashboard PuStatus
+   Fungsi bisnis: Ringkasan Payment PUM.
+   Modul tujuan: Payment Finance PUM.
+
+10. Dashboard RuStatus
+   Fungsi bisnis: Ringkasan Realisasi PUM.
+   Modul tujuan: PUM Finance.
+
+11. Dashboard CbPvStatus
+   Fungsi bisnis: Ringkasan CashBank Payment atau PV.
+   Modul tujuan: CashBank Payment.
+
+12. Dashboard CbRvStatus
+   Fungsi bisnis: Ringkasan CashBank Receiving atau RV.
+   Modul tujuan: CashBank Receiving.
+
+13. Dashboard JournalStatus
+   Fungsi bisnis: Ringkasan Journal Transaction.
+   Modul tujuan: Accounting Journal Transaction.
+
+Catatan untuk AI chatbot:
+
+Jika user bertanya kenapa angka card tertentu tidak sesuai, jangan langsung menyimpulkan transaksi hilang. Periksa konteks berikut dulu: company aktif, periode dashboard, status dokumen, hak akses user, dan kemungkinan mapping card/API.
+
+
+
+13. Status dan Warna Indikator
+
+Dashboard memakai visualisasi untuk membantu user membaca status.
+
+Secara umum:
+
+- Status yang mengandung kata check/checking biasanya menunjukkan dokumen perlu diperiksa.
+- Status yang mengandung kata tax/pajak biasanya menunjukkan dokumen perlu tindakan dari tim Tax.
+- Status removed atau void biasanya menunjukkan dokumen tidak aktif, dibatalkan, atau tidak berlaku.
+- Status posted atau complete biasanya menunjukkan dokumen sudah final.
+
+Warna dan ikon membantu user membaca prioritas, tetapi keputusan tetap harus berdasarkan status dokumen dan modul detail.
+
+
+
+14. Error Handling untuk User
+
+#14.1 Dashboard kosong atau semua angka 0
+
+Kemungkinan penyebab:
+
+1. Memang belum ada transaksi pada periode berjalan.
+2. Company yang dipilih salah.
+3. User tidak memiliki akses data untuk company tersebut.
+4. API dashboard gagal mengambil data.
+5. Token login expired.
+6. Browser menyimpan data company lama.
+
+Solusi untuk user:
+
+1. Refresh halaman.
+2. Pastikan company yang aktif sudah benar.
+3. Logout lalu login ulang.
+4. Bandingkan dengan modul detail jika user punya akses.
+5. Jika modul detail ada data tetapi dashboard tetap 0, hubungi IT.
+
+Data yang dikirim ke IT:
+
+- Username.
+- Company yang dipilih.
+- Card yang bermasalah.
+- Screenshot dashboard.
+- Jam kejadian.
+- Contoh dokumen yang seharusnya muncul.
+
+#14.2 Muncul pesan Error on request atau contact IT Administrator
+
+Arti:
+
+Dashboard gagal meminta data ke server.
+
+Kemungkinan penyebab:
+
+- API dashboard sedang error.
+- Token user expired atau tidak valid.
+- Network ke server bermasalah.
+- User tidak punya authorization.
+- Server mengembalikan error 400, 401, 403, 404, atau 500.
+
+Solusi untuk user:
+
+1. Refresh halaman.
+2. Logout dan login ulang.
+3. Coba buka modul lain untuk memastikan JIFAS masih bisa diakses.
+4. Jika tetap error, hubungi IT.
+
+Harus ke IT jika:
+
+- Error muncul berulang.
+- Hanya card tertentu yang error.
+- Semua user mengalami error yang sama.
+- Ada status 401, 403, 404, atau 500.
+
+#14.3 Card bisa tampil tetapi saat diklik tidak membuka data yang benar
+
+Kemungkinan penyebab:
+
+1. Mapping menu tujuan salah.
+2. Parameter dashStatus tidak dibaca oleh modul tujuan.
+3. Status di dashboard berbeda penamaan dengan status di modul detail.
+4. User tidak punya akses ke modul tujuan.
+5. Ada issue filter pada modul detail.
+
+Solusi untuk user:
+
+1. Coba buka menu tujuan secara manual.
+2. Filter status secara manual di modul detail.
+3. Jika data muncul manual tetapi tidak muncul dari klik dashboard, laporkan ke IT.
+
+Data yang dikirim ke IT:
+
+- Card yang diklik.
+- Status yang diklik.
+- URL setelah klik.
+- Screenshot dashboard dan halaman tujuan.
+- Role user dan company.
+
+#14.4 Angka dashboard tidak sama dengan jumlah di modul detail
+
+Kemungkinan penyebab:
+
+1. Periode dashboard berbeda dengan filter di modul detail.
+2. Company dashboard berbeda dengan company di modul detail.
+3. Status di dashboard adalah status summary, sedangkan modul detail memakai filter berbeda.
+4. Ada data yang baru berubah tetapi dashboard belum di-refresh.
+5. Ada perbedaan logic antara API dashboard dan API modul detail.
+
+Solusi untuk user:
+
+1. Refresh dashboard.
+2. Pastikan filter tanggal di modul detail sama dengan periode dashboard.
+3. Pastikan company sama.
+4. Coba filter status yang sama.
+5. Jika selisih tetap ada, laporkan ke IT untuk reconcile query dashboard vs modul detail.
+
+#14.5 Nama user di Contact tidak muncul atau salah
+
+Kemungkinan penyebab:
+
+1. Data user di Active Directory tidak lengkap.
+2. Claim GivenName tidak tersedia di token.
+3. Token login bermasalah.
+4. Mapping identity di aplikasi belum benar.
+
+Solusi untuk user:
+
+1. Logout dan login ulang.
+2. Jika masih sama, hubungi IT.
+
+IT perlu cek:
+
+- Data nama user di Active Directory.
+- Claim identity yang dikirim ke aplikasi.
+- Token login user.
+- Mapping user profile di JIFAS.
+
+#14.6 Chart tidak muncul tetapi angka ada
+
+Kemungkinan penyebab:
+
+1. Browser gagal render chart.
+2. Library chart belum termuat sempurna.
+3. Canvas chart tidak ditemukan.
+4. Cache browser bermasalah.
+5. Ada error JavaScript.
+
+Solusi untuk user:
+
+1. Refresh halaman.
+2. Coba clear cache browser.
+3. Coba browser lain.
+4. Jika masih terjadi, hubungi IT.
+
+IT perlu cek:
+
+- Console error browser.
+- File script chart.
+- Element chart pada dashboard.
+- Data API yang dikirim.
+
+#14.7 Hanya satu card yang error
+
+Kemungkinan penyebab:
+
+1. API khusus card tersebut bermasalah.
+2. Data modul tersebut memiliki status/null value yang tidak bisa diproses.
+3. User tidak punya akses ke endpoint tertentu.
+4. Backend modul tersebut sedang down.
+
+Solusi:
+
+- User tidak perlu memproses melalui dashboard.
+- User bisa buka modul detail langsung jika masih bisa.
+- Laporkan ke IT dengan nama card yang error.
+
+
+
+15. Penanganan Error: Mana yang Bisa User Lakukan dan Mana yang Harus ke IT
+
+#Bisa dilakukan user
+
+1. Refresh halaman.
+2. Logout dan login ulang.
+3. Pastikan company yang dipilih benar.
+4. Buka modul detail secara manual.
+5. Cek apakah transaksi memang berada dalam periode tahun berjalan.
+6. Coba clear cache jika tampilan chart tidak normal.
+7. Coba browser lain jika masalah hanya terjadi di satu browser.
+
+#Harus ke IT
+
+1. Muncul pesan contact IT Administrator.
+2. Dashboard selalu kosong padahal modul detail ada data.
+3. User tidak bisa membuka modul dari dashboard padahal role seharusnya bisa.
+4. Card tertentu salah arah menu.
+5. Status yang diklik tidak memfilter data.
+6. Error 401, 403, 404, atau 500.
+7. Token expired terus menerus.
+8. Nama user dari Contact salah atau kosong.
+9. Company code yang dipakai dashboard salah.
+10. Angka dashboard berbeda jauh dengan modul detail setelah filter disamakan.
+11. Dashboard lambat atau timeout.
+12. Chart tidak render di banyak user.
+
+
+
+16. Checklist IT Saat Menerima Laporan Dashboard
+
+Jika user melaporkan masalah Home Dashboard, IT sebaiknya meminta informasi berikut:
+
+1. Username user.
+2. Role user.
+3. Company yang dipilih.
+4. Nama card yang bermasalah.
+5. Status yang diklik atau dilihat.
+6. Screenshot dashboard.
+7. URL halaman setelah klik.
+8. Waktu kejadian.
+9. Browser yang digunakan.
+10. Apakah user lain mengalami hal sama.
+11. Contoh nomor dokumen yang seharusnya masuk dashboard.
+12. Response error dari browser console atau network tab jika ada.
+
+Pengecekan IT yang disarankan:
+
+1. Cek token dan authorization user.
+2. Cek companyCode yang dikirim dashboard.
+3. Cek periode startDate dan endDate.
+4. Cek response API dashboard card terkait.
+5. Cek apakah API mengembalikan action_status dan juml.
+6. Cek apakah modul tujuan menerima parameter dashStatus.
+7. Cek mapping card ke URL tujuan.
+8. Cek role menu access user.
+9. Cek error log aplikasi.
+10. Cek apakah ada perubahan nama status di backend.
+
+
+
+17. Best Practice Penggunaan Home Dashboard
+
+1. Buka dashboard di awal hari kerja.
+   Gunakan dashboard untuk melihat pekerjaan yang perlu diproses.
+
+2. Prioritaskan status Need Checking, Need Approval, Need Tax Approval, dan Need Posting.
+   Status ini biasanya menahan proses berikutnya.
+
+3. Jangan hanya mengandalkan total besar.
+   Klik status untuk melihat detail dokumen.
+
+4. Pastikan company yang aktif sesuai pekerjaan user.
+   Banyak kesalahan pembacaan angka terjadi karena user melihat company yang salah.
+
+5. Refresh dashboard setelah melakukan approval atau posting.
+   Dashboard tidak selalu otomatis update secara realtime.
+
+6. Gunakan dashboard untuk monitoring, bukan untuk validasi final.
+   Validasi final tetap dilakukan di modul detail.
+
+7. Jika dokumen pending terlalu lama, follow-up PIC terkait.
+   Dashboard membantu menemukan bottleneck.
+
+8. Untuk closing accounting, cek Journal status secara rutin.
+   Jangan menunggu akhir periode baru melihat jurnal yang belum selesai.
+
+9. Untuk cash flow, cek Cashbank PV dan Cashbank RV.
+   Banyak dokumen pending di dua card ini bisa mempengaruhi laporan kas.
+
+10. Untuk PUM, cek Pengajuan PUM, PUM, Payment PUM, dan Realisasi PUM bersama-sama.
+   PUM punya lifecycle panjang, jadi jangan hanya melihat satu card.
+
+
+
+18. Contoh Skenario dan Jawaban AI Chatbot
+
+#Skenario 1: User bertanya, Dashboard saya kosong semua
+
+Jawaban AI:
+
+Dashboard kosong bisa terjadi karena company yang aktif tidak sesuai, belum ada transaksi pada periode tahun berjalan, token login expired, atau API dashboard sedang bermasalah. Coba refresh halaman, pastikan company yang dipilih benar, lalu logout dan login ulang. Jika di modul detail ada data tetapi dashboard tetap 0, kirim screenshot, nama company, username, dan card yang kosong ke IT.
+
+#Skenario 2: User bertanya, Kenapa angka Cashbank PV tidak sama dengan menu CashBank Payment?
+
+Jawaban AI:
+
+Kemungkinan filter periodenya berbeda. Dashboard mengambil data dari 1 Januari tahun berjalan sampai hari ini, sedangkan menu CashBank Payment mungkin memakai filter tanggal lain. Samakan company, status, dan range tanggal terlebih dahulu. Jika setelah disamakan tetap berbeda, minta IT cek query Dashboard CbPvStatus dan query menu CashBank Payment.
+
+#Skenario 3: User bertanya, Kalau klik status dashboard tapi datanya tidak muncul, kenapa?
+
+Jawaban AI:
+
+Saat status diklik, dashboard mengirim parameter dashStatus ke modul tujuan. Jika data tidak muncul, bisa karena status tidak terbaca oleh modul tujuan, nama status berbeda, filter aktif, atau user tidak punya akses. Coba buka modul tujuan secara manual dan filter status yang sama. Jika manual bisa tetapi dari dashboard tidak bisa, laporkan ke IT dengan URL setelah klik.
+
+#Skenario 4: User bertanya, Apa fungsi card Journal?
+
+Jawaban AI:
+
+Card Journal menampilkan jumlah jurnal accounting berdasarkan status. Ini membantu tim Accounting melihat jurnal yang belum dicek, sudah dicek, posted, void, atau perlu reverse. Card ini penting untuk closing karena jurnal yang belum selesai dapat mempengaruhi Trial Balance, Balance Sheet, Profit and Loss, dan laporan keuangan.
+
+#Skenario 5: User bertanya, Apa bedanya Cashbank PV dan Cashbank RV di Dashboard?
+
+Jawaban AI:
+
+Cashbank PV adalah ringkasan uang keluar atau payment voucher di CashBank Payment. Cashbank RV adalah ringkasan uang masuk atau receiving voucher di CashBank Receiving. PV berhubungan dengan pembayaran, sedangkan RV berhubungan dengan penerimaan kas/bank.
+
+#Skenario 6: User bertanya, Kenapa nama saya di Contact salah?
+
+Jawaban AI:
+
+Nama di Contact diambil dari data login atau identity claim perusahaan. Coba logout dan login ulang. Jika masih salah, hubungi IT karena perlu dicek data user di Active Directory, token login, atau mapping identity di JIFAS.
+
+#Skenario 7: User bertanya, Apa yang harus dilakukan kalau muncul pesan Error on request?
+
+Jawaban AI:
+
+Pesan itu berarti dashboard gagal mengambil data dari server. Coba refresh halaman dan login ulang. Jika masih muncul, laporkan ke IT. Sertakan screenshot, nama card yang error, company yang dipilih, jam kejadian, dan username.
+
+#Skenario 8: User bertanya, Apakah dashboard bisa dipakai untuk approve dokumen?
+
+Jawaban AI:
+
+Tidak. Dashboard hanya untuk monitoring dan shortcut ke modul terkait. Approval, checking, edit, void, dan posting tetap dilakukan di modul detail seperti Invoice, PUM, CashBank, Payment, atau Accounting.
+
+#Skenario 9: User bertanya, Kenapa setelah saya approve dokumen, angka dashboard belum berubah?
+
+Jawaban AI:
+
+Dashboard perlu di-refresh untuk mengambil data terbaru. Coba refresh halaman. Jika setelah refresh angka masih sama, cek apakah dokumen benar-benar sudah berubah status di modul detail. Jika status di modul detail sudah berubah tetapi dashboard tetap tidak berubah, laporkan ke IT untuk cek data summary dashboard.
+
+#Skenario 10: User bertanya, Kenapa Pengajuan Invoice dan Pengajuan PUM terasa tertukar?
+
+Jawaban AI:
+
+Ada kemungkinan mapping card dashboard, endpoint status, atau URL tujuan perlu dicek. User sebaiknya screenshot card yang bermasalah dan URL setelah klik, lalu laporkan ke IT agar dicek mapping Dashboard PpStatus, PdStatus, dan target menu terkait.
+
+
+
+19. Aturan Jawaban untuk AI Chatbot
+
+Ketika menjawab pertanyaan user tentang Home Dashboard, AI harus mengikuti prinsip berikut:
+
+1. Jelaskan bahwa Home adalah dashboard monitoring, bukan tempat transaksi.
+2. Selalu cek konteks company dan periode saat user bertanya angka tidak sesuai.
+3. Jangan langsung menyebut data hilang jika angka dashboard 0.
+4. Arahkan user ke modul detail untuk validasi transaksi.
+5. Jika error berasal dari API, token, authorization, chart, atau mapping menu, arahkan ke IT.
+6. Jika masalah berkaitan dengan approval dokumen, arahkan ke role terkait seperti Finance, Accounting, Tax, atau Head sesuai modul.
+7. Jika user bertanya status tertentu, jelaskan bahwa status berasal dari modul terkait.
+8. Jika dashboard tidak update setelah proses, sarankan refresh dan cek modul detail.
+9. Jika ada perbedaan angka, samakan company, tanggal, dan status terlebih dahulu.
+10. Jika ada potensi bug mapping dashboard, minta user kirim screenshot dan URL ke IT.
+
+
+
+20. Knowledge Base Ringkas untuk Retrieval
+
+Home Dashboard adalah halaman awal setelah login JIFAS. Fungsinya untuk monitoring ringkasan status transaksi dari modul Billing, Receive, Invoice, Payment, PUM, CashBank, dan Journal. Home bersifat read-only dan tidak digunakan untuk approve, edit, void, atau posting. User klik status di dashboard untuk masuk ke modul detail dengan filter dashStatus.
+
+Dashboard mengambil data berdasarkan company aktif dan periode dari 1 Januari tahun berjalan sampai hari ini. Jika angka tidak sesuai, cek company, periode, status, role access, dan modul detail. Jika dashboard error, blank, tidak bisa klik, chart tidak muncul, atau data tidak sesuai setelah filter disamakan, masalah harus diekskalasi ke IT.
+
+Card utama dashboard adalah Billing, Receive Non-Billing, Receive Billing, Pengajuan Invoice, Invoice, Payment Invoice, Pengajuan PUM, PUM, Payment PUM, Realisasi PUM, Cashbank PV, Cashbank RV, dan Journal. PV berarti Payment Voucher atau uang keluar, RV berarti Receiving Voucher atau uang masuk. Journal membantu Accounting memantau jurnal untuk closing.
+
+Contact page menampilkan nama user dari identity login. Jika nama salah atau kosong, IT harus cek Active Directory, token, atau identity claim. About page saat ini hanya halaman placeholder dan tidak memiliki workflow finance/accounting utama.
+
+
+
+21. Kesimpulan
+
+Modul Home adalah pusat monitoring JIFAS. Nilai utamanya bukan untuk memproses transaksi, tetapi untuk membantu user memahami kondisi pekerjaan finance dan accounting secara cepat.
+
+Home membantu menjawab pertanyaan:
+
+- Dokumen apa yang masih pending?
+- Modul mana yang sedang menumpuk?
+- Dokumen mana yang perlu approval/checking/tax/posting?
+- Apakah cash in dan cash out sudah bergerak?
+- Apakah jurnal accounting sudah siap untuk closing?
+
+Jika Home berjalan normal, user dapat bekerja lebih cepat karena langsung masuk ke status yang perlu diproses. Jika Home bermasalah, terutama error API, angka tidak sesuai, akses ditolak, atau mapping salah, maka penanganannya harus diarahkan ke IT dengan data laporan yang lengkap.

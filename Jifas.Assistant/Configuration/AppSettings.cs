@@ -5,48 +5,53 @@ using System;
 namespace Jifas.Assistant.Configuration
 {
     // ========================================
-    // CONFIGURATION MODELS (Strongly Typed)
+    // MODEL CONFIGURATION (Strongly Typed)
     // ========================================
 
     /// <summary>
-    /// Gemini API Settings
+    /// Konfigurasi LLM lokal dari Ollama.
     /// </summary>
-    public class GeminiSettings
+    public class OllamaSettings
     {
-        public string ApiKey { get; set; }
-        public string Model { get; set; }
-        public string BaseUrl { get; set; }
+        public string ApiKey { get; set; } = string.Empty;
+        public string Model { get; set; } = "qwen3:8b";
+        public string BaseUrl { get; set; } = "http://10.0.12.54:11434";
+        public float Temperature { get; set; } = 0.3f;
+        public float TopP { get; set; } = 0.85f;
+        public int TopK { get; set; } = 40;
+        public int MaxOutputTokens { get; set; } = 2048;
+        public int TimeoutSeconds { get; set; } = 180;
     }
 
     /// <summary>
-    /// OpenAI API Settings (Optional)
+    /// Konfigurasi OpenAI opsional jika suatu saat provider diganti.
     /// </summary>
     public class OpenAISettings
     {
-        public string ApiKey { get; set; }
+        public string ApiKey { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Azure OpenAI Settings (Optional)
+    /// Konfigurasi Azure OpenAI opsional.
     /// </summary>
     public class AzureOpenAISettings
     {
-        public string Endpoint { get; set; }
-        public string Key { get; set; }
+        public string Endpoint { get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Support Configuration
+    /// Kontak support yang dipakai saat chatbot harus mengarahkan user ke IT.
     /// </summary>
     public class SupportSettings
     {
-        public string HelpDeskEmail { get; set; }
-        public string HelpDeskPhone { get; set; }
-        public string Department { get; set; }
+        public string HelpDeskEmail { get; set; } = string.Empty;
+        public string HelpDeskPhone { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Suggestion Configuration
+    /// Konfigurasi suggestion lama untuk kompatibilitas config.
     /// </summary>
     public class SuggestionSettings
     {
@@ -58,7 +63,7 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Knowledge Base Configuration
+    /// Konfigurasi pencarian Knowledge Base.
     /// </summary>
     public class KnowledgeBaseSettings
     {
@@ -72,21 +77,23 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Chat Configuration
+    /// Template pesan error dan guardrail chatbot.
     /// </summary>
     public class ChatSettings
     {
-        public string DefaultErrorMessage { get; set; }
-        public string EmptyMessageError { get; set; }
-        public string NoKBMatchMessage { get; set; }
-        public string OutOfScopeMessage { get; set; }
+        public string DefaultErrorMessage { get; set; } = string.Empty;
+        public string EmptyMessageError { get; set; } = string.Empty;
+        public string NoKBMatchMessage { get; set; } = string.Empty;
+        public string OutOfScopeMessage { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Caching Configuration
+    /// Konfigurasi cache jawaban, KB, dan Redis.
     /// </summary>
     public class CachingSettings
     {
+        public bool UseRedis { get; set; }
+        public string RedisInstanceName { get; set; } = "JIFAS:";
         public int DefaultDurationMinutes { get; set; }
         public int ResponseDurationHours { get; set; }
         public bool EnableKBCache { get; set; }
@@ -97,7 +104,7 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// API Configuration
+    /// Batasan umum request API.
     /// </summary>
     public class ApiSettings
     {
@@ -106,19 +113,19 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Qdrant Vector Database Configuration
+    /// Konfigurasi Qdrant lama. Saat ini search utama memakai PostgreSQL pgvector.
     /// </summary>
     public class QdrantSettings
     {
         public bool Enabled { get; set; }
-        public string Url { get; set; }
-        public string CollectionName { get; set; }
-        public string ApiKey { get; set; }
+        public string Url { get; set; } = string.Empty;
+        public string CollectionName { get; set; } = string.Empty;
+        public string ApiKey { get; set; } = string.Empty;
         public int EmbeddingDimensions { get; set; }
     }
 
     /// <summary>
-    /// Search Configuration
+    /// Konfigurasi engine search.
     /// </summary>
     public class SearchSettings
     {
@@ -127,7 +134,7 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Metrics Configuration
+    /// Konfigurasi penyimpanan metrik monitoring.
     /// </summary>
     public class MetricsSettings
     {
@@ -139,7 +146,7 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Health Check Configuration
+    /// Konfigurasi health check.
     /// </summary>
     public class HealthCheckSettings
     {
@@ -148,7 +155,7 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Performance Configuration
+    /// Konfigurasi threshold performa aplikasi.
     /// </summary>
     public class PerformanceSettings
     {
@@ -160,7 +167,7 @@ namespace Jifas.Assistant.Configuration
     }
 
     /// <summary>
-    /// Optimization Configuration
+    /// Konfigurasi fitur optimasi eksperimental.
     /// </summary>
     public class OptimizationSettings
     {
@@ -168,11 +175,11 @@ namespace Jifas.Assistant.Configuration
     }
 
     // ========================================
-    // CONFIGURATION PROVIDER HELPER
+    // HELPER PEMBACA CONFIGURATION
     // ========================================
 
     /// <summary>
-    /// Helper class untuk access configuration dengan mudah
+    /// Helper untuk membaca configuration di service yang belum memakai IOptions.
     /// </summary>
     public class AppSettings
     {
@@ -184,83 +191,82 @@ namespace Jifas.Assistant.Configuration
         }
 
         /// <summary>
-        /// Get Gemini Settings
-        /// Usage: var apiKey = settings.Gemini.ApiKey;
+        /// Ambil konfigurasi Ollama.
         /// </summary>
-        public GeminiSettings Gemini => _configuration.GetSection("Gemini").Get<GeminiSettings>() ?? new GeminiSettings();
+        public OllamaSettings Ollama => _configuration.GetSection("Ollama").Get<OllamaSettings>() ?? new OllamaSettings();
 
         /// <summary>
-        /// Get OpenAI Settings (Optional)
+        /// Ambil konfigurasi OpenAI opsional.
         /// </summary>
         public OpenAISettings OpenAI => _configuration.GetSection("OpenAI").Get<OpenAISettings>() ?? new OpenAISettings();
 
         /// <summary>
-        /// Get Azure OpenAI Settings (Optional)
+        /// Ambil konfigurasi Azure OpenAI opsional.
         /// </summary>
         public AzureOpenAISettings AzureOpenAI => _configuration.GetSection("Azure:OpenAI").Get<AzureOpenAISettings>() ?? new AzureOpenAISettings();
 
         /// <summary>
-        /// Get Support Settings
+        /// Ambil konfigurasi kontak support.
         /// </summary>
         public SupportSettings Support => _configuration.GetSection("Support").Get<SupportSettings>() ?? new SupportSettings();
 
         /// <summary>
-        /// Get Suggestion Settings
+        /// Ambil konfigurasi suggestion lama.
         /// </summary>
         public SuggestionSettings Suggestion => _configuration.GetSection("Suggestion").Get<SuggestionSettings>() ?? new SuggestionSettings();
 
         /// <summary>
-        /// Get Knowledge Base Settings
+        /// Ambil konfigurasi Knowledge Base.
         /// </summary>
         public KnowledgeBaseSettings KnowledgeBase => _configuration.GetSection("KnowledgeBase").Get<KnowledgeBaseSettings>() ?? new KnowledgeBaseSettings();
 
         /// <summary>
-        /// Get Chat Settings
+        /// Ambil konfigurasi pesan chatbot.
         /// </summary>
         public ChatSettings Chat => _configuration.GetSection("Chat").Get<ChatSettings>() ?? new ChatSettings();
 
         /// <summary>
-        /// Get Caching Settings
+        /// Ambil konfigurasi cache.
         /// </summary>
         public CachingSettings Caching => _configuration.GetSection("Caching").Get<CachingSettings>() ?? new CachingSettings();
 
         /// <summary>
-        /// Get API Settings
+        /// Ambil konfigurasi API.
         /// </summary>
         public ApiSettings API => _configuration.GetSection("API").Get<ApiSettings>() ?? new ApiSettings();
 
         /// <summary>
-        /// Get Qdrant Settings
+        /// Ambil konfigurasi Qdrant lama.
         /// </summary>
         public QdrantSettings Qdrant => _configuration.GetSection("Qdrant").Get<QdrantSettings>() ?? new QdrantSettings();
 
         /// <summary>
-        /// Get Search Settings
+        /// Ambil konfigurasi search.
         /// </summary>
         public SearchSettings Search => _configuration.GetSection("Search").Get<SearchSettings>() ?? new SearchSettings();
 
         /// <summary>
-        /// Get Metrics Settings
+        /// Ambil konfigurasi metrics.
         /// </summary>
         public MetricsSettings Metrics => _configuration.GetSection("Metrics").Get<MetricsSettings>() ?? new MetricsSettings();
 
         /// <summary>
-        /// Get Health Check Settings
+        /// Ambil konfigurasi health check.
         /// </summary>
         public HealthCheckSettings HealthCheck => _configuration.GetSection("HealthCheck").Get<HealthCheckSettings>() ?? new HealthCheckSettings();
 
         /// <summary>
-        /// Get Performance Settings
+        /// Ambil konfigurasi performance.
         /// </summary>
         public PerformanceSettings Performance => _configuration.GetSection("Performance").Get<PerformanceSettings>() ?? new PerformanceSettings();
 
         /// <summary>
-        /// Get Optimization Settings
+        /// Ambil konfigurasi optimization.
         /// </summary>
         public OptimizationSettings Optimization => _configuration.GetSection("Optimization").Get<OptimizationSettings>() ?? new OptimizationSettings();
 
         /// <summary>
-        /// Get Connection String
+        /// Ambil connection string database utama.
         /// </summary>
         public string DefaultConnection => _configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
     }

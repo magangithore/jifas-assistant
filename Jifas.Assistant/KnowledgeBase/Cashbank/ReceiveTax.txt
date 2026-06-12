@@ -1,4 +1,4 @@
-DOKUMENTASI KNOWLEDGE BASE
+﻿DOKUMENTASI KNOWLEDGE BASE
 CB RECEIVING TAX APPROVAL
 
 A. PENGENALAN
@@ -23,9 +23,9 @@ A. PENGENALAN
    - Untuk penerimaan yang melibatkan perhitungan pajak (internal transfer, kredit investor, dll)
 
 4. Alur Singkat
-   Lihat dokumen penerimaan → Verifikasi detail penerimaan → Periksa perhitungan PPN 
-   → Periksa perhitungan PPH → Lakukan koreksi jika diperlukan → Setujui/Tolak 
-   → Dokumen siap untuk posting/pembukuan
+   Lihat dokumen penerimaan -> Verifikasi detail penerimaan -> Periksa perhitungan PPN 
+   -> Periksa perhitungan PPH -> Lakukan koreksi jika diperlukan -> Setujui/Tolak 
+   -> Dokumen siap untuk posting/pembukuan
 
 
 B. MENU UTAMA - DAFTAR DOKUMEN PENERIMAAN PAJAK
@@ -82,7 +82,7 @@ B. MENU UTAMA - DAFTAR DOKUMEN PENERIMAAN PAJAK
 2. Filter dan Pencarian
    - Interface menampilkan default hanya dokumen dengan status "Need Approval"
    - Anda dapat mengklik setiap kolom untuk memfilter data yang spesifik
-   - Contoh: Klik kolom "Tanggal" → pilih tanggal spesifik untuk melihat penerimaan 
+   - Contoh: Klik kolom "Tanggal" -> pilih tanggal spesifik untuk melihat penerimaan 
      pada periode tertentu
 
 3. Ekspor Data
@@ -168,7 +168,7 @@ D. MEMAHAMI DETAIL DOKUMEN PENERIMAAN
       
    e) TOTAL PPN (Total Value Added Tax)
       - Total PPN pada penerimaan = DPP × 10%
-      - Contoh: Jika DPP 100.000.000 → PPN = 10.000.000
+      - Contoh: Jika DPP 100.000.000 -> PPN = 10.000.000
       - PPN yang perusahaan terima dari pihak pemberi
       
    f) TOTAL PPH (Total Income Tax)
@@ -322,7 +322,7 @@ F. TAB PPN - VERIFIKASI PAJAK PERTAMBAHAN NILAI
    - Total baris = Total PPN header
    - Bukti penerimaan original sudah diterima
    
-   ✗ TOLAK / MINTA KOREKSI jika:
+   [X] TOLAK / MINTA KOREKSI jika:
    - NPWP belum terdaftar atau berbeda dari master
    - Nama WP tidak konsisten dengan master pihak pemberi
    - Bukti penerimaan/faktur nomor tidak jelas atau berbeda
@@ -435,7 +435,7 @@ G. TAB PPH - VERIFIKASI PAJAK PENGHASILAN
    - Total baris = Total PPH header
    - Bukti pemotong pajak sudah diterima dari pihak pemberi
    
-   ✗ TOLAK / MINTA KOREKSI jika:
+   [X] TOLAK / MINTA KOREKSI jika:
    - NPWP tidak ada atau berbeda
    - Nama WP tidak sesuai master
    - Tipe PPH tidak appropriate untuk jenis penerimaan

@@ -24,8 +24,8 @@ namespace Jifas.Assistant.Services
         private readonly ILoggerService _logger;
         private readonly string _kbPath;
         private readonly ICacheService _cacheService;
-        private Dictionary<string, List<string>> _kbStructure;
-        private List<string> _availableTopics;
+        private Dictionary<string, List<string>> _kbStructure = new();
+        private List<string> _availableTopics = new();
 
         public KnowledgeBaseContextService(
             ILoggerService logger,

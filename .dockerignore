@@ -6,7 +6,14 @@
 **/bin
 **/obj
 **/dist
+**/publish-context
+**/logs
+**/Logs
+**/reports
 **/.env
+**/.env.*
+!.env.example
+!.env.docker
 **/docker-compose.override.yml
 **/README.md
 **/LICENSE
@@ -16,7 +23,6 @@
 **/.node_repl_history
 **/*.log
 **/*.logs
-**/Logs
 **/.DS_Store
 **/*.swp
 **/*.swo

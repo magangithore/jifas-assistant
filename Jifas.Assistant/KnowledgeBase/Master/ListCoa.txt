@@ -39,7 +39,7 @@ HDAC: Head Accounting
 MGAC: Magang Accounting
 
 Membuka Modul List COA
-1. Klik menu Master → List COA
+1. Klik menu Master -> List COA
 2. Sistem akan menampilkan struktur pohon COA lengkap
 3. Tampilan awal menampilkan semua akun parent (8 kategori utama)
 4. Akun parent dapat di-expand/collapse untuk melihat child account

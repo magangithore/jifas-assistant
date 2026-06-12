@@ -1,4 +1,4 @@
-MODUL: RECEIVING - CREATE/EDIT INVOICE IK (Invoice Keputusan)
+﻿MODUL: RECEIVING - CREATE/EDIT INVOICE IK (Invoice Keputusan)
 
 TUJUAN:
 Halaman ini digunakan untuk membuat dokumen Invoice IK baru atau mengubah/mengedit
@@ -194,17 +194,17 @@ CATATAN:
 F. FLOW PERJALANAN DOKUMEN INVOICE IK
 
 1. CREATE (Pemohon membuat dokumen)
-   ↓
+   v
 2. FINANCE CHECKING (Bagian Finance review)
-   ↓
+   v
 3. TAX APPROVAL (Bagian Pajak approve)
-   ↓
+   v
 4. POSTING (Dokumen diposting ke GL)
-   ↓
+   v
 5. ACCOUNTING CHECKING (Bagian Akuntansi review)
-   ↓
+   v
 6. READY TO PAY (Siap untuk proses pembayaran)
-   ↓
+   v
 7. PAID (Pembayaran selesai)
 
 G. TIPS DAN TRIK PENGGUNAAN
@@ -231,25 +231,25 @@ G. TIPS DAN TRIK PENGGUNAAN
 
 H. JIKA TERJADI ERROR/MASALAH
 ERROR: "Please fill required field before!"
-→ Ada field wajib yang belum diisi
-→ Periksa kembali semua kolom bertanda "*" (asterisk)
+-> Ada field wajib yang belum diisi
+-> Periksa kembali semua kolom bertanda "*" (asterisk)
 
 ERROR: "Cannot continue to save! Please fill currency rate"
-→ Kurs harus diisi jika menggunakan mata uang asing
-→ Jika IDR, kurs bisa dikosongkan atau isi 1
+-> Kurs harus diisi jika menggunakan mata uang asing
+-> Jika IDR, kurs bisa dikosongkan atau isi 1
 
 ERROR: "DPP amount cannot be zero!"
-→ Setiap detail harus punya jumlah dasar > 0
+-> Setiap detail harus punya jumlah dasar > 0
 
 ERROR: "Tax code must be selected!"
-→ Setiap detail harus punya jenis pajak
+-> Setiap detail harus punya jenis pajak
 
 ERROR: "PPH code must be selected!"
-→ Jika PPh (%) ada nilai, harus pilih jenis PPh
+-> Jika PPh (%) ada nilai, harus pilih jenis PPh
 
 ERROR: "Input amount MUST BE EQUAL with total base amount detail!"
-→ Jumlah yang diinput di field "Amount" tidak sama dengan total detail
-→ Periksa ulang perhitungan di detail grid
+-> Jumlah yang diinput di field "Amount" tidak sama dengan total detail
+-> Periksa ulang perhitungan di detail grid
 
 CATATAN PENTING
 Dokumen Invoice IK adalah dokumen penting untuk akuntansi
@@ -332,7 +332,7 @@ A. TOMBOL "CREATE RECEIVE IK" (RV untuk dokumen IK)
    2. Sistem akan meminta Anda memilih dokumen IK mana yang akan "di-receive"
    3. Data dari IK (jumlah, vendor, pajak) akan otomatis terisi
    4. Anda hanya perlu menambah info bank dan detail pembayaran
-   5. Simpan → dokumen RV IK tercipta
+   5. Simpan -> dokumen RV IK tercipta
 
 B. TOMBOL "CREATE RECEIVE NON IK" (RV yang berdiri sendiri)
    Gunakan ketika: Anda menerima uang/kas yang tidak terkait dengan dokumen IK tertentu
@@ -352,7 +352,7 @@ B. TOMBOL "CREATE RECEIVE NON IK" (RV yang berdiri sendiri)
       - Mata uang dan jumlah
       - Keterangan
    3. Detail dapat mencakup alokasi ke beberapa cost center
-   4. Simpan → dokumen RV Non-IK tercipta
+   4. Simpan -> dokumen RV Non-IK tercipta
 
 IV. INFORMASI PENTING SAAT MEMBUAT RV
 YANG HARUS DIISI:
@@ -446,10 +446,10 @@ RV TYPE = Non-IK (Standalone Receiving)
 
 IX. PERUSAHAAN DENGAN BATASAN (PT BP)
 CATATAN KHUSUS: Jika login dengan perusahaan "BP"
-  → Tombol "CREATE RECEIVE" dan "CREATE RECEIVE IK" akan DISABLED/tidak bisa diklik
-  → Artinya: PT BP tidak bisa membuat dokumen RV baru
-  → Alasan: Ada kebijakan khusus penanganan receiving untuk PT BP
-  → Solusi: Hubungi manager/finance head untuk process penerimaan PT BP
+  -> Tombol "CREATE RECEIVE" dan "CREATE RECEIVE IK" akan DISABLED/tidak bisa diklik
+  -> Artinya: PT BP tidak bisa membuat dokumen RV baru
+  -> Alasan: Ada kebijakan khusus penanganan receiving untuk PT BP
+  -> Solusi: Hubungi manager/finance head untuk process penerimaan PT BP
 
 X. TIPS MENGGUNAKAN RV
 1. KAPAN PAKAI RV TYPE IK?
@@ -475,44 +475,44 @@ X. TIPS MENGGUNAKAN RV
 
 XI. TROUBLESHOOTING RV
 ERROR: "Tidak bisa membuat RV"
-→ Mungkin Anda login sebagai PT BP (ada batasan)
-→ Hubungi manager Anda
+-> Mungkin Anda login sebagai PT BP (ada batasan)
+-> Hubungi manager Anda
 
 ERROR: "Dokumen IK tidak ditemukan"
-→ Jika membuat RV IK, dokumen IK mungkin sudah VOID
-→ Cari dokumen IK yang statusnya "READY TO PAY"
+-> Jika membuat RV IK, dokumen IK mungkin sudah VOID
+-> Cari dokumen IK yang statusnya "READY TO PAY"
 
 ERROR: "Total detail tidak cocok dengan amount"
-→ Jumlah semua baris detail harus sama dengan amount header
-→ Tambah atau kurangi baris detail sesuai kebutuhan
+-> Jumlah semua baris detail harus sama dengan amount header
+-> Tambah atau kurangi baris detail sesuai kebutuhan
 
 TIDAK BISA EDIT SETELAH SUBMIT?
-→ Menunggu approval dari Finance, normalnya seperti itu
-→ Jika perlu ubah urgent, hubungi supervisor
+-> Menunggu approval dari Finance, normalnya seperti itu
+-> Jika perlu ubah urgent, hubungi supervisor
 
 ALUR KESELURUHAN RECEIVING PROCESS
 IK (Create)
-  ↓
+  v
   Pengecekan Finance
-  ↓
+  v
 Pajak Approval
-  ↓
-RV IK (Create) ← Di sini membuat RV untuk IK tersebut
-  ↓
+  v
+RV IK (Create) <- Di sini membuat RV untuk IK tersebut
+  v
 Finance Checking pada RV
-  ↓
+  v
 READY TO PAY
-  ↓
+  v
 PAID (Setelah pembayaran)
 
 Vs.
 
 RV Non-IK (Berdiri Sendiri)
-  ↓
+  v
 Finance Checking
-  ↓
+  v
 READY TO PAY
-  ↓
+  v
 PAID
 
 KESIMPULAN

@@ -12,7 +12,8 @@ using jifas_assistant.DAL.Models;
 namespace Jifas.Assistant.Services
 {
     /// <summary>
-    /// Service untuk loading Knowledge Base files dari folder, chunking, embedding, dan insert ke SQL Server
+    /// Service untuk membaca file Knowledge Base, membuat chunk, generate embedding, dan menyimpan ke database.
+    /// Runtime saat ini memakai PostgreSQL + pgvector sebagai penyimpanan semantic search.
     /// </summary>
     public interface IKnowledgeBaseLoaderService
     {
@@ -25,13 +26,13 @@ namespace Jifas.Assistant.Services
         private readonly JIFAS_AssistantContext _context;
         private readonly IConfiguration _configuration;
         private readonly ILogger<KnowledgeBaseLoaderService> _logger;
-        private readonly IEmbeddingService _embeddingService;
+        private readonly IEmbeddingService? _embeddingService;
 
         public KnowledgeBaseLoaderService(
             JIFAS_AssistantContext context,
             IConfiguration configuration,
             ILogger<KnowledgeBaseLoaderService> logger,
-            IEmbeddingService embeddingService = null)
+            IEmbeddingService? embeddingService = null)
         {
             _context = context;
             _configuration = configuration;
@@ -65,21 +66,21 @@ namespace Jifas.Assistant.Services
                     {
                         var content = File.ReadAllText(filePath, Encoding.UTF8);
                         
-                        // Extract category dari path (folder name)
+                        // Category diambil dari nama folder agar hasil search tetap bisa difilter per modul.
                         var category = ExtractCategoryFromPath(filePath, kbFolderPath);
                         
                         _logger.LogInformation($"[{fileCount}/{allFiles.Length}] Processing: {filePath}");
 
-                        // Chunk the document
+                        // Pecah dokumen menjadi beberapa chunk agar konteks RAG lebih presisi.
                         var chunks = await ChunkDocumentAsync(filePath, content, category);
-                        _logger.LogInformation($"  ? Chunked into {chunks.Count} chunks");
+                        _logger.LogInformation($"  OK Chunked into {chunks.Count} chunks");
 
-                        // Insert chunks
+                        // Simpan setiap chunk ke tabel KnowledgeBaseDocuments versi loader lama.
                         foreach (var chunk in chunks)
                         {
                             try
                             {
-                                // Convert ke model database
+                                // Convert hasil parsing ke model database.
                                 var dbChunk = new KnowledgeBaseDocuments
                                 {
                                     Title = chunk.Title,
@@ -101,23 +102,23 @@ namespace Jifas.Assistant.Services
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning($"  ? Error processing chunk: {ex.Message}");
+                                _logger.LogWarning($"  WARNING processing chunk: {ex.Message}");
                                 continue;
                             }
                         }
 
                         await _context.SaveChangesAsync();
                         totalChunksInserted += chunks.Count;
-                        _logger.LogInformation($"  ? Inserted {chunks.Count} chunks");
+                        _logger.LogInformation($"  OK Inserted {chunks.Count} chunks");
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError($"  ? Error processing file {filePath}: {ex.Message}");
+                        _logger.LogError($"  ERROR processing file {filePath}: {ex.Message}");
                         continue;
                     }
                 }
 
-                _logger.LogInformation($"\n? Knowledge Base Loading Complete!");
+                _logger.LogInformation("\nKnowledge Base Loading Complete.");
                 _logger.LogInformation($"   Total Files: {fileCount}");
                 _logger.LogInformation($"   Total Chunks Inserted: {totalChunksInserted}");
 
@@ -142,10 +143,10 @@ namespace Jifas.Assistant.Services
 
             try
             {
-                // Get file info
+                // Nama file dipakai sebagai fallback title jika dokumen tidak punya heading.
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 
-                // Parse title dari file (first heading atau filename)
+                // Title diambil dari heading pertama, jika tidak ada pakai nama file.
                 var title = ExtractTitle(content, fileName);
 
                 // Split ke paragraf (double newline atau section headers)
@@ -167,16 +168,16 @@ namespace Jifas.Assistant.Services
                         continue;
 
                     // Generate embedding jika service tersedia
-                    string embeddingBase64 = null;
+                    string? embeddingJson = null;
                     
                     if (_embeddingService != null)
                     {
                         try
                         {
-                            var embedding = await _embeddingService.GenerateEmbeddingAsync(cleanContent);
-                            if (embedding != null)
+                            var embedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(cleanContent);
+                            if (embedding != null && embedding.Length > 0)
                             {
-                                embeddingBase64 = Convert.ToBase64String(embedding);
+                                embeddingJson = Utilities.EmbeddingSerializer.Serialize(embedding);
                             }
                         }
                         catch (Exception ex)
@@ -192,7 +193,7 @@ namespace Jifas.Assistant.Services
                         Category = category,
                         Tags = ExtractTags(category, paragraph),
                         FilePath = filePath,
-                        EmbeddingBase64 = embeddingBase64,
+                        EmbeddingBase64 = embeddingJson ?? string.Empty,
                         EmbeddingDimensions = _configuration.GetValue<int>("Embedding:Dimensions"),
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
@@ -346,19 +347,19 @@ namespace Jifas.Assistant.Services
 
     public class KnowledgeBaseChunk
     {
-        public string Title { get; set; }
-        public string Content { get; set; }
-        public string Category { get; set; }
-        public string Tags { get; set; }
-        public string FilePath { get; set; }
-        public string EmbeddingBase64 { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string Category { get; set; } = "General";
+        public string Tags { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        public string EmbeddingBase64 { get; set; } = string.Empty;
         public int EmbeddingDimensions { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int ViewCount { get; set; }
         public double RelevanceScore { get; set; }
-        public string CreatedBy { get; set; }
-        public string UpdatedBy { get; set; }
+        public string CreatedBy { get; set; } = "KBLoader";
+        public string UpdatedBy { get; set; } = "KBLoader";
     }
 }

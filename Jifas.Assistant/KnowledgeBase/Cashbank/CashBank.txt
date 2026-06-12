@@ -1,0 +1,1438 @@
+﻿JIFAS KNOWLEDGE BASE - MODUL CASHBANK
+
+Dokumen ini dibuat untuk knowledge base AI Chatbot JIFAS. Fokus dokumen ini adalah pemahaman business process, alur kerja, istilah, validasi, status dokumen, troubleshooting, dan pola eskalasi ke IT. Dokumen ini bukan dokumentasi coding, tetapi penjelasan logika sistem agar AI dapat menjawab user dengan konteks yang benar.
+
+Modul: CashBank
+Sub modul utama:
+1. CB Payment atau Cashbook Payment
+2. CB Receiving atau Cashbook Receiving
+3. Transfer Internal
+4. Transfer Inter Company
+5. Payment Tax Approval
+6. Receiving Tax Approval
+
+Tujuan utama modul CashBank adalah mencatat dan mengontrol seluruh pergerakan uang perusahaan, baik uang keluar, uang masuk, maupun perpindahan dana antar rekening atau antar perusahaan dalam grup Jababeka.
+
+
+1. GAMBARAN BESAR MODUL CASHBANK
+
+CashBank adalah modul yang mengatur pencatatan kas dan bank perusahaan. Setiap uang yang keluar atau masuk harus dibuatkan dokumen Cashbook agar transaksi dapat diverifikasi, disetujui, diposting ke akuntansi, dan masuk ke laporan keuangan.
+
+Dalam JIFAS, CashBank berfungsi sebagai jembatan antara aktivitas keuangan operasional dan pencatatan accounting. Finance mencatat transaksi kas atau bank, Tax melakukan pemeriksaan pajak jika transaksi memiliki PPN atau PPH, lalu Accounting atau sistem posting memastikan transaksi masuk ke General Ledger.
+
+Secara sederhana:
+
+Uang keluar menggunakan CB Payment.
+Uang masuk menggunakan CB Receiving.
+Pindah dana antar rekening dalam perusahaan menggunakan Transfer Internal.
+Pindah dana antar perusahaan dalam grup menggunakan Transfer Inter Company.
+Jika ada pajak, dokumen harus masuk Payment Tax Approval atau Receiving Tax Approval sebelum final.
+Setelah semua valid, dokumen diposting dan masuk ke buku besar.
+
+CashBank sangat penting karena berhubungan langsung dengan:
+- Kontrol kas dan bank
+- Pembayaran vendor
+- Penerimaan customer
+- Transfer antar rekening
+- Transfer antar perusahaan
+- Pajak PPN dan PPH
+- Posting ke General Ledger
+- Cash flow report
+- Bank reconciliation
+- Audit trail
+
+
+2. ISTILAH PENTING DI MODUL CASHBANK
+
+Cashbook adalah dokumen pencatatan pergerakan uang.
+
+CB Payment adalah dokumen Cashbook untuk uang keluar. Contohnya pembayaran vendor, pembayaran karyawan, pembayaran pajak, pembayaran PUM, atau pengeluaran lain.
+
+CB Receiving adalah dokumen Cashbook untuk uang masuk. Contohnya penerimaan dari customer, penerimaan pinjaman, penerimaan transfer, atau penerimaan lain.
+
+PV adalah Payment Voucher. Biasanya mewakili sisi uang keluar.
+
+RV adalah Receiving Voucher. Biasanya mewakili sisi uang masuk.
+
+Cek atau BG adalah alat pembayaran menggunakan cek atau bilyet giro.
+
+Bank Amount adalah nominal aktual yang keluar dari atau masuk ke rekening bank.
+
+Base Amount adalah nominal dasar sebelum pajak.
+
+DPP adalah Dasar Pengenaan Pajak, yaitu dasar nilai yang digunakan untuk menghitung pajak.
+
+PPN adalah Pajak Pertambahan Nilai.
+
+PPH adalah Pajak Penghasilan atau withholding tax.
+
+PPH Type adalah jenis PPH yang dipilih, misalnya PPH 21, PPH 23, PPH 26, atau PPH 4 ayat 2.
+
+Tax Code adalah kode pajak pada detail transaksi. Contoh umum: NT untuk no tax, 10 persen untuk PPN, N0 untuk kondisi khusus.
+
+COA adalah Chart of Account, yaitu akun accounting untuk mengklasifikasikan transaksi.
+
+Division dan Department adalah pembagian organisasi untuk menentukan unit pemilik biaya atau penerima pendapatan.
+
+Currency Rate adalah kurs mata uang yang digunakan saat transaksi menggunakan currency selain IDR.
+
+In Words atau Terbilang adalah nominal dalam bentuk kalimat.
+
+Void adalah pembatalan dokumen.
+
+Posting adalah proses final yang memasukkan transaksi ke General Ledger.
+
+Checking adalah proses review dan persetujuan sebelum dokumen lanjut ke tahap berikutnya.
+
+Tax Correction adalah koreksi nilai pajak, biasanya karena pembulatan, selisih kecil, atau koreksi detail PPN atau PPH.
+
+Bank Reconciliation adalah pencocokan data CashBank dengan mutasi bank.
+
+
+3. POSISI CASHBANK DALAM FLOW JIFAS
+
+CashBank tidak berdiri sendiri. Modul ini terhubung dengan modul lain.
+
+Hubungan dengan Invoice:
+Invoice vendor yang sudah disetujui bisa menjadi dasar pembayaran. Setelah invoice siap dibayar, Finance membuat atau memproses CB Payment.
+
+Hubungan dengan PUM:
+Pembayaran uang muka karyawan dapat dicatat sebagai CB Payment. Setelah PUM dipertanggungjawabkan, data akhirnya masuk ke accounting.
+
+Hubungan dengan Receiving atau Sales Receive:
+Uang yang diterima dari customer dapat dicatat sebagai CB Receiving dan akan mempengaruhi saldo kas atau bank.
+
+Hubungan dengan Tax:
+Jika CB Payment atau CB Receiving memiliki PPN atau PPH, dokumen harus melewati tax approval sebelum final.
+
+Hubungan dengan Accounting:
+Setiap transaksi CashBank yang valid akan diposting ke General Ledger. Setelah posting, transaksi mempengaruhi ledger, trial balance, balance sheet, profit and loss, dan cash flow.
+
+Hubungan dengan Master Data:
+CashBank membutuhkan master vendor, customer, employee, bank, currency, rate, COA, division, department, tax code, PPH type, dan cek BG.
+
+
+4. RINGKASAN FLOW CASHBANK
+
+Flow uang keluar:
+Invoice atau kebutuhan pembayaran muncul
+Finance membuat CB Payment
+Finance mengisi vendor, bank, amount, COA, pajak, dan deskripsi
+Dokumen masuk Need Finance Checking
+Head Finance atau Cashier melakukan checking
+Jika ada pajak, dokumen masuk Need Tax Approval
+Tax melakukan verifikasi PPN dan PPH
+Dokumen masuk tahap final check atau posting
+Dokumen diposting ke General Ledger
+Uang keluar tercatat di bank dan laporan keuangan
+
+Flow uang masuk:
+Uang masuk ke bank atau kas perusahaan
+Finance membuat CB Receiving
+Finance mengisi sumber penerimaan, bank, amount, COA, pajak, dan deskripsi
+Dokumen masuk Need Finance Checking
+Head Finance atau Cashier melakukan checking
+Jika ada pajak, dokumen masuk Need Tax Approval
+Tax melakukan verifikasi PPN dan PPH
+Dokumen diposting ke General Ledger
+Uang masuk tercatat di bank dan laporan keuangan
+
+Flow transfer internal:
+Perusahaan memindahkan dana dari satu bank ke bank lain dalam perusahaan yang sama
+Finance membuat Transfer Internal
+Sistem membentuk pasangan dokumen PV dan RV
+PV mencatat sisi uang keluar dari bank asal
+RV mencatat sisi uang masuk ke bank tujuan
+Dokumen masuk checking
+Setelah disetujui, dokumen bisa diposting
+Saldo antar bank berubah tetapi total kas perusahaan tetap sama
+
+Flow transfer inter company:
+Satu perusahaan dalam grup mengirim dana ke perusahaan lain
+Finance membuat Transfer Inter Company
+Sistem membentuk PV di perusahaan pengirim dan RV di perusahaan penerima
+Dokumen mencatat source company, destination company, source bank, destination bank, amount, currency, dan reference
+Setelah checking dan posting, dua perusahaan memiliki jejak transaksi yang saling terhubung
+
+
+5. STATUS DOKUMEN CASHBANK
+
+Status dokumen menunjukkan posisi dokumen dalam workflow.
+
+Need Finance Checking:
+Status awal setelah dokumen dibuat. Artinya dokumen menunggu review dari Head Finance, Cashier, atau pihak yang berwenang. Dokumen masih bisa dicek, diupdate, atau divoid sesuai kondisi.
+
+Need Accounting Checking:
+Dokumen sudah melewati Finance Checking dan menunggu pemeriksaan sisi accounting. Pada tahap ini biasanya field utama tidak boleh sembarangan diubah.
+
+Need Tax Approval:
+Dokumen memiliki PPN atau PPH dan perlu persetujuan tax. Jika tax belum approve, dokumen belum boleh diposting.
+
+Reject By Tax:
+Tax menolak dokumen karena ada data pajak yang salah, kurang lengkap, atau tidak sesuai. Pembuat dokumen harus memperbaiki dokumen atau membuat ulang sesuai arahan.
+
+Need Check Detail:
+Dokumen sudah melewati beberapa proses dan menunggu pemeriksaan detail akhir. Biasanya hanya bisa void jika ada kesalahan besar.
+
+Need Posting:
+Dokumen sudah siap diposting ke General Ledger.
+
+Complete atau Posted:
+Dokumen sudah final dan masuk ke accounting. Dokumen tidak boleh diedit langsung. Jika salah, gunakan void, reverse, atau buat dokumen koreksi sesuai arahan Finance dan Accounting.
+
+Void:
+Dokumen dibatalkan. Alasan void wajib jelas. Dokumen void tidak digunakan sebagai transaksi aktif.
+
+Void Reverse:
+Dokumen pernah dibatalkan dan membutuhkan penanganan reversal.
+
+Need Jurnal Reverse:
+Dokumen memerlukan jurnal reversal di accounting. User biasa tidak boleh mencoba mengubah langsung. Koordinasikan dengan Accounting atau IT jika status stuck.
+
+Removed:
+Dokumen sudah dihapus secara sistem atau tidak aktif. Biasanya tidak ada action lanjutan dari user.
+
+Need to Check CekBG:
+Status khusus pada transfer yang berkaitan dengan cek atau BG. Artinya nomor cek BG perlu dicek, biasanya karena ada potensi duplikasi, cek pernah dipakai, atau master cek BG belum valid.
+
+
+6. ROLE DAN TANGGUNG JAWAB
+
+Finance Staff:
+Membuat dokumen CB Payment, CB Receiving, Transfer Internal, dan Transfer Inter Company. Mengisi data header, detail COA, pajak, amount, reference, dan deskripsi.
+
+Head Finance atau Cashier:
+Melakukan checking atas dokumen CashBank. Memastikan bank, nominal, vendor, customer, tujuan, dan deskripsi sudah benar sebelum dokumen lanjut.
+
+Accounting Staff atau Accounting Checker:
+Memastikan alokasi COA, division, department, dan dampak accounting sudah benar. Memastikan dokumen siap diposting ke General Ledger.
+
+Tax Staff:
+Memverifikasi PPN, PPH, NPWP, faktur pajak, bukti potong, tax code, dan PPH type. Tax dapat approve, reject, atau meminta tax correction.
+
+IT Support:
+Menangani masalah teknis seperti data tidak muncul, grid error, dropdown kosong, API error, akses menu tidak muncul, dokumen stuck karena error sistem, token expired, atau error posting yang bukan karena input user.
+
+Master Data Team atau Admin:
+Menangani master vendor, customer, employee, bank, COA, division, department, tax, PPH, currency, rate, dan cek BG.
+
+
+7. CB PAYMENT ATAU CASHBOOK PAYMENT
+
+#7.1 Definisi
+
+CB Payment adalah dokumen untuk mencatat pengeluaran uang dari rekening bank atau kas perusahaan. Dokumen ini dipakai untuk membayar vendor, supplier, karyawan, pajak, PUM, atau kebutuhan pengeluaran lainnya.
+
+CB Payment menjawab pertanyaan bisnis: uang perusahaan keluar untuk apa, kepada siapa, dari bank mana, menggunakan mata uang apa, berapa nilainya, apakah ada pajak, dan akan dicatat ke akun accounting mana.
+
+#7.2 Kapan CB Payment digunakan
+
+CB Payment digunakan ketika:
+- Perusahaan membayar invoice vendor atau supplier
+- Perusahaan membayar biaya operasional
+- Perusahaan membayar gaji, honor, atau reimburse tertentu
+- Perusahaan membayar PUM atau sisa PUM
+- Perusahaan melakukan pembayaran pajak
+- Perusahaan membayar transaksi lain yang menyebabkan uang keluar dari bank atau kas
+
+Sebelum membuat CB Payment, user harus memastikan:
+- Ada dasar pembayaran yang jelas, seperti invoice, tagihan, memo, approval, atau dokumen pendukung
+- Vendor atau penerima sudah valid
+- Bank sumber pembayaran sudah benar
+- Nominal sudah dikonfirmasi
+- COA sudah sesuai
+- Pajak sudah diketahui jika ada
+- Approval internal sudah ada jika dibutuhkan
+
+#7.3 Jenis pembayaran dalam CB Payment
+
+Ada dua model utama:
+
+Pembayaran dengan Cek atau BG:
+Digunakan jika uang keluar menggunakan cek atau bilyet giro. User perlu mengisi nomor cek atau BG, tanggal terbit, tanggal bayar, dan tanggal jatuh tempo. Nomor cek BG harus valid dan tidak boleh sembarangan dipakai ulang.
+
+Pembayaran non cek atau transfer:
+Digunakan jika pembayaran dilakukan melalui transfer bank atau online banking. Form lebih sederhana karena tidak perlu nomor cek BG dan tanggal jatuh tempo cek.
+
+#7.4 Flow lengkap CB Payment
+
+1. User menerima invoice atau instruksi pembayaran.
+2. User membuka menu CB Payment.
+3. User klik tombol membuat CB Payment baru.
+4. User memilih payment method, yaitu cek BG atau non cek.
+5. User memilih purpose pembayaran.
+6. User memilih vendor, employee, atau penerima.
+7. User memilih bank sumber pembayaran.
+8. User mengisi ref doc, misalnya nomor invoice atau nomor tagihan.
+9. Jika cek BG, user mengisi nomor cek, date of issue, paid date, dan due date.
+10. Sistem membaca currency dari bank.
+11. Jika currency non IDR, sistem mengambil rate dan user memastikan rate benar.
+12. User mengisi bank amount.
+13. User mengisi detail COA.
+14. Sistem menghitung base amount, total DPP, total PPN, total PPH, total amount, dan terbilang.
+15. User mengisi description yang jelas.
+16. User menekan save.
+17. Sistem melakukan validasi.
+18. Jika valid, dokumen dibuat dan masuk Need Finance Checking.
+19. Head Finance melakukan checking.
+20. Jika tidak ada pajak, dokumen dapat lanjut ke check detail atau posting.
+21. Jika ada pajak, dokumen masuk Payment Tax Approval.
+22. Tax approve atau reject.
+23. Jika approve, dokumen lanjut ke posting.
+24. Setelah posting, dokumen final dan masuk General Ledger.
+
+#7.5 Data header CB Payment
+
+Payment Method:
+Menentukan apakah pembayaran menggunakan cek BG atau transfer biasa.
+
+Purpose:
+Tujuan pembayaran. Contoh: purchase payment, employee payment, sisa PUM, atau tujuan lain sesuai setting perusahaan.
+
+To atau Vendor:
+Penerima pembayaran. Umumnya vendor, supplier, atau employee tergantung purpose.
+
+Bank:
+Rekening sumber pembayaran. Bank menentukan currency dan mempengaruhi rate.
+
+Ref Doc:
+Nomor referensi dokumen, misalnya invoice vendor. Field ini penting untuk tracing.
+
+Cek BG No:
+Nomor cek atau BG. Wajib jika payment method adalah cek.
+
+Date of Issue:
+Tanggal cek diterbitkan atau tanggal dokumen untuk pembayaran.
+
+Paid Date:
+Tanggal pembayaran dilakukan. Untuk cek, tanggal paid tidak boleh melebihi due date.
+
+Due Date:
+Tanggal jatuh tempo cek. Due date tidak boleh lebih kecil dari paid date.
+
+Currency Code:
+Mata uang transaksi, otomatis mengikuti bank.
+
+Currency Rate:
+Kurs yang digunakan. Untuk IDR biasanya 1. Untuk currency asing harus ada rate.
+
+Bank Amount:
+Jumlah uang yang keluar dari bank.
+
+Base Amount:
+Nilai dasar dari detail sebelum pajak.
+
+Total DPP:
+Dasar pengenaan pajak.
+
+Total PPN:
+Total pajak pertambahan nilai.
+
+Total PPH:
+Total pajak penghasilan yang dipotong.
+
+Total Amount:
+Jumlah final setelah pajak. Secara umum formula yang harus dipahami adalah DPP ditambah PPN dikurangi PPH.
+
+In Words:
+Terbilang otomatis dari nominal.
+
+Description:
+Keterangan pembayaran. Harus jelas, misalnya pembayaran invoice vendor apa, periode apa, barang atau jasa apa.
+
+#7.6 Data detail CB Payment
+
+Detail CB Payment menjelaskan alokasi accounting dari pembayaran.
+
+Division:
+Divisi pemilik biaya.
+
+Department:
+Departemen pemilik biaya.
+
+COA Code:
+Akun accounting yang digunakan.
+
+Description:
+Deskripsi detail, biasanya mengikuti COA atau keterangan transaksi.
+
+Amount:
+Nominal DPP atau nilai dasar untuk baris tersebut.
+
+Tax Code:
+Kode pajak. NT berarti tidak ada pajak. Kode PPN akan menghasilkan PPN. Kode khusus seperti N0 digunakan untuk kasus tertentu sesuai setup.
+
+PPN Amount:
+Nilai PPN yang dihitung sistem.
+
+PPH Amount:
+Nilai PPH yang dihitung sistem.
+
+PPH Type:
+Jenis PPH. Wajib jika baris memiliki PPH lebih dari 0.
+
+Total Amount:
+Jumlah akhir per baris setelah pajak.
+
+#7.7 Validasi CB Payment
+
+Validasi utama:
+- Semua field wajib harus diisi
+- Payment method harus dipilih
+- Purpose harus dipilih
+- Vendor atau penerima harus dipilih
+- Bank harus dipilih
+- Jika cek BG, nomor cek BG, date issue, paid date, dan due date wajib diisi
+- Currency rate tidak boleh 0
+- Bank amount harus sama dengan total amount
+- Detail tidak boleh kosong
+- Division wajib diisi
+- Department wajib diisi
+- COA wajib diisi
+- PPH Type wajib jika PPH lebih dari 0
+- Description wajib jelas
+- Paid date tidak boleh melewati due date untuk cek BG
+- Nomor cek BG tidak boleh duplikat atau sudah terpakai
+
+Sistem memiliki toleransi kecil untuk selisih rounding pajak per item, terutama pada transaksi dengan pajak. Tetapi user tidak boleh mengandalkan toleransi ini untuk membiarkan selisih besar.
+
+#7.8 Update CB Payment
+
+CB Payment dapat diupdate jika status masih dalam tahap yang memungkinkan koreksi, misalnya Need Finance Checking, Need Accounting Checking, Need Tax Approval, atau Reject By Tax.
+
+Yang biasanya bisa diubah:
+- Description
+- Detail COA tertentu
+- Amount detail
+- Tax code
+- PPH type
+- Currency rate pada kondisi tertentu
+
+Yang biasanya tidak boleh sembarangan diubah:
+- Nomor dokumen
+- Payment method
+- Vendor utama
+- Bank utama
+- Tanggal utama setelah proses approval berjalan
+- Data yang sudah final atau posted
+
+Jika dokumen sudah posted, jangan edit langsung. Gunakan proses void, reverse, atau buat dokumen baru sesuai arahan Finance dan Accounting.
+
+#7.9 Void CB Payment
+
+Void digunakan untuk membatalkan dokumen pembayaran. Void harus memiliki alasan yang jelas.
+
+Flow void:
+1. User buka dokumen.
+2. User klik Void.
+3. Sistem meminta void reason.
+4. User mengisi alasan pembatalan.
+5. Sistem meminta konfirmasi.
+6. Jika berhasil, status dokumen berubah menjadi void atau masuk ke status terkait reversal.
+
+Void reason tidak boleh kosong. Jika user tidak tahu alasan pembatalan, jangan lanjut void sebelum koordinasi dengan atasan.
+
+#7.10 Error umum CB Payment dan cara menjawab
+
+Error: Please fill required field before continue to save.
+Artinya ada field wajib yang belum diisi. User harus cek purpose, vendor, bank, tanggal, amount, description, dan detail.
+Jika semua terlihat terisi tetapi error masih muncul, arahkan ke IT dengan screenshot.
+
+Error: Cannot continue to save. Please fill currency rate.
+Artinya rate kosong atau 0. User harus cek currency dan rate. Jika bank currency asing tetapi rate tidak muncul, hubungi IT atau master data rate.
+
+Error: Bank amount must be equal with Total Amount.
+Artinya nominal bank amount tidak sama dengan hasil perhitungan detail dan pajak. User harus cek DPP, PPN, PPH, tax code, dan amount detail. Jika hanya selisih kecil karena rounding dan tetap ditolak, hubungi Finance atau IT.
+
+Error: Please fill Payment Detail before continue to save.
+Artinya detail COA kosong. User harus klik Add COA dan isi minimal satu baris detail.
+
+Error: Please fill Division before continue to save.
+Artinya ada baris detail yang belum memiliki division.
+
+Error: Please fill Department before continue to save.
+Artinya ada baris detail yang belum memiliki department.
+
+Error: Please fill COA Code before continue to save.
+Artinya ada baris detail yang belum memiliki akun COA.
+
+Error: Please fill PPH Type before continue to save.
+Artinya ada PPH pada detail, tetapi PPH Type belum dipilih. User harus pilih PPH Type yang benar atau tanya Tax.
+
+Error: Void reason must be filled.
+Artinya user belum mengisi alasan void. Alasan void wajib untuk audit trail.
+
+Grid tidak muncul, dropdown vendor kosong, bank tidak muncul, atau loading lama:
+Ini masalah teknis atau master data. Minta user refresh, logout login, clear cache, lalu hubungi IT jika tetap terjadi.
+
+
+8. CB RECEIVING ATAU CASHBOOK RECEIVING
+
+#8.1 Definisi
+
+CB Receiving adalah dokumen untuk mencatat penerimaan uang ke kas atau rekening bank perusahaan. Dokumen ini dipakai untuk mencatat pembayaran dari customer, penerimaan pinjaman, penerimaan modal, penerimaan dari penjualan asset, atau penerimaan lain.
+
+CB Receiving menjawab pertanyaan bisnis: uang masuk dari siapa, ke bank mana, untuk apa, berapa nominalnya, apakah ada pajak, dan dicatat ke akun mana.
+
+#8.2 Kapan CB Receiving digunakan
+
+CB Receiving digunakan ketika:
+- Customer membayar invoice atau tagihan
+- Perusahaan menerima uang dari penjualan barang atau jasa
+- Perusahaan menerima DP atau partial payment
+- Perusahaan menerima pinjaman bank
+- Perusahaan menerima modal atau investasi
+- Perusahaan menerima bunga atau dividen
+- Perusahaan menerima transfer internal yang perlu dicatat sebagai uang masuk
+
+Sebelum membuat CB Receiving, user harus memastikan:
+- Uang sudah clear di bank atau kas
+- Nominal sesuai bukti transfer atau bank statement
+- Sumber penerimaan jelas
+- Customer atau pihak pemberi sudah valid
+- Ada ref doc atau bukti pendukung
+- COA sudah sesuai
+- Pajak sudah diketahui jika ada
+
+#8.3 Flow lengkap CB Receiving
+
+1. Uang masuk ke rekening bank atau kas perusahaan.
+2. Finance memverifikasi mutasi bank atau bukti transfer.
+3. User membuka menu CB Receiving.
+4. User membuat dokumen CB Receiving.
+5. User memilih purpose penerimaan.
+6. User mengisi doc date.
+7. User memilih From, yaitu customer, vendor, employee, atau pihak pemberi.
+8. User memilih bank penerima.
+9. Sistem membaca currency dan rate dari bank.
+10. User mengisi ref doc.
+11. User mengisi bank amount.
+12. User mengisi detail COA.
+13. Sistem menghitung DPP, PPN, PPH, total amount, dan terbilang.
+14. User mengisi description.
+15. User menekan save.
+16. Sistem melakukan validasi.
+17. Jika valid, dokumen masuk Need Finance Checking.
+18. Head Finance melakukan checking.
+19. Jika ada pajak, dokumen masuk Receiving Tax Approval.
+20. Tax approve atau reject.
+21. Jika approve, dokumen lanjut ke posting.
+22. Setelah posting, uang masuk tercatat ke General Ledger dan laporan keuangan.
+
+#8.4 Data header CB Receiving
+
+Purpose:
+Tujuan penerimaan, misalnya customer payment, loan, other receipt, atau tujuan lain sesuai setting.
+
+Doc Date:
+Tanggal penerimaan.
+
+From:
+Pihak yang mengirim uang. Bisa customer, vendor, employee, investor, atau sumber lain. Dalam kasus tertentu dapat kosong untuk transfer internal, tetapi description harus sangat jelas.
+
+Bank:
+Rekening yang menerima uang.
+
+Ref Doc:
+Nomor referensi invoice, nota, bukti transfer, atau dokumen pendukung.
+
+Currency Code:
+Mata uang penerimaan mengikuti bank.
+
+Currency Rate:
+Kurs untuk transaksi currency asing.
+
+Bank Amount:
+Jumlah uang yang benar-benar masuk ke bank.
+
+Base Amount:
+Nilai dasar dari detail.
+
+Total DPP:
+Total dasar pajak.
+
+Total PPN:
+Total PPN dari penerimaan.
+
+Total PPH:
+Total PPH yang berkaitan dengan penerimaan.
+
+Total Amount:
+Jumlah akhir yang harus sama dengan bank amount.
+
+In Words:
+Terbilang dari nominal.
+
+Description:
+Keterangan penerimaan. Harus memuat sumber, nomor invoice, periode, dan tujuan penerimaan jika memungkinkan.
+
+#8.5 Data detail CB Receiving
+
+Division:
+Divisi penerima atau pemilik transaksi.
+
+Department:
+Departemen penerima atau pemilik transaksi.
+
+COA Code:
+Akun accounting penerimaan, misalnya pendapatan penjualan, piutang, loan, atau akun lainnya.
+
+Description:
+Keterangan detail.
+
+Amount:
+Nominal dasar per baris.
+
+Tax Code:
+Kode pajak.
+
+PPN Amount:
+Nilai PPN per baris.
+
+PPH Amount:
+Nilai PPH per baris.
+
+PPH Type:
+Jenis PPH, wajib jika ada PPH.
+
+Total Amount:
+Jumlah akhir per baris.
+
+#8.6 Validasi CB Receiving
+
+Validasi utama:
+- Purpose wajib diisi
+- Doc date wajib diisi
+- From wajib jelas sesuai kebutuhan transaksi
+- Bank wajib diisi
+- Currency rate tidak boleh 0
+- Bank amount harus sama dengan total amount
+- Detail tidak boleh kosong
+- PPH Type wajib jika ada PPH lebih dari 0
+- Description wajib jelas
+- Ref doc sangat disarankan untuk rekonsiliasi
+- Uang harus sudah clear di bank sebelum dokumen dibuat
+
+Jika uang masih pending di bank, jangan membuat dokumen final dulu. Tunggu sampai dana benar-benar clear supaya tidak terjadi mismatch saat bank reconciliation.
+
+#8.7 Update CB Receiving
+
+CB Receiving dapat diupdate jika status masih memungkinkan, misalnya Need Finance Checking, Need Accounting Checking, Need Tax Approval, atau Reject By Tax.
+
+Yang bisa diupdate biasanya:
+- Description
+- Detail amount
+- Tax code
+- PPH type
+- Currency rate pada kondisi tertentu
+
+Jika dokumen sudah posted, jangan edit langsung. Lakukan void atau reverse sesuai arahan Finance dan Accounting.
+
+#8.8 Void CB Receiving
+
+Void digunakan jika penerimaan salah input, duplikat, salah customer, salah bank, salah amount, atau ternyata dana tidak valid.
+
+Alasan void wajib diisi. Jika dokumen sudah posted, void biasanya perlu proses reversal di accounting.
+
+#8.9 Error umum CB Receiving dan cara menjawab
+
+Error: Please fill required field before continue to save.
+Cek purpose, doc date, from, bank, amount, description, dan detail.
+
+Error: Cannot continue to save. Please fill currency rate.
+Rate kosong atau 0. Cek currency bank. Jika rate tidak muncul, hubungi IT atau master data.
+
+Error: Bank amount must be equal with Total Amount.
+Cek amount detail, PPN, PPH, dan tax code. Total akhir harus sama dengan uang yang benar-benar masuk ke bank.
+
+Error: Please fill Receiving Detail before continue to save.
+Detail COA kosong. Tambahkan minimal satu baris detail.
+
+Error: Please fill PPH Type before continue to save.
+Ada PPH lebih dari 0 tetapi PPH Type kosong. Isi PPH Type atau tanya Tax.
+
+Error: Cash book detail is locked atau cannot edit.
+Dokumen sudah final atau posted. Tidak bisa diedit langsung. Koordinasi dengan Finance, Accounting, atau IT.
+
+Grid detail tidak tampil atau error:
+Refresh browser, logout login, clear cache, coba browser lain. Jika tetap, hubungi IT. Jangan force-save dokumen jika detail grid bermasalah.
+
+
+9. TRANSFER INTERNAL
+
+#9.1 Definisi
+
+Transfer Internal adalah proses memindahkan dana dari satu rekening bank ke rekening bank lain dalam perusahaan yang sama. Tujuannya bukan untuk mencatat biaya atau pendapatan, tetapi memindahkan saldo kas atau bank.
+
+Contoh:
+- Transfer dari Bank BCA ke Bank Mandiri milik perusahaan yang sama
+- Transfer dari rekening IDR ke rekening lain untuk kebutuhan operasional
+- Pemindahan dana antar rekening perusahaan untuk cash management
+
+#9.2 Dampak accounting
+
+Transfer Internal biasanya menghasilkan dua sisi transaksi:
+- PV untuk mencatat uang keluar dari bank asal
+- RV untuk mencatat uang masuk ke bank tujuan
+
+Karena masih dalam perusahaan yang sama, total kas perusahaan secara keseluruhan tidak berubah. Yang berubah hanya posisi saldo per rekening bank.
+
+#9.3 Flow Transfer Internal
+
+1. Finance menentukan kebutuhan transfer antar rekening.
+2. User membuka menu Transfer Internal.
+3. User mengisi nomor cek BG jika digunakan.
+4. User mengisi date of issue, paid date, dan due date.
+5. User memilih currency dan memastikan rate.
+6. User mengisi detail bank asal atau From Bank.
+7. User mengisi ref no bank asal.
+8. User memilih destination bank.
+9. User mengisi destination ref no.
+10. User mengisi description.
+11. User mengisi atau mereset detail COA.
+12. Sistem menjumlahkan detail amount dan mengisi amount total.
+13. User menyimpan dokumen.
+14. Sistem membuat pasangan PV dan RV.
+15. Dokumen masuk Need Checking.
+16. Head Finance atau role yang berwenang melakukan checking.
+17. Jika sudah checking, dokumen bisa diposting.
+18. Setelah posting, saldo bank asal berkurang dan saldo bank tujuan bertambah.
+
+#9.4 Field penting Transfer Internal
+
+Cek BG No:
+Nomor cek atau BG yang dipakai. Tidak boleh menggunakan nomor yang sudah pernah dipakai.
+
+Cek Baru:
+Indikasi jika user ingin menggunakan cek BG baru atau mengganti cek BG sebelumnya. Jika mengaktifkan ini, alasan harus jelas.
+
+Description why create new cek BG:
+Alasan membuat atau mengganti cek BG. Penting untuk audit trail.
+
+Date of Issue:
+Tanggal terbit dokumen atau cek.
+
+Paid Date:
+Tanggal pembayaran atau pencairan.
+
+Due Date:
+Tanggal batas akhir pembayaran.
+
+Amount:
+Nominal transfer. Pada transfer, nilai ini dihitung dari detail COA.
+
+Currency:
+Mata uang transfer.
+
+Rate:
+Kurs untuk currency selain IDR.
+
+From Bank:
+Bank asal dana.
+
+Ref No:
+Nomor referensi bank asal.
+
+Destination Bank:
+Bank tujuan dana.
+
+Destination Ref No:
+Nomor referensi bank tujuan.
+
+Description:
+Keterangan transfer, misalnya tujuan pemindahan dana.
+
+Detail COA:
+Akun, division, department, dan amount yang digunakan untuk klasifikasi transaksi.
+
+#9.5 Validasi Transfer Internal
+
+- Nomor cek BG wajib jika transaksi menggunakan cek BG
+- Nomor cek BG tidak boleh pernah dipakai
+- Jika cek BG baru dibuat, alasan wajib jelas
+- Date of issue wajib diisi
+- Paid date wajib diisi
+- Due date wajib diisi
+- Paid date tidak boleh melebihi due date
+- From Bank wajib diisi
+- Destination Bank wajib diisi
+- Ref no dan destination ref no wajib diisi
+- Amount harus lebih dari 0
+- Currency rate harus valid
+- Detail COA tidak boleh kosong
+- Bank asal dan bank tujuan harus dicek agar tidak salah rekening
+
+#9.6 Status Transfer Internal
+
+Need Checking:
+Dokumen menunggu persetujuan sebelum posting.
+
+Need to Check CekBG:
+Ada issue terkait cek BG, misalnya nomor cek belum valid atau perlu pengecekan ulang.
+
+Posting Checking:
+Dokumen sudah melewati checking dan menunggu posting.
+
+Posting Done atau Posted:
+Dokumen sudah diposting.
+
+Posting Cancel atau Void:
+Dokumen dibatalkan.
+
+#9.7 Error umum Transfer Internal
+
+Cek BG sudah pernah dipakai:
+Gunakan nomor cek BG lain. Jika data master cek BG tidak sesuai, hubungi IT atau Admin Master Data.
+
+Nomor cek BG tidak ditemukan:
+Pastikan nomor benar. Jika cek baru, isi indikator cek baru dan alasan. Jika seharusnya ada di master tetapi tidak muncul, hubungi IT.
+
+Amount tidak sesuai detail:
+Reset COA lalu isi ulang detail. Amount transfer harus berasal dari total detail.
+
+Posting button disabled:
+Dokumen belum checking, ada field berubah setelah checking, atau status belum siap posting. Lakukan checking ulang sesuai role. Jika status sudah benar tapi tombol tetap mati, hubungi IT.
+
+Dokumen stuck di Need Checking:
+Follow up ke Head Finance. Jika sudah diapprove tapi status tidak berubah, hubungi IT dengan nomor PV dan RV.
+
+
+10. TRANSFER INTER COMPANY
+
+#10.1 Definisi
+
+Transfer Inter Company adalah proses memindahkan dana dari satu perusahaan ke perusahaan lain dalam grup Jababeka. Berbeda dengan Transfer Internal, transaksi ini melibatkan dua company code.
+
+Contoh:
+- Perusahaan KI mengirim dana ke perusahaan RC
+- Head Office mengirim dana ke anak perusahaan
+- Satu entitas membayar atau mendanai entitas lain
+
+#10.2 Dampak accounting
+
+Transfer Inter Company membentuk pasangan dokumen:
+- PV pada perusahaan pengirim, karena uang keluar
+- RV pada perusahaan penerima, karena uang masuk
+
+Transaksi ini penting karena menyangkut pencatatan antar entitas. Selain saldo bank, transaksi dapat berdampak pada akun intercompany, due to, due from, piutang antar perusahaan, atau hutang antar perusahaan sesuai COA yang digunakan.
+
+#10.3 Flow Transfer Inter Company
+
+1. Finance menentukan kebutuhan transfer antar perusahaan.
+2. User membuka menu Transfer Inter Company.
+3. User mengisi cek BG jika digunakan.
+4. User mengisi date of issue, paid date, due date, amount, currency, dan rate.
+5. User memilih Sending Bank di perusahaan pengirim.
+6. User mengisi Ref No bank pengirim.
+7. User memilih Destination Company.
+8. User memilih Destination Bank milik perusahaan penerima.
+9. User mengisi Destination Ref No.
+10. User mengisi Description.
+11. User mengisi detail COA.
+12. Sistem membuat PV dan RV yang saling berhubungan.
+13. Dokumen masuk Need Checking.
+14. Head Finance melakukan checking.
+15. Jika valid, dokumen masuk tahap posting.
+16. Setelah posting, perusahaan pengirim memiliki catatan uang keluar dan perusahaan penerima memiliki catatan uang masuk.
+
+#10.4 Field penting Transfer Inter Company
+
+Cek BG No:
+Nomor cek atau BG.
+
+Date of Issue:
+Tanggal dokumen atau tanggal cek.
+
+Paid Date:
+Tanggal pembayaran.
+
+Due Date:
+Tanggal jatuh tempo.
+
+Currency dan Rate:
+Mata uang serta kurs.
+
+Amount:
+Nominal transfer.
+
+Sending Bank:
+Bank asal dari perusahaan pengirim.
+
+Ref No:
+Nomor referensi bank asal.
+
+Destination Company:
+Perusahaan tujuan dana.
+
+Destination Bank:
+Bank tujuan pada perusahaan penerima.
+
+Destination Ref No:
+Nomor referensi sisi penerima.
+
+Description:
+Keterangan transaksi antar perusahaan.
+
+Detail COA:
+Akun yang digunakan untuk mencatat transaksi intercompany.
+
+#10.5 Validasi Transfer Inter Company
+
+- Source company harus jelas dari company login atau parameter perusahaan
+- Destination company wajib diisi
+- Destination bank harus milik destination company
+- Sending bank harus valid untuk source company
+- Nomor referensi kedua sisi harus jelas
+- Amount harus lebih dari 0
+- Currency rate harus valid
+- Cek BG tidak boleh duplikat
+- Detail COA wajib ada
+- Jika ada perubahan setelah checking, proses checking perlu diulang sebelum posting
+
+#10.6 Error umum Transfer Inter Company
+
+Destination company tidak muncul:
+Kemungkinan user tidak punya akses, master company belum aktif, atau masalah API. Hubungi IT atau Admin Master Data.
+
+Destination bank kosong:
+Kemungkinan bank belum diset untuk perusahaan tujuan. Hubungi Admin Master Data atau IT.
+
+PV terbentuk tetapi RV tidak terlihat:
+Ini perlu dicek oleh IT karena Transfer Inter Company harus menjaga pasangan dokumen keluar dan masuk. Sertakan nomor PV, company asal, dan company tujuan.
+
+Dokumen tidak bisa posting:
+Cek apakah sudah checking, apakah field berubah setelah checking, apakah cek BG valid, dan apakah detail COA lengkap. Jika semua benar tetapi tetap gagal, hubungi IT.
+
+Nomor cek BG bermasalah:
+Cek ke master cek BG. Jika status cek sudah pernah dipakai atau locked, gunakan nomor lain atau minta IT cek master data.
+
+
+11. PAYMENT TAX APPROVAL
+
+#11.1 Definisi
+
+Payment Tax Approval adalah proses verifikasi pajak untuk dokumen pembayaran. Tahap ini memastikan PPN dan PPH pada CB Payment sudah benar sebelum dokumen diposting ke General Ledger.
+
+Payment Tax Approval adalah gatekeeper pajak untuk uang keluar.
+
+#11.2 Kapan dokumen masuk Payment Tax Approval
+
+Dokumen masuk Payment Tax Approval jika:
+- CB Payment sudah dibuat
+- Dokumen sudah melewati Finance Checking
+- Transaksi memiliki PPN atau PPH
+- Dokumen perlu diverifikasi tax sebelum posting
+
+#11.3 Flow Payment Tax Approval
+
+1. Tax Staff membuka menu Payment Tax Approval.
+2. Sistem menampilkan dokumen berstatus Need Approval.
+3. Tax membuka dokumen melalui tombol Approval.
+4. Tax melihat header dokumen: PV No, vendor, bank, ref no, currency, amount, status.
+5. Tax memeriksa detail COA dan amount.
+6. Tax membuka tab PPN jika ada PPN.
+7. Tax memeriksa NPWP, nama wajib pajak, alamat wajib pajak, nomor faktur pajak, tanggal faktur, DPP, dan PPN.
+8. Tax membuka tab PPH jika ada PPH.
+9. Tax memeriksa PPH Type, bukti potong, DPP, PPH, tanggal, bulan, dan tahun.
+10. Jika ada selisih kecil atau pembulatan, Tax dapat menggunakan Tax Correction sesuai aturan.
+11. Jika semua benar, Tax klik Approve.
+12. Jika ada masalah, Tax klik Reject dan mengisi alasan reject.
+13. Dokumen yang approve lanjut ke tahap posting.
+14. Dokumen yang reject kembali ke pembuat dokumen untuk diperbaiki.
+
+#11.4 Hal yang diperiksa Tax pada CB Payment
+
+- Total DPP benar
+- Total PPN benar
+- Total PPH benar
+- Formula DPP + PPN - PPH = Total Amount benar
+- Vendor valid
+- NPWP vendor valid jika ada pajak
+- Nama wajib pajak sesuai vendor
+- Alamat wajib pajak sesuai master
+- Nomor faktur pajak tidak duplikat
+- Tanggal faktur masuk akal
+- PPH Type sesuai transaksi
+- Bukti potong tersedia jika dibutuhkan
+- Dokumen pendukung tersedia di tab file jika digunakan
+
+#11.5 PPN pada Payment
+
+PPN pada pembayaran biasanya terkait invoice pajak dari vendor. Tax harus memastikan:
+- DPP sesuai invoice
+- PPN sesuai tarif yang berlaku di sistem
+- Nomor faktur pajak valid
+- Faktur tidak duplikat
+- NPWP vendor benar
+- Nama dan alamat wajib pajak konsisten
+
+#11.6 PPH pada Payment
+
+PPH pada pembayaran adalah pajak yang dipotong dari pembayaran ke vendor atau pihak penerima. Tax harus memastikan:
+- PPH Type benar
+- Rate sesuai tipe PPH
+- DPP benar
+- PPH Amount benar
+- Bukti potong jelas
+- Jika vendor tidak memiliki NPWP, perlakuan pajaknya harus dikonfirmasi ke Tax
+
+#11.7 Approve dan Reject Tax
+
+Approve digunakan jika data pajak valid dan dokumen boleh lanjut posting.
+
+Reject digunakan jika data pajak salah atau belum lengkap. Alasan reject wajib jelas agar pembuat dokumen tahu apa yang harus diperbaiki.
+
+Contoh alasan reject:
+- NPWP vendor tidak sesuai master
+- Nomor faktur pajak duplikat
+- PPH Type belum dipilih
+- PPN tidak sama dengan DPP
+- Bukti potong belum dilampirkan
+- Amount tidak match dengan dokumen pendukung
+
+#11.8 Tax Correction
+
+Tax Correction digunakan untuk koreksi pajak, terutama karena pembulatan atau penyesuaian detail. Tax Correction bukan untuk mengakali transaksi yang salah besar. Jika data dasar salah, dokumen harus direject dan diperbaiki dari sumbernya.
+
+#11.9 Error umum Payment Tax Approval
+
+Error saat approve karena masih ada data missing:
+Jangan approve. Minta user melengkapi data terlebih dahulu.
+
+PPH Type belum dipilih:
+Minta pembuat dokumen memilih tipe PPH yang benar atau konsultasi ke Tax.
+
+NPWP tidak valid:
+Minta koreksi master vendor atau data dokumen. Jika master data salah, eskalasi ke Master Data atau IT.
+
+Nomor faktur pajak duplikat:
+Minta koreksi nomor faktur. Jika sistem salah mendeteksi duplikasi, hubungi IT.
+
+Dokumen sudah approve tetapi masih muncul di Need Approval:
+Refresh halaman. Jika tetap muncul, cek status filter. Jika masih salah, hubungi IT karena kemungkinan cache atau status update gagal.
+
+Approve gagal dengan pesan API atau server error:
+Hubungi IT dengan nomor PV, screenshot error, user login, waktu kejadian, dan langkah yang dilakukan.
+
+
+12. RECEIVING TAX APPROVAL
+
+#12.1 Definisi
+
+Receiving Tax Approval adalah proses verifikasi pajak untuk dokumen penerimaan kas atau uang masuk. Tahap ini memastikan PPN dan PPH pada CB Receiving sudah benar sebelum dokumen diposting ke General Ledger.
+
+Receiving Tax Approval adalah gatekeeper pajak untuk uang masuk.
+
+#12.2 Kapan dokumen masuk Receiving Tax Approval
+
+Dokumen masuk Receiving Tax Approval jika:
+- CB Receiving sudah dibuat
+- Dokumen sudah melewati Finance Checking
+- Transaksi memiliki PPN atau PPH
+- Penerimaan perlu diverifikasi pajak sebelum posting
+
+#12.3 Flow Receiving Tax Approval
+
+1. Tax Staff membuka menu Receiving Tax Approval.
+2. Sistem menampilkan dokumen penerimaan berstatus Need Approval.
+3. Tax membuka dokumen melalui tombol Approval.
+4. Tax melihat header dokumen: RV No, from, bank, ref no, currency, amount, status.
+5. Tax memeriksa detail penerimaan.
+6. Tax membuka tab PPN jika ada PPN.
+7. Tax memeriksa nama wajib pajak, NPWP, alamat, nomor bukti atau faktur, tanggal, DPP, dan PPN.
+8. Tax membuka tab PPH jika ada PPH.
+9. Tax memeriksa PPH Type, bukti potong, DPP, PPH, tanggal, bulan, dan tahun.
+10. Jika ada selisih kecil atau pembulatan, Tax dapat menggunakan Tax Correction.
+11. Jika benar, Tax approve.
+12. Jika salah, Tax reject dengan alasan.
+13. Dokumen approve lanjut ke posting.
+14. Dokumen reject harus diperbaiki.
+
+#12.4 Hal yang diperiksa Tax pada CB Receiving
+
+- Sumber penerimaan valid
+- Bank penerima benar
+- Bukti penerimaan atau ref no jelas
+- Total DPP benar
+- Total PPN benar
+- Total PPH benar
+- Formula DPP + PPN - PPH = Total Amount benar
+- NPWP pihak pemberi valid jika ada pajak
+- Nama wajib pajak sesuai master
+- Alamat wajib pajak sesuai dokumen
+- PPH Type sesuai jenis penerimaan
+- Bukti potong atau bukti penerimaan tersedia jika dibutuhkan
+
+#12.5 PPN pada Receiving
+
+PPN pada penerimaan berarti perusahaan menerima uang yang termasuk komponen PPN. Tax harus memastikan PPN sesuai dengan DPP dan bukti pajaknya jelas.
+
+#12.6 PPH pada Receiving
+
+PPH pada penerimaan berarti ada pajak yang dipotong oleh pihak pemberi atau pihak terkait. Tax harus memastikan bukti potong dan tipe PPH benar.
+
+#12.7 Error umum Receiving Tax Approval
+
+NPWP pihak pemberi kosong atau tidak valid:
+Jangan approve sampai jelas. Minta master data atau pembuat dokumen melengkapi.
+
+Amount tidak match dengan bukti penerimaan:
+Reject dan minta koreksi. Jangan approve data yang tidak match dengan bank statement atau bukti transfer.
+
+PPH Type belum dipilih:
+Minta pembuat dokumen memilih PPH Type atau konsultasi ke Tax.
+
+Bukti penerimaan tidak jelas:
+Reject dengan alasan yang jelas.
+
+Approve gagal karena server error:
+Hubungi IT dengan nomor RV, screenshot, waktu kejadian, dan user yang melakukan approval.
+
+
+13. ATURAN PERHITUNGAN PAJAK
+
+Formula umum:
+Total Amount = DPP + PPN - PPH
+
+Pada CB Payment:
+Total Amount adalah jumlah yang dibayarkan ke pihak penerima setelah memperhitungkan PPN dan PPH.
+
+Pada CB Receiving:
+Total Amount adalah jumlah yang benar-benar masuk ke rekening perusahaan setelah memperhitungkan PPN dan PPH.
+
+PPN:
+PPN dihitung dari DPP berdasarkan tax code yang dipilih.
+
+PPH:
+PPH dihitung dari DPP berdasarkan PPH Type atau tax setup.
+
+NPWP:
+Jika ada PPN atau PPH, NPWP wajib valid sesuai kebutuhan pajak.
+
+PPH Type:
+Wajib jika PPH lebih dari 0. Jangan asal pilih PPH Type karena dampaknya ke reporting pajak.
+
+Faktur Pajak:
+Untuk transaksi dengan PPN, nomor faktur harus jelas dan tidak boleh duplikat.
+
+Bukti Potong:
+Untuk transaksi dengan PPH, bukti potong harus terdokumentasi.
+
+Rounding:
+Selisih kecil karena pembulatan dapat terjadi. Gunakan Tax Correction jika memang sesuai aturan. Jika selisih besar, dokumen harus diperbaiki dari detail transaksi.
+
+
+14. BANK RECONCILIATION DAN KONTROL CASH FLOW
+
+CashBank harus dicocokkan dengan bank statement secara rutin.
+
+Untuk CB Payment:
+Cocokkan tanggal pembayaran, nomor dokumen, nomor cek BG, ref doc, vendor, dan amount dengan mutasi bank.
+
+Untuk CB Receiving:
+Cocokkan tanggal uang masuk, customer, ref doc, bank, dan amount dengan mutasi bank.
+
+Untuk Transfer Internal:
+Pastikan bank asal berkurang dan bank tujuan bertambah dengan nominal yang sama.
+
+Untuk Transfer Inter Company:
+Pastikan PV source company dan RV destination company terbentuk dan saling match.
+
+Jika ada selisih:
+- Cek apakah transaksi belum clear
+- Cek apakah ada salah tanggal
+- Cek apakah amount salah
+- Cek apakah dokumen belum posted
+- Cek apakah ada double input
+- Cek apakah ada transaksi bank yang belum dibuatkan CB
+
+Jika selisih tidak ditemukan penyebabnya, eskalasi ke Finance Supervisor, Accounting, atau IT.
+
+
+15. DOKUMEN PENDUKUNG YANG DISARANKAN
+
+Untuk CB Payment:
+- Invoice vendor
+- Faktur pajak
+- Bukti potong PPH
+- Purchase order atau SPK jika ada
+- Receiving voucher atau bukti barang/jasa diterima
+- Approval pembayaran
+- Bukti transfer atau cek BG
+- Printout CB Payment yang sudah ditandatangani
+
+Untuk CB Receiving:
+- Invoice penjualan
+- Bukti transfer customer
+- Bank statement
+- Faktur pajak jika ada
+- Bukti potong PPH jika ada
+- Credit memo atau debit memo jika ada
+- Printout CB Receiving yang sudah ditandatangani
+
+Untuk Transfer Internal:
+- Instruksi transfer
+- Bukti transfer antar rekening
+- Nomor cek BG jika digunakan
+- Printout PV dan RV
+
+Untuk Transfer Inter Company:
+- Instruksi transfer antar perusahaan
+- Approval antar entitas
+- Bukti transfer
+- Referensi intercompany
+- Printout PV dan RV
+
+
+16. BEST PRACTICE USER
+
+Isi reference document dengan lengkap.
+
+Gunakan description yang jelas. Jangan hanya menulis “payment vendor” atau “penerimaan customer”. Tulis nomor invoice, nama pihak, periode, dan tujuan transaksi.
+
+Buat satu dokumen untuk satu vendor atau satu customer jika memungkinkan. Ini memudahkan tracking.
+
+Pastikan uang sudah clear sebelum membuat CB Receiving.
+
+Pastikan invoice dan dokumen pendukung valid sebelum membuat CB Payment.
+
+Jangan memilih tax code secara asal.
+
+Jika ada PPH, pastikan PPH Type sudah benar.
+
+Jika transaksi currency asing, pastikan rate benar.
+
+Monitor dokumen yang stuck di Need Checking lebih dari beberapa hari.
+
+Print dan arsipkan dokumen penting.
+
+Lakukan rekonsiliasi bank setiap akhir bulan.
+
+Jika sudah posted, jangan meminta edit langsung. Gunakan void atau reversal sesuai prosedur.
+
+
+17. TROUBLESHOOTING UMUM DAN ESKALASI KE IT
+
+#17.1 Masalah yang bisa user cek sendiri
+
+Field wajib belum diisi:
+Cek field header dan detail. Isi data yang kosong.
+
+Bank amount tidak sama dengan total amount:
+Cek detail amount, tax code, PPN, PPH, dan PPH Type.
+
+PPH Type kosong:
+Isi PPH Type jika PPH lebih dari 0. Jika tidak tahu, tanya Tax.
+
+Currency rate kosong:
+Cek currency. Jika bukan IDR, pastikan rate ada. Jika rate tidak muncul, hubungi IT atau master data.
+
+Dokumen belum bisa posting:
+Cek apakah dokumen sudah melewati checking dan tax approval.
+
+Dokumen rejected by tax:
+Baca alasan reject, perbaiki data pajak, lalu update atau buat ulang sesuai instruksi.
+
+#17.2 Masalah yang harus diarahkan ke IT
+
+Arahkan ke IT jika:
+- Menu CashBank tidak muncul padahal user seharusnya punya akses
+- User tidak bisa membuka dokumen karena error sistem
+- Grid tidak load setelah refresh dan login ulang
+- Dropdown vendor, customer, bank, COA, tax, atau PPH kosong padahal master data ada
+- API error, server error, 401, 403, 404, atau 500
+- Dokumen berhasil disimpan tetapi tidak muncul di grid
+- Dokumen stuck di status tertentu padahal approval sudah dilakukan
+- PV terbentuk tetapi RV pasangan tidak terbentuk pada transfer
+- Nomor cek BG terkunci padahal belum pernah dipakai
+- Posting gagal tanpa alasan validasi yang jelas
+- Tax approval sudah approve tetapi status tidak berubah
+- Data amount berubah sendiri atau tidak sesuai hasil perhitungan
+- Print atau export Excel error terus-menerus
+- File attachment tidak tampil atau tidak bisa dibuka
+
+#17.3 Data yang harus dikirim user ke IT
+
+Minta user menyiapkan:
+- Nama user login
+- Company code
+- Menu yang digunakan
+- Nomor dokumen, misalnya PV No atau RV No
+- Status dokumen saat ini
+- Screenshot full error
+- Waktu kejadian
+- Langkah yang dilakukan sebelum error
+- Browser yang digunakan
+- Apakah sudah refresh, logout login, atau clear cache
+- Jika transfer, sertakan nomor PV dan RV pasangan
+- Jika tax, sertakan tab yang bermasalah, PPN atau PPH
+
+#17.4 Template jawaban AI untuk error teknis
+
+Jika user berkata: grid tidak muncul.
+Jawaban AI:
+Coba refresh halaman, logout login ulang, lalu buka kembali menu yang sama. Jika masih tidak muncul, kemungkinan ada masalah koneksi, session, atau API. Tolong kirim screenshot, nama menu, company code, dan waktu kejadian ke IT Support.
+
+Jika user berkata: dokumen stuck.
+Jawaban AI:
+Cek dulu status dokumennya. Jika masih Need Finance Checking, follow up ke Head Finance. Jika sudah diapprove tetapi status tidak berubah, itu kemungkinan issue sistem. Kirim nomor dokumen dan screenshot status ke IT.
+
+Jika user berkata: posting gagal.
+Jawaban AI:
+Cek apakah dokumen sudah melewati checking, tax approval, dan tidak ada field wajib yang kosong. Jika semua sudah benar tetapi posting tetap gagal, jangan buat dokumen baru dulu. Kirim nomor dokumen, screenshot error, dan waktu kejadian ke IT agar tidak terjadi duplikasi.
+
+Jika user berkata: bank tidak muncul di dropdown.
+Jawaban AI:
+Kemungkinan bank belum aktif di master data, user tidak punya akses company tersebut, atau ada error load data. Coba refresh. Jika tetap tidak muncul, hubungi IT atau Admin Master Data.
+
+
+18. CONTOH SKENARIO DAN JAWABAN AI
+
+#18.1 User tidak bisa save CB Payment
+
+Kemungkinan penyebab:
+- Field wajib belum diisi
+- Detail COA kosong
+- Bank amount tidak sama dengan total amount
+- Currency rate kosong
+- PPH Type belum dipilih
+- Cek BG belum valid
+
+Jawaban AI:
+Cek dulu bagian header dan detail. Pastikan vendor, bank, purpose, amount, description, dan detail COA sudah terisi. Lalu pastikan Bank Amount sama dengan Total Amount. Jika ada PPH, PPH Type wajib dipilih. Jika pesan error masih muncul padahal semua sudah lengkap, kirim screenshot error dan nomor dokumen ke IT.
+
+#18.2 User bertanya kenapa CB Receiving harus dibuat setelah uang clear
+
+Jawaban AI:
+CB Receiving mencatat uang yang benar-benar masuk ke bank perusahaan. Jika transfer customer masih pending, dokumen sebaiknya belum dibuat sebagai final karena nanti bisa mismatch dengan bank statement. Tunggu dana clear terlebih dahulu, lalu buat CB Receiving berdasarkan nominal yang benar-benar masuk.
+
+#18.3 User bertanya apakah bisa edit dokumen setelah approved
+
+Jawaban AI:
+Jika dokumen sudah approved atau posted, biasanya dokumen tidak bisa diedit langsung. Jika masih Need Finance Checking, Need Accounting Checking, Need Tax Approval, atau Reject By Tax, beberapa field masih bisa diperbaiki sesuai aturan. Jika sudah posted, gunakan void atau reversal sesuai arahan Finance dan Accounting.
+
+#18.4 User bertanya bedanya CB Payment dan CB Receiving
+
+Jawaban AI:
+CB Payment untuk uang keluar, misalnya bayar vendor, bayar PUM, atau bayar biaya. CB Receiving untuk uang masuk, misalnya customer membayar invoice, penerimaan pinjaman, atau uang masuk lain. Keduanya masuk CashBank, tetapi arah pergerakan uangnya berbeda.
+
+#18.5 User bertanya bedanya Transfer Internal dan Transfer Inter Company
+
+Jawaban AI:
+Transfer Internal adalah pemindahan dana antar bank dalam perusahaan yang sama. Transfer Inter Company adalah pemindahan dana dari satu perusahaan ke perusahaan lain dalam grup. Transfer Internal mengubah saldo antar rekening dalam company yang sama, sedangkan Transfer Inter Company menghasilkan catatan PV di perusahaan pengirim dan RV di perusahaan penerima.
+
+#18.6 User bertanya kenapa harus isi PPH Type
+
+Jawaban AI:
+PPH Type wajib jika ada nilai PPH karena sistem perlu mengetahui jenis pajak penghasilan yang digunakan. PPH 21, PPH 23, PPH 26, dan PPH 4 ayat 2 memiliki perlakuan dan rate berbeda. Jika tidak yakin tipe PPH-nya, jangan asal pilih. Tanyakan ke Tax.
+
+#18.7 User bertanya kenapa bank amount tidak sama total amount
+
+Jawaban AI:
+Bank Amount adalah nominal aktual yang keluar atau masuk bank. Total Amount dihitung dari detail transaksi: DPP plus PPN minus PPH. Jika tidak sama, biasanya ada kesalahan amount detail, tax code, PPN, PPH, atau PPH Type. Periksa ulang detail COA dan perhitungan pajaknya.
+
+#18.8 User bertanya dokumen sudah approve tax tapi masih Need Approval
+
+Jawaban AI:
+Coba refresh halaman dan cek filter status. Jika dokumen masih muncul sebagai Need Approval setelah refresh, kemungkinan status update belum tersimpan atau ada masalah cache/API. Kirim nomor dokumen dan screenshot ke IT.
+
+#18.9 User bertanya apakah bisa membuat CB Payment tanpa invoice
+
+Jawaban AI:
+Sebaiknya CB Payment dibuat berdasarkan invoice atau dokumen pendukung. Jika memang tidak ada invoice, misalnya advance atau transaksi khusus, description harus sangat jelas dan harus ada approval dari atasan. Jangan membuat pembayaran tanpa dasar dokumen yang bisa diaudit.
+
+#18.10 User bertanya apakah bisa menerima uang dari beberapa customer dalam satu CB Receiving
+
+Jawaban AI:
+Tidak disarankan. Lebih baik satu dokumen untuk satu customer agar mudah ditelusuri dan direkonsiliasi. Jika terpaksa menggabungkan, harus ada approval dari Head Finance dan description harus sangat detail.
+
+
+19. KAMUS SINGKAT UNTUK AI CHATBOT
+
+Jika user menyebut CB Payment, pahami sebagai Cashbook Payment atau pembayaran uang keluar.
+
+Jika user menyebut CB Receiving, pahami sebagai Cashbook Receiving atau penerimaan uang masuk.
+
+Jika user menyebut PV, pahami sebagai dokumen payment voucher atau sisi uang keluar.
+
+Jika user menyebut RV, pahami sebagai receiving voucher atau sisi uang masuk.
+
+Jika user menyebut CekBG, cek bg, BG, atau cek, pahami sebagai instrumen pembayaran cek atau bilyet giro.
+
+Jika user menyebut bank amount, pahami sebagai nominal aktual bank.
+
+Jika user menyebut total amount, pahami sebagai hasil perhitungan final dari detail dan pajak.
+
+Jika user menyebut DPP, pahami sebagai dasar pengenaan pajak.
+
+Jika user menyebut PPN, pahami sebagai pajak pertambahan nilai.
+
+Jika user menyebut PPH, pahami sebagai pajak penghasilan atau withholding tax.
+
+Jika user menyebut PPH type, pahami sebagai jenis PPH yang wajib diisi jika ada PPH.
+
+Jika user menyebut posting, pahami sebagai finalisasi ke General Ledger.
+
+Jika user menyebut checking, pahami sebagai approval/review sebelum dokumen lanjut.
+
+Jika user menyebut void, pahami sebagai pembatalan dokumen dengan alasan.
+
+Jika user menyebut stuck, pahami sebagai dokumen tertahan di status tertentu dan perlu dicek apakah menunggu approval atau ada error sistem.
+
+
+20. INSTRUKSI KHUSUS UNTUK AI CHATBOT
+
+AI harus menjawab dengan bahasa user-friendly, bukan bahasa coding.
+
+AI harus menjelaskan flow bisnis, bukan menyebut nama fungsi atau endpoint kecuali user memang bertanya sebagai developer.
+
+AI harus membedakan masalah input user dan masalah teknis sistem.
+
+Jika masalah adalah field kosong, amount tidak match, PPH Type kosong, atau salah tax code, arahkan user untuk memperbaiki data.
+
+Jika masalah adalah menu tidak muncul, grid error, dropdown kosong, server error, status tidak berubah, dokumen tidak muncul, atau posting gagal tanpa alasan jelas, arahkan ke IT.
+
+AI harus menyarankan user menyiapkan nomor dokumen, status, screenshot, company code, dan waktu kejadian saat eskalasi ke IT.
+
+AI tidak boleh menyarankan user mengedit dokumen yang sudah posted secara langsung.
+
+AI harus menyarankan void, reverse, atau koreksi resmi jika dokumen sudah final.
+
+AI harus mengingat bahwa tax approval adalah gatekeeper sebelum posting untuk dokumen yang memiliki pajak.
+
+AI harus selalu menekankan bahwa Bank Amount harus sama dengan Total Amount, dan Total Amount berasal dari DPP plus PPN minus PPH.
+
+AI harus mengingat bahwa Transfer Internal adalah antar bank dalam perusahaan yang sama, sedangkan Transfer Inter Company adalah antar perusahaan.
+
+AI harus mengingat bahwa Transfer Internal dan Transfer Inter Company membentuk pasangan PV dan RV.
+
+AI harus berhati-hati saat menjawab soal pajak. Jika user tidak tahu PPH Type atau tax code, arahkan untuk konfirmasi ke Tax Team.
+
+AI harus berhati-hati saat menjawab soal master data. Jika vendor, customer, bank, COA, atau tax code tidak muncul, arahkan ke IT atau Admin Master Data.
+
+
+21. RANGKUMAN MODUL CASHBANK
+
+CashBank adalah modul utama untuk mengontrol pergerakan kas dan bank perusahaan.
+
+CB Payment mencatat uang keluar.
+
+CB Receiving mencatat uang masuk.
+
+Transfer Internal mencatat perpindahan uang antar rekening dalam perusahaan yang sama.
+
+Transfer Inter Company mencatat perpindahan uang antar perusahaan dalam grup.
+
+Payment Tax Approval memverifikasi pajak untuk pembayaran.
+
+Receiving Tax Approval memverifikasi pajak untuk penerimaan.
+
+Semua dokumen CashBank harus memiliki data yang jelas, nominal yang balance, detail COA yang benar, pajak yang valid, dan approval sesuai workflow.
+
+Jika sudah posted, dokumen menjadi final dan tidak boleh diedit langsung.
+
+Jika ada error input, user dapat memperbaiki sesuai pesan validasi.
+
+Jika ada error sistem, data tidak muncul, status stuck, atau posting gagal tanpa alasan jelas, masalah harus diarahkan ke IT.
+
+CashBank yang rapi akan membuat cash flow akurat, bank reconciliation mudah, audit trail jelas, dan laporan keuangan lebih reliable.

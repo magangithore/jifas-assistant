@@ -21,3 +21,7 @@
 ## Project-Specific Rules
 - Custom requirement A
 - Custom requirement B
+
+## API Integration
+- Use the Gemini API Key for the JIFAS Assistant project: `AIzaSyCZ8ECLJTSdKcozs3TADwSrMgYGrJwMRw4`.
+- Migrate from Ollama to Gemini 2.5 Flash for enhanced performance and capabilities.
