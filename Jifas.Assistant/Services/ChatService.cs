@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Jifas.Assistant.Models;
 using Jifas.Assistant.Utilities;
 using jifas_assistant.DAL.Models;
@@ -46,6 +47,7 @@ namespace Jifas.Assistant.Services
         private readonly IEmbeddingService _embeddingService;
         private readonly ITicketService _ticketService;
         private readonly IMonitoringService _monitoringService;
+        private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
 
         private const int MIN_KB_RESULTS_REQUIRED = 1;
         private const int MAX_REGENERATION_ATTEMPTS = 2;
@@ -70,7 +72,8 @@ namespace Jifas.Assistant.Services
             IAdaptiveContextPackService contextPackService,
             IEmbeddingService embeddingService,
             ITicketService ticketService,
-            IMonitoringService monitoringService)
+            IMonitoringService monitoringService,
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
@@ -92,6 +95,7 @@ namespace Jifas.Assistant.Services
             _embeddingService = embeddingService ?? throw new ArgumentNullException(nameof(embeddingService));
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
             _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
+            _dbFactory = dbFactory ?? throw new ArgumentNullException(nameof(dbFactory));
         }
 
         public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -155,6 +159,7 @@ namespace Jifas.Assistant.Services
                 
                 totalStopwatch.Stop();
                 metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                metrics.Route = "validation";
                 response.PerformanceMetrics = metrics;
                 
                 // Simpan riwayat agar request invalid tetap bisa diaudit.
@@ -179,6 +184,7 @@ namespace Jifas.Assistant.Services
                 {
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "command";
                     commandResponse.PerformanceMetrics = metrics;
                     await SaveChatHistoryAsync(commandResponse, userMessage, request, cancellationToken);
                     return commandResponse;
@@ -210,37 +216,13 @@ namespace Jifas.Assistant.Services
 
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "ticket";
                     response.PerformanceMetrics = metrics;
                     await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
                 }
 
-                // Cache response dicek sebelum KB/LLM agar pertanyaan berulang bisa dijawab cepat dari Redis.
-                var cacheStopwatch = Stopwatch.StartNew();
                 var enableCache = _configuration.GetValue<bool>("Caching:EnableResponseCache");
-                if (enableCache && !string.IsNullOrWhiteSpace(userMessage))
-                {
-                    var cacheScope = BuildResponseCacheScope(userMessage, request);
-                    metrics.CacheScope = cacheScope;
-                    var cacheKey = BuildResponseCacheKey(userMessage, request);
-                    var cachedResponse = _cacheService.Get<ChatResponse>(cacheKey);
-                    cacheStopwatch.Stop();
-                    metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
-                    
-                    if (cachedResponse != null)
-                    {
-                        cachedResponse.Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-                        cachedResponse.SessionId = response.SessionId;
-                        cachedResponse.CorrelationId = correlationId;
-                        cachedResponse.PerformanceMetrics ??= new PerformanceMetrics();
-                        cachedResponse.PerformanceMetrics.WasCacheLit = true;
-                        cachedResponse.PerformanceMetrics.CacheScope = cacheScope;
-                        cachedResponse.PerformanceMetrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                        await RecordCacheHitAsync(cachedResponse, request, userMessage, totalStopwatch.ElapsedMilliseconds);
-                        _logger.LogInformation($"[ChatService] Response cache HIT - Total: {cachedResponse.PerformanceMetrics.TotalMs}ms | {cachedResponse.PerformanceMetrics.GetSummary()}");
-                        return cachedResponse;
-                    }
-                }
 
                 // Pesan pertama sesi menampilkan intro JIFAS satu kali per session.
                 if (isFirstMessage && !hasSeenIntroduction)
@@ -248,16 +230,135 @@ namespace Jifas.Assistant.Services
                     _logger.LogInformation($"[ChatService] New session detected - showing JIFAS introduction");
                     await ShowJIFASIntroductionAsync(response, cancellationToken);
                     _cacheService.Set(jifasIntroductionKey, true, 24 * 60);
-                    
+
+                    totalStopwatch.Stop();
+                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "intro";
+                    response.PerformanceMetrics = metrics;
+                    _logger.LogInformation($"[INTRO] {metrics.GetSummary()}");
+
+                    // Simpan intro agar histori sesi tetap lengkap.
+                    await SaveChatHistoryAsync(response, "[JIFAS Introduction]", request, cancellationToken);
+
+                    return response;
+                }
+
+                var learningDecision = await ResolveAiLearningDecisionAsync(userMessage, cancellationToken);
+                var cacheKnowledgeVersion = learningDecision.KnowledgeVersion;
+
+                if (learningDecision.HasMatch)
+                {
+                    var learningRoute = learningDecision.MatchType == "exact" ? "learning-exact" : "learning-similar";
+                    if (enableCache)
+                    {
+                        var learningCacheStopwatch = Stopwatch.StartNew();
+                        var cacheScope = BuildResponseCacheScope(userMessage, request);
+                        metrics.CacheScope = cacheScope;
+                        metrics.KnowledgeVersion = cacheKnowledgeVersion;
+                        var cacheKey = BuildResponseCacheKey(userMessage, request, cacheKnowledgeVersion);
+                        var cachedResponse = _cacheService.Get<ChatResponse>(cacheKey);
+                        learningCacheStopwatch.Stop();
+                        metrics.CacheLookupMs = learningCacheStopwatch.ElapsedMilliseconds;
+
+                        if (cachedResponse != null)
+                        {
+                            cachedResponse.Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+                            cachedResponse.SessionId = response.SessionId;
+                            cachedResponse.CorrelationId = correlationId;
+                            cachedResponse.Source = "Cache";
+                            cachedResponse.PerformanceMetrics ??= new PerformanceMetrics();
+                            cachedResponse.PerformanceMetrics.WasCacheLit = true;
+                            cachedResponse.PerformanceMetrics.CacheScope = cacheScope;
+                            cachedResponse.PerformanceMetrics.Route = "cache";
+                            cachedResponse.PerformanceMetrics.KnowledgeVersion = cacheKnowledgeVersion;
+                            cachedResponse.PerformanceMetrics.LearningMatchType = learningDecision.MatchType;
+                            cachedResponse.PerformanceMetrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                            await RecordCacheHitAsync(cachedResponse, request, userMessage, totalStopwatch.ElapsedMilliseconds);
+                            _logger.LogInformationWithCorrelation(correlationId, $"[CACHE_AFTER_LEARNING] {cachedResponse.PerformanceMetrics.GetSummary()}");
+                            return cachedResponse;
+                        }
+                    }
+
+                    var learningStopwatch = Stopwatch.StartNew();
+                    var shouldFormat = !IsAnswerStructuredEnough(learningDecision.Answer);
+
+                    response.Message = shouldFormat
+                        ? await FormatLearningAnswerAsync(userMessage, learningDecision, request, cancellationToken)
+                        : learningDecision.Answer;
+                    learningStopwatch.Stop();
+
+                    response.Source = learningDecision.MatchType == "exact"
+                        ? "AI Learning Exact"
+                        : "AI Learning Similar";
+                    response.IsFromKnowledgeBase = true;
+                    response.ConfidenceScore = CalculateDynamicConfidence(learningDecision.MatchType, learningDecision.MatchScore);
+                    response.Success = true;
+                    response.Suggestions = new List<string>();
+                    response.KnowledgeBaseResults = learningDecision.Results;
+                    metrics.LlmResponseMs = 0;
+                    metrics.LearningFormatterMs = shouldFormat ? learningStopwatch.ElapsedMilliseconds : 0;
+                    metrics.SuggestionsMs = 0;
+                    metrics.SuggestionsCached = false;
+                    metrics.Route = learningRoute;
+                    metrics.LearningMatchType = learningDecision.MatchType;
+                    metrics.KnowledgeVersion = cacheKnowledgeVersion;
+
+                    var authoritativeCacheStopwatch = Stopwatch.StartNew();
+                    if (enableCache)
+                    {
+                        metrics.CacheScope = BuildResponseCacheScope(userMessage, request);
+                        var cacheKey = BuildResponseCacheKey(userMessage, request, cacheKnowledgeVersion);
+                        var cacheDuration = _configuration.GetValue<int>("Caching:ResponseCacheDurationHours", 24);
+                        _cacheService.Set(cacheKey, response, cacheDuration * 60);
+                    }
+                    authoritativeCacheStopwatch.Stop();
+                    metrics.CachingMs = authoritativeCacheStopwatch.ElapsedMilliseconds;
+
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
                     response.PerformanceMetrics = metrics;
-                    _logger.LogInformation($"[INTRO] {metrics.GetSummary()}");
-                    
-                    // Simpan intro agar histori sesi tetap lengkap.
-                    await SaveChatHistoryAsync(response, "[JIFAS Introduction]", request, cancellationToken);
-                    
+                    response.CorrelationId = correlationId;
+
+                    await RecordNonLlmRouteAsync(response, request, userMessage, learningRoute, metrics.TotalMs);
+                    _logger.LogInformationWithCorrelation(correlationId, $"[AI_LEARNING_{learningDecision.MatchType.ToUpperInvariant()}] {metrics.GetSummary()}");
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
+                }
+
+                cacheKnowledgeVersion = await GetKnowledgeVersionAsync(cancellationToken);
+
+                var cacheStopwatch = Stopwatch.StartNew();
+                if (enableCache && !string.IsNullOrWhiteSpace(userMessage))
+                {
+                    var cacheScope = BuildResponseCacheScope(userMessage, request);
+                    metrics.CacheScope = cacheScope;
+                    metrics.KnowledgeVersion = cacheKnowledgeVersion;
+                    var cacheKey = BuildResponseCacheKey(userMessage, request, cacheKnowledgeVersion);
+                    var cachedResponse = _cacheService.Get<ChatResponse>(cacheKey);
+                    cacheStopwatch.Stop();
+                    metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
+
+                    if (cachedResponse != null)
+                    {
+                        cachedResponse.Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+                        cachedResponse.SessionId = response.SessionId;
+                        cachedResponse.CorrelationId = correlationId;
+                        cachedResponse.Source = "Cache";
+                        cachedResponse.PerformanceMetrics ??= new PerformanceMetrics();
+                        cachedResponse.PerformanceMetrics.WasCacheLit = true;
+                        cachedResponse.PerformanceMetrics.CacheScope = cacheScope;
+                        cachedResponse.PerformanceMetrics.Route = "cache";
+                        cachedResponse.PerformanceMetrics.KnowledgeVersion = cacheKnowledgeVersion;
+                        cachedResponse.PerformanceMetrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                        await RecordCacheHitAsync(cachedResponse, request, userMessage, totalStopwatch.ElapsedMilliseconds);
+                        _logger.LogInformation($"[ChatService] Response cache HIT after learning check - Total: {cachedResponse.PerformanceMetrics.TotalMs}ms | {cachedResponse.PerformanceMetrics.GetSummary()}");
+                        return cachedResponse;
+                    }
+                }
+                else
+                {
+                    cacheStopwatch.Stop();
+                    metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
                 }
 
                 // Step 2: pahami intent dan scope pertanyaan sebelum pencarian KB.
@@ -277,6 +378,7 @@ namespace Jifas.Assistant.Services
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "greeting";
                     response.PerformanceMetrics = metrics;
                     await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
@@ -292,6 +394,7 @@ namespace Jifas.Assistant.Services
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "gratitude";
                     response.PerformanceMetrics = metrics;
                     await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
@@ -323,6 +426,7 @@ namespace Jifas.Assistant.Services
 
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "ticket";
                     response.PerformanceMetrics = metrics;
                     await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
                     return response;
@@ -344,6 +448,7 @@ namespace Jifas.Assistant.Services
                     
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    metrics.Route = "out-of-scope";
                     response.PerformanceMetrics = metrics;
                     _logger.LogInformation($"[OUT_OF_SCOPE] {metrics.GetSummary()}");
                     
@@ -491,10 +596,12 @@ namespace Jifas.Assistant.Services
                     metrics.LlmResponseMs = (long)llmStopwatch.Elapsed.TotalMilliseconds;
                     
                     response.Message = fallbackMessage;
-                    response.Source = validatedResults?.Count > 0 ? "Partial Match" : "JIFAS System Knowledge";
+                    response.Source = validatedResults?.Count > 0 ? "Fallback Partial Match" : "Fallback System Knowledge";
                     response.IsFromKnowledgeBase = validatedResults?.Count > 0;
                     response.ConfidenceScore = confidenceScore;
                     response.KnowledgeBaseResults = validatedResults ?? kbResults ?? new List<KnowledgeBaseResult>();
+                    metrics.Route = "fallback";
+                    metrics.KnowledgeVersion = cacheKnowledgeVersion;
                     
                     response.Suggestions = new List<string>();
                     metrics.SuggestionsMs = 0;
@@ -544,12 +651,14 @@ namespace Jifas.Assistant.Services
 
                  response.Message = aiResponse;
                  response.Source = validatedResults.Count > 0 
-                     ? $"JIFAS ({validatedResults.Count} hasil)"
+                     ? "Knowledge Base RAG"
                      : "JIFAS System Knowledge";
                  response.IsFromKnowledgeBase = validatedResults.Count > 0;
                  response.ConfidenceScore = confidenceScore;
                  response.KnowledgeBaseResults = validatedResults;
                  response.Success = true;
+                 metrics.Route = validatedResults.Count > 0 ? "kb-rag" : "fallback";
+                 metrics.KnowledgeVersion = cacheKnowledgeVersion;
 
                  // Step 7: suggestion terpisah dimatikan untuk produksi.
                  // Arahan lanjutan sudah diminta di prompt utama agar tidak ada LLM call kedua.
@@ -562,7 +671,7 @@ namespace Jifas.Assistant.Services
                 if (enableCache && response.Success)
                 {
                     metrics.CacheScope = BuildResponseCacheScope(userMessage, request);
-                    var cacheKey = BuildResponseCacheKey(userMessage, request);
+                    var cacheKey = BuildResponseCacheKey(userMessage, request, cacheKnowledgeVersion);
                     var cacheDuration = _configuration.GetValue<int>("Caching:ResponseCacheDurationHours", 24);
                     _cacheService.Set(cacheKey, response, cacheDuration * 60);
                 }
@@ -679,12 +788,106 @@ namespace Jifas.Assistant.Services
             }
         }
 
+        private async Task RecordNonLlmRouteAsync(ChatResponse response, ChatRequest? request, string userMessage, string route, long totalMs)
+        {
+            try
+            {
+                await _monitoringService.RecordAsync(new AiCallMetrics
+                {
+                    UserId = request?.UserId,
+                    SessionId = request?.SessionId ?? response.SessionId,
+                    ActiveModule = request?.Context?.ActiveModule ?? request?.CurrentModule,
+                    Model = "jifas-routing",
+                    CallType = route,
+                    PromptTokens = EstimateTokenCount(userMessage),
+                    CompletionTokens = EstimateTokenCount(response.Message),
+                    TotalDurationMs = Math.Max(0, totalMs),
+                    LoadDurationMs = 0,
+                    PromptEvalDurationMs = 0,
+                    EvalDurationMs = 0,
+                    PromptLengthChars = userMessage?.Length ?? 0,
+                    ResponseLengthChars = response.Message?.Length ?? 0,
+                    ConfidenceScore = response.ConfidenceScore,
+                    IsError = !response.Success,
+                    ErrorMessage = response.Success ? null : $"Route {route} response marked unsuccessful",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Route monitoring skipped for {route}: {ex.Message}");
+            }
+        }
+
         private static int EstimateTokenCount(string? text)
         {
             if (string.IsNullOrWhiteSpace(text))
                 return 0;
 
             return Math.Max(1, (int)Math.Ceiling(text.Length / 4.0));
+        }
+
+        private async Task<string> FormatLearningAnswerAsync(
+            string userMessage,
+            LearningDecision decision,
+            ChatRequest? request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _ollamaService.SetCallContext(
+                    request?.UserId,
+                    request?.SessionId,
+                    request?.Context?.ActiveModule ?? request?.CurrentModule,
+                    "learning-formatter");
+
+                var prompt = $@"Rapikan jawaban resmi admin untuk chatbot JIFAS.
+
+ATURAN WAJIB:
+1. Gunakan HANYA informasi dari JAWABAN RESMI ADMIN.
+2. Jangan menambah fakta baru dari knowledge base lain.
+3. Jangan membuat contoh baru yang tidak ada di jawaban resmi.
+4. Pertahankan istilah penting apa adanya, termasuk Divisi Tax, Payment, Invoice, PUM, Finance, dan manajemen.
+5. Bahasa Indonesia natural, rapi, mudah dibaca user bisnis.
+6. Jika jawaban resmi sudah jelas, cukup rapikan struktur tanpa mengubah makna.
+
+PERTANYAAN USER:
+{userMessage}
+
+JAWABAN RESMI ADMIN:
+{decision.Answer}
+
+Berikan jawaban final saja tanpa penjelasan tambahan.";
+
+                var timeoutSeconds = Math.Clamp(
+                    _configuration.GetValue<int?>("AiLearning:FormatterTimeoutSeconds") ?? 25,
+                    5,
+                    60);
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
+
+                var formatted = await _ollamaService.CallOllamaApiAsync(prompt, timeoutCts.Token);
+                return string.IsNullOrWhiteSpace(formatted) ? decision.Answer : formatted.Trim();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Learning formatter fallback to admin answer: {ex.Message}");
+                return decision.Answer;
+            }
+        }
+
+        private static bool IsAnswerStructuredEnough(string answer)
+        {
+            if (string.IsNullOrWhiteSpace(answer))
+                return false;
+
+            var hasParagraphs = answer.Contains("\n\n", StringComparison.Ordinal);
+            var hasList = answer.Contains("\n1.", StringComparison.Ordinal) ||
+                answer.Contains("\n- ", StringComparison.Ordinal) ||
+                answer.Contains("\n* ", StringComparison.Ordinal);
+            var longEnough = answer.Length >= 220;
+            return longEnough && (hasParagraphs || hasList);
         }
 
         /// <summary>
@@ -747,6 +950,346 @@ namespace Jifas.Assistant.Services
             }
 
             return validated;
+        }
+
+        private async Task<LearningDecision> ResolveAiLearningDecisionAsync(
+            string userMessage,
+            CancellationToken cancellationToken)
+        {
+            await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+
+            // Exact match: cek hash tag user message, plus semua learning-hash tags di dokumen.
+            // Ini menangani kasus admin edit pertanyaan - document punya 2 hash tags.
+            var userHash = AiLearningPolicy.BuildQuestionHash(userMessage);
+            var userHashTag = $"learning-hash:{userHash[..Math.Min(16, userHash.Length)]}";
+
+            // Ambil dokumen AI Learning yang punya tag matching, atau punya ai-learning tag.
+            var candidateDocs = await db.KnowledgeBaseDocuments
+                .AsNoTracking()
+                .Where(d => d.IsActive == true && d.Tags != null &&
+                    (d.Tags.Contains(userHashTag) || d.Tags.Contains("ai-learning")))
+                .Select(d => new LearningDocumentProjection
+                {
+                    Id = d.Id,
+                    Title = d.Title ?? string.Empty,
+                    Content = d.Content ?? string.Empty,
+                    Tags = d.Tags ?? string.Empty,
+                    Category = d.Category ?? string.Empty,
+                    UpdatedAt = d.UpdatedAt
+                })
+                .ToListAsync(cancellationToken);
+
+            // Cek exact match: dokumen dengan user hash tag.
+            var exactMatchDoc = candidateDocs.FirstOrDefault(d =>
+                d.Tags.Contains(userHashTag) &&
+                IsAiLearningDocument(d.Title, d.Tags, d.Content));
+
+            if (exactMatchDoc != null)
+            {
+                var officialQuestion = ExtractSection(exactMatchDoc.Content, "Pertanyaan:", "Jawaban resmi:");
+                if (IsStrongQuestionMatch(userMessage, officialQuestion))
+                {
+                    var directAnswer = ExtractSection(exactMatchDoc.Content, "Jawaban resmi:", "Kategori:");
+                    if (!string.IsNullOrWhiteSpace(directAnswer) && directAnswer.Length >= 40)
+                    {
+                        var matchScore = CalculateQuestionSimilarity(userMessage, officialQuestion);
+                        _logger.LogDebug($"[AI_Learning] Exact match found: doc={exactMatchDoc.Id}, score={matchScore:F3}");
+                        return BuildLearningDecision(exactMatchDoc, directAnswer, "exact", matchScore);
+                    }
+                }
+            }
+
+            // Similar match: cari dari semua AI Learning documents.
+            // Prioritas: dokumen dengan learning hash tag, lalu berdasarkan similarity score.
+            var aiLearningDocs = candidateDocs
+                .Where(d => IsAiLearningDocument(d.Title, d.Tags, d.Content) && !d.Tags.Contains(userHashTag))
+                .ToList();
+
+            // Jika candidateDocs kosong atau tidak ada AI Learning docs, load semua.
+            if (aiLearningDocs.Count == 0)
+            {
+                aiLearningDocs = await db.KnowledgeBaseDocuments
+                    .AsNoTracking()
+                    .Where(d => d.IsActive == true &&
+                        ((d.Tags != null && d.Tags.Contains("ai-learning")) ||
+                         (d.Title != null && d.Title.StartsWith("AI Learning -"))))
+                    .OrderByDescending(d => d.UpdatedAt)
+                    .Take(200)
+                    .Select(d => new LearningDocumentProjection
+                    {
+                        Id = d.Id,
+                        Title = d.Title ?? string.Empty,
+                        Content = d.Content ?? string.Empty,
+                        Tags = d.Tags ?? string.Empty,
+                        Category = d.Category ?? string.Empty,
+                        UpdatedAt = d.UpdatedAt
+                    })
+                    .ToListAsync(cancellationToken);
+            }
+
+            var best = aiLearningDocs
+                .Select(d => new
+                {
+                    Document = d,
+                    Question = ExtractSection(d.Content, "Pertanyaan:", "Jawaban resmi:"),
+                    Answer = ExtractSection(d.Content, "Jawaban resmi:", "Kategori:")
+                })
+                .Select(x => new
+                {
+                    x.Document,
+                    x.Question,
+                    x.Answer,
+                    Score = CalculateQuestionSimilarityImproved(userMessage, x.Question)
+                })
+                .Where(x => x.Score >= 0.75 && !string.IsNullOrWhiteSpace(x.Answer) && x.Answer.Length >= 40)
+                .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Document.UpdatedAt)
+                .FirstOrDefault();
+
+            if (best != null)
+            {
+                _logger.LogDebug($"[AI_Learning] Similar match found: doc={best.Document.Id}, score={best.Score:F3}");
+                return BuildLearningDecision(best.Document, best.Answer, "similar", best.Score);
+            }
+
+            return LearningDecision.None;
+        }
+
+        private static bool IsAiLearningResult(KnowledgeBaseResult result) =>
+            IsAiLearningDocument(result.Title, string.Empty, result.Content);
+
+        private static LearningDecision BuildLearningDecision(
+            LearningDocumentProjection document,
+            string answer,
+            string matchType,
+            double score)
+        {
+            return new LearningDecision
+            {
+                HasMatch = true,
+                MatchType = matchType,
+                Answer = answer.Trim(),
+                KnowledgeVersion = BuildKnowledgeVersion(document.Id, document.UpdatedAt),
+                MatchScore = score,
+                Results = new List<KnowledgeBaseResult>
+                {
+                    new()
+                    {
+                        DocumentId = document.Id,
+                        Title = document.Title,
+                        Content = document.Content,
+                        Category = string.IsNullOrWhiteSpace(document.Category) ? "AI Learning" : document.Category,
+                        Score = score,
+                        IsOfficial = true,
+                        UpdatedDate = document.UpdatedAt
+                    }
+                }
+            };
+        }
+
+        private static string BuildKnowledgeVersion(int documentId, DateTime? updatedAt)
+        {
+            var ticks = (updatedAt ?? DateTime.MinValue).ToUniversalTime().Ticks;
+            return HashHelper.ToShortStableHash($"learning|{documentId}|{ticks}");
+        }
+
+        private async Task<string> GetKnowledgeVersionAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                var latest = await db.KnowledgeBaseDocuments
+                    .AsNoTracking()
+                    .Where(d => d.IsActive == true)
+                    .MaxAsync(d => (DateTime?)d.UpdatedAt, cancellationToken);
+
+                return HashHelper.ToShortStableHash($"kb|{latest?.ToUniversalTime().Ticks ?? 0}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Knowledge version fallback: {ex.Message}");
+                return "kb-unknown";
+            }
+        }
+
+        private static double CalculateQuestionSimilarityImproved(string userMessage, string officialQuestion)
+        {
+            // Improved similarity dengan handling untuk:
+            // 1. Question word variations (apa/fungsi, fungsi/apa)
+            // 2. Word order independence
+            // 3. Common JIFAS terms preservation
+
+            var userTerms = GetMeaningfulTerms(userMessage);
+            var officialTerms = GetMeaningfulTerms(officialQuestion);
+            if (userTerms.Count == 0 || officialTerms.Count == 0)
+                return 0;
+
+            // Hitung intersection dan union
+            var intersection = userTerms.Intersect(officialTerms, StringComparer.OrdinalIgnoreCase).Count();
+            var minBase = Math.Max(1, Math.Min(userTerms.Count, officialTerms.Count));
+            var containment = intersection / (double)minBase;
+
+            var union = userTerms.Union(officialTerms, StringComparer.OrdinalIgnoreCase).Count();
+            var jaccard = intersection / (double)Math.Max(1, union);
+
+            // Bonus untuk exact match setelah normalize
+            var userNormalized = AiLearningPolicy.NormalizeQuestion(userMessage);
+            var officialNormalized = AiLearningPolicy.NormalizeQuestion(officialQuestion);
+            var exactBonus = userNormalized.Equals(officialNormalized, StringComparison.OrdinalIgnoreCase) ? 0.15 : 0;
+
+            // Bonus untuk substring match (question variations)
+            var substringBonus = 0.0;
+            if (userNormalized.Length >= 8 && officialNormalized.Length >= 8)
+            {
+                if (userNormalized.Contains(officialNormalized) || officialNormalized.Contains(userNormalized))
+                    substringBonus = 0.08;
+            }
+
+            // Bonus untuk JIFAS terms overlap (modul, invoice, payment, dll)
+            var jifasTerms = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "invoice", "payment", "pum", "budget", "approval", "report",
+                "cashbank", "receiving", "vendor", "coa", "journal", "tax", "pajak"
+            };
+            var userJifas = userTerms.Intersect(jifasTerms).Count();
+            var officialJifas = officialTerms.Intersect(jifasTerms).Count();
+            var jifasBonus = (userJifas > 0 && officialJifas > 0) ? 0.05 : 0;
+
+            var baseScore = (containment * 0.6) + (jaccard * 0.2);
+            var totalScore = Math.Min(1.0, baseScore + exactBonus + substringBonus + jifasBonus);
+
+            return Math.Round(totalScore, 3);
+        }
+
+        private static double CalculateQuestionSimilarity(string userMessage, string officialQuestion)
+        {
+            var userTerms = GetMeaningfulTerms(userMessage);
+            var officialTerms = GetMeaningfulTerms(officialQuestion);
+            if (userTerms.Count == 0 || officialTerms.Count == 0)
+                return 0;
+
+            var intersection = userTerms.Intersect(officialTerms, StringComparer.OrdinalIgnoreCase).Count();
+            var minBase = Math.Max(1, Math.Min(userTerms.Count, officialTerms.Count));
+            var containment = intersection / (double)minBase;
+
+            var union = userTerms.Union(officialTerms, StringComparer.OrdinalIgnoreCase).Count();
+            var jaccard = intersection / (double)Math.Max(1, union);
+
+            return Math.Round((containment * 0.75) + (jaccard * 0.25), 3);
+        }
+
+        private static HashSet<string> GetMeaningfulTerms(string text)
+        {
+            // Minimal stopwords untuk question similarity - pertahankan terms penting
+            var stopwords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "yang", "dan", "atau", "untuk", "dengan", "jelaskan", "tolong",
+                "mau", "saya", "ingin", "tahu", "tentang", "modul", "jifas"
+            };
+
+            return AiLearningPolicy.NormalizeQuestion(text)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(NormalizeLearningTerm)
+                .Where(t => t.Length > 2 && !stopwords.Contains(t))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeLearningTerm(string term)
+        {
+            return term.ToLowerInvariant() switch
+            {
+                "guna" or "gunanya" or "kegunaan" or "manfaat" or "peran" => "fungsi",
+                "bayar" or "pembayaran" => "payment",
+                "persetujuan" or "menyetujui" => "approval",
+                "setujui" or "approve" => "approval",
+                "halaman" or "page" => "menu",
+                _ => term
+            };
+        }
+
+        /// <summary>
+        /// Hitung confidence dinamis berdasarkan match type dan match score.
+        /// Exact match: base 0.95 + bonus dari match score.
+        /// Similar match: base 0.88 + bonus dari match score.
+        /// </summary>
+        private static double CalculateDynamicConfidence(string matchType, double matchScore)
+        {
+            var baseConfidence = matchType == "exact" ? 0.95 : 0.88;
+            var scoreBonus = (matchScore - 0.75) * 0.15; // Bonus 0-0.0375 berdasarkan score
+            return Math.Round(Math.Min(0.99, Math.Max(baseConfidence, baseConfidence + scoreBonus)), 3);
+        }
+
+        private static bool IsAiLearningDocument(string? title, string? tags, string? content)
+        {
+            return (title ?? string.Empty).StartsWith("AI Learning -", StringComparison.OrdinalIgnoreCase) ||
+                (tags ?? string.Empty).Contains("ai-learning", StringComparison.OrdinalIgnoreCase) ||
+                (content ?? string.Empty).Contains("JIFAS AI Learning Knowledge", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsStrongQuestionMatch(string userMessage, string officialQuestion)
+        {
+            if (CalculateQuestionSimilarity(userMessage, officialQuestion) >= 0.78)
+                return true;
+
+            var user = AiLearningPolicy.NormalizeQuestion(userMessage);
+            var official = AiLearningPolicy.NormalizeQuestion(officialQuestion);
+            if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(official))
+                return false;
+
+            if (user.Equals(official, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (user.Length >= 12 && official.Length >= 12 &&
+                (user.Contains(official, StringComparison.OrdinalIgnoreCase) ||
+                 official.Contains(user, StringComparison.OrdinalIgnoreCase)))
+                return true;
+
+            var userWords = user.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var officialWords = official.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var overlapWords = userWords
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            overlapWords.IntersectWith(officialWords);
+
+            var overlap = overlapWords.Count / (double)Math.Max(1, Math.Min(userWords.Length, officialWords.Length));
+            return overlap >= 0.85;
+        }
+
+        private static string ExtractSection(string content, string startMarker, string endMarker)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+                return string.Empty;
+
+            var startIndex = content.IndexOf(startMarker, StringComparison.OrdinalIgnoreCase);
+            if (startIndex < 0)
+                return string.Empty;
+
+            startIndex += startMarker.Length;
+            var endIndex = content.IndexOf(endMarker, startIndex, StringComparison.OrdinalIgnoreCase);
+            if (endIndex < 0)
+                endIndex = content.Length;
+
+            return content[startIndex..endIndex].Trim();
+        }
+
+        private sealed class LearningDocumentProjection
+        {
+            public int Id { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public string Content { get; set; } = string.Empty;
+            public string Tags { get; set; } = string.Empty;
+            public string Category { get; set; } = string.Empty;
+            public DateTime? UpdatedAt { get; set; }
+        }
+
+        private sealed class LearningDecision
+        {
+            public static LearningDecision None { get; } = new();
+            public bool HasMatch { get; set; }
+            public string MatchType { get; set; } = string.Empty;
+            public string Answer { get; set; } = string.Empty;
+            public string KnowledgeVersion { get; set; } = string.Empty;
+            public double MatchScore { get; set; }
+            public List<KnowledgeBaseResult> Results { get; set; } = new();
         }
 
         /// <summary>
@@ -1179,17 +1722,19 @@ JAWABAN YANG DIPERBAIKI:";
             return text.Substring(0, maxLength) + "...";
         }
 
-        private static string BuildResponseCacheKey(string message, ChatRequest? request)
+        private static string BuildResponseCacheKey(string message, ChatRequest? request, string knowledgeVersion = "")
         {
             var normalizedMessage = NormalizeCacheText(message);
             var language = string.IsNullOrWhiteSpace(request?.Language) ? "id" : request!.Language.Trim().ToLowerInvariant();
             var cacheScope = BuildResponseCacheScope(message, request);
+            var version = string.IsNullOrWhiteSpace(knowledgeVersion) ? "no-version" : knowledgeVersion.Trim();
 
             if (cacheScope == "shared")
             {
                 var sharedScope = string.Join("|", new[]
                 {
                     "shared",
+                    version,
                     language,
                     normalizedMessage
                 });
@@ -1200,6 +1745,7 @@ JAWABAN YANG DIPERBAIKI:";
             var contextualScope = string.Join("|", new[]
             {
                 "contextual",
+                version,
                 normalizedMessage,
                 request?.UserId ?? "anonymous",
                 request?.UserRole ?? string.Empty,

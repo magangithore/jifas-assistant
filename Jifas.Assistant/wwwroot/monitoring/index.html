@@ -932,6 +932,8 @@
           <option value="all">Semua tipe</option>
           <option value="chat">AI</option>
           <option value="cache-hit">Cache</option>
+          <option value="learning-exact">Learning exact</option>
+          <option value="learning-similar">Learning similar</option>
           <option value="validation">Validasi</option>
           <option value="error">Error</option>
         </select>
@@ -1058,7 +1060,7 @@ function fmtDuration(ms) {
 function fmtDurationLong(ms) {
   if (ms == null || Number.isNaN(Number(ms))) return '-';
   const value = Math.max(0, Math.round(Number(ms)));
-  if (value < 1000) return `${fmtNumber(value, 0)} ms`;
+  if (value < 1000) return '< 1 detik';
 
   const totalSeconds = Math.round(value / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -1078,6 +1080,15 @@ function fmtCallType(type) {
   const labels = {
     'chat': 'AI generate',
     'cache-hit': 'Cache',
+    'learning-exact': 'Learning exact',
+    'learning-similar': 'Learning similar',
+    'kb-rag': 'KB RAG',
+    'fallback': 'Fallback',
+    'ticket': 'Ticket',
+    'intro': 'Intro',
+    'greeting': 'Sapaan',
+    'gratitude': 'Terima kasih',
+    'out-of-scope': 'Di luar scope',
     'suggestions': 'Saran',
     'embedding': 'Embedding',
     'validation': 'Validasi'

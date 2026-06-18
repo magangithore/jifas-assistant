@@ -265,12 +265,17 @@ public static class AiLearningPolicy
             q.Contains("perbedaan");
     }
 
-    private static (bool containsSensitive, string reason) DetectSensitiveData(string text)
+    public static (bool containsSensitive, string reason) DetectSensitiveData(string text)
     {
-        var match = SensitiveRegex.Match(text);
-        return match.Success
-            ? (true, $"Terdeteksi pola sensitif: {match.Value}")
-            : (false, string.Empty);
+        var matches = SensitiveRegex.Matches(text);
+        if (!matches.Any())
+            return (false, string.Empty);
+
+        var uniquePatterns = matches.Select(m => m.Value).Distinct().Take(3).ToList();
+        var reason = uniquePatterns.Count == 1
+            ? $"Terdeteksi pola sensitif: {uniquePatterns.First()}"
+            : $"Terdeteksi {matches.Count} pola sensitif: {string.Join(", ", uniquePatterns)}";
+        return (true, reason);
     }
 
     private static string BuildReason(bool highQuality, bool feedbackDriven, int frequency, bool possibleFalseOutOfScope, bool faqLike)
@@ -451,6 +456,19 @@ public class AiLearningService : IAiLearningService
 
         if (candidate.ContainsSensitiveData)
             throw new InvalidOperationException("Candidate masih bertanda sensitif. Edit dan bersihkan data sensitif sebelum publish.");
+
+        var finalSensitive = AiLearningPolicy.DetectSensitiveData(finalQuestion + "\n" + finalAnswer);
+        if (finalSensitive.containsSensitive)
+        {
+            candidate.ContainsSensitiveData = true;
+            candidate.SensitiveReason = finalSensitive.reason;
+            candidate.Flags = MergeCsv(candidate.Flags, new[] { "SensitiveReviewRequired" });
+            candidate.UpdatedAt = DateTime.UtcNow;
+            await AddAuditAsync(db, candidate.Id, "SensitiveBlocked", actor, candidate.Status, candidate.Status, finalSensitive.reason, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            throw new InvalidOperationException($"Jawaban final masih mengandung data sensitif. {finalSensitive.reason}");
+        }
+
         if (string.IsNullOrWhiteSpace(finalQuestion) || finalQuestion.Length < 8)
             throw new InvalidOperationException("Pertanyaan final terlalu pendek.");
         if (string.IsNullOrWhiteSpace(finalAnswer) || finalAnswer.Length < 120)
@@ -659,11 +677,23 @@ public class AiLearningService : IAiLearningService
 
         var question = GetEffectiveQuestion(candidate);
         var answer = GetEffectiveAnswer(candidate);
-        var learningHashTag = $"learning-hash:{candidate.QuestionHash[..Math.Min(16, candidate.QuestionHash.Length)]}";
+        EnsureFinalAnswerIsSafe(candidate, question, answer);
+
+        var finalQuestionHash = AiLearningPolicy.BuildQuestionHash(question);
+        var finalLearningHashTag = BuildLearningHashTag(finalQuestionHash);
+
+        // Preserve original hash tag jika admin mengedit pertanyaan (menggunakan normalized comparison).
+        // Ini memastikan user yang tanya versi original masih bisa exact match.
+        var originalLearningHashTag = BuildLearningHashTag(candidate.QuestionHash);
+        var preserveOriginalHash = !string.IsNullOrWhiteSpace(candidate.EditedQuestion) &&
+            AiLearningPolicy.NormalizeQuestion(candidate.EditedQuestion) != AiLearningPolicy.NormalizeQuestion(candidate.OriginalQuestion);
+
         var content = BuildKnowledgeContent(question, answer, candidate);
 
         var existingDocument = await db.KnowledgeBaseDocuments
-            .Where(d => d.IsActive == true && d.Tags != null && d.Tags.Contains(learningHashTag))
+            .Where(d => d.IsActive == true &&
+                ((candidate.PublishedDocumentId.HasValue && d.Id == candidate.PublishedDocumentId.Value) ||
+                 (d.Tags != null && (d.Tags.Contains(finalLearningHashTag) || d.Tags.Contains(originalLearningHashTag)))))
             .FirstOrDefaultAsync(cancellationToken);
         if (existingDocument != null)
         {
@@ -676,7 +706,13 @@ public class AiLearningService : IAiLearningService
             existingDocument.Title = BuildKnowledgeTitle(question);
             existingDocument.Content = content;
             existingDocument.Category = string.IsNullOrWhiteSpace(candidate.Category) ? "AI Learning" : candidate.Category;
-            existingDocument.Tags = MergeCsv(candidate.Tags, new[] { learningHashTag, "ai-learning", "approved", "reviewed" });
+
+            // Selalu punya final hash tag; preserve original hash jika pertanyaan diedit.
+            var tagsToMerge = new List<string> { finalLearningHashTag, "ai-learning", "approved", "reviewed" };
+            if (preserveOriginalHash)
+                tagsToMerge.Add(originalLearningHashTag);
+            existingDocument.Tags = MergeCsv(candidate.Tags, tagsToMerge);
+
             existingDocument.IsActive = true;
             existingDocument.UpdatedAt = DateTime.UtcNow;
             existingDocument.UpdatedBy = actor;
@@ -692,7 +728,12 @@ public class AiLearningService : IAiLearningService
             Title = BuildKnowledgeTitle(question),
             Content = content,
             Category = string.IsNullOrWhiteSpace(candidate.Category) ? "AI Learning" : candidate.Category,
-            Tags = MergeCsv(candidate.Tags, new[] { learningHashTag, "ai-learning", "approved", "reviewed" }),
+
+            // Selalu punya final hash tag; preserve original hash jika pertanyaan diedit.
+            Tags = preserveOriginalHash
+                ? MergeCsv(candidate.Tags, new[] { finalLearningHashTag, originalLearningHashTag, "ai-learning", "approved", "reviewed" })
+                : MergeCsv(candidate.Tags, new[] { finalLearningHashTag, "ai-learning", "approved", "reviewed" }),
+
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -778,6 +819,21 @@ public class AiLearningService : IAiLearningService
 
     private static string GetEffectiveAnswer(LearningCandidate candidate) =>
         string.IsNullOrWhiteSpace(candidate.EditedAnswer) ? candidate.OriginalAnswer : candidate.EditedAnswer;
+
+    private static string BuildLearningHashTag(string questionHash) =>
+        $"learning-hash:{questionHash[..Math.Min(16, questionHash.Length)]}";
+
+    private static void EnsureFinalAnswerIsSafe(LearningCandidate candidate, string question, string answer)
+    {
+        var sensitive = AiLearningPolicy.DetectSensitiveData(question + "\n" + answer);
+        if (!sensitive.containsSensitive)
+            return;
+
+        candidate.ContainsSensitiveData = true;
+        candidate.SensitiveReason = sensitive.reason;
+        candidate.Flags = MergeCsv(candidate.Flags, new[] { "SensitiveReviewRequired" });
+        throw new InvalidOperationException($"Jawaban final masih mengandung data sensitif. {sensitive.reason}");
+    }
 
     private static LearningCandidateDto ToDto(LearningCandidate c) => new()
     {

@@ -18,6 +18,7 @@
       --warn: #b45309;
       --danger: #b91c1c;
       --ok: #15803d;
+      --info: #0369a1;
       --shadow: 0 18px 45px rgba(15, 23, 42, .08);
     }
     [data-theme="dark"] {
@@ -32,6 +33,7 @@
       --warn: #f59e0b;
       --danger: #f87171;
       --ok: #4ade80;
+      --info: #38bdf8;
       --shadow: 0 18px 45px rgba(0, 0, 0, .28);
     }
     * { box-sizing: border-box; }
@@ -73,6 +75,7 @@
     h1, h2, h3 { margin: 0; }
     h1 { font-size: 20px; }
     .subtitle { color: var(--muted); font-size: 13px; }
+    .tiny { color: var(--muted); font-size: 12px; }
     .toolbar {
       display: flex;
       gap: 10px;
@@ -101,6 +104,35 @@
     button.warning { background: var(--warn); border-color: var(--warn); color: white; }
     button:disabled { opacity: .55; cursor: not-allowed; }
     main { padding: 24px 28px 36px; }
+    .guide {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .guide-card {
+      padding: 15px 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .guide-card strong { display: block; margin-bottom: 6px; }
+    .guide-card p { margin: 0; color: var(--muted); font-size: 13px; }
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .step {
+      padding: 13px 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .step strong { display: block; margin-bottom: 4px; }
+    .step span { color: var(--muted); font-size: 12px; }
     .stats {
       display: grid;
       grid-template-columns: repeat(6, minmax(120px, 1fr));
@@ -123,6 +155,7 @@
       margin-bottom: 6px;
     }
     .stat strong { display: block; font-size: 26px; line-height: 1; }
+    .stat p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
     .layout {
       display: grid;
       grid-template-columns: minmax(420px, 1fr) minmax(440px, .92fr);
@@ -171,11 +204,26 @@
       font-size: 12px;
       font-weight: 700;
     }
-    .NeedsEdit { color: var(--warn); }
-    .ReadyForPublish { color: var(--brand); }
-    .Published { color: var(--ok); }
-    .PublishFailed { color: var(--danger); }
+    .NeedsEdit { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+    .ReadyForPublish { color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, transparent); }
+    .Published { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+    .PublishFailed { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+    .Archived { color: var(--muted); }
+    .info-pill { color: var(--info); background: color-mix(in srgb, var(--info) 14%, transparent); }
     .detail { padding: 16px; display: grid; gap: 14px; }
+    .decision-box {
+      display: grid;
+      gap: 8px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--brand) 8%, var(--panel));
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
     .field label {
       display: flex;
       justify-content: space-between;
@@ -198,6 +246,19 @@
       color: var(--text);
     }
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .validation-list {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .validation-list .ok { color: var(--ok); }
+    .validation-list .bad { color: var(--danger); }
+    .validation-list .warn { color: var(--warn); }
     .notice {
       margin-bottom: 14px;
       padding: 12px 14px;
@@ -206,10 +267,19 @@
       background: var(--panel);
       color: var(--muted);
     }
-    .empty { padding: 24px; color: var(--muted); }
+    .empty {
+      padding: 24px;
+      color: var(--muted);
+      display: grid;
+      gap: 8px;
+    }
+    .empty strong { color: var(--text); }
     @media (max-width: 1100px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
+      .workflow { grid-template-columns: 1fr; }
+      .guide { grid-template-columns: 1fr; }
       .layout { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
       .list { max-height: none; }
     }
   </style>
@@ -220,13 +290,13 @@
       <div class="logo">AI</div>
       <div>
         <h1>JIFAS AI Learning</h1>
-        <div class="subtitle">Kurasi jawaban chatbot sebelum masuk Knowledge Base resmi</div>
+        <div class="subtitle">Panel kurasi jawaban chatbot sebelum menjadi Knowledge Base resmi</div>
       </div>
     </div>
     <div class="toolbar">
       <input class="api-base" id="apiBase" placeholder="API base URL">
       <input id="apiKey" type="password" placeholder="Admin API key">
-      <button id="saveKey">Simpan key</button>
+      <button id="saveKey">Simpan akses</button>
       <button id="themeToggle">Light mode</button>
       <button class="primary" id="refreshBtn">Refresh</button>
     </div>
@@ -234,6 +304,23 @@
 
   <main>
     <div class="notice" id="notice">Masukkan Admin API key dan pastikan API Base mengarah ke JIFAS Assistant, contoh http://localhost:8888.</div>
+    <section class="guide" aria-label="Panduan kerja admin">
+      <div class="guide-card">
+        <strong>Yang perlu dikerjakan admin</strong>
+        <p>Fokus ke status Perlu diedit. Rapikan jawaban final, hapus data sensitif, lalu tandai siap publish.</p>
+      </div>
+      <div class="guide-card">
+        <strong>Cara jawaban dipakai chatbot</strong>
+        <p>Setelah publish, pertanyaan yang sama memakai jawaban final admin. Pertanyaan mirip memakai jawaban final sebagai sumber utama.</p>
+      </div>
+    </section>
+    <section class="workflow" aria-label="Alur AI Learning">
+      <div class="step"><strong>1. Ambil Chat</strong><span>Collector memilih percakapan yang layak dikurasi.</span></div>
+      <div class="step"><strong>2. Edit Jawaban</strong><span>Admin rapikan pertanyaan, jawaban, kategori, dan tags.</span></div>
+      <div class="step"><strong>3. Cek Aman</strong><span>Jawaban final wajib bersih dari data sensitif.</span></div>
+      <div class="step"><strong>4. Siap Publish</strong><span>Kandidat masuk antrean scheduler/manual publish.</span></div>
+      <div class="step"><strong>5. Jadi KB</strong><span>Jawaban dipakai chatbot sebagai AI Learning authoritative.</span></div>
+    </section>
     <section class="stats" id="stats"></section>
 
     <section class="layout">
@@ -241,24 +328,24 @@
         <div class="panel-head">
           <div>
             <h2>Daftar Kandidat</h2>
-            <div class="subtitle">Jawaban buruk masuk edit queue, bukan dihapus.</div>
+            <div class="subtitle">Pilih jawaban yang perlu diedit, siap publish, gagal, atau sudah masuk KB.</div>
           </div>
           <div class="filters">
             <select id="statusFilter">
               <option value="">Semua status</option>
-              <option value="NeedsEdit">NeedsEdit</option>
-              <option value="ReadyForPublish">ReadyForPublish</option>
-              <option value="Published">Published</option>
-              <option value="PublishFailed">PublishFailed</option>
-              <option value="Archived">Archived</option>
+              <option value="NeedsEdit">Perlu diedit</option>
+              <option value="ReadyForPublish">Siap publish</option>
+              <option value="Published">Sudah publish</option>
+              <option value="PublishFailed">Gagal publish</option>
+              <option value="Archived">Arsip</option>
             </select>
             <input id="searchBox" placeholder="Cari pertanyaan">
           </div>
         </div>
         <div class="panel-head">
           <div class="actions">
-            <button id="collectBtn">Collect dari chat</button>
-            <button id="publishBtn" class="success">Publish approved</button>
+            <button id="collectBtn">Ambil dari chat</button>
+            <button id="publishBtn" class="success">Publish yang siap</button>
           </div>
           <span class="subtitle" id="countLabel">0 data</span>
         </div>
@@ -269,7 +356,7 @@
         <div class="panel-head">
           <div>
             <h2>Editor Knowledge</h2>
-            <div class="subtitle">Edit jawaban final sebelum siap dipublish scheduler.</div>
+            <div class="subtitle">Edit versi resmi yang akan dipakai chatbot.</div>
           </div>
           <span class="pill" id="detailStatus">Belum dipilih</span>
         </div>
@@ -378,6 +465,61 @@
       return new Intl.NumberFormat('id-ID').format(value || 0);
     }
 
+    function statusLabel(status) {
+      const labels = {
+        NeedsEdit: 'Perlu diedit',
+        ReadyForPublish: 'Siap publish',
+        Published: 'Sudah publish',
+        PublishFailed: 'Gagal publish',
+        Archived: 'Arsip'
+      };
+      return labels[status] || status || '-';
+    }
+
+    function routePreview(item) {
+      if (!item) return '-';
+      if (item.status === 'Published') return 'Chatbot akan menjawab sebagai AI Learning Exact untuk pertanyaan yang sama, atau Similar untuk pertanyaan yang sangat mirip.';
+      if (item.status === 'ReadyForPublish') return 'Kandidat menunggu scheduler/manual publish. Setelah publish, jawaban final masuk Knowledge Base dan cache lama akan diganti versi baru.';
+      if (item.status === 'NeedsEdit') return 'Belum dipakai chatbot. Edit dulu jawaban final, pastikan aman, lalu tandai siap publish.';
+      if (item.status === 'PublishFailed') return 'Belum masuk Knowledge Base. Baca error publish, perbaiki isinya, lalu tandai siap publish ulang.';
+      return 'Kandidat ini tidak aktif dipakai chatbot.';
+    }
+
+    function answerValidation(item) {
+      const q = document.getElementById('editedQuestion')?.value || item?.effectiveQuestion || '';
+      const a = document.getElementById('editedAnswer')?.value || item?.effectiveAnswer || '';
+      const sensitive = document.getElementById('containsSensitive')?.checked ?? item?.containsSensitiveData;
+      return {
+        questionOk: q.trim().length >= 8,
+        answerOk: a.trim().length >= 120,
+        tagOk: (document.getElementById('tags')?.value || item?.tags || '').toLowerCase().includes('ai-learning'),
+        sensitiveOk: !sensitive,
+        questionLength: q.trim().length,
+        answerLength: a.trim().length
+      };
+    }
+
+    function renderValidation(item) {
+      const v = answerValidation(item);
+      const elBox = document.getElementById('validationBox');
+      if (!elBox) return;
+      elBox.innerHTML = `
+        <div class="${v.questionOk ? 'ok' : 'bad'}">${v.questionOk ? 'OK' : 'Perlu dicek'}: Pertanyaan final ${fmtNumber(v.questionLength)} karakter, minimal 8.</div>
+        <div class="${v.answerOk ? 'ok' : 'bad'}">${v.answerOk ? 'OK' : 'Perlu dicek'}: Jawaban final ${fmtNumber(v.answerLength)} karakter, minimal 120.</div>
+        <div class="${v.tagOk ? 'ok' : 'warn'}">${v.tagOk ? 'OK' : 'Saran'}: Tags sebaiknya tetap memuat ai-learning agar mudah dilacak.</div>
+        <div class="${v.sensitiveOk ? 'ok' : 'bad'}">${v.sensitiveOk ? 'OK' : 'Belum aman'}: Data sensitif harus dibersihkan sebelum publish.</div>
+      `;
+      const preview = document.getElementById('finalPreview');
+      if (preview) {
+        preview.textContent = document.getElementById('editedAnswer')?.value?.trim() || 'Belum ada jawaban final.';
+      }
+      const readyBtn = document.getElementById('markReady');
+      if (readyBtn) {
+        readyBtn.disabled = !(v.questionOk && v.answerOk && v.sensitiveOk);
+        readyBtn.title = readyBtn.disabled ? 'Lengkapi validasi sebelum tandai siap publish.' : 'Kandidat valid dan bisa masuk antrean publish.';
+      }
+    }
+
     function esc(value) {
       return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
@@ -404,24 +546,30 @@
 
     function renderStats(stats) {
       const cards = [
-        ['Needs Edit', stats.needsEdit],
-        ['Ready Publish', stats.readyForPublish],
-        ['Published', stats.published],
-        ['Failed', stats.publishFailed],
-        ['Archived', stats.archived],
-        ['Published Today', stats.publishedToday]
+        ['Perlu Diedit', stats.needsEdit, 'Masih menunggu kurasi admin.'],
+        ['Siap Publish', stats.readyForPublish, 'Menunggu scheduler atau publish manual.'],
+        ['Sudah Publish', stats.published, 'Sudah masuk Knowledge Base resmi.'],
+        ['Gagal Publish', stats.publishFailed, 'Perlu dibuka dan diperbaiki ulang.'],
+        ['Arsip', stats.archived, 'Disimpan untuk audit, tidak dipakai chatbot.'],
+        ['Publish Hari Ini', stats.publishedToday, 'Jumlah knowledge baru hari ini.']
       ];
-      els.stats.innerHTML = cards.map(([label, value]) => `
+      els.stats.innerHTML = cards.map(([label, value, help]) => `
         <div class="card stat">
           <label>${label}</label>
           <strong>${fmtNumber(value)}</strong>
+          <p>${help}</p>
         </div>`).join('');
     }
 
     function renderList(total) {
       els.countLabel.textContent = `${fmtNumber(state.candidates.length)} dari ${fmtNumber(total)} data`;
       if (!state.candidates.length) {
-        els.list.innerHTML = '<div class="empty">Belum ada kandidat sesuai filter.</div>';
+        const filterLabel = els.statusFilter.value ? statusLabel(els.statusFilter.value) : 'filter ini';
+        els.list.innerHTML = `
+          <div class="empty">
+            <strong>Belum ada kandidat untuk ${esc(filterLabel)}.</strong>
+            <span>Klik Ambil dari chat untuk mencari kandidat baru, atau ubah filter status di atas.</span>
+          </div>`;
         return;
       }
       els.list.innerHTML = state.candidates.map(item => `
@@ -429,11 +577,12 @@
           <div>
             <div class="question">${esc(item.effectiveQuestion || item.originalQuestion)}</div>
             <div class="meta">
-              <span class="pill ${item.status}">${esc(item.status)}</span>
+              <span class="pill ${item.status}">${esc(statusLabel(item.status))}</span>
               <span>${esc(item.category)}</span>
               <span>freq ${fmtNumber(item.frequency)}</span>
               <span>conf ${item.confidenceScore == null ? '-' : Math.round(item.confidenceScore * 100) + '%'}</span>
-              ${item.containsSensitiveData ? '<span class="pill PublishFailed">Sensitive</span>' : ''}
+              ${item.containsSensitiveData ? '<span class="pill PublishFailed">Perlu cek sensitif</span>' : ''}
+              ${item.status === 'Published' ? '<span class="pill Published">Aktif di KB</span>' : ''}
             </div>
           </div>
           <span class="subtitle">#${item.id}</span>
@@ -453,12 +602,28 @@
       }
     }
 
+    async function reloadSelected() {
+      if (!state.selected?.id) return;
+      state.selected = await api(`/api/learning/candidates/${state.selected.id}`);
+      renderDetail();
+      renderList(state.candidates.length);
+    }
+
     function renderDetail() {
       const item = state.selected;
       if (!item) return;
-      els.detailStatus.textContent = item.status;
+      els.detailStatus.textContent = statusLabel(item.status);
       els.detailStatus.className = `pill ${item.status}`;
       els.detail.innerHTML = `
+        <div class="decision-box">
+          <strong>Cara chatbot memakai kandidat ini</strong>
+          <span>${esc(routePreview(item))}</span>
+          <div class="meta">
+            <span class="pill info-pill">Exact: pertanyaan sama</span>
+            <span class="pill info-pill">Similar: pertanyaan mirip kuat</span>
+            <span class="pill info-pill">Cache: aktif setelah publish</span>
+          </div>
+        </div>
         <div class="field">
           <label>Pertanyaan asli</label>
           <div class="preview">${esc(item.originalQuestion)}</div>
@@ -475,23 +640,36 @@
           <label>Jawaban final <span>wajib bersih dari data sensitif</span></label>
           <textarea id="editedAnswer" style="min-height:220px">${esc(item.editedAnswer || item.originalAnswer)}</textarea>
         </div>
+        <div class="validation-list" id="validationBox"></div>
         <div class="field">
-          <label>Category</label>
-          <input id="category" value="${esc(item.category || 'AI Learning')}" style="width:100%">
+          <label>Preview jawaban yang akan dipakai chatbot <span>setelah publish</span></label>
+          <div class="preview" id="finalPreview">${esc(item.editedAnswer || item.originalAnswer || 'Belum ada jawaban final.')}</div>
         </div>
-        <div class="field">
-          <label>Tags</label>
-          <input id="tags" value="${esc(item.tags || 'ai-learning,approved,reviewed')}" style="width:100%">
+        <div class="form-grid">
+          <div class="field">
+            <label>Category <span>modul/topik utama</span></label>
+            <input id="category" value="${esc(item.category || 'AI Learning')}" style="width:100%">
+            <div class="tiny">Contoh: Payment, Invoice, PUM, Report. Dipakai untuk filter dan ranking KB.</div>
+          </div>
+          <div class="field">
+            <label>Tags <span>pisahkan dengan koma</span></label>
+            <input id="tags" value="${esc(item.tags || 'ai-learning,approved,reviewed')}" style="width:100%">
+            <div class="tiny">Tags membantu pencarian dan exact match. Biarkan ai-learning, approved, reviewed tetap ada.</div>
+          </div>
         </div>
         <div class="field">
           <label>Catatan review</label>
           <textarea id="reviewNotes">${esc(item.reviewNotes || '')}</textarea>
         </div>
+        <div class="field">
+          <label>Alasan sensitif <span>diisi otomatis atau manual</span></label>
+          <input id="sensitiveReason" value="${esc(item.sensitiveReason || '')}" style="width:100%">
+        </div>
         <div class="meta">
           <span class="pill">Source: ${esc(item.source || '-')}</span>
           <span class="pill">Quality: ${item.qualityScore == null ? '-' : Math.round(item.qualityScore * 100) + '%'}</span>
           <span class="pill">Flags: ${esc(item.flags || '-')}</span>
-          <label class="pill"><input id="containsSensitive" type="checkbox" ${item.containsSensitiveData ? 'checked' : ''}> Sensitive</label>
+          <label class="pill"><input id="containsSensitive" type="checkbox" ${item.containsSensitiveData ? 'checked' : ''}> Mengandung data sensitif</label>
         </div>
         <div class="actions">
           <button class="primary" id="saveEdit">Simpan Edit</button>
@@ -501,6 +679,12 @@
       document.getElementById('saveEdit').addEventListener('click', saveEdit);
       document.getElementById('markReady').addEventListener('click', markReady);
       document.getElementById('archiveBtn').addEventListener('click', archiveCandidate);
+      ['editedQuestion', 'editedAnswer', 'containsSensitive'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => renderValidation(item));
+        document.getElementById(id).addEventListener('change', () => renderValidation(item));
+      });
+      document.getElementById('tags').addEventListener('input', () => renderValidation(item));
+      renderValidation(item);
     }
 
     function currentEditPayload() {
@@ -511,34 +695,47 @@
         tags: document.getElementById('tags').value,
         reviewNotes: document.getElementById('reviewNotes').value,
         containsSensitiveData: document.getElementById('containsSensitive').checked,
-        sensitiveReason: document.getElementById('containsSensitive').checked ? 'Admin masih menandai jawaban sensitif.' : ''
+        sensitiveReason: document.getElementById('containsSensitive').checked
+          ? (document.getElementById('sensitiveReason').value || 'Admin masih menandai jawaban sensitif.')
+          : ''
       };
     }
 
     async function saveEdit() {
       if (!state.selected) return;
+      const button = document.getElementById('saveEdit');
       try {
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Menyimpan...';
+        }
         state.selected = await api(`/api/learning/candidates/${state.selected.id}/edit`, {
           method: 'PUT',
           body: JSON.stringify(currentEditPayload())
         });
         setNotice('Edit tersimpan.', 'ok');
         await loadAll();
-        renderDetail();
+        await reloadSelected();
       } catch (err) {
         setNotice(`Gagal simpan edit: ${err.message}`, 'error');
         throw err;
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Simpan Edit';
+        }
       }
     }
 
     async function markReady() {
       if (!state.selected) return;
+      if (!confirm('Tandai kandidat ini siap publish? Setelah itu scheduler/manual publish bisa memasukkan jawaban final ke Knowledge Base.')) return;
       try {
         await saveEdit();
         state.selected = await api(`/api/learning/candidates/${state.selected.id}/ready`, { method: 'POST' });
         setNotice('Kandidat sudah siap dipublish scheduler.', 'ok');
         await loadAll();
-        renderDetail();
+        await reloadSelected();
       } catch (err) {
         setNotice(`Gagal tandai ready: ${err.message}`, 'error');
       }
@@ -546,6 +743,7 @@
 
     async function archiveCandidate() {
       if (!state.selected) return;
+      if (!confirm('Arsipkan kandidat ini? Data tetap tersimpan untuk audit, tetapi tidak akan dipakai chatbot.')) return;
       try {
         state.selected = await api(`/api/learning/candidates/${state.selected.id}/archive`, {
           method: 'POST',
@@ -553,7 +751,7 @@
         });
         setNotice('Kandidat diarsipkan, tidak dihapus.', 'ok');
         await loadAll();
-        renderDetail();
+        await reloadSelected();
       } catch (err) {
         setNotice(`Gagal arsip: ${err.message}`, 'error');
       }
@@ -569,7 +767,9 @@
     els.statusFilter.addEventListener('change', loadAll);
     els.searchBox.addEventListener('input', () => clearTimeout(window.searchTimer) || (window.searchTimer = setTimeout(loadAll, 350)));
     els.collectBtn.addEventListener('click', async () => {
+      if (!confirm('Ambil kandidat baru dari chat history sekarang? Proses ini hanya membuat antrean review, tidak langsung publish.')) return;
       els.collectBtn.disabled = true;
+      els.collectBtn.textContent = 'Mengambil data...';
       try {
         const result = await api('/api/learning/collect/run', { method: 'POST', body: JSON.stringify({ scanLimit: 250 }) });
         setNotice(`Collector selesai: ${result.created} baru, ${result.updated} update, ${result.skipped} skip.`, 'ok');
@@ -578,10 +778,13 @@
         setNotice(`Collector gagal: ${err.message}`, 'error');
       } finally {
         els.collectBtn.disabled = false;
+        els.collectBtn.textContent = 'Ambil dari chat';
       }
     });
     els.publishBtn.addEventListener('click', async () => {
+      if (!confirm('Publish semua kandidat berstatus Siap Publish? Jawaban akan masuk Knowledge Base dan cache terkait akan diperbarui.')) return;
       els.publishBtn.disabled = true;
+      els.publishBtn.textContent = 'Mempublish...';
       try {
         const result = await api('/api/learning/publish/run', { method: 'POST', body: JSON.stringify({ limit: 10 }) });
         setNotice(`Publish selesai: ${result.published} published, ${result.failed} failed.`, result.failed ? 'error' : 'ok');
@@ -590,6 +793,7 @@
         setNotice(`Publish gagal: ${err.message}`, 'error');
       } finally {
         els.publishBtn.disabled = false;
+        els.publishBtn.textContent = 'Publish yang siap';
       }
     });
     els.themeToggle.addEventListener('click', () => {

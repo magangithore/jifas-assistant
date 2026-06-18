@@ -74,6 +74,17 @@ public class AiLearningPolicyTests
     }
 
     [Fact]
+    public void DetectSensitiveData_FindsFinalAnswerSensitivePattern()
+    {
+        var result = AiLearningPolicy.DetectSensitiveData(
+            "Cara cek invoice?\nCek dokumen INV-20260608-001 atau email finance@example.com.");
+
+        Assert.True(result.containsSensitive);
+        Assert.Contains("Terdeteksi", result.reason);
+        Assert.Contains("sensitif", result.reason);
+    }
+
+    [Fact]
     public void Evaluate_SkipsInvalidInputAnswer()
     {
         var chat = SuccessfulChat(

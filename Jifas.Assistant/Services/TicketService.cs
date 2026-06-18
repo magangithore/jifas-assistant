@@ -114,8 +114,10 @@ namespace Jifas.Assistant.Services
             "ya buatkan", "ya buat", "tolong buat", "buat tiketnya",
             // Frasa yang menunjukkan MASIH ada masalah (wants ticket)
             "belum terselesaikan", "belum solved", "belum beres",
+            "sudah solved", "udah solved", "sudah selesai",
             "masih error", "masih bermasalah", "masih gagal",
-            "tetap error", "tetap tidak bisa", "tetap bermasalah"
+            "tetap error", "tetap tidak bisa", "tetap bermasalah",
+            "tetap gagal", "masih belum solved", "masih belum beres"
         };
 
         // Konfirmasi pendek hanya berlaku untuk pesan maksimal 4 kata.
@@ -134,9 +136,11 @@ namespace Jifas.Assistant.Services
         };
 
         // Penolakan satu kata hanya berlaku untuk pesan maksimal 3 kata.
+        // FIXED: "solved" dilepas dari ShortOnlyRejections karena "belum solved" harusnya konfirmasi.
+        // "solved" tetap bisa reject jika panjang pesan 1-3 kata saja (misal "solved dong").
         private static readonly HashSet<string> ShortOnlyRejections = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "tidak", "nggak", "ngga", "gak", "no", "jangan", "batal", "cancel", "sudah", "solved", "beres", "selesai"
+            "tidak", "nggak", "ngga", "gak", "no", "jangan", "batal", "cancel", "sudah", "beres", "selesai"
         };
 
         #endregion
@@ -418,7 +422,13 @@ namespace Jifas.Assistant.Services
             }
 
             // User might be providing more detail - update problem
-            state.Problem += "\n" + userMessage;
+            // FIXED: Use " --- " separator for clearer problem delineation
+            if (!string.IsNullOrWhiteSpace(userMessage) && userMessage.Length > 5)
+            {
+                state.Problem = string.IsNullOrWhiteSpace(state.Problem)
+                    ? userMessage
+                    : state.Problem + "\n\n--- Informasi Tambahan ---\n" + userMessage;
+            }
             SetDialogState(sessionId, state);
 
             return new TicketDialogResponse
@@ -885,13 +895,26 @@ namespace Jifas.Assistant.Services
             var lower = message.ToLowerInvariant().Trim();
             var wordCount = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
 
+            // FRASA KONFIRMASI (masih ada masalah, mau buat tiket):
+            // "belum solved", "sudah solved", "masih error", dll -> BUKAN rejection
+            var confirmationPhrases = new[] { "belum solved", "sudah solved", "masih error", "masih gagal", "masih bermasalah", "tetap error", "tetap gagal", "tetap bermasalah", "belum terselesaikan" };
+            if (confirmationPhrases.Any(p => lower.Contains(p)) && wordCount >= 2)
+            {
+                // Ini frasa konfirmasi, bukan penolakan
+                return false;
+            }
+
             foreach (var pattern in RejectionPatterns)
             {
                 if (!lower.Contains(pattern)) continue;
 
-                // Pattern pendek hanya berlaku untuk pesan maksimal 4 kata.
+                // Pattern pendek hanya berlaku untuk pesan maksimal 3 kata.
                 // Ini mencegah "tidak bisa di approve" terbaca sebagai penolakan.
-                if (ShortOnlyRejections.Contains(pattern) && wordCount > 4)
+                if (ShortOnlyRejections.Contains(pattern) && wordCount > 3)
+                    continue;
+
+                // "solved" tunggal (1-3 kata) = rejection, tapi "belum solved" (4+ kata) = konfirmasi
+                if (pattern.Equals("solved", StringComparison.OrdinalIgnoreCase) && wordCount > 3)
                     continue;
 
                 return true;

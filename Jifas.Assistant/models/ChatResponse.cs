@@ -172,13 +172,34 @@ namespace Jifas.Assistant.Models
         public int KbResultsAfterValidation { get; set; }
 
         /// <summary>
+        /// Jalur keputusan utama yang dipakai chatbot: learning-exact, learning-similar, kb-rag, cache, ticket, fallback.
+        /// </summary>
+        public string Route { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Versi knowledge yang ikut masuk ke cache key agar publish/republish tidak tertutup cache lama.
+        /// </summary>
+        public string KnowledgeVersion { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Jenis match AI Learning: exact, similar, atau kosong jika bukan AI Learning.
+        /// </summary>
+        public string LearningMatchType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Durasi formatter LLM khusus AI Learning. Normalnya 0 jika jawaban admin langsung dipakai.
+        /// </summary>
+        public long LearningFormatterMs { get; set; }
+
+        /// <summary>
         /// Ringkasan performa untuk log.
         /// </summary>
         public string GetSummary()
         {
             var cacheLabel = WasCacheLit ? "HIT" : "MISS";
             var scopeLabel = string.IsNullOrWhiteSpace(CacheScope) ? "n/a" : CacheScope;
-            return $"[PERFORMANCE] Total: {TotalMs}ms | Validation: {InputValidationMs}ms | KB Search: {KbSearchMs}ms | LLM: {LlmResponseMs}ms | Suggestions: {SuggestionsMs}ms | Cache: {cacheLabel}/{scopeLabel}";
+            var routeLabel = string.IsNullOrWhiteSpace(Route) ? "n/a" : Route;
+            return $"[PERFORMANCE] Total: {TotalMs}ms | Route: {routeLabel} | Validation: {InputValidationMs}ms | KB Search: {KbSearchMs}ms | LLM: {LlmResponseMs}ms | LearningFormatter: {LearningFormatterMs}ms | Suggestions: {SuggestionsMs}ms | Cache: {cacheLabel}/{scopeLabel}";
         }
     }
 

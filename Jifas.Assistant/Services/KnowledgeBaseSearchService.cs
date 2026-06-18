@@ -29,6 +29,7 @@ namespace Jifas.Assistant.Services
         Task<List<KnowledgeBaseChunkDto>> SearchByKeywordAsync(string query, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
         Task<List<KnowledgeBaseChunkDto>> SearchBySemanticAsync(float[]? embedding, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
         Task<List<KnowledgeBaseChunkDto>> SearchAsync(string query, float[]? embedding = null, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
+        Task<List<KnowledgeBaseChunkDto>> SearchByCategoryAsync(string query, string category, int topK = 5, string? correlationId = null, CancellationToken cancellationToken = default);
     }
 
     public class KnowledgeBaseSearchService : IKnowledgeBaseSearchService
@@ -139,7 +140,16 @@ namespace Jifas.Assistant.Services
 
                         var titleMatches = keywords.Count(k => titleLower.Contains(k));
                         var contentMatches = keywords.Count(k => contentLower.Contains(k));
-                        var relevanceScore = (titleMatches * 2.0 + contentMatches) / (keywords.Length * 3.0);
+
+                        // Hitung score berdasarkan match ratio + absolute matches.
+                        // Score = (matchRatio * 0.5) + (absoluteBonus * 0.5)
+                        // matchRatio = matchedKeywords / totalKeywords
+                        // absoluteBonus = min(totalMatches / maxPossible, 1.0)
+                        var totalMatches = titleMatches + contentMatches;
+                        var maxPossible = keywords.Length * 3; // title*2 + content*1 per keyword
+                        var matchRatio = keywords.Length > 0 ? keywords.Count(k => titleLower.Contains(k) || contentLower.Contains(k)) / (double)keywords.Length : 0;
+                        var absoluteBonus = maxPossible > 0 ? Math.Min(totalMatches / (double)maxPossible, 1.0) : 0;
+                        var relevanceScore = (matchRatio * 0.5) + (absoluteBonus * 0.5);
 
                         return new KnowledgeBaseChunkDto
                         {
@@ -184,26 +194,38 @@ namespace Jifas.Assistant.Services
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                if (embedding == null || embedding.Length == 0)
+                    return new List<KnowledgeBaseChunkDto>();
+
+                // Cache semantic search results berdasarkan embedding hash.
+                var embeddingHash = HashHelper.ToShortStableHash(string.Join(",", embedding.Select(e => e.ToString("F4"))));
+                var cacheKey = $"KB_Semantic_{embeddingHash}_{topK}";
+                var cached = _cacheService.Get<List<KnowledgeBaseChunkDto>>(cacheKey);
+                if (cached != null)
+                {
+                    _logger.LogInformation($"[KnowledgeBaseSearchService] Semantic cache HIT: hash={embeddingHash[..8]}");
+                    stopwatch.Stop();
+                    if (!string.IsNullOrEmpty(correlationId))
+                        _logger.LogPerformance("KBSemanticSearchCacheHit", stopwatch.ElapsedMilliseconds, correlationId);
+                    return cached;
+                }
+
                 var logMsg = string.IsNullOrEmpty(correlationId)
                     ? $"[KnowledgeBaseSearchService] Semantic search with {embedding?.Length ?? 0}-dim embedding"
                     : $"[{correlationId}] Semantic search with {embedding?.Length ?? 0}-dim embedding";
                 _logger.LogInformation(logMsg);
 
-                if (embedding == null || embedding.Length == 0)
-                    return new List<KnowledgeBaseChunkDto>();
-
                 await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
                 if (db.Database.IsNpgsql())
                 {
-                    var pgResults = await SearchByPgVectorAsync(db, embedding, topK, cancellationToken);
+                    var pgResults = await SearchByPgVectorAsync(db, embedding!, topK, cancellationToken);
                     if (pgResults.Count > 0)
                     {
+                        _cacheService.Set(cacheKey, pgResults, 15); // Cache 15 menit
                         stopwatch.Stop();
                         if (!string.IsNullOrEmpty(correlationId))
-                        {
                             _logger.LogPerformance("KBSemanticSearchPgVector", stopwatch.ElapsedMilliseconds, correlationId);
-                        }
-
                         return pgResults;
                     }
                 }
@@ -235,7 +257,7 @@ namespace Jifas.Assistant.Services
                     .AsParallel()
                     .Select(kv =>
                     {
-                        var similarity = CosineSimilarity(embedding, kv.Value);
+                        var similarity = CosineSimilarity(embedding!, kv.Value);
                         if (similarity < 0.3f) return null;
 
                         if (!metadataSnapshot.TryGetValue(kv.Key, out var meta)) return null;
@@ -312,7 +334,7 @@ namespace Jifas.Assistant.Services
 
                 // Hybrid search menggabungkan keyword dan semantic search.
                 var keywordResults = await SearchByKeywordAsync(query, topK, correlationId, cancellationToken);
-                
+
                 List<KnowledgeBaseChunkDto>? semanticResults = null;
                 if (embedding != null && embedding.Length > 0)
                 {
@@ -321,7 +343,7 @@ namespace Jifas.Assistant.Services
 
                 // Gabungkan hasil dengan deduplication berdasarkan chunk id.
                 var mergedResults = new Dictionary<int, KnowledgeBaseChunkDto>();
-                
+
                 foreach (var result in keywordResults)
                 {
                     mergedResults[result.Id] = result;
@@ -333,7 +355,7 @@ namespace Jifas.Assistant.Services
                     {
                         if (mergedResults.ContainsKey(result.Id))
                         {
-                            mergedResults[result.Id].RelevanceScore = 
+                            mergedResults[result.Id].RelevanceScore =
                                 (mergedResults[result.Id].RelevanceScore + result.RelevanceScore) / 2.0;
                         }
                         else
@@ -373,11 +395,109 @@ namespace Jifas.Assistant.Services
                     ? $"[KnowledgeBaseSearchService] Hybrid search error: {ex.Message}"
                     : $"[{correlationId}] Hybrid search error: {ex.Message}";
                 _logger.LogError(logMsg, ex);
-                
+
                 if (!string.IsNullOrEmpty(correlationId))
                 {
                     _logger.LogPerformance("KBHybridSearch_Error", totalStopwatch.ElapsedMilliseconds, correlationId);
                 }
+                return new List<KnowledgeBaseChunkDto>();
+            }
+        }
+
+        /// <summary>
+        /// Pencarian dengan filter kategori spesifik.
+        /// Berguna untuk modul tertentu seperti Invoice, Payment, PUM.
+        /// </summary>
+        public async Task<List<KnowledgeBaseChunkDto>> SearchByCategoryAsync(
+            string query,
+            string category,
+            int topK = 5,
+            string? correlationId = null,
+            CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var logMsg = string.IsNullOrEmpty(correlationId)
+                    ? $"[KnowledgeBaseSearchService] Category search: {query} in {category}"
+                    : $"[{correlationId}] Category search: {query} in {category}";
+                _logger.LogInformation(logMsg);
+
+                var allKeywords = query.ToLower()
+                    .Split(new[] { ' ', '?', '!', ',', '.', ';', ':' }, StringSplitOptions.RemoveEmptyEntries);
+
+                var meaningfulKeywords = allKeywords.Where(k => !_stopwords.Contains(k) && k.Length > 2).ToArray();
+                var keywords = meaningfulKeywords.Length > 0 ? meaningfulKeywords : allKeywords;
+
+                if (keywords.Length == 0)
+                    return new List<KnowledgeBaseChunkDto>();
+
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                var baseQuery = db.KnowledgeBaseChunks
+                    .Include(c => c.Document)
+                    .Where(c => c.Document != null &&
+                        c.Document.IsActive == true &&
+                        EF.Functions.ILike(c.Document.Category, category));
+
+                var topKeywords = keywords.Take(3).ToArray();
+                var p0 = $"%{EscapeLikePattern(topKeywords[0])}%";
+                var p1 = topKeywords.Length > 1 ? $"%{EscapeLikePattern(topKeywords[1])}%": null;
+                var p2 = topKeywords.Length > 2 ? $"%{EscapeLikePattern(topKeywords[2])}%": null;
+
+                var filteredQuery = baseQuery.Where(c =>
+                    (EF.Functions.Like(c.Content, p0) || EF.Functions.Like(c.Document.Title, p0))
+                    || (p1 != null && (EF.Functions.Like(c.Content, p1) || EF.Functions.Like(c.Document.Title, p1)))
+                    || (p2 != null && (EF.Functions.Like(c.Content, p2) || EF.Functions.Like(c.Document.Title, p2))));
+
+                var matchedChunks = await filteredQuery
+                    .Take(topK * 5)
+                    .ToListAsync(cancellationToken);
+
+                stopwatch.Stop();
+                if (!string.IsNullOrEmpty(correlationId))
+                {
+                    _logger.LogPerformance("KBCategorySearch", stopwatch.ElapsedMilliseconds, correlationId);
+                }
+
+                var results = matchedChunks
+                    .Select(c =>
+                    {
+                        var contentLower = c.Content?.ToLower() ?? "";
+                        var titleLower = c.Document?.Title?.ToLower() ?? "";
+
+                        var titleMatches = keywords.Count(k => titleLower.Contains(k));
+                        var contentMatches = keywords.Count(k => contentLower.Contains(k));
+                        var keywordScore = (titleMatches * 2.0 + contentMatches) / (keywords.Length * 3.0);
+
+                        return new KnowledgeBaseChunkDto
+                        {
+                            Id = c.Id,
+                            DocumentId = c.DocumentId,
+                            Title = c.Document?.Title ?? string.Empty,
+                            Content = c.Content ?? string.Empty,
+                            Category = c.Document?.Category ?? string.Empty,
+                            ChunkIndex = c.ChunkIndex,
+                            RelevanceScore = Math.Min(keywordScore, 1.0)
+                        };
+                    })
+                    .OrderByDescending(r => r.RelevanceScore)
+                    .Take(topK)
+                    .ToList();
+
+                return results;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                var logMsg = string.IsNullOrEmpty(correlationId)
+                    ? $"[KnowledgeBaseSearchService] Category search error: {ex.Message}"
+                    : $"[{correlationId}] Category search error: {ex.Message}";
+                _logger.LogError(logMsg, ex);
                 return new List<KnowledgeBaseChunkDto>();
             }
         }
@@ -516,7 +636,8 @@ namespace Jifas.Assistant.Services
                 .Replace("\\", "\\\\")
                 .Replace("%", "\\%")
                 .Replace("_", "\\_")
-                .Replace("[", "\\[");
+                .Replace("[", "\\[")
+                .Replace("]", "\\]");
         }
     }
 }
