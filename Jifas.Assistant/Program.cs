@@ -58,12 +58,12 @@ builder.Services.Configure<SuggestionSettings>(builder.Configuration.GetSection(
 builder.Services.AddSingleton(sp => new AppSettings(builder.Configuration));
 
 // DbContext utama untuk Knowledge Base, RAG, pgvector, dan audit data chatbot.
-builder.Services.AddDbContext<JIFAS_AssistantContext>(options =>
-    ConfigureJifasDbContext(options, builder.Configuration));
-
-// Factory dipakai service yang dapat berjalan paralel agar tiap operasi DB memakai context sendiri.
-builder.Services.AddDbContextFactory<JIFAS_AssistantContext>(options =>
-    ConfigureJifasDbContext(options, builder.Configuration));
+// AddDbContextFactory dipakai karena service berjalan paralel dan butuh context sendiri.
+// DbContextOptions harus Singleton agar compatible dengan IDbContextFactory singleton.
+builder.Services.AddDbContextFactory<JIFAS_AssistantContext>((sp, options) =>
+{
+    ConfigureJifasDbContext(options, builder.Configuration);
+});
 
 // Controller API memakai Newtonsoft agar kontrak response lama tetap kompatibel.
 builder.Services.AddControllers()
