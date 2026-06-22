@@ -423,7 +423,7 @@ app.Use(async (context, next) =>
     {
         context.Response.Headers.TryAdd(
             "Content-Security-Policy",
-            "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none';");
+            "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss: https://cdn.jsdelivr.net; frame-ancestors 'none';");
     }
 
     await next();
