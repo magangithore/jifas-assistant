@@ -7,11 +7,11 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
-$composeArgs = @("--env-file", ".env.docker")
-if (Test-Path ".env.docker.local") {
-    # File lokal ini berisi secret seperti token Jira dan tidak ikut commit.
-    $composeArgs += @("--env-file", ".env.docker.local")
+$envFile = ".env"
+if (-not (Test-Path -LiteralPath $envFile)) {
+    throw "File environment tidak ditemukan: $envFile. Buat satu file .env di root repo."
 }
+$composeArgs = @("--env-file", $envFile)
 
 function Read-EnvFiles {
     param([string[]]$Paths)
@@ -51,11 +51,11 @@ function Assert-SecretConfigured {
 
     $value = if ($EnvValues.ContainsKey($Key)) { [string]$EnvValues[$Key] } else { "" }
     if ([string]::IsNullOrWhiteSpace($value) -or $value.Contains("replace-with") -or $value.Length -lt $MinimumLength) {
-        throw "Docker production preflight gagal: $Key wajib diisi di .env.docker.local atau secret environment. Nilai secret tidak ditampilkan."
+        throw "Docker production preflight gagal: $Key wajib diisi di .env atau secret environment. Nilai secret tidak ditampilkan."
     }
 }
 
-$envValues = Read-EnvFiles @(".env.docker", ".env.docker.local")
+$envValues = Read-EnvFiles @(".env")
 $environmentName = if ($envValues.ContainsKey("ASPNETCORE_ENVIRONMENT")) { [string]$envValues["ASPNETCORE_ENVIRONMENT"] } else { "Production" }
 if ($environmentName -ne "Development") {
     Assert-SecretConfigured $envValues "Admin__ApiKey" 16

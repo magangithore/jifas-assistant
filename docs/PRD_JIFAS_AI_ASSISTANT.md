@@ -374,7 +374,7 @@ Rollout awal fokus pada company `KI` untuk validasi internal. Desain tetap mendu
 | ID | Requirement | Priority | Acceptance Criteria |
 |---|---|---:|---|
 | DEPLOY-001 | Runtime utama memakai Docker internal. | Must | Stack API/Postgres/Redis bisa start via script. |
-| DEPLOY-002 | Docker memakai `.env.docker` dan `.env.docker.local`. | Must | Secret real tidak masuk git. |
+| DEPLOY-002 | Docker memakai `.env`. | Must | Secret real tidak masuk git. |
 | DEPLOY-003 | Startup production wajib validasi `Admin__ApiKey`. | Must | App gagal start jika secret kosong. |
 | DEPLOY-004 | Jika JWT enabled, `Jwt__SigningKey` minimal 32 karakter. | Must | Startup validation mencegah config lemah. |
 | DEPLOY-005 | PostgreSQL bootstrap memakai `Initialize-PostgresPgvector.sql`. | Must | DB baru bisa bootstrap idempotent. |
@@ -645,7 +645,7 @@ Metrik minimal:
 dotnet build --no-restore
 dotnet test --no-restore
 powershell -ExecutionPolicy Bypass -File scripts\Test-ProductionReadiness.ps1
-docker compose --env-file .env.docker --env-file .env.docker.local config --quiet
+docker compose --env-file .env config --quiet
 ```
 
 Acceptance:
@@ -732,8 +732,7 @@ Acceptance:
 File:
 
 - `.env.example`: template aman.
-- `.env.docker`: placeholder/default aman.
-- `.env.docker.local`: secret lokal, tidak boleh commit.
+- `.env`: file lokal Docker tunggal.
 
 Secret wajib production:
 
@@ -795,7 +794,7 @@ Harus idempotent:
 | User menganggap AI selalu benar | Salah proses | Confidence, wording aman, arahkan IT untuk akses/server. |
 | Stress test membuat server panas | Downtime lokal | Jalankan bertahap, monitor dashboard, stop jika overheating. |
 | Real Jira test spam tiket | Noise di Jira | Flag eksplisit dan prefix `[TEST]`. |
-| Secret bocor | Security incident | `.env.docker.local`, secret scan, jangan print token. |
+| Secret bocor | Security incident | `.env`, secret scan, jangan print token. |
 
 ## 19. Success Metrics
 
@@ -959,4 +958,3 @@ Sebuah perubahan dianggap siap merge/deploy jika:
 - Jika menyentuh ticket flow, test cancel path wajib lulus.
 - Jika membuat real Jira ticket, ticket key dan URL harus diverifikasi.
 - Jika menyentuh AI Learning, unauthorized/admin flow wajib dites.
-

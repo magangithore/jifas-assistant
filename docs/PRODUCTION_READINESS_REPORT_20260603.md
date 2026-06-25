@@ -44,7 +44,7 @@ powershell -ExecutionPolicy Bypass -File scripts\Run-ChatStressTest.ps1 -Virtual
 - `dotnet build --no-restore`: lulus, 0 warning, 0 error.
 - `dotnet test --no-restore`: lulus, 14/14 test passed.
 - `scripts/Test-ProductionReadiness.ps1`: lulus untuk file wajib, JSON config, env template, secret scan dasar, Docker compose config, build, dan test.
-- `docker compose --env-file .env.docker --env-file .env.docker.local config --quiet`: lulus.
+- `docker compose --env-file .env config --quiet`: lulus.
 
 ### Docker Runtime
 
@@ -118,7 +118,7 @@ Catatan tambahan: setelah refactor suggestion, monitoring error rate tidak lagi 
 
 ## Production Notes
 
-- Real secret wajib diletakkan di `.env.docker.local` atau secret manager.
+- Real secret wajib diletakkan di `.env` lokal atau secret manager.
 - Jika `Jwt__Enabled=true`, `Jwt__SigningKey` minimal 32 karakter.
 - `Admin__ApiKey` wajib di production.
 - Selama rate limit chat dinonaktifkan, stress test tidak boleh menghasilkan 429 maupun 5xx.

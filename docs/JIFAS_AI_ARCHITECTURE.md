@@ -175,7 +175,7 @@ File berikut adalah artifact runtime dan harus di-ignore:
 - `scripts/*_log.txt`
 - `scripts/*_raw.txt`
 - `scripts/*_preview.txt`
-- `.env.docker.local`
+- `.env`
 
 ## 11. Validation Standard
 
@@ -185,7 +185,7 @@ Sebelum dianggap siap:
 dotnet build --no-restore
 dotnet test --no-restore
 powershell -ExecutionPolicy Bypass -File scripts\Test-ProductionReadiness.ps1
-docker compose --env-file .env.docker --env-file .env.docker.local config --quiet
+docker compose --env-file .env config --quiet
 ```
 
 Stress baseline:

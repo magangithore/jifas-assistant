@@ -59,8 +59,7 @@ jifas-assistant/
 |-- docker-compose.yml               Stack API + Postgres + Redis
 |-- Dockerfile                       Image API
 |-- .env.example                     Template non-secret
-|-- .env.docker                      Placeholder Docker
-`-- .env.docker.local                Secret lokal, tidak boleh commit
+`-- .env                             Satu file env lokal untuk Docker
 ```
 
 ## Service Penting
@@ -142,7 +141,7 @@ Response utama:
 
 ## Docker Run
 
-Siapkan secret lokal di `.env.docker.local` dari template `.env.example`, lalu jalankan:
+Siapkan `.env` dari template `.env.example`, lalu jalankan:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\Start-DockerStack.ps1 -SkipTests
@@ -200,7 +199,7 @@ Local gate:
 dotnet build --no-restore
 dotnet test --no-restore
 powershell -ExecutionPolicy Bypass -File scripts\Test-ProductionReadiness.ps1
-docker compose --env-file .env.docker --env-file .env.docker.local config --quiet
+docker compose --env-file .env config --quiet
 ```
 
 Functional smoke:

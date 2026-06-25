@@ -15,7 +15,7 @@ JIFAS Assistant memakai PostgreSQL `pgvector` sebagai database utama dan semanti
 
 ## Konfigurasi
 
-Secret dan connection string production tidak disimpan di repo. Gunakan `.env.docker.local` atau secret manager.
+Secret dan connection string production tidak disimpan di repo. Gunakan `.env` lokal atau secret manager.
 
 ```powershell
 POSTGRES_PASSWORD=<strong-password>

@@ -51,7 +51,9 @@
         condition: service_healthy
     environment:
       # Database Configuration
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:-Host=jifas-postgres;Port=5432;Database=jifas_assistant;Username=jifas;Password=jifas_dev_password}
+      # Host di-hardcode "jifas-postgres" supaya tidak bisa ditimpa env var session.
+      # DB/user/password tetap dibaca dari .env.
+      ConnectionStrings__DefaultConnection: "Host=jifas-postgres;Port=5432;Database=${POSTGRES_DB:-jifas_assistant};Username=${POSTGRES_USER:-jifas};Password=${POSTGRES_PASSWORD:-jifas_dev_password}"
       ConnectionStrings__Redis: ${ConnectionStrings__Redis:-jifas-redis:6379}
       Admin__ApiKey: ${Admin__ApiKey:-}
       Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0:-}
@@ -59,7 +61,7 @@
       Jwt__Authority: ${Jwt__Authority:-}
       Jwt__Audience: ${Jwt__Audience:-JifasWebApp}
       Jwt__SigningKey: ${Jwt__SigningKey:-}
-      
+
       # Ollama AI Configuration
       Ollama__ApiKey: ""
       Ollama__Model: ${Ollama__Model:-qwen3:8b}
@@ -67,7 +69,7 @@
       Ollama__Temperature: ${Ollama__Temperature:-0.3}
       Ollama__MaxTokens: ${Ollama__MaxTokens:-2048}
 
-      # Embedding Configuration  
+      # Embedding Configuration
       Embedding__Provider: Ollama
       Embedding__Model: qwen3-embedding:4b
       Embedding__Dimensions: 2560
@@ -85,35 +87,33 @@
       Jira__TimeoutSeconds: ${Jira__TimeoutSeconds:-30}
       Jira__EnableOfflineFallback: ${Jira__EnableOfflineFallback:-false}
       Jira__BypassSslValidation: ${Jira__BypassSslValidation:-false}
-      
+
       # ASP.NET Core
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8888
       DOTNET_RUNNING_IN_CONTAINER: "true"
-      
+
       # Logging
       Logging__LogLevel__Default: ${Logging__LogLevel__Default:-Information}
       Logging__EnableRequestLogging: ${Logging__EnableRequestLogging:-false}
       Https__EnableRedirection: ${Https__EnableRedirection:-false}
-      
+
       # Caching
       Caching__UseRedis: ${Caching__UseRedis:-true}
       Caching__RedisInstanceName: ${Caching__RedisInstanceName:-JIFAS:}
       Caching__EnableResponseCache: ${Caching__EnableResponseCache:-true}
       Caching__ResponseCacheDurationHours: ${Caching__ResponseCacheDurationHours:-24}
       Caching__EnableKBCache: ${Caching__EnableKBCache:-true}
-    
     volumes:
+      - ./Jifas.Assistant/wwwroot:/app/wwwroot   # BIND-MOUNT UI: edit index.html -> save -> refresh, tanpa rebuild
       - ./logs:/app/logs
       - dataprotection_keys:/root/.aspnet/DataProtection-Keys
-    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    
     restart: unless-stopped
     networks:
       - jifas-network

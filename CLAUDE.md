@@ -196,8 +196,7 @@ Jangan print, commit, atau tulis ulang secret real.
 File aman:
 
 - `.env.example`: template placeholder;
-- `.env.docker`: placeholder Docker;
-- `.env.docker.local`: secret lokal, jangan commit.
+- `.env`: satu file lokal untuk Docker; jangan commit kalau berisi secret.
 
 Production startup wajib memvalidasi:
 
@@ -216,7 +215,7 @@ powershell -ExecutionPolicy Bypass -File scripts\Start-DockerStack.ps1 -SkipTest
 Check compose config:
 
 ```powershell
-docker compose --env-file .env.docker --env-file .env.docker.local config --quiet
+docker compose --env-file .env config --quiet
 ```
 
 Check health:

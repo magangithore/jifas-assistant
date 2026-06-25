@@ -140,6 +140,14 @@ namespace Jifas.Assistant.Services
             var jifasIntroductionKey = $"JIFAS_Intro_{response.SessionId}";
             var hasSeenIntroduction = _cacheService.Get<bool>(jifasIntroductionKey);
 
+            // Cek apakah sesi ini sudah punya chat history. Jika ya, skip greeting/intro.
+            var hasSessionHistory = false;
+            if (!isFirstMessage && !string.IsNullOrWhiteSpace(response.SessionId))
+            {
+                var sessionHistory = await _chatHistoryService.GetSessionHistoryAsync(response.SessionId, 1, cancellationToken);
+                hasSessionHistory = sessionHistory.Count > 0;
+            }
+
             // Step 1: validasi input sebelum menyentuh cache, KB, atau LLM.
             var validationStopwatch = Stopwatch.StartNew();
             var validationResult = _inputValidator.ValidateChatRequest(request);
@@ -225,7 +233,8 @@ namespace Jifas.Assistant.Services
                 var enableCache = _configuration.GetValue<bool>("Caching:EnableResponseCache");
 
                 // Pesan pertama sesi menampilkan intro JIFAS satu kali per session.
-                if (isFirstMessage && !hasSeenIntroduction)
+                // Skip juga kalau sesi sudah punya chat history (safety net).
+                if (isFirstMessage && !hasSeenIntroduction && !hasSessionHistory)
                 {
                     _logger.LogInformation($"[ChatService] New session detected - showing JIFAS introduction");
                     await ShowJIFASIntroductionAsync(response, cancellationToken);
@@ -367,39 +376,9 @@ namespace Jifas.Assistant.Services
                 intentStopwatch.Stop();
                 _logger.LogInformation($"[ChatService] Intent: {intentResult.Intent}, Confidence: {intentResult.Confidence:P0}");
 
-                // Handle special intents (greeting, gratitude, out of scope)
-                if (intentResult.Intent == IntentType.Greeting)
-                {
-                    response.Message = await GenerateNaturalGreetingAsync();
-                    response.Source = "Greeting";
-                    response.IsFromKnowledgeBase = false;
-                    response.Success = true;
-                    response.Suggestions = new List<string>();
-                    
-                    totalStopwatch.Stop();
-                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                    metrics.Route = "greeting";
-                    response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
-                    return response;
-                }
-
-                if (intentResult.Intent == IntentType.Gratitude)
-                {
-                    response.Message = await GenerateNaturalGratitudeResponseAsync();
-                    response.Source = "Gratitude";
-                    response.IsFromKnowledgeBase = false;
-                    response.Success = true;
-                    response.Suggestions = new List<string>();
-                    
-                    totalStopwatch.Stop();
-                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                    metrics.Route = "gratitude";
-                    response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
-                    return response;
-                }
-
+                // Greeting dan Gratitude ditangani langsung oleh Ollama dengan full context (last 5 turns).
+                // Ollama tahu konteks percakapan dan bisa respon natural tanpa reset konteks.
+                // Intro greeting untuk sesi benar-benar baru tetap di-handle di block isFirstMessage di atas.
                 // Step 2A: deteksi apakah user ingin membuat tiket support.
                 if (intentResult.Intent == IntentType.TicketRequest)
                 {
