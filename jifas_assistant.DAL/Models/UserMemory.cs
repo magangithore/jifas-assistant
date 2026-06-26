@@ -113,5 +113,19 @@ namespace jifas_assistant.DAL.Models
         /// Terakhir kali profil diupdate
         /// </summary>
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // ─── Cross-session memory ───────────────────────────────────────────
+
+        /// <summary>
+        /// ID sesi terakhir user — untuk cross-session memory.
+        /// Saat user buka sesi baru, AI inject konteks dari sesi ini.
+        /// </summary>
+        [MaxLength(100)]
+        public string? LastSessionId { get; set; }
+
+        /// <summary>
+        /// Timestamp sesi terakhir — untuk format "2 jam yang lalu" dll.
+        /// </summary>
+        public DateTime? LastSessionAt { get; set; }
     }
 }

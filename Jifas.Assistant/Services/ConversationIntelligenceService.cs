@@ -205,8 +205,10 @@ namespace Jifas.Assistant.Services
                     return context;
                 }
 
-                // Build conversation turns (oldest first)
+                // Build conversation turns (oldest first).
+                // Filter out "[Session Greeting]" placeholder — it confuses Ollama chat context.
                 var turns = history
+                    .Where(h => h.UserMessage != "[Session Greeting]")
                     .OrderBy(h => h.CreatedAt)
                     .Select(h => new ConversationTurn
                     {
@@ -408,6 +410,7 @@ namespace Jifas.Assistant.Services
                     return string.Empty;
 
                 var turns = history
+                    .Where(h => h.UserMessage != "[Session Greeting]")
                     .OrderBy(h => h.CreatedAt)
                     .Select(h => new ConversationTurn
                     {

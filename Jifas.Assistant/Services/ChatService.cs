@@ -45,6 +45,7 @@ namespace Jifas.Assistant.Services
         private readonly IUserMemoryService _userMemory;
         private readonly IAdaptiveContextPackService _contextPackService;
         private readonly IEmbeddingService _embeddingService;
+        private readonly ICrossSessionContextService _crossSessionContext;
         private readonly ITicketService _ticketService;
         private readonly IMonitoringService _monitoringService;
         private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
@@ -73,7 +74,8 @@ namespace Jifas.Assistant.Services
             IEmbeddingService embeddingService,
             ITicketService ticketService,
             IMonitoringService monitoringService,
-            IDbContextFactory<JIFAS_AssistantContext> dbFactory)
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory,
+            ICrossSessionContextService crossSessionContext)
         {
             _ollamaService = ollamaService;
             _knowledgeBaseService = knowledgeBaseService;
@@ -96,6 +98,7 @@ namespace Jifas.Assistant.Services
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
             _monitoringService = monitoringService ?? throw new ArgumentNullException(nameof(monitoringService));
             _dbFactory = dbFactory ?? throw new ArgumentNullException(nameof(dbFactory));
+            _crossSessionContext = crossSessionContext ?? throw new ArgumentNullException(nameof(crossSessionContext));
         }
 
         public async Task<ChatResponse> ProcessMessageAsync(ChatRequest request, CancellationToken cancellationToken = default)
@@ -127,7 +130,30 @@ namespace Jifas.Assistant.Services
                 activeModule: request?.Context?.ActiveModule,
                 callType:     "chat");
 
-            var isFirstMessage = string.IsNullOrWhiteSpace(request?.SessionId);
+            // isFirstMessage: true jika frontend mengirim flag ini (new session/page load).
+            // SessionId selalu ada karena controller selalu generate GUID jika kosong.
+            // Cross-session: jika isFirstMessage=true, cek apakah user punya prior sessions.
+            var isFirstMessage = request?.IsFirstMessage == true;
+
+            // Track apakah response ini greeting/intro — jika ya, skip semua cache KB (shared scope, lintas user).
+            var isGreetingResponse = false;
+
+            // Track apakah returning user (buka sesi baru tapi punya history di sesi sebelumnya).
+            // Cross-session memory: AI inject konteks dari LastSessionId user.
+            var isReturningUser = false;
+            CrossSessionContext? priorContext = null;
+            if (isFirstMessage)
+            {
+                var userProfile = await _userMemory.GetUserProfileAsync(request?.UserId ?? "anonymous");
+                if (!userProfile.IsNewUser && userProfile.TotalSessions > 0)
+                {
+                    priorContext = await _crossSessionContext.GetPriorSessionContextAsync(
+                        request?.UserId ?? "anonymous", maxTurns: 3);
+                    isReturningUser = priorContext?.HasPriorSession == true;
+                    if (isReturningUser)
+                        _logger.LogInformation($"[ChatService] Returning user: {request?.UserId}, Sessions: {userProfile.TotalSessions}, PriorTopics: {string.Join(", ", priorContext?.TopicsFromPriorSession ?? new List<string>())}");
+                }
+            }
 
             // Log context dari frontend untuk membantu analisis issue company/module/page.
             _logger.LogDebug(
@@ -233,21 +259,38 @@ namespace Jifas.Assistant.Services
                 var enableCache = _configuration.GetValue<bool>("Caching:EnableResponseCache");
 
                 // Pesan pertama sesi menampilkan intro JIFAS satu kali per session.
-                // Skip juga kalau sesi sudah punya chat history (safety net).
+                // Returning user: personalized greeting + cross-session context injection.
                 if (isFirstMessage && !hasSeenIntroduction && !hasSessionHistory)
                 {
-                    _logger.LogInformation($"[ChatService] New session detected - showing JIFAS introduction");
-                    await ShowJIFASIntroductionAsync(response, cancellationToken);
+                    if (isReturningUser && priorContext?.HasPriorSession == true)
+                    {
+                        _logger.LogInformation($"[ChatService] Returning user detected - showing personalized return greeting");
+                        var returnGreeting = await _crossSessionContext.GenerateReturnGreetingAsync(
+                            priorContext, request?.Language ?? "id");
+                        response.Message = returnGreeting;
+                        response.Source = "JIFAS AI Assistant - Welcome Back";
+                        metrics.Route = "return-greeting";
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"[ChatService] New session detected - showing JIFAS introduction");
+                        await ShowJIFASIntroductionAsync(response, cancellationToken);
+                        metrics.Route = "intro";
+                    }
+
                     _cacheService.Set(jifasIntroductionKey, true, 24 * 60);
+                    isGreetingResponse = true;
 
                     totalStopwatch.Stop();
                     metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                    metrics.Route = "intro";
                     response.PerformanceMetrics = metrics;
-                    _logger.LogInformation($"[INTRO] {metrics.GetSummary()}");
+                    _logger.LogInformation($"[{(isReturningUser ? "RETURN_GREETING" : "INTRO")}] {metrics.GetSummary()}");
 
-                    // Simpan intro agar histori sesi tetap lengkap.
-                    await SaveChatHistoryAsync(response, "[JIFAS Introduction]", request, cancellationToken);
+                    await SaveChatHistoryAsync(response, "[Session Greeting]", request, cancellationToken);
+
+                    // Update LastSessionId untuk cross-session memory
+                    if (!string.IsNullOrWhiteSpace(request?.UserId) && request.UserId != "anonymous")
+                        await _crossSessionContext.UpdateLastSessionAsync(request.UserId, response.SessionId);
 
                     return response;
                 }
@@ -258,7 +301,7 @@ namespace Jifas.Assistant.Services
                 if (learningDecision.HasMatch)
                 {
                     var learningRoute = learningDecision.MatchType == "exact" ? "learning-exact" : "learning-similar";
-                    if (enableCache)
+                    if (enableCache && !isGreetingResponse)
                     {
                         var learningCacheStopwatch = Stopwatch.StartNew();
                         var cacheScope = BuildResponseCacheScope(userMessage, request);
@@ -412,11 +455,16 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Step 2B: cek apakah pertanyaan masih berada dalam scope JIFAS.
+                // Greeting/gratitude selalu in-scope — skip detector untuk avoid unnecessary Ollama call.
                 var scopeStopwatch = Stopwatch.StartNew();
-                var scopeCheckResult = await _outOfScopeDetector.CheckScopeAsync(userMessage);
+                var scopeCheckResult = new ScopeCheckResult { IsInScope = true };
+                if (intentResult.Intent != IntentType.Greeting && intentResult.Intent != IntentType.Gratitude)
+                {
+                    scopeCheckResult = await _outOfScopeDetector.CheckScopeAsync(userMessage);
+                }
                 scopeStopwatch.Stop();
                 metrics.ScopeDetectionMs = scopeStopwatch.ElapsedMilliseconds;
-                
+
                 // Out of scope - generate natural rejection
                 if (!scopeCheckResult.IsInScope || intentResult.Intent == IntentType.OutOfScope)
                 {
@@ -454,11 +502,47 @@ namespace Jifas.Assistant.Services
                     var turns = fullContext.RecentTurns
                         .Select(t => (t.UserMessage, t.AssistantResponse))
                         .ToList();
-                    _ollamaService.SetConversationHistory(turns);
+
+                    // Cross-session: prepend prior session turns for returning users
+                    if (isReturningUser && priorContext?.HasPriorSession == true)
+                    {
+                        var priorTurns = priorContext.PriorTurns
+                            .Select(t => (t.UserMessage, t.AssistantResponse)).ToList();
+                        var combinedTurns = priorTurns.Concat(turns).ToList();
+                        _ollamaService.SetConversationHistory(combinedTurns);
+                        _logger.LogInformation($"[ChatService] Cross-session: injected {priorTurns.Count} prior turns + {turns.Count} current turns");
+                    }
+                    else
+                    {
+                        _ollamaService.SetConversationHistory(turns);
+                    }
                 }
                 else
                 {
-                    _ollamaService.SetConversationHistory(null);
+                    // No current session turns — check if returning user has prior turns
+                    if (isReturningUser && priorContext?.HasPriorSession == true)
+                    {
+                        var priorTurns = priorContext.PriorTurns
+                            .Select(t => (t.UserMessage, t.AssistantResponse)).ToList();
+                        _ollamaService.SetConversationHistory(priorTurns);
+                        _logger.LogInformation($"[ChatService] Cross-session: injected {priorTurns.Count} prior turns (no current turns yet)");
+                    }
+                    else
+                    {
+                        _ollamaService.SetConversationHistory(null);
+                    }
+                }
+
+                // Cross-session: prepend prior session context to conversationContext for context-aware prompts
+                if (isReturningUser && priorContext?.HasPriorSession == true &&
+                    !string.IsNullOrEmpty(priorContext.FormattedContext))
+                {
+                    if (!string.IsNullOrEmpty(conversationContext))
+                        conversationContext = priorContext.FormattedContext + "\n\n" + conversationContext;
+                    else
+                        conversationContext = priorContext.FormattedContext;
+
+                    _logger.LogInformation($"[ChatService] Cross-session context prepended to prompt");
                 }
 
                 // Step 3: cari Knowledge Base dengan hybrid search keyword + semantic pgvector.
@@ -698,6 +782,12 @@ namespace Jifas.Assistant.Services
                 catch (Exception ex)
                 {
                     _logger.LogWarning($"[ChatService] Pattern extraction skipped: {ex.Message}");
+                }
+
+                // Update LastSessionId untuk cross-session memory tracking
+                if (!string.IsNullOrWhiteSpace(request?.UserId) && request.UserId != "anonymous")
+                {
+                    await _crossSessionContext.UpdateLastSessionAsync(request.UserId, response.SessionId);
                 }
 
                 _logger.LogDebug(

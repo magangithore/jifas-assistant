@@ -92,7 +92,9 @@ CREATE TABLE IF NOT EXISTS "UserMemory" (
     "AverageConfidenceReceived" double precision NOT NULL DEFAULT 0,
     "FirstSeenAt" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "LastSeenAt" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "UpdatedAt" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "UpdatedAt" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "LastSessionId" varchar(100),
+    "LastSessionAt" timestamp with time zone
 );
 
 CREATE TABLE IF NOT EXISTS "LearningCandidates" (

@@ -285,6 +285,9 @@ builder.Services.AddScoped<IUserMemoryService, UserMemoryService>();
 // Monitoring menyimpan metrik dan broadcast ke dashboard.
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 
+// Cross-session conversation memory — track last session per user for persistent context
+builder.Services.AddScoped<ICrossSessionContextService, CrossSessionContextService>();
+
 // ChatService diregistrasikan terakhir karena bergantung pada service-service di atas.
 builder.Services.AddScoped<IChatService, ChatService>();
 
