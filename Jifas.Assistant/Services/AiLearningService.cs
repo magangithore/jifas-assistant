@@ -115,6 +115,7 @@ public sealed class LearningCollectionResult
     public int Created { get; set; }
     public int Updated { get; set; }
     public int Skipped { get; set; }
+    public int SkippedDueToRateLimit { get; set; }
 }
 
 public sealed class LearningPublishRunResult
@@ -513,8 +514,38 @@ public class AiLearningService : IAiLearningService
     public async Task<LearningCollectionResult> CollectCandidatesAsync(int? scanLimit = null, CancellationToken cancellationToken = default)
     {
         var effectiveLimit = scanLimit ?? _configuration.GetValue<int>("AiLearning:CollectorScanLimit", 500);
-        var result = new LearningCollectionResult();
+        var maxPerUserPerDay = _configuration.GetValue<int>("AiLearning:MaxNewCandidatesPerUserPerDay", 20);
+        var todayStart = DateTime.UtcNow.Date;
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+
+        // Rate limit: hitung candidate BARU per user hari ini SEKALI.
+        // Only NEW candidates (Create) di-rate-limit; update existing tidak dibatasi.
+        var createdTodayByUser = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        if (maxPerUserPerDay > 0)
+        {
+            // Step 1: get SourceChatHistoryIds of candidates created today
+            var todayCandidateChatIds = await db.LearningCandidates
+                .AsNoTracking()
+                .Where(c => c.CreatedAt >= todayStart && c.SourceChatHistoryId.HasValue)
+                .Select(c => c.SourceChatHistoryId!.Value)
+                .ToListAsync(cancellationToken);
+
+            if (todayCandidateChatIds.Count != 0)
+            {
+                // Step 2: batch-fetch UserId dari ChatHistory
+                var chatIdToUserId = await db.ChatHistories
+                    .AsNoTracking()
+                    .Where(h => todayCandidateChatIds.Contains(h.Id))
+                    .ToDictionaryAsync(h => h.Id, h => h.UserId ?? "anonymous", cancellationToken);
+
+                // Step 3: count per UserId
+                foreach (var cid in todayCandidateChatIds)
+                    if (chatIdToUserId.TryGetValue(cid, out var uid) && !string.IsNullOrWhiteSpace(uid))
+                        createdTodayByUser[uid] = createdTodayByUser.GetValueOrDefault(uid) + 1;
+            }
+        }
+
+        var result = new LearningCollectionResult();
         var since = DateTime.UtcNow.AddDays(-30);
 
         var chats = await db.ChatHistories
@@ -545,11 +576,25 @@ public class AiLearningService : IAiLearningService
                 continue;
             }
 
+            // Rate limit: skip hanya untuk candidate BARU, bukan update existing.
+            if (maxPerUserPerDay > 0)
+            {
+                var userId = chat.UserId ?? "anonymous";
+                if (createdTodayByUser.TryGetValue(userId, out var existingCount) && existingCount >= maxPerUserPerDay)
+                {
+                    result.Skipped++;
+                    result.SkippedDueToRateLimit++;
+                    continue;
+                }
+            }
+
             var lastSeenBefore = lastSeenByHash.TryGetValue(normalized, out var ls) ? ls : DateTime.MinValue;
             var saved = await CreateOrUpdateCandidateAsync(db, chat, evaluation, frequency, lastSeenBefore, "collector", cancellationToken);
             if (saved.created)
             {
                 lastSeenByHash[normalized] = chat.CreatedAt;
+                var userId = chat.UserId ?? "anonymous";
+                createdTodayByUser[userId] = createdTodayByUser.GetValueOrDefault(userId) + 1;
                 result.Created++;
             }
             else
@@ -1064,8 +1109,8 @@ public sealed class AiLearningSchedulerService : BackgroundService
                 if (now >= nextCollectAt)
                 {
                     var collect = await learning.CollectCandidatesAsync(cancellationToken: stoppingToken);
-                    _logger.LogInformation("[AiLearningScheduler] Collector scanned={Scanned}, created={Created}, updated={Updated}, skipped={Skipped}",
-                        collect.Scanned, collect.Created, collect.Updated, collect.Skipped);
+                    _logger.LogInformation("[AiLearningScheduler] Collector scanned={Scanned}, created={Created}, updated={Updated}, skipped={Skipped}, rateLimitSkipped={RateLimitSkipped}",
+                        collect.Scanned, collect.Created, collect.Updated, collect.Skipped, collect.SkippedDueToRateLimit);
                     nextCollectAt = now.Add(collectorInterval);
                 }
 

@@ -749,6 +749,11 @@
       els.detailStatus.textContent = statusLabel(item.status);
       els.detailStatus.className = `pill ${item.status}`;
       els.detail.innerHTML = `
+        ${item.containsSensitiveData ? `
+        <div style="padding:12px 14px;border-radius:var(--radius-sm);background:color-mix(in srgb,var(--danger) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));display:grid;gap:6px">
+          <b style="font-size:13px;color:var(--danger)">&#9888; Data Sensitif Terdeteksi</b>
+          <span style="font-size:12.5px;color:var(--muted)">${esc(item.sensitiveReason || 'Jawaban mengandung pola data sensitif (email, nomor invoice, NPWP, dsb). Harap hapus/mask sebelum publish.')}</span>
+        </div>` : ''}
         <div class="decision">
           <b>Cara chatbot memakai kandidat ini</b>
           <span>${esc(routePreview(item))}</span>
