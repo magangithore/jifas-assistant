@@ -65,6 +65,7 @@ public sealed class LearningCandidateDto
     public bool ContainsSensitiveData { get; set; }
     public string SensitiveReason { get; set; } = string.Empty;
     public int Frequency { get; set; }
+    public int TotalFrequency { get; set; }
     public string ReviewNotes { get; set; } = string.Empty;
     public string ReviewedBy { get; set; } = string.Empty;
     public int? PublishedDocumentId { get; set; }
@@ -72,6 +73,7 @@ public sealed class LearningCandidateDto
     public string PublishError { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public DateTime? LastSeenAt { get; set; }
     public DateTime? ReviewedAt { get; set; }
     public DateTime? PublishedAt { get; set; }
 }
@@ -298,8 +300,8 @@ public interface IAiLearningService
     Task<LearningCandidateDto?> UpdateCandidateAsync(int id, LearningCandidateEditRequest request, string actor, CancellationToken cancellationToken = default);
     Task<LearningCandidateDto?> MarkReadyAsync(int id, string actor, CancellationToken cancellationToken = default);
     Task<LearningCandidateDto?> ArchiveAsync(int id, string actor, string? notes = null, CancellationToken cancellationToken = default);
-    Task<LearningCollectionResult> CollectCandidatesAsync(int scanLimit = 250, CancellationToken cancellationToken = default);
-    Task<LearningCandidateDto?> CreateCandidateFromFeedbackAsync(int chatHistoryId, int rating, string? comment, CancellationToken cancellationToken = default);
+    Task<LearningCollectionResult> CollectCandidatesAsync(int? scanLimit = null, CancellationToken cancellationToken = default);
+    Task<LearningCandidateDto?> CreateCandidateFromFeedbackAsync(int chatHistoryId, int rating, string? comment, DateTime? lastSeenAtBeforeUpdate = null, CancellationToken cancellationToken = default);
     Task<LearningPublishRunResult> PublishReadyAsync(int? limit = null, string actor = "scheduler", CancellationToken cancellationToken = default);
 }
 
@@ -390,6 +392,7 @@ public class AiLearningService : IAiLearningService
         var total = await candidates.CountAsync(cancellationToken);
         var items = await candidates
             .OrderByDescending(c => c.UpdatedAt)
+            .ThenByDescending(c => c.LastSeenAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(c => ToDto(c))
@@ -506,8 +509,9 @@ public class AiLearningService : IAiLearningService
         return ToDto(candidate);
     }
 
-    public async Task<LearningCollectionResult> CollectCandidatesAsync(int scanLimit = 250, CancellationToken cancellationToken = default)
+    public async Task<LearningCollectionResult> CollectCandidatesAsync(int? scanLimit = null, CancellationToken cancellationToken = default)
     {
+        var effectiveLimit = scanLimit ?? _configuration.GetValue<int>("AiLearning:CollectorScanLimit", 500);
         var result = new LearningCollectionResult();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var since = DateTime.UtcNow.AddDays(-30);
@@ -516,7 +520,7 @@ public class AiLearningService : IAiLearningService
             .AsNoTracking()
             .Where(c => c.CreatedAt >= since)
             .OrderByDescending(c => c.CreatedAt)
-            .Take(Math.Clamp(scanLimit, 10, 1000))
+            .Take(Math.Clamp(effectiveLimit, 10, 1000))
             .ToListAsync(cancellationToken);
 
         result.Scanned = chats.Count;
@@ -524,6 +528,10 @@ public class AiLearningService : IAiLearningService
         var frequencies = chats
             .GroupBy(c => AiLearningPolicy.NormalizeQuestion(c.UserMessage))
             .ToDictionary(g => g.Key, g => g.Count());
+
+        // Per-hash checkpoint: LastSeenAt saat candidate dibuat (bukan saat di-update).
+        // Ini memastikan tidak double-count saat window scan overlap.
+        var lastSeenByHash = new Dictionary<string, DateTime>();
 
         foreach (var chat in chats)
         {
@@ -536,18 +544,24 @@ public class AiLearningService : IAiLearningService
                 continue;
             }
 
-            var saved = await CreateOrUpdateCandidateAsync(db, chat, evaluation, frequency, "collector", cancellationToken);
+            var lastSeenBefore = lastSeenByHash.TryGetValue(normalized, out var ls) ? ls : DateTime.MinValue;
+            var saved = await CreateOrUpdateCandidateAsync(db, chat, evaluation, frequency, lastSeenBefore, "collector", cancellationToken);
             if (saved.created)
+            {
+                lastSeenByHash[normalized] = chat.CreatedAt;
                 result.Created++;
+            }
             else
+            {
                 result.Updated++;
+            }
         }
 
         await db.SaveChangesAsync(cancellationToken);
         return result;
     }
 
-    public async Task<LearningCandidateDto?> CreateCandidateFromFeedbackAsync(int chatHistoryId, int rating, string? comment, CancellationToken cancellationToken = default)
+    public async Task<LearningCandidateDto?> CreateCandidateFromFeedbackAsync(int chatHistoryId, int rating, string? comment, DateTime? lastSeenAtBeforeUpdate = null, CancellationToken cancellationToken = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var chat = await db.ChatHistories.FirstOrDefaultAsync(c => c.Id == chatHistoryId, cancellationToken);
@@ -565,7 +579,7 @@ public class AiLearningService : IAiLearningService
             evaluation.Reason = $"{evaluation.Reason}; feedback: {comment.Trim()}";
         }
 
-        var saved = await CreateOrUpdateCandidateAsync(db, chat, evaluation, frequency, "feedback", cancellationToken);
+        var saved = await CreateOrUpdateCandidateAsync(db, chat, evaluation, frequency, lastSeenAtBeforeUpdate ?? DateTime.MinValue, "feedback", cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return ToDto(saved.candidate);
     }
@@ -622,6 +636,7 @@ public class AiLearningService : IAiLearningService
         ChatHistory chat,
         CandidateEvaluation evaluation,
         int frequency,
+        DateTime? existingLastSeenAt,
         string actor,
         CancellationToken cancellationToken)
     {
@@ -629,15 +644,24 @@ public class AiLearningService : IAiLearningService
         var existing = await db.LearningCandidates.FirstOrDefaultAsync(c => c.QuestionHash == hash, cancellationToken);
         if (existing != null)
         {
+            var lastSeenBefore = existingLastSeenAt ?? existing.LastSeenAt;
+            var newOccurrences = chat.CreatedAt > lastSeenBefore ? 1 : 0;
+            existing.TotalFrequency += newOccurrences;
+
             existing.Frequency = Math.Max(existing.Frequency, frequency);
             existing.LastSeenAt = DateTime.UtcNow;
             existing.UpdatedAt = DateTime.UtcNow;
             existing.QualityScore = Math.Max(existing.QualityScore ?? 0, evaluation.QualityScore);
             existing.Flags = MergeCsv(existing.Flags, evaluation.Flags);
+            existing.SourceChatHistoryId = chat.Id; // update ke chat terbaru
             if (string.IsNullOrWhiteSpace(existing.CandidateReason))
                 existing.CandidateReason = evaluation.Reason;
 
-            await AddAuditAsync(db, existing.Id, "SeenAgain", actor, existing.Status, existing.Status, $"Frequency updated to {existing.Frequency}", cancellationToken);
+            if (newOccurrences > 0)
+            {
+                await AddAuditAsync(db, existing.Id, "SeenAgain", actor, existing.Status, existing.Status,
+                    $"TotalFrequency +{newOccurrences}", cancellationToken);
+            }
             return (existing, false);
         }
 
@@ -659,6 +683,7 @@ public class AiLearningService : IAiLearningService
             ContainsSensitiveData = evaluation.ContainsSensitiveData,
             SensitiveReason = evaluation.SensitiveReason,
             Frequency = Math.Max(1, frequency),
+            TotalFrequency = frequency,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             LastSeenAt = DateTime.UtcNow
@@ -857,6 +882,7 @@ public class AiLearningService : IAiLearningService
         ContainsSensitiveData = c.ContainsSensitiveData,
         SensitiveReason = c.SensitiveReason,
         Frequency = c.Frequency,
+        TotalFrequency = c.TotalFrequency,
         ReviewNotes = c.ReviewNotes,
         ReviewedBy = c.ReviewedBy,
         PublishedDocumentId = c.PublishedDocumentId,
@@ -864,6 +890,7 @@ public class AiLearningService : IAiLearningService
         PublishError = c.PublishError,
         CreatedAt = c.CreatedAt,
         UpdatedAt = c.UpdatedAt,
+        LastSeenAt = c.LastSeenAt,
         ReviewedAt = c.ReviewedAt,
         PublishedAt = c.PublishedAt
     };

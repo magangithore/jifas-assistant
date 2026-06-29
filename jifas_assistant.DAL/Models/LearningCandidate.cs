@@ -65,6 +65,9 @@ public class LearningCandidate
 
     public int Frequency { get; set; } = 1;
 
+    /// <summary>Total historis frekuensi, terakumulasi di semua collector run.</summary>
+    public int TotalFrequency { get; set; } = 0;
+
     public DateTime LastSeenAt { get; set; } = DateTime.UtcNow;
 
     public string ReviewNotes { get; set; } = string.Empty;
