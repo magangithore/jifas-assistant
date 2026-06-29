@@ -303,6 +303,7 @@ public interface IAiLearningService
     Task<LearningCollectionResult> CollectCandidatesAsync(int? scanLimit = null, CancellationToken cancellationToken = default);
     Task<LearningCandidateDto?> CreateCandidateFromFeedbackAsync(int chatHistoryId, int rating, string? comment, DateTime? lastSeenAtBeforeUpdate = null, CancellationToken cancellationToken = default);
     Task<LearningPublishRunResult> PublishReadyAsync(int? limit = null, string actor = "scheduler", CancellationToken cancellationToken = default);
+    Task<int> CleanupAuditLogsAsync(CancellationToken cancellationToken = default);
 }
 
 public class AiLearningService : IAiLearningService
@@ -981,6 +982,23 @@ Catatan review: {candidate.ReviewNotes}
         return chunks;
     }
 
+    public async Task<int> CleanupAuditLogsAsync(CancellationToken cancellationToken = default)
+    {
+        var retentionDays = _configuration.GetValue<int>("AiLearning:AuditRetentionDays", 30);
+        var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
+
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var deleted = await db.LearningCandidateAuditLogs
+            .Where(l => l.CreatedAt < cutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        if (deleted > 0)
+        {
+            _logger.LogInformation("[AiLearningScheduler] CleanupAuditLogs deleted {Count} audit entries older than {RetentionDays} days.", deleted, retentionDays);
+        }
+        return deleted;
+    }
+
     private static KnowledgeBaseChunks CreateChunk(int documentId, int index, string content) => new()
     {
         DocumentId = documentId,
@@ -1019,6 +1037,7 @@ public sealed class AiLearningSchedulerService : BackgroundService
         var publisherInterval = TimeSpan.FromMinutes(Math.Max(1, _configuration.GetValue<int?>("AiLearning:PublisherIntervalMinutes") ?? 15));
         var nextCollectAt = DateTime.UtcNow.AddSeconds(30);
         var nextPublishAt = DateTime.UtcNow.AddMinutes(2);
+        var nextCleanupAt = DateTime.UtcNow.AddMinutes(5); // first cleanup 5 min after start
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -1042,6 +1061,14 @@ public sealed class AiLearningSchedulerService : BackgroundService
                     _logger.LogInformation("[AiLearningScheduler] Publisher attempted={Attempted}, published={Published}, failed={Failed}",
                         publish.Attempted, publish.Published, publish.Failed);
                     nextPublishAt = now.Add(publisherInterval);
+                }
+
+                var cleanupInterval = TimeSpan.FromHours(Math.Max(1, _configuration.GetValue<int?>("AiLearning:AuditCleanupIntervalHours") ?? 24));
+                if (now >= nextCleanupAt)
+                {
+                    var cleaned = await learning.CleanupAuditLogsAsync(stoppingToken);
+                    _logger.LogInformation("[AiLearningScheduler] Audit cleanup removed {Count} old entries.", cleaned);
+                    nextCleanupAt = now.Add(cleanupInterval);
                 }
             }
             catch (OperationCanceledException)
