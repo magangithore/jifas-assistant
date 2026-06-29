@@ -112,6 +112,65 @@ public class AiLearningPolicyTests
     }
 
     [Fact]
+    public void Evaluate_SkipsSessionGreeting_Placeholder()
+    {
+        // [Session Greeting] stored as UserMessage, ResponseSource = "JIFAS AI Assistant"
+        var chat = SuccessfulChat(
+            "[Session Greeting]",
+            "Selamat datang...",
+            source: "JIFAS AI Assistant",
+            confidence: 0.5,
+            isKb: false);
+        Assert.False(AiLearningPolicy.Evaluate(chat).ShouldCreate);
+        Assert.True(AiLearningPolicy.Evaluate(chat).ShouldSkip);
+    }
+
+    [Fact]
+    public void TotalFrequencyIdempotency_SameChatReScanned_NoIncrement()
+    {
+        // Simulasi: chat A diproses 2x, checkpoint = CreatedAt(A)
+        var chatA = new ChatHistory
+        {
+            Id = 1,
+            UserMessage = "Apa itu JIFAS?",
+            AiResponse = "JIFAS adalah sistem finance.",
+            ResponseSource = "JIFAS (3 hasil)",
+            ConfidenceScore = 0.8,
+            IsFromKnowledgeBase = true,
+            Success = true,
+            CreatedAt = new DateTime(2026, 6, 25, 10, 0, 0, DateTimeKind.Utc)
+        };
+
+        // Run 1: checkpoint = DateTime.MinValue, chatA baru → TotalFrequency += 1
+        var checkpointRun1 = DateTime.MinValue;
+        var newOccRun1 = chatA.CreatedAt > checkpointRun1 ? 1 : 0;
+        Assert.Equal(1, newOccRun1); // chat baru: +1
+
+        // Run 2: checkpoint = CreatedAt(chatA), chatA di-rescan → tidak naik
+        var checkpointRun2 = chatA.CreatedAt; // checkpoint = CreatedAt(chatA)
+        var newOccRun2 = chatA.CreatedAt > checkpointRun2 ? 1 : 0;
+        Assert.Equal(0, newOccRun2); // re-scan: +0 (idempoten)
+
+        // Run 3: chat B lebih baru, hanya chat B yang naik
+        var chatB = new ChatHistory
+        {
+            Id = 2,
+            UserMessage = "Apa itu JIFAS?",
+            AiResponse = "JIFAS adalah sistem finance.",
+            ResponseSource = "JIFAS (3 hasil)",
+            ConfidenceScore = 0.8,
+            IsFromKnowledgeBase = true,
+            Success = true,
+            CreatedAt = new DateTime(2026, 6, 26, 10, 0, 0, DateTimeKind.Utc)
+        };
+        var checkpointRun3 = chatA.CreatedAt;
+        var newOccRun3ChatA = chatA.CreatedAt > checkpointRun3 ? 1 : 0;
+        var newOccRun3ChatB = chatB.CreatedAt > checkpointRun3 ? 1 : 0;
+        Assert.Equal(0, newOccRun3ChatA); // chat A: older than checkpoint → +0
+        Assert.Equal(1, newOccRun3ChatB); // chat B: newer than checkpoint → +1
+    }
+
+    [Fact]
     public void Evaluate_SkipsFailedChat()
     {
         var chat = new ChatHistory

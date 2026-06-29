@@ -650,7 +650,7 @@ public class AiLearningService : IAiLearningService
             existing.TotalFrequency += newOccurrences;
 
             existing.Frequency = Math.Max(existing.Frequency, frequency);
-            existing.LastSeenAt = DateTime.UtcNow;
+            existing.LastSeenAt = chat.CreatedAt;  // simpan CreatedAt chat, bukan waktu collector run
             existing.UpdatedAt = DateTime.UtcNow;
 
             // QualityScore threshold-based update — only for NeedsEdit status
