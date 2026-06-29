@@ -652,7 +652,21 @@ public class AiLearningService : IAiLearningService
             existing.Frequency = Math.Max(existing.Frequency, frequency);
             existing.LastSeenAt = DateTime.UtcNow;
             existing.UpdatedAt = DateTime.UtcNow;
-            existing.QualityScore = Math.Max(existing.QualityScore ?? 0, evaluation.QualityScore);
+
+            // QualityScore threshold-based update — only for NeedsEdit status
+            if (existing.Status == LearningCandidateStatuses.NeedsEdit)
+            {
+                var upDelta = _configuration.GetValue<double>("AiLearning:QualityScoreUpDelta", 0.05);
+                var downDelta = _configuration.GetValue<double>("AiLearning:QualityScoreDownDelta", 0.15);
+                var oldScore = existing.QualityScore ?? 0;
+                var newScore = evaluation.QualityScore;
+                var diff = newScore - oldScore;
+                if (diff > 0 && diff >= upDelta)
+                    existing.QualityScore = newScore;
+                else if (diff < 0 && Math.Abs(diff) >= downDelta)
+                    existing.QualityScore = newScore;
+            }
+
             existing.Flags = MergeCsv(existing.Flags, evaluation.Flags);
             existing.SourceChatHistoryId = chat.Id; // update ke chat terbaru
             if (string.IsNullOrWhiteSpace(existing.CandidateReason))
