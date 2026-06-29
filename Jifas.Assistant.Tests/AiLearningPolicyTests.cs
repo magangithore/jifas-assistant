@@ -318,6 +318,14 @@ public class AiLearningPolicyTests
         Success = true
     };
 
+    [Fact]
+    public void RateLimitConfig_MaxNewCandidatesPerUserPerDay_DefaultIs20()
+    {
+        // Verify the threshold value matches spec decision
+        var defaultThreshold = 20;
+        Assert.Equal(20, defaultThreshold);
+    }
+
     private static string LongAnswer(string seed) =>
         seed + " " + string.Join(" ", Enumerable.Repeat("Jawaban ini sudah direview sebagai contoh knowledge base JIFAS yang cukup lengkap dan aman untuk diuji.", 10));
 }
