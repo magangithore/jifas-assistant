@@ -15,7 +15,7 @@ namespace Jifas.Assistant.Services
     public interface IChatHistoryService
     {
         Task SaveChatAsync(ChatHistory chatHistory, CancellationToken cancellationToken = default);
-        Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, int limit = 50, CancellationToken cancellationToken = default);
+        Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, string? userId, int limit = 50, CancellationToken cancellationToken = default);
         Task<List<ChatHistory>> GetUserHistoryAsync(string userId, int limit = 100, CancellationToken cancellationToken = default);
     }
 
@@ -67,9 +67,11 @@ namespace Jifas.Assistant.Services
         }
 
         /// <summary>
-        /// Get chat history untuk specific session
+        /// Get chat history for specific session, filtered by userId.
+        /// If userId is provided, only returns history where UserId matches —
+        /// preventing session hijacking where a different user reuses the same sessionId.
         /// </summary>
-        public async Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, int limit = 50, CancellationToken cancellationToken = default)
+        public async Task<List<ChatHistory>> GetSessionHistoryAsync(string sessionId, string? userId, int limit = 50, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -81,13 +83,22 @@ namespace Jifas.Assistant.Services
                 }
 
                 await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-                var history = await db.ChatHistories
-                    .Where(h => h.SessionId == sessionId)
+                IQueryable<ChatHistory> query = db.ChatHistories
+                    .Where(h => h.SessionId == sessionId);
+
+                // IDOR guard: if userId is provided, verify ownership.
+                // If no match, return empty — session belongs to a different user.
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    query = query.Where(h => h.UserId == userId);
+                }
+
+                var history = await query
                     .OrderByDescending(h => h.CreatedAt)
                     .Take(limit)
                     .ToListAsync(cancellationToken);
 
-                _logger.LogInformation($"[ChatHistoryService] Retrieved {history.Count} records for session {sessionId}");
+                _logger.LogInformation($"[ChatHistoryService] Retrieved {history.Count} records for session {sessionId} (userId={userId ?? "any"})");
                 return history;
             }
             catch (Exception ex)

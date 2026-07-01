@@ -127,6 +127,7 @@ namespace Jifas.Assistant.Services
                 sb.AppendLine("=== ATURAN SCOPE (WAJIB DIIKUTI) ===");
                 sb.AppendLine("Kamu HANYA menjawab seputar sistem JIFAS: Invoice, Payment, PUM, Receiving, CashBank, Budget, Accounting, Approval, Master Data, Report, Login, Akses, dan proses keuangan lainnya.");
                 sb.AppendLine("TOPIK YANG HARUS DITOLAK: politik, cuaca, berita terkini, olahraga, game, musik, film, resep masakan, sejarah, agama, kesehatan, cripto, bitcoin, dan pertanyaan umum non-JIFAS lainnya.");
+                sb.AppendLine("KONSEP TEKNIS IT UMUM di luar konteks JIFAS juga DITOLAK: websocket, REST API, HTTP/S, database engine, JSON parsing, authentication protocol, OAuth, SAML, MQTT, WebRTC, graphQL, dan konsep pemrograman/aplikasi umum lainnya.");
                 sb.AppendLine("Jika pertanyaan di luar topik JIFAS, TOLAK dengan sopan dan arahkan ke JIFAS.");
                 sb.AppendLine("Contoh penolakan yang benar: \"Maaf, itu di luar area saya. Saya khusus untuk JIFAS - Invoice, Payment, PUM, Budget, Approval, dan modul keuangan lainnya. Mau tanya yang mana?\"");
                 sb.AppendLine("KAMU YANG MENENTUKAN apakah pertanyaan masih dalam scope JIFAS - jangan menolak jika ada kaitan dengan keuangan/akuntansi/perusahaan.");

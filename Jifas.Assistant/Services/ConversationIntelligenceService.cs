@@ -90,9 +90,9 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public interface IConversationMemoryService
     {
-        Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 15);
-        Task<string> GetFormattedContextAsync(string sessionId);
-        Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery);
+        Task<ConversationContext> BuildContextAsync(string sessionId, string? userId, int maxTurns = 15);
+        Task<string> GetFormattedContextAsync(string sessionId, string? userId);
+        Task<bool> IsFollowUpQueryAsync(string sessionId, string? userId, string currentQuery);
         string? ExtractTopic(string message);
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Jifas.Assistant.Services
         /// key decisions, errors, and pending work in a dense format.
         /// Used for: ticket descriptions, long-session context, handoff to IT.
         /// </summary>
-        Task<string> CompactSessionAsync(string sessionId, int maxTurns = 20);
+        Task<string> CompactSessionAsync(string sessionId, string? userId, int maxTurns = 20);
     }
 
     /// <summary>
@@ -190,9 +190,9 @@ namespace Jifas.Assistant.Services
 
         #region Conversation Memory Methods
 
-        public async Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 15)
+        public async Task<ConversationContext> BuildContextAsync(string sessionId, string? userId, int maxTurns = 15)
         {
-            const int HISTORY_DEPTH = 200; // max turns to fetch for running summary detection
+            const int HISTORY_DEPTH = 200;
             const int RECENT_WINDOW = 15;  // turns shown verbatim in prompt
             const int SUMMARY_TTL_MIN = 30;
 
@@ -204,18 +204,19 @@ namespace Jifas.Assistant.Services
                     return context;
 
                 // Check cache first
-                var cacheKey = $"ConversationContext_{sessionId}";
+                var safeUserId = string.IsNullOrWhiteSpace(userId) ? "anon" : userId;
+                var cacheKey = $"ConversationContext_{safeUserId}_{sessionId}";
                 var cached = _cacheService.Get<ConversationContext>(cacheKey);
                 if (cached != null && cached.RecentTurns.Count > 0)
                 {
                     // Cache hit — verify RunningSummary still valid if older turns exist
                     if (cached.OlderTurnsCount > 0)
                     {
-                        var summaryKey = $"RunningSummary_{sessionId}";
+                        var summaryKey = $"RunningSummary_{safeUserId}_{sessionId}";
                         var cachedSummary = _cacheService.Get<string>(summaryKey);
                         if (string.IsNullOrEmpty(cachedSummary))
                         {
-                            cached.RunningSummary = await ComputeRunningSummaryAsync(sessionId, HISTORY_DEPTH, RECENT_WINDOW);
+                            cached.RunningSummary = await ComputeRunningSummaryAsync(sessionId, userId, HISTORY_DEPTH, RECENT_WINDOW);
                             _cacheService.Set(summaryKey, cached.RunningSummary, SUMMARY_TTL_MIN);
                         }
                         else cached.RunningSummary = cachedSummary;
@@ -225,7 +226,7 @@ namespace Jifas.Assistant.Services
                 }
 
                 // Cache miss — fetch up to HISTORY_DEPTH to know total session size
-                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, HISTORY_DEPTH);
+                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, userId, HISTORY_DEPTH);
                 if (allHistory == null || allHistory.Count == 0)
                     return context;
 
@@ -256,7 +257,7 @@ namespace Jifas.Assistant.Services
 
                 if (context.OlderTurnsCount > 0)
                 {
-                    var summaryKey = $"RunningSummary_{sessionId}";
+                    var summaryKey = $"RunningSummary_{safeUserId}_{sessionId}";
                     var cachedSummary = _cacheService.Get<string>(summaryKey);
                     if (!string.IsNullOrEmpty(cachedSummary))
                     {
@@ -265,7 +266,7 @@ namespace Jifas.Assistant.Services
                     }
                     else
                     {
-                        context.RunningSummary = await ComputeRunningSummaryAsync(sessionId, HISTORY_DEPTH, RECENT_WINDOW);
+                        context.RunningSummary = await ComputeRunningSummaryAsync(sessionId, userId, HISTORY_DEPTH, RECENT_WINDOW);
                         _cacheService.Set(summaryKey, context.RunningSummary, SUMMARY_TTL_MIN);
                         _logger.LogInformation("[ConversationMemory] Running summary COMPUTED ({0} older turns, {1} chars)",
                             context.OlderTurnsCount, context.RunningSummary.Length);
@@ -297,11 +298,11 @@ namespace Jifas.Assistant.Services
         /// Deterministic running summary for turns older than the 15-turn window.
         /// Rule-based extraction — NO Ollama call.
         /// </summary>
-        private async Task<string> ComputeRunningSummaryAsync(string sessionId, int historyDepth, int recentWindow)
+        private async Task<string> ComputeRunningSummaryAsync(string sessionId, string? userId, int historyDepth, int recentWindow)
         {
             try
             {
-                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, historyDepth);
+                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, userId, historyDepth);
                 if (allHistory == null || allHistory.Count == 0)
                     return string.Empty;
 
@@ -361,13 +362,13 @@ namespace Jifas.Assistant.Services
             }
         }
 
-        public async Task<string> GetFormattedContextAsync(string sessionId)
+        public async Task<string> GetFormattedContextAsync(string sessionId, string? userId)
         {
-            var context = await BuildContextAsync(sessionId);
+            var context = await BuildContextAsync(sessionId, userId);
             return context.FormattedContext ?? string.Empty;
         }
 
-        public async Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery)
+        public async Task<bool> IsFollowUpQueryAsync(string sessionId, string? userId, string currentQuery)
         {
             try
             {
@@ -392,7 +393,7 @@ namespace Jifas.Assistant.Services
                     if (queryLower.Contains(pronoun))
                     {
                         // Verify there's previous context
-                        var context = await BuildContextAsync(sessionId, 1);
+                        var context = await BuildContextAsync(sessionId, userId, 1);
                         if (context.HasPreviousContext)
                         {
                             _logger.LogDebug($"[ConversationMemory] Follow-up detected: pronoun '{pronoun}' with context");
@@ -405,7 +406,7 @@ namespace Jifas.Assistant.Services
                 var wordCount = currentQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
                 if (wordCount <= 3)
                 {
-                    var context = await BuildContextAsync(sessionId, 1);
+                    var context = await BuildContextAsync(sessionId, userId, 1);
                     if (context.HasPreviousContext)
                     {
                         _logger.LogDebug("[ConversationMemory] Follow-up detected: short query with context");
@@ -519,14 +520,14 @@ namespace Jifas.Assistant.Services
         /// Inspired by Claude Code's compaction system — preserves user intents,
         /// key decisions, errors/issues, and context in a dense format.
         /// </summary>
-        public async Task<string> CompactSessionAsync(string sessionId, int maxTurns = 20)
+        public async Task<string> CompactSessionAsync(string sessionId, string? userId, int maxTurns = 20)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(sessionId))
                     return string.Empty;
 
-                var history = await _chatHistoryService.GetSessionHistoryAsync(sessionId, maxTurns);
+                var history = await _chatHistoryService.GetSessionHistoryAsync(sessionId, userId, maxTurns);
                 if (history == null || history.Count == 0)
                     return string.Empty;
 

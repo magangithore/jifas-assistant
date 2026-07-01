@@ -170,7 +170,7 @@ namespace Jifas.Assistant.Services
             var hasSessionHistory = false;
             if (!isFirstMessage && !string.IsNullOrWhiteSpace(response.SessionId))
             {
-                var sessionHistory = await _chatHistoryService.GetSessionHistoryAsync(response.SessionId, 1, cancellationToken);
+                var sessionHistory = await _chatHistoryService.GetSessionHistoryAsync(response.SessionId, request?.UserId, 1, cancellationToken);
                 hasSessionHistory = sessionHistory.Count > 0;
             }
 
@@ -356,7 +356,8 @@ namespace Jifas.Assistant.Services
                     metrics.KnowledgeVersion = cacheKnowledgeVersion;
 
                     var authoritativeCacheStopwatch = Stopwatch.StartNew();
-                    if (enableCache)
+                    // Only cache authoritative learning responses (grounded in prior answers).
+                    if (enableCache && response.IsFromKnowledgeBase)
                     {
                         metrics.CacheScope = BuildResponseCacheScope(userMessage, request);
                         var cacheKey = BuildResponseCacheKey(userMessage, request, cacheKnowledgeVersion);
@@ -421,7 +422,7 @@ namespace Jifas.Assistant.Services
 
                 // Build full conversation context upfront — needed for ALL downstream decisions.
                 // maxTurns=15: sliding window untuk single-pass pipeline (fix: was 5, now 15).
-                var fullContext = await _conversationIntelligence.BuildContextAsync(response.SessionId, maxTurns: 15);
+                var fullContext = await _conversationIntelligence.BuildContextAsync(response.SessionId, request?.UserId, maxTurns: 15);
 
                 // Build conversation turns for the AI intent classifier.
                 var conversationHistory = new List<(string UserMessage, string AssistantResponse)>();
@@ -490,9 +491,11 @@ namespace Jifas.Assistant.Services
                 response.Success = true;
                 response.Suggestions = new List<string>();
 
-                // Step 8: simpan response final ke Redis agar request identik bisa cepat.
+                // Step 8: simpan response final ke Redis — KB-grounded responses only.
+                // OOS, system-knowledge-only, and error responses are NOT cached
+                // to prevent polluting cache with ungrounded answers.
                 var cacheStopwatch2 = Stopwatch.StartNew();
-                if (enableCache && response.Success)
+                if (enableCache && response.Success && response.IsFromKnowledgeBase)
                 {
                     metrics.CacheScope = BuildResponseCacheScope(userMessage, request);
                     var cacheKey = BuildResponseCacheKey(userMessage, request, cacheKnowledgeVersion);
@@ -1212,9 +1215,10 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 // Every new message invalidates the cached context so the next request gets fresh data.
                 try
                 {
-                    var contextCacheKey = $"ConversationContext_{response.SessionId}";
+                    var safeUserId = string.IsNullOrWhiteSpace(request?.UserId) ? "anon" : request!.UserId;
+                    var contextCacheKey = $"ConversationContext_{safeUserId}_{response.SessionId}";
                     _cacheService.Remove(contextCacheKey);
-                    _logger.LogDebug($"[ChatService] Invalidated conversation context cache for session {response.SessionId}");
+                    _logger.LogDebug($"[ChatService] Invalidated conversation context cache for session {response.SessionId} (userId={safeUserId})");
                 }
                 catch (Exception cacheEx)
                 {
@@ -1330,6 +1334,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         private async Task<string> GenerateClarificationResponseAsync(
             string userQuery,
             string sessionId,
+            string? userId,
             List<(string UserMessage, string AssistantResponse)> conversationHistory,
             CancellationToken cancellationToken = default)
         {
@@ -1359,7 +1364,7 @@ Tugas Anda: Berikan jawaban yang lebih singkat, jelas, dan mudah dipahami.
 - Tunjukkan empati (""Maaf kurang jelas"", ""Oke saya jelaskan ulang"").
 
 JAWABAN SINGKAT:";
-                var context = await _conversationIntelligence.GetFormattedContextAsync(sessionId);
+                var context = await _conversationIntelligence.GetFormattedContextAsync(sessionId, userId);
                 var clarifyResponse = await _ollamaService.GenerateResponseAsync(
                     clarificationPrompt,
                     new List<KnowledgeBaseResult>(),
