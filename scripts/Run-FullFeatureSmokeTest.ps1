@@ -179,7 +179,7 @@ $userBase = "enterprise-smoke-$runId"
 
 $kbAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $true -and $d.isFromKnowledgeBase -eq $true); note = "source=$($d.source), kb=$($d.isFromKnowledgeBase)" } }
 $successAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $true); note = "source=$($d.source)" } }
-$outAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $true -and ([string]$d.source) -match "Out of Scope"); note = "source=$($d.source)" } }
+$outAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $true -and ([string]$d.message) -match "Maaf|di luar|di luar scope|bukan topik|saya khusus|tidak bisa saya"); note = "source=$($d.source)" } }
 $validationAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $false -and ([string]$d.source) -match "Input Validation"); note = "expected validation rejection, source=$($d.source)" } }
 $cacheAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $true -and $d.performanceMetrics.wasCacheLit -eq $true -and $d.performanceMetrics.cacheScope -eq "shared"); note = "cache=$($d.performanceMetrics.wasCacheLit)/$($d.performanceMetrics.cacheScope)" } }
 

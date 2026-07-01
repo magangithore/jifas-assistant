@@ -37,6 +37,18 @@ namespace Jifas.Assistant.Services
         void SetCallContext(string? userId, string? sessionId, string? activeModule, string callType = "chat");
 
         /// <summary>
+        /// Single-pass conversational response: history + RAG + scope/format rules in one Ollama call.
+        /// The model autonomously decides intent (follow-up/clarification/greeting/OOS/new topic).
+        /// </summary>
+        Task<string> GenerateConversationalResponseAsync(
+            string userQuery,
+            List<KnowledgeBaseResult> kbResults,
+            List<(string UserMessage, string AssistantResponse)> conversationHistory,
+            string? activePageContext = null,
+            string? userId = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Set riwayat percakapan terbaru agar model memahami follow-up user.
         /// </summary>
         void SetConversationHistory(List<(string user, string assistant)>? turns);

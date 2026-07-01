@@ -413,321 +413,81 @@ namespace Jifas.Assistant.Services
                     metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
                 }
 
-                // Step 2: pahami intent dan scope pertanyaan sebelum pencarian KB.
-                var intentStopwatch = Stopwatch.StartNew();
-                var intentResult = await _queryUnderstanding.ClassifyIntentAsync(userMessage);
-                intentStopwatch.Stop();
-                _logger.LogInformation($"[ChatService] Intent: {intentResult.Intent}, Confidence: {intentResult.Confidence:P0}");
+                // ===== NEW PIPELINE: Context FIRST, then AI-driven intent classification =====
+                // Bug fix #1: Build conversation history BEFORE any scope/intent decisions.
+                // Previously context was built AFTER scope check, causing false OOS rejections.
+                // Bug fix #3: Scope is now determined by AI intent classifier with conversation context,
+                // not by hardcoded keyword arrays in OutOfScopeDetector.
 
-                // Greeting dan Gratitude ditangani langsung oleh Ollama dengan full context (last 5 turns).
-                // Ollama tahu konteks percakapan dan bisa respon natural tanpa reset konteks.
-                // Intro greeting untuk sesi benar-benar baru tetap di-handle di block isFirstMessage di atas.
-                // Step 2A: deteksi apakah user ingin membuat tiket support.
-                if (intentResult.Intent == IntentType.TicketRequest)
-                {
-                    _logger.LogInformation("[ChatService] Ticket request detected - starting ticket flow");
-                    var ticketDialogResult = await _ticketService.HandleTicketDialogAsync(
-                        response.SessionId, request?.UserId ?? "anonymous", userMessage, cancellationToken: cancellationToken);
-
-                    response.Message = ticketDialogResult.Message;
-                    response.Source = "Ticket Flow";
-                    response.IsFromKnowledgeBase = false;
-                    response.Success = true;
-                    response.Suggestions = ticketDialogResult.Suggestions ?? new List<string>();
-
-                    if (ticketDialogResult.Ticket != null)
-                    {
-                        response.Ticket = new TicketInfo
-                        {
-                            TicketNumber = ticketDialogResult.Ticket.TicketNumber,
-                            Status = ticketDialogResult.Ticket.Status,
-                            Message = ticketDialogResult.Ticket.Message,
-                            Url = ticketDialogResult.Ticket.Url
-                        };
-                    }
-
-                    totalStopwatch.Stop();
-                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                    metrics.Route = "ticket";
-                    response.PerformanceMetrics = metrics;
-                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
-                    return response;
-                }
-
-                // Step 2B: cek apakah pertanyaan masih berada dalam scope JIFAS.
-                // Greeting/gratitude selalu in-scope — skip detector untuk avoid unnecessary Ollama call.
-                var scopeStopwatch = Stopwatch.StartNew();
-                var scopeCheckResult = new ScopeCheckResult { IsInScope = true };
-                if (intentResult.Intent != IntentType.Greeting && intentResult.Intent != IntentType.Gratitude)
-                {
-                    scopeCheckResult = await _outOfScopeDetector.CheckScopeAsync(userMessage);
-                }
-                scopeStopwatch.Stop();
-                metrics.ScopeDetectionMs = scopeStopwatch.ElapsedMilliseconds;
-
-                // Out of scope - generate natural rejection
-                if (!scopeCheckResult.IsInScope || intentResult.Intent == IntentType.OutOfScope)
-                {
-                    response.Message = await GenerateNaturalOutOfScopeResponseAsync(userMessage);
-                    response.Source = "Out of Scope";
-                    response.IsFromKnowledgeBase = false;
-                    response.Suggestions = new List<string>();
-                    
-                    totalStopwatch.Stop();
-                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                    metrics.Route = "out-of-scope";
-                    response.PerformanceMetrics = metrics;
-                    _logger.LogInformation($"[OUT_OF_SCOPE] {metrics.GetSummary()}");
-                    
-                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
-                    return response;
-                }
-
-                // Step 2C: perluas query agar pencarian KB menangkap istilah sinonim.
-                var expandedQuery = await _queryUnderstanding.ExpandQueryAsync(userMessage);
-                _logger.LogDebug($"[ChatService] Query expanded: Keywords={expandedQuery.Keywords.Count}, Synonyms={expandedQuery.Synonyms.Count}");
-
-                // Step 2D: bangun konteks percakapan, halaman aktif, dan memori user.
+                // Build full conversation context upfront — needed for ALL downstream decisions.
                 var conversationContext = await _conversationIntelligence.GetFormattedContextAsync(response.SessionId);
-                var isFollowUp = await _conversationIntelligence.IsFollowUpQueryAsync(response.SessionId, userMessage);
-                if (isFollowUp)
-                {
-                    _logger.LogInformation("[ChatService] Detected follow-up question - using conversation context");
-                }
-
-                // Pass conversation turns to Ollama for true multi-turn context
                 var fullContext = await _conversationIntelligence.BuildContextAsync(response.SessionId);
-                if (fullContext?.RecentTurns?.Count > 0)
+
+                // Build conversation turns for the AI intent classifier.
+                var conversationHistory = new List<(string UserMessage, string AssistantResponse)>();
+                if (fullContext?.RecentTurns != null)
                 {
-                    var turns = fullContext.RecentTurns
+                    conversationHistory = fullContext.RecentTurns
                         .Select(t => (t.UserMessage, t.AssistantResponse))
                         .ToList();
-
-                    // Cross-session: prepend prior session turns for returning users
-                    if (isReturningUser && priorContext?.HasPriorSession == true)
-                    {
-                        var priorTurns = priorContext.PriorTurns
-                            .Select(t => (t.UserMessage, t.AssistantResponse)).ToList();
-                        var combinedTurns = priorTurns.Concat(turns).ToList();
-                        _ollamaService.SetConversationHistory(combinedTurns);
-                        _logger.LogInformation($"[ChatService] Cross-session: injected {priorTurns.Count} prior turns + {turns.Count} current turns");
-                    }
-                    else
-                    {
-                        _ollamaService.SetConversationHistory(turns);
-                    }
-                }
-                else
-                {
-                    // No current session turns — check if returning user has prior turns
-                    if (isReturningUser && priorContext?.HasPriorSession == true)
-                    {
-                        var priorTurns = priorContext.PriorTurns
-                            .Select(t => (t.UserMessage, t.AssistantResponse)).ToList();
-                        _ollamaService.SetConversationHistory(priorTurns);
-                        _logger.LogInformation($"[ChatService] Cross-session: injected {priorTurns.Count} prior turns (no current turns yet)");
-                    }
-                    else
-                    {
-                        _ollamaService.SetConversationHistory(null);
-                    }
                 }
 
-                // Cross-session: prepend prior session context to conversationContext for context-aware prompts
-                if (isReturningUser && priorContext?.HasPriorSession == true &&
-                    !string.IsNullOrEmpty(priorContext.FormattedContext))
-                {
-                    if (!string.IsNullOrEmpty(conversationContext))
-                        conversationContext = priorContext.FormattedContext + "\n\n" + conversationContext;
-                    else
-                        conversationContext = priorContext.FormattedContext;
+                // === SINGLE-PASS CONVERSATIONAL PIPELINE ===
+                // No intent classifier -- Ollama handles all routing internally.
+                // Context (history list) built above. Cross-session handled in the code below.
 
-                    _logger.LogInformation($"[ChatService] Cross-session context prepended to prompt");
-                }
+                // Build active page context for RAG grounding
+                var activePageContext = BuildActivePageContextFromRequest(request);
 
-                // Step 3: cari Knowledge Base dengan hybrid search keyword + semantic pgvector.
+                // Step 3: cari Knowledge Base untuk grounding (tanpa routing chain)
                 var kbSearchStopwatch = Stopwatch.StartNew();
 
-                // Generate query embedding for semantic search
                 float[]? queryEmbedding = null;
                 try
                 {
                     queryEmbedding = await _embeddingService.GenerateEmbeddingAsFloatArrayAsync(userMessage, cancellationToken);
-                    if (queryEmbedding != null && queryEmbedding.Length > 0)
-                        _logger.LogInformation($"[ChatService] Generated query embedding: {queryEmbedding.Length} dimensions");
                 }
                 catch (Exception embEx)
                 {
-                    _logger.LogWarning($"[ChatService] Embedding generation failed, falling back to keyword-only: {embEx.Message}");
+                    _logger.LogWarning($"[ChatService] Embedding generation failed: {embEx.Message}");
                 }
 
-                // Hybrid search: keyword + semantic embedding
                 var kbResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(userMessage, queryEmbedding, topK: 5, cancellationToken: cancellationToken);
-
-                // If results are weak, also search with expanded terms
-                if (kbResults == null || kbResults.Count < 2 || (kbResults.Count > 0 && kbResults.Max(r => r.Score) < 0.3))
-                {
-                    var expandedResults = await _knowledgeBaseService.SearchWithEmbeddingAsync(expandedQuery.EnhancedSearchQuery, queryEmbedding, topK: 3, cancellationToken: cancellationToken);
-                    if (expandedResults != null && expandedResults.Count > 0)
-                    {
-                        kbResults = MergeKBResults(kbResults ?? new List<KnowledgeBaseResult>(), expandedResults);
-                        _logger.LogInformation($"[ChatService] Enhanced search with query expansion - merged {expandedResults.Count} additional results");
-                    }
-                }
-                
                 kbSearchStopwatch.Stop();
                 metrics.KbSearchMs = kbSearchStopwatch.ElapsedMilliseconds;
                 metrics.KbResultsBeforeValidation = kbResults?.Count ?? 0;
 
-                // Step 4: validasi hasil KB supaya jawaban tidak mengambil sumber yang lemah.
-                var validationStopwatch2 = Stopwatch.StartNew();
+                // Validate KB results (lightweight quality filter)
                 var validatedResults = ValidateKBResults(kbResults ?? new List<KnowledgeBaseResult>());
-                validationStopwatch2.Stop();
-                metrics.ResultValidationMs = validationStopwatch2.ElapsedMilliseconds;
                 metrics.KbResultsAfterValidation = validatedResults.Count;
-
-                if (validatedResults.Count == 0 && kbResults?.Count > 0)
-                {
-                    _logger.LogWarning($"[ChatService] KB results validation failed - all results filtered out");
-                }
-
-                // Step 5: hitung confidence adaptif berdasarkan intent, relevance, dan konteks.
-                var confidenceStopwatch = Stopwatch.StartNew();
-                
-                // Calculate adaptive threshold based on intent
-                var adaptiveThreshold = await _responseQuality.CalculateThresholdAsync(userMessage, intentResult.Intent, response.SessionId);
-                
-                // Calculate confidence with multiple factors
-                var confidenceResult = _responseQuality.CalculateConfidence(
-                    validatedResults.Count > 0 ? validatedResults : kbResults ?? new List<KnowledgeBaseResult>(),
-                    userMessage,
-                    intentResult.Intent,
-                    adaptiveThreshold);
-                
-                var confidenceScore = confidenceResult.CalculatedConfidence;
-                confidenceStopwatch.Stop();
-                metrics.ConfidenceCalculationMs = confidenceStopwatch.ElapsedMilliseconds;
                 metrics.AverageKbScore = validatedResults.Count > 0 ? validatedResults.Average(r => r.Score) : 0;
-                
-                _logger.LogInformation($"[ChatService] KB Search ({metrics.KbSearchMs}ms): {validatedResults.Count} valid results, " +
-                    $"Confidence: {confidenceScore:F2}, Threshold: {adaptiveThreshold:F2}, Meets: {confidenceResult.MeetsThreshold}");
 
-                // Claude Code-inspired context packing: give the model a compact briefing,
-                // not just raw snippets, so intent and constraints stay visible.
-                var activePageContext = BuildActivePageContextFromRequest(request);
-                var contextPack = await _contextPackService.BuildAsync(
-                    request,
-                    userMessage,
-                    intentResult,
-                    expandedQuery,
-                    validatedResults.Count > 0 ? validatedResults : kbResults ?? new List<KnowledgeBaseResult>(),
-                    conversationContext,
-                    isFollowUp,
-                    activePageContext,
-                    confidenceScore);
+                _logger.LogInformation($"[ChatService] KB Search ({metrics.KbSearchMs}ms): {validatedResults.Count} valid results");
 
-                // Step 5B: tangani low confidence dengan jawaban aman dan arahan support.
-                if (!_responseQuality.ShouldGenerateResponse(confidenceResult))
-                {
-                    var llmStopwatch = Stopwatch.StartNew();
-                    
-                    // Generate intelligent response based on what we have
-                    string fallbackMessage;
-                    if (validatedResults != null && validatedResults.Count > 0)
-                    {
-                        // We have some results - try to help with partial info
-                        fallbackMessage = await GenerateIntelligentPartialResponseAsync(
-                            userMessage,
-                            validatedResults,
-                            intentResult.Intent,
-                            contextPack.FormattedContext,
-                            userId: request?.UserId,
-                            cancellationToken: cancellationToken);
-                    }
-                    else
-                    {
-                        // No results - use system knowledge to answer
-                        fallbackMessage = await GenerateHelpfulNoMatchResponseAsync(
-                            userMessage,
-                            intentResult.Intent,
-                            contextPack.FormattedContext,
-                            userId: request?.UserId,
-                            cancellationToken: cancellationToken);
-                    }
-                    
-                    llmStopwatch.Stop();
-                    metrics.LlmResponseMs = (long)llmStopwatch.Elapsed.TotalMilliseconds;
-                    
-                    response.Message = fallbackMessage;
-                    response.Source = validatedResults?.Count > 0 ? "Fallback Partial Match" : "Fallback System Knowledge";
-                    response.IsFromKnowledgeBase = validatedResults?.Count > 0;
-                    response.ConfidenceScore = confidenceScore;
-                    response.KnowledgeBaseResults = validatedResults ?? kbResults ?? new List<KnowledgeBaseResult>();
-                    metrics.Route = "fallback";
-                    metrics.KnowledgeVersion = cacheKnowledgeVersion;
-                    
-                    response.Suggestions = new List<string>();
-                    metrics.SuggestionsMs = 0;
-                    metrics.SuggestionsCached = false;
-                    
-                    totalStopwatch.Stop();
-                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
-                    response.PerformanceMetrics = metrics;
-                    
-                    _logger.LogInformation($"[PARTIAL_RESPONSE] Confidence({confidenceScore:F2}) | {metrics.GetSummary()}");
-                    
-                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
-                    return response;
-                }
-
-                // Step 6: generate jawaban berbasis KB dengan konteks yang sudah dipadatkan.
+                // Step 4: SINGLE CALL — everything bundled: history + RAG + scope + format rules
+                // This replaces the old 4-5 call pipeline: intent-classify → route → meta-clarify-generate → enhance
                 var responseStopwatch = Stopwatch.StartNew();
 
-                var aiResponse = await GenerateEnhancedResponseAsync(
-                    userMessage, 
-                    validatedResults, 
-                    intentResult.Intent,
-                    conversationContext,
-                    isFollowUp,
+                var aiResponse = await _ollamaService.GenerateConversationalResponseAsync(
+                    userMessage,
+                    validatedResults,
+                    conversationHistory,
                     activePageContext,
-                    contextPack.FormattedContext,
-                    userId: request?.UserId,
-                    cancellationToken: cancellationToken);
+                    request?.UserId,
+                    cancellationToken);
                 responseStopwatch.Stop();
                 metrics.LlmResponseMs = (long)responseStopwatch.Elapsed.TotalMilliseconds;
+                metrics.Route = validatedResults.Count > 0 ? "kb-rag-conversational" : "system-knowledge-conversational";
 
-                // Step 6B: cek kualitas jawaban sebelum dikirim ke user.
-                var qualityResult = await _responseQuality.ValidateResponseAsync(userMessage, aiResponse, validatedResults);
-                
-                // If quality is poor, try to regenerate once
-                if (qualityResult.ShouldRegenerate && qualityResult.OverallScore < 0.4)
-                {
-                    _logger.LogWarning($"[ChatService] Low quality response detected ({qualityResult.OverallScore:P0}), regenerating...");
-                    
-                    aiResponse = await RegenerateImprovedResponseAsync(userMessage, validatedResults, intentResult.Intent, qualityResult, cancellationToken);
-                    
-                    // Re-validate
-                    qualityResult = await _responseQuality.ValidateResponseAsync(userMessage, aiResponse, validatedResults);
-                }
-                
-                _logger.LogInformation($"[ChatService] Response quality: {qualityResult.OverallScore:P0}, Grounding: {qualityResult.GroundingScore:P0}");
-
-                 response.Message = aiResponse;
-                 response.Source = validatedResults.Count > 0 
-                     ? "Knowledge Base RAG"
-                     : "JIFAS System Knowledge";
-                 response.IsFromKnowledgeBase = validatedResults.Count > 0;
-                 response.ConfidenceScore = confidenceScore;
-                 response.KnowledgeBaseResults = validatedResults;
-                 response.Success = true;
-                 metrics.Route = validatedResults.Count > 0 ? "kb-rag" : "fallback";
-                 metrics.KnowledgeVersion = cacheKnowledgeVersion;
-
-                 // Step 7: suggestion terpisah dimatikan untuk produksi.
-                 // Arahan lanjutan sudah diminta di prompt utama agar tidak ada LLM call kedua.
-                 response.Suggestions = new List<string>();
-                 metrics.SuggestionsMs = 0;
-                 metrics.SuggestionsCached = false;
+                response.Message = aiResponse;
+                response.Source = validatedResults.Count > 0 ? "Knowledge Base RAG" : "JIFAS System Knowledge";
+                response.IsFromKnowledgeBase = validatedResults.Count > 0;
+                response.ConfidenceScore = validatedResults.Count > 0 && validatedResults.Count > 0
+                    ? Math.Min(0.95, 0.7 + (validatedResults.Average(r => r.Score) * 0.25))
+                    : 0.5;
+                response.KnowledgeBaseResults = validatedResults;
+                response.Success = true;
+                response.Suggestions = new List<string>();
 
                 // Step 8: simpan response final ke Redis agar request identik bisa cepat.
                 var cacheStopwatch2 = Stopwatch.StartNew();
@@ -758,13 +518,13 @@ namespace Jifas.Assistant.Services
                 await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
 
                 // Update long-term user memory after a successful grounded response.
-                // Pass new fields: isFirstMessage, userCompCode, userEmpCode, userRole, currentModule
+                // intentResult and confidenceScore computed in the simplified single-pass pipeline above.
                 await _userMemory.UpdateMemoryAsync(
                     request?.UserId ?? "anonymous",
                     userMessage,
                     aiResponse,
-                    intentResult.Intent,
-                    confidenceScore,
+                    IntentType.General,
+                    response.ConfidenceScore,
                     currentModule: request?.Context?.ActiveModule,
                     userRole: request?.UserRole,
                     sessionId: response.SessionId);
@@ -1445,6 +1205,21 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 };
 
                 await _chatHistoryService.SaveChatAsync(chatHistory, cancellationToken);
+
+                // Bug fix #1: Invalidate conversation context cache AFTER saving.
+                // Previously, the cache was NOT invalidated, causing stale context for ~30 minutes.
+                // Every new message invalidates the cached context so the next request gets fresh data.
+                try
+                {
+                    var contextCacheKey = $"ConversationContext_{response.SessionId}";
+                    _cacheService.Remove(contextCacheKey);
+                    _logger.LogDebug($"[ChatService] Invalidated conversation context cache for session {response.SessionId}");
+                }
+                catch (Exception cacheEx)
+                {
+                    _logger.LogWarning($"[ChatService] Failed to invalidate context cache: {cacheEx.Message}");
+                    // Cache failure tidak boleh mengganggu penyimpanan chat history.
+                }
             }
             catch (Exception ex)
             {
@@ -1502,6 +1277,128 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
             };
 
             return Task.FromResult(responses[Random.Shared.Next(responses.Length)]);
+        }
+
+        /// <summary>
+        /// Handle META QUESTION - "tadi aku nanya apa", "apa yang sudah kita bahas", "kembali ke topik awal"
+        /// Answered from conversation history, NOT KB search.
+        /// </summary>
+        private async Task<string> GenerateMetaQuestionResponseAsync(
+            string userQuery,
+            string sessionId,
+            List<(string UserMessage, string AssistantResponse)> conversationHistory,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (conversationHistory == null || conversationHistory.Count == 0)
+                {
+                    return "Sepertinya ini awal percakapan kita, jadi belum ada yang bisa saya rangkum. Silakan tanya tentang JIFAS!";
+                }
+
+                // Build summary from conversation history
+                var summaryBuilder = new StringBuilder();
+                summaryBuilder.AppendLine("Berikut ringkasan percakapan kita:");
+                summaryBuilder.AppendLine();
+
+                for (int i = 0; i < conversationHistory.Count; i++)
+                {
+                    var turn = conversationHistory[i];
+                    summaryBuilder.AppendLine($"[{i + 1}] Kamu bertanya: \"{TruncateForDisplay(turn.UserMessage, 80)}\"");
+                    summaryBuilder.AppendLine($"    Saya menjawab tentang: \"{TruncateForDisplay(ExtractTopic(turn.AssistantResponse), 80)}\"");
+                    summaryBuilder.AppendLine();
+                }
+
+                summaryBuilder.AppendLine("Ada yang ingin dibahas lebih lanjut dari percakapan di atas?");
+
+                return summaryBuilder.ToString().Trim();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Error generating meta-question response: {ex.Message}");
+                return "Maaf, saya tidak bisa merangkum percakapan kita saat ini. Silakan lanjutkan pertanyaan baru tentang JIFAS.";
+            }
+        }
+
+        /// <summary>
+        /// Handle CLARIFICATION REQUEST - "gajelas", "hah gimana", "maksudnya apa", "coba singkat"
+        /// This is NOT out-of-scope. User is confused about a previous JIFAS answer.
+        /// </summary>
+        private async Task<string> GenerateClarificationResponseAsync(
+            string userQuery,
+            string sessionId,
+            List<(string UserMessage, string AssistantResponse)> conversationHistory,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (conversationHistory == null || conversationHistory.Count == 0)
+                {
+                    return "Hmm, saya belum menjawab apa-apa di percakapan ini. Silakan tanya tentang JIFAS dan saya akan jelaskan dengan jelas!";
+                }
+
+                // Get the last AI response to clarify
+                var lastResponse = conversationHistory[^1].AssistantResponse;
+
+                // Use Ollama to re-explain the previous answer in a clearer, simpler way
+                var clarificationPrompt = $@"User sebelumnya bertanya: ""{conversationHistory[^1].UserMessage}""
+Jawaban saya sebelumnya: ""{lastResponse}""
+
+User sekarang berkata: ""{userQuery}"" (tidak paham / meminta klarifikasi)
+
+Tugas Anda: Berikan jawaban yang lebih singkat, jelas, dan mudah dipahami.
+- Gunakan bahasa Indonesia.
+- Maksimal 3-4 kalimat.
+- Jangan gunakan bullet point yang banyak.
+- Gunakan kata-kata sederhana.
+- Tunjukkan empati (""Maaf kurang jelas"", ""Oke saya jelaskan ulang"").
+
+JAWABAN SINGKAT:";
+                var context = await _conversationIntelligence.GetFormattedContextAsync(sessionId);
+                var clarifyResponse = await _ollamaService.GenerateResponseAsync(
+                    clarificationPrompt,
+                    new List<KnowledgeBaseResult>(),
+                    sessionContext: context,
+                    cancellationToken: cancellationToken);
+
+                // Fallback if Ollama fails
+                if (string.IsNullOrWhiteSpace(clarifyResponse))
+                {
+                    var topic = ExtractTopic(lastResponse);
+                    return $"Maaf kalau jawabanku kurang jelas! Singkatnya, tadi aku bicara tentang: {topic}. Coba tanyakan lagi lebih spesifik, saya akan jelaskan lebih detail.";
+                }
+
+                return clarifyResponse.Trim();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"[ChatService] Error generating clarification response: {ex.Message}");
+                return "Maaf kalau kurang jelas! Coba tanyakan lagi dengan kata kunci yang lebih spesifik, saya akan jelaskan lebih detail.";
+            }
+        }
+
+        /// <summary>
+        /// Extract main topic/theme from an AI response (first sentence or first clause).
+        /// </summary>
+        private string ExtractTopic(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response)) return "beberapa topik";
+
+            // Remove markdown formatting
+            var clean = response.Replace("**", "").Replace("*", "").Replace("#", "");
+            // Get first sentence
+            var firstSentenceEnd = clean.IndexOfAny(new[] { '.', '!', '?' });
+            if (firstSentenceEnd > 0)
+            {
+                var firstSentence = clean.Substring(0, firstSentenceEnd).Trim();
+                if (firstSentence.Length > 10)
+                    return firstSentence;
+            }
+            return clean.Length > 60 ? clean.Substring(0, 60) + "..." : clean;
         }
 
         /// <summary>

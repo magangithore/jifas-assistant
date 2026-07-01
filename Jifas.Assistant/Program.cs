@@ -262,7 +262,6 @@ builder.Services.AddHttpClient<TicketService>(client =>
             ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             : null
 }).Services.AddScoped<ITicketService, TicketService>();
-
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 builder.Services.AddScoped<IOutOfScopeDetector, OutOfScopeDetector>();
 builder.Services.AddScoped<IJifasContextService, JifasContextService>();
