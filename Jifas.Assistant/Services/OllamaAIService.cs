@@ -98,6 +98,7 @@ namespace Jifas.Assistant.Services
             List<(string UserMessage, string AssistantResponse)> conversationHistory,
             string? activePageContext = null,
             string? userId = null,
+            string? runningSummary = null,
             CancellationToken cancellationToken = default)
         {
             try
@@ -108,7 +109,7 @@ namespace Jifas.Assistant.Services
                     return "Pertanyaan tidak valid. Silakan berikan pertanyaan yang jelas.";
 
                 // Build conversation history section for the prompt
-                var historySection = BuildConversationHistorySection(conversationHistory);
+                var historySection = BuildConversationHistorySection(conversationHistory, runningSummary);
 
                 // Build RAG snippets from KB results
                 var ragSection = BuildRagSection(kbResults);
@@ -178,7 +179,9 @@ namespace Jifas.Assistant.Services
         /// Build conversation history section for single-pass prompt.
         /// Uses sliding window of 15 turns, with running summary for older turns.
         /// </summary>
-        private string BuildConversationHistorySection(List<(string user, string assistant)> history)
+        private string BuildConversationHistorySection(
+            List<(string user, string assistant)> history,
+            string? runningSummary = null)
         {
             if (history == null || history.Count == 0)
                 return "(Ini pesan pertama dalam sesi ini — belum ada konteks sebelumnya)";
@@ -187,15 +190,19 @@ namespace Jifas.Assistant.Services
             var recent = history.TakeLast(CONVERSATIONAL_WINDOW).ToList();
             var startIndex = history.Count - recent.Count;
 
-            // If there are older turns before the window, add a summary
+            // If there are older turns before the window, inject the real running summary
             var olderCount = startIndex;
-            var summaryLine = olderCount > 0
-                ? $"\n[... {olderCount} pesan sebelumnya dalam sesi ini ...]\n"
-                : string.Empty;
 
             var lines = new List<string>();
             lines.Add("=== RIWAYAT PERCAKAPAN ===");
-            if (olderCount > 0) lines.Add($"[... {olderCount} pesan sebelumnya ...]");
+            if (olderCount > 0)
+            {
+                // Replace placeholder with real running summary from older turns
+                if (!string.IsNullOrWhiteSpace(runningSummary))
+                    lines.Add(runningSummary);
+                else
+                    lines.Add($"[... {olderCount} pesan sebelumnya dalam sesi ini ...]");
+            }
 
             for (var i = 0; i < recent.Count; i++)
             {

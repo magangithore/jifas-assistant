@@ -46,6 +46,7 @@ namespace Jifas.Assistant.Services
             List<(string UserMessage, string AssistantResponse)> conversationHistory,
             string? activePageContext = null,
             string? userId = null,
+            string? runningSummary = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>

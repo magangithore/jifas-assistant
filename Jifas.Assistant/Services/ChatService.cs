@@ -474,6 +474,7 @@ namespace Jifas.Assistant.Services
                     conversationHistory,
                     activePageContext,
                     request?.UserId,
+                    fullContext?.RunningSummary,
                     cancellationToken);
                 responseStopwatch.Stop();
                 metrics.LlmResponseMs = (long)responseStopwatch.Elapsed.TotalMilliseconds;

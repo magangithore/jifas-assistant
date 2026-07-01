@@ -21,6 +21,19 @@ namespace Jifas.Assistant.Services
         public string CurrentTopic { get; set; } = string.Empty;
         public bool HasPreviousContext { get; set; }
         public string FormattedContext { get; set; } = string.Empty;
+
+        // Running summary for turns older than the 15-turn window.
+        // LAZY: only computed + cached when session has > 15 turns.
+        // Stored separately in Redis (key: RunningSummary_{sessionId}) to allow
+        // fine-grained invalidation vs the main ConversationContext cache.
+        public string RunningSummary { get; set; } = string.Empty;
+
+        // How many turns exist in the session total (includes both recent + older).
+        public int TotalSessionTurns { get; set; }
+
+        // How many turns are outside the 15-turn recent window.
+        // 0 = no summary needed (session <= 15 turns).
+        public int OlderTurnsCount { get; set; }
     }
 
     public class ConversationTurn
@@ -77,7 +90,7 @@ namespace Jifas.Assistant.Services
     /// </summary>
     public interface IConversationMemoryService
     {
-        Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 5);
+        Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 15);
         Task<string> GetFormattedContextAsync(string sessionId);
         Task<bool> IsFollowUpQueryAsync(string sessionId, string currentQuery);
         string? ExtractTopic(string message);
@@ -177,37 +190,49 @@ namespace Jifas.Assistant.Services
 
         #region Conversation Memory Methods
 
-        public async Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 5)
+        public async Task<ConversationContext> BuildContextAsync(string sessionId, int maxTurns = 15)
         {
+            const int HISTORY_DEPTH = 200; // max turns to fetch for running summary detection
+            const int RECENT_WINDOW = 15;  // turns shown verbatim in prompt
+            const int SUMMARY_TTL_MIN = 30;
+
             var context = new ConversationContext { SessionId = sessionId };
 
             try
             {
                 if (string.IsNullOrWhiteSpace(sessionId))
-                {
                     return context;
-                }
 
                 // Check cache first
                 var cacheKey = $"ConversationContext_{sessionId}";
                 var cached = _cacheService.Get<ConversationContext>(cacheKey);
                 if (cached != null && cached.RecentTurns.Count > 0)
                 {
-                    _logger.LogDebug("[ConversationMemory] Cache HIT");
+                    // Cache hit — verify RunningSummary still valid if older turns exist
+                    if (cached.OlderTurnsCount > 0)
+                    {
+                        var summaryKey = $"RunningSummary_{sessionId}";
+                        var cachedSummary = _cacheService.Get<string>(summaryKey);
+                        if (string.IsNullOrEmpty(cachedSummary))
+                        {
+                            cached.RunningSummary = await ComputeRunningSummaryAsync(sessionId, HISTORY_DEPTH, RECENT_WINDOW);
+                            _cacheService.Set(summaryKey, cached.RunningSummary, SUMMARY_TTL_MIN);
+                        }
+                        else cached.RunningSummary = cachedSummary;
+                    }
+                    _logger.LogDebug("[ConversationMemory] Cache HIT (summaryLen={0})", cached.RunningSummary.Length);
                     return cached;
                 }
 
-                // Get recent history from database
-                var history = await _chatHistoryService.GetSessionHistoryAsync(sessionId, maxTurns);
-                
-                if (history == null || history.Count == 0)
-                {
+                // Cache miss — fetch up to HISTORY_DEPTH to know total session size
+                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, HISTORY_DEPTH);
+                if (allHistory == null || allHistory.Count == 0)
                     return context;
-                }
 
-                // Build conversation turns (oldest first).
-                // Filter out "[Session Greeting]" placeholder — it confuses Ollama chat context.
-                var turns = history
+                context.TotalSessionTurns = allHistory.Count;
+
+                // Build full turn list (oldest first, skip [Session Greeting])
+                var allTurns = allHistory
                     .Where(h => h.UserMessage != "[Session Greeting]")
                     .OrderBy(h => h.CreatedAt)
                     .Select(h => new ConversationTurn
@@ -217,26 +242,122 @@ namespace Jifas.Assistant.Services
                         Timestamp = h.CreatedAt,
                         Topic = ExtractTopic(h.UserMessage) ?? string.Empty
                     })
-                    .Take(maxTurns)
                     .ToList();
 
-                context.RecentTurns = turns;
-                context.HasPreviousContext = turns.Count > 0;
-                context.TopicsDiscussed = turns.Select(t => t.Topic).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
-                context.CurrentTopic = turns.LastOrDefault()?.Topic ?? string.Empty;
-                context.FormattedContext = FormatContext(turns);
+                // Split: last 15 = recent window, rest = older (for summary)
+                context.RecentTurns = allTurns.TakeLast(RECENT_WINDOW).ToList();
+                context.HasPreviousContext = allTurns.Count > 0;
+                context.TopicsDiscussed = allTurns.Select(t => t.Topic).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+                context.CurrentTopic = allTurns.LastOrDefault()?.Topic ?? string.Empty;
+                context.FormattedContext = FormatContext(context.RecentTurns);
 
-                // Cache for 30 minutes
+                var olderTurns = allTurns.Take(Math.Max(0, allTurns.Count - RECENT_WINDOW)).ToList();
+                context.OlderTurnsCount = olderTurns.Count;
+
+                if (context.OlderTurnsCount > 0)
+                {
+                    var summaryKey = $"RunningSummary_{sessionId}";
+                    var cachedSummary = _cacheService.Get<string>(summaryKey);
+                    if (!string.IsNullOrEmpty(cachedSummary))
+                    {
+                        context.RunningSummary = cachedSummary;
+                        _logger.LogDebug("[ConversationMemory] Running summary CACHE HIT ({0} older turns)", context.OlderTurnsCount);
+                    }
+                    else
+                    {
+                        context.RunningSummary = await ComputeRunningSummaryAsync(sessionId, HISTORY_DEPTH, RECENT_WINDOW);
+                        _cacheService.Set(summaryKey, context.RunningSummary, SUMMARY_TTL_MIN);
+                        _logger.LogInformation("[ConversationMemory] Running summary COMPUTED ({0} older turns, {1} chars)",
+                            context.OlderTurnsCount, context.RunningSummary.Length);
+                    }
+                }
+                else
+                {
+                    context.RunningSummary = string.Empty;
+                    _logger.LogDebug("[ConversationMemory] No running summary needed ({0} total turns)", allTurns.Count);
+                }
+
+                // Cache main context (30 min)
                 _cacheService.Set(cacheKey, context, 30);
 
-                _logger.LogInformation($"[ConversationMemory] Built context for session {sessionId}: {turns.Count} turns, Topics: {string.Join(", ", context.TopicsDiscussed)}");
+                _logger.LogInformation("[ConversationMemory] Built context {0}: {1} total, {2} recent, {3} older (summary={4})",
+                    sessionId, allTurns.Count, context.RecentTurns.Count, context.OlderTurnsCount,
+                    context.RunningSummary.Length > 0 ? "yes" : "no");
 
                 return context;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[ConversationMemory] Error building context: {ex.Message}");
+                _logger.LogError("[ConversationMemory] Error building context: {0}", null, ex.Message);
                 return context;
+            }
+        }
+
+        /// <summary>
+        /// Deterministic running summary for turns older than the 15-turn window.
+        /// Rule-based extraction — NO Ollama call.
+        /// </summary>
+        private async Task<string> ComputeRunningSummaryAsync(string sessionId, int historyDepth, int recentWindow)
+        {
+            try
+            {
+                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, historyDepth);
+                if (allHistory == null || allHistory.Count == 0)
+                    return string.Empty;
+
+                var olderRaw = allHistory
+                    .Where(h => h.UserMessage != "[Session Greeting]")
+                    .OrderBy(h => h.CreatedAt)
+                    .ToList();
+
+                var cutoff = olderRaw.Count - recentWindow;
+                if (cutoff <= 0)
+                    return string.Empty;
+
+                olderRaw = olderRaw.Take(cutoff).ToList();
+
+                var turns = olderRaw
+                    .Select(h => new ConversationTurn
+                    {
+                        UserMessage = h.UserMessage,
+                        AssistantResponse = TruncateResponse(h.AiResponse, 500),
+                        Timestamp = h.CreatedAt,
+                        Topic = ExtractTopic(h.UserMessage) ?? string.Empty
+                    })
+                    .ToList();
+
+                var sb = new StringBuilder();
+                var topics = turns.Select(t => t.Topic)
+                    .Where(t => !string.IsNullOrEmpty(t) && t != "General")
+                    .Distinct().ToList();
+                if (topics.Count > 0)
+                    sb.AppendLine($"[RINGKASAN] Topik yang sudah dibahas: {string.Join(", ", topics)}");
+
+                sb.AppendLine("[RINGKASAN] Kronologi percakapan (paling lama ke baru):");
+                foreach (var turn in turns)
+                {
+                    sb.AppendLine($"  [{turn.Timestamp:HH:mm}] {turn.UserMessage}");
+                    if (!string.IsNullOrEmpty(turn.AssistantResponse))
+                    {
+                        var snippet = turn.AssistantResponse.Length > 150
+                            ? turn.AssistantResponse.Substring(0, 150) + "..."
+                            : turn.AssistantResponse;
+                        sb.AppendLine($"    -> {snippet}");
+                    }
+                }
+
+                var lastMsg = turns.LastOrDefault()?.UserMessage?.ToLowerInvariant() ?? "";
+                if (lastMsg.Contains("error") || lastMsg.Contains("gagal") ||
+                    lastMsg.Contains("masalah") || lastMsg.Contains("tidak bisa") ||
+                    lastMsg.Contains("tiket"))
+                    sb.AppendLine("[RINGKASAN] Status: Ada masalah/permintaan yang belum terselesaikan");
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[ConversationMemory] ComputeRunningSummary error: {0}", null, ex.Message);
+                return string.Empty;
             }
         }
 
