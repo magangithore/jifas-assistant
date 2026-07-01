@@ -420,8 +420,8 @@ namespace Jifas.Assistant.Services
                 // not by hardcoded keyword arrays in OutOfScopeDetector.
 
                 // Build full conversation context upfront — needed for ALL downstream decisions.
-                var conversationContext = await _conversationIntelligence.GetFormattedContextAsync(response.SessionId);
-                var fullContext = await _conversationIntelligence.BuildContextAsync(response.SessionId);
+                // maxTurns=15: sliding window untuk single-pass pipeline (fix: was 5, now 15).
+                var fullContext = await _conversationIntelligence.BuildContextAsync(response.SessionId, maxTurns: 15);
 
                 // Build conversation turns for the AI intent classifier.
                 var conversationHistory = new List<(string UserMessage, string AssistantResponse)>();
