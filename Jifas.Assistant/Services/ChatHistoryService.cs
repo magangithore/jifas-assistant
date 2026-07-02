@@ -86,12 +86,15 @@ namespace Jifas.Assistant.Services
                 IQueryable<ChatHistory> query = db.ChatHistories
                     .Where(h => h.SessionId == sessionId);
 
-                // IDOR guard: if userId is provided, verify ownership.
-                // If no match, return empty — session belongs to a different user.
-                if (!string.IsNullOrWhiteSpace(userId))
+                // IDOR guard: userId is MANDATORY for session history access.
+                // Returning empty (not falling back to sessionId-only) prevents
+                // session hijacking where attacker sends userId="" + victim sessionId.
+                if (string.IsNullOrWhiteSpace(userId))
                 {
-                    query = query.Where(h => h.UserId == userId);
+                    _logger.LogWarning($"[ChatHistoryService] IDOR ATTEMPT: empty userId with sessionId={sessionId}");
+                    return new List<ChatHistory>();
                 }
+                query = query.Where(h => h.UserId == userId);
 
                 var history = await query
                     .OrderByDescending(h => h.CreatedAt)

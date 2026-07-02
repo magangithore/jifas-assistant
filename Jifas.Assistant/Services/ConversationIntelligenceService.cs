@@ -203,16 +203,24 @@ namespace Jifas.Assistant.Services
                 if (string.IsNullOrWhiteSpace(sessionId))
                     return context;
 
+                // IDOR defense-in-depth: if userId is missing, return empty context.
+                // Do NOT fallback to sessionId-only query — that bypasses userId binding.
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    _logger.LogWarning("[ConversationMemory] IDOR ATTEMPT: BuildContextAsync called with empty userId for session {0}", sessionId);
+                    return context;
+                }
+
                 // Check cache first
-                var safeUserId = string.IsNullOrWhiteSpace(userId) ? "anon" : userId;
-                var cacheKey = $"ConversationContext_{safeUserId}_{sessionId}";
+                var safeUserId = userId;
+                var cacheKey = $"ConversationContext_{userId}_{sessionId}";
                 var cached = _cacheService.Get<ConversationContext>(cacheKey);
                 if (cached != null && cached.RecentTurns.Count > 0)
                 {
                     // Cache hit — verify RunningSummary still valid if older turns exist
                     if (cached.OlderTurnsCount > 0)
                     {
-                        var summaryKey = $"RunningSummary_{safeUserId}_{sessionId}";
+                        var summaryKey = $"RunningSummary_{userId}_{sessionId}";
                         var cachedSummary = _cacheService.Get<string>(summaryKey);
                         if (string.IsNullOrEmpty(cachedSummary))
                         {
