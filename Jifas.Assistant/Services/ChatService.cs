@@ -414,6 +414,44 @@ namespace Jifas.Assistant.Services
                     metrics.CacheLookupMs = cacheStopwatch.ElapsedMilliseconds;
                 }
 
+                // ===== SCOPE PRE-GATE =====
+                // High-precision, low-recall hard-block SEBELUM pipeline mahal.
+                // - ESCAPE: activeModule atau istilah JIFAS -> teruskan ke LLM.
+                // - HARD-BLOCK: topik OOS jelas tanpa sinyal JIFAS -> return OOS, skip Ollama.
+                // - PASS THROUGH: sisanya (ambigu/nuansa) -> lanjut pipeline normal.
+                // OOS hard-block TIDAK di-cache (konsisten dengan gate cache existing).
+                var scopeStopwatch = Stopwatch.StartNew();
+                var preGateResult = _outOfScopeDetector.EvaluatePreGate(userMessage, request);
+                scopeStopwatch.Stop();
+                metrics.ScopeDetectionMs = scopeStopwatch.ElapsedMilliseconds;
+
+                if (preGateResult.IsHardBlocked)
+                {
+                    _logger.LogInformation("[ScopePreGate] Hard-block: {0} — skipping Ollama", preGateResult.Reason);
+                    var oosMessage = $"Maaf, pertanyaan tentang \"{userMessage}\" di luar cakupan JIFAS AI Assistant. " +
+                        "Saya dirancang khusus untuk membantu hal-hal terkait sistem JIFAS — " +
+                        "Invoice, Payment, PUM, Receiving, Budget, Accounting (GL/AP/AR), Laporan Keuangan, dan proses approval. " +
+                        "Ada yang ingin Anda tanyakan tentang JIFAS?";
+                    response.Message = oosMessage;
+                    response.Success = true;
+                    response.IsFromKnowledgeBase = false;
+                    response.Source = "OutOfScope PreGate";
+                    response.ConfidenceScore = 1.0;
+                    response.Suggestions = new List<string>();
+                    response.KnowledgeBaseResults = new List<KnowledgeBaseResult>();
+                    metrics.Route = "oos-pregate";
+                    metrics.LlmResponseMs = 0;
+
+                    totalStopwatch.Stop();
+                    metrics.TotalMs = totalStopwatch.ElapsedMilliseconds;
+                    response.PerformanceMetrics = metrics;
+                    response.CorrelationId = correlationId;
+
+                    _logger.LogInformationWithCorrelation(correlationId, $"[OOS_PREGATE] {metrics.GetSummary()}");
+                    await SaveChatHistoryAsync(response, userMessage, request, cancellationToken);
+                    return response;
+                }
+
                 // ===== NEW PIPELINE: Context FIRST, then AI-driven intent classification =====
                 // Bug fix #1: Build conversation history BEFORE any scope/intent decisions.
                 // Previously context was built AFTER scope check, causing false OOS rejections.
