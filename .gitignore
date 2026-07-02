@@ -381,3 +381,18 @@ scripts/*_preview.txt
 publish/
 publish-context/
 docker-compose.override.yml
+
+# Claude Code artifacts
+.claude/
+CLAUDE_INSTRUCTION.md
+PROMPT_FOR_CLAUDE_CODE.md
+
+# Dev/test artifacts
+*.bat
+*.dll
+check_chat.sql
+scripts/fix_*.js
+scripts/red-team*.js
+scripts/dump_*.js
+scripts/RedTeam-Attacks.ps1
+vt.dll

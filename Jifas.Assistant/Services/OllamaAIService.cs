@@ -37,9 +37,6 @@ namespace Jifas.Assistant.Services
         private static readonly AsyncLocal<string?> _currentUserId    = new();
         private static readonly AsyncLocal<string?> _currentSessionId = new();
         private static readonly AsyncLocal<string?> _currentModule    = new();
-        // Recent conversation turns to include in Ollama messages array (true multi-turn)
-        private static readonly AsyncLocal<List<(string user, string assistant)>?> _conversationTurns = new();
-
         private const int CONVERSATIONAL_WINDOW = 15; // Sliding window for conversation history
         private const int TRUNCATE_HISTORY_AT = 300;  // Chars per response in history
 
@@ -50,12 +47,6 @@ namespace Jifas.Assistant.Services
             _currentUserId.Value    = userId;
             _currentSessionId.Value = sessionId;
             _currentModule.Value    = activeModule;
-        }
-
-        /// <inheritdoc />
-        public void SetConversationHistory(List<(string user, string assistant)>? turns)
-        {
-            _conversationTurns.Value = turns;
         }
 
         public OllamaAIService(
@@ -134,7 +125,7 @@ namespace Jifas.Assistant.Services
                 sb.AppendLine("PERGUNAKAN/scroll riwayat percakapan untuk pertanyaan soal sejarah chat ini - JANGAN menolak pertanyaan seperti \"tadi aku nanya apa\", \"apa yang sudah dibicarakan\", \"ringkas obrolan kita\".");
                 sb.AppendLine("");
                 sb.AppendLine("=== ATURAN FORMAT (WAJIB DIIKUTI) ===");
-                sb.AppendLine("- Bahasa Indonesia natural, conversaional, seperti chat dengan rekan kerja senior");
+                sb.AppendLine("- Bahasa Indonesia natural, conversational, seperti chat dengan rekan kerja senior");
                 sb.AppendLine("- Ringkas dan padat, jangan bertele-tele");
                 sb.AppendLine("- JANGAN pakai garis pemisah (--- atau ***)");
                 sb.AppendLine("- JANGAN pakai heading markdown (## atau ###)");
@@ -377,28 +368,10 @@ namespace Jifas.Assistant.Services
             {
                 var endpoint = $"{_baseUrl}{OLLAMA_CHAT_ENDPOINT}";
 
-                // Build messages array — skip conversation history for fast (suggestion) calls
-                var includeTurns = maxTokens == null; // only include turns for full main responses
                 var messages = new List<object>
                 {
                     new { role = "system", content = BuildJifasSystemInstruction() }
                 };
-
-                // Inject up to last 5 conversation turns for better context continuity (main call only)
-                if (includeTurns)
-                {
-                    var turns = _conversationTurns.Value;
-                    if (turns != null && turns.Count > 0)
-                    {
-                        foreach (var turn in turns.TakeLast(5))
-                        {
-                            if (!string.IsNullOrWhiteSpace(turn.user))
-                                messages.Add(new { role = "user", content = turn.user });
-                            if (!string.IsNullOrWhiteSpace(turn.assistant))
-                                messages.Add(new { role = "assistant", content = TruncateForContext(turn.assistant, 400) });
-                        }
-                    }
-                }
 
                 // Add current user prompt
                 messages.Add(new { role = "user", content = prompt });

@@ -48,11 +48,6 @@ namespace Jifas.Assistant.Services
             string? userId = null,
             string? runningSummary = null,
             CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Set riwayat percakapan terbaru agar model memahami follow-up user.
-        /// </summary>
-        void SetConversationHistory(List<(string user, string assistant)>? turns);
     }
 
     public class KnowledgeBaseResult
