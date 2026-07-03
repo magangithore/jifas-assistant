@@ -224,7 +224,9 @@ namespace Jifas.Assistant.Services
                         var cachedSummary = _cacheService.Get<string>(summaryKey);
                         if (string.IsNullOrEmpty(cachedSummary))
                         {
-                            cached.RunningSummary = await ComputeRunningSummaryAsync(sessionId, userId, HISTORY_DEPTH, RECENT_WINDOW);
+                            // Fetch history once — reuse untuk summary computation (tidak 2x query)
+                            var hist = await _chatHistoryService.GetSessionHistoryAsync(sessionId, userId, HISTORY_DEPTH);
+                            cached.RunningSummary = ComputeRunningSummary(hist, RECENT_WINDOW);
                             _cacheService.Set(summaryKey, cached.RunningSummary, SUMMARY_TTL_MIN);
                         }
                         else cached.RunningSummary = cachedSummary;
@@ -274,7 +276,8 @@ namespace Jifas.Assistant.Services
                     }
                     else
                     {
-                        context.RunningSummary = await ComputeRunningSummaryAsync(sessionId, userId, HISTORY_DEPTH, RECENT_WINDOW);
+                        // allHistory sudah di-fetch di atas — reuse, jangan query lagi
+                        context.RunningSummary = ComputeRunningSummary(allHistory, RECENT_WINDOW);
                         _cacheService.Set(summaryKey, context.RunningSummary, SUMMARY_TTL_MIN);
                         _logger.LogInformation("[ConversationMemory] Running summary COMPUTED ({0} older turns, {1} chars)",
                             context.OlderTurnsCount, context.RunningSummary.Length);
@@ -305,12 +308,12 @@ namespace Jifas.Assistant.Services
         /// <summary>
         /// Deterministic running summary for turns older than the 15-turn window.
         /// Rule-based extraction — NO Ollama call.
+        /// internal: dipanggil langsung dari test (tanpa reflection).
         /// </summary>
-        private async Task<string> ComputeRunningSummaryAsync(string sessionId, string? userId, int historyDepth, int recentWindow)
+        internal string ComputeRunningSummary(List<ChatHistory> allHistory, int recentWindow)
         {
             try
             {
-                var allHistory = await _chatHistoryService.GetSessionHistoryAsync(sessionId, userId, historyDepth);
                 if (allHistory == null || allHistory.Count == 0)
                     return string.Empty;
 

@@ -7,6 +7,11 @@
     <UserSecretsId>b375d8c9-0269-41b2-bece-00556711b0b1</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Allow test project to access internal members (ComputeRunningSummary, dll.) -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jifas.Assistant.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- Entity Framework Core -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />

@@ -22,6 +22,10 @@ public class MonitoringService : IMonitoringService
     // FIXED: Track failed recordings for monitoring and alerting
     private static int _failedRecordings;
 
+    // SaveHistory metrics — in-memory counters (reset saat app restart)
+    private static int _historySaveSuccess;
+    private static int _historySaveFailure;
+
     public MonitoringService(
         IDbContextFactory<JIFAS_AssistantContext> dbFactory,
         IHubContext<MonitoringHub> hub,
@@ -34,6 +38,8 @@ public class MonitoringService : IMonitoringService
 
     // Static accessor for dashboard to display failed recording count
     public static int FailedRecordings => _failedRecordings;
+    public static int HistorySaveSuccessCount => _historySaveSuccess;
+    public static int HistorySaveFailureCount => _historySaveFailure;
 
     // Record metrics dari setiap call AI ke database dan dashboard.
     public async Task RecordAsync(AiCallMetrics m)
@@ -108,6 +114,15 @@ public class MonitoringService : IMonitoringService
         }
     }
 
+    /// <inheritdoc />
+    public void RecordHistorySave(bool success, string? sessionId)
+    {
+        if (success)
+            Interlocked.Increment(ref _historySaveSuccess);
+        else
+            Interlocked.Increment(ref _historySaveFailure);
+    }
+
     // Aggregate stats untuk kartu KPI dan grafik dashboard.
     public async Task<MonitoringStats> GetStatsAsync(int lastMinutes = 60)
     {
@@ -140,7 +155,9 @@ public class MonitoringService : IMonitoringService
             TotalPromptTokens = logs.Sum(l => (long)l.PromptTokens),
             TotalCompletionTokens = logs.Sum(l => (long)l.CompletionTokens),
             AvgResponseLengthChars = Math.Round(logs.Average(l => l.ResponseLengthChars), 0),
-            LastCallAt = logs.Max(l => l.CreatedAt)
+            LastCallAt = logs.Max(l => l.CreatedAt),
+            HistorySaveSuccess = _historySaveSuccess,
+            HistorySaveFailure = _historySaveFailure
         };
     }
 

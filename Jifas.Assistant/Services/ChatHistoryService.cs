@@ -23,11 +23,16 @@ namespace Jifas.Assistant.Services
     {
         private readonly IDbContextFactory<JIFAS_AssistantContext> _dbFactory;
         private readonly ILoggerService _logger;
+        private readonly IMonitoringService _monitoringService;
 
-        public ChatHistoryService(IDbContextFactory<JIFAS_AssistantContext> dbFactory, ILoggerService logger)
+        public ChatHistoryService(
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory,
+            ILoggerService logger,
+            IMonitoringService monitoringService)
         {
             _dbFactory = dbFactory;
             _logger = logger;
+            _monitoringService = monitoringService;
         }
 
         /// <summary>
@@ -58,10 +63,12 @@ namespace Jifas.Assistant.Services
                 await db.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation($"[ChatHistoryService] Chat saved - Session: {chatHistory.SessionId}, ResponseTime: {chatHistory.ResponseTimeMs}ms");
+                _monitoringService.RecordHistorySave(success: true, chatHistory.SessionId);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[ChatHistoryService] Error saving chat history: {ex.Message}");
+                _logger.LogError($"[ChatHistoryService] Gagal menyimpan chat history - SessionId: {chatHistory?.SessionId ?? "(null)"}, ErrorType: {ex.GetType().Name}");
+                _monitoringService.RecordHistorySave(success: false, chatHistory?.SessionId);
                 // Don't throw - allow application to continue even if history save fails
             }
         }

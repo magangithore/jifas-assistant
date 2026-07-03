@@ -51,6 +51,10 @@ public record MonitoringStats
     public long TotalCompletionTokens { get; init; }
     public double AvgResponseLengthChars { get; init; }
     public DateTime? LastCallAt { get; init; }
+    /// <summary>Total history saves berhasil (in-memory counter, reset saat app restart).</summary>
+    public long HistorySaveSuccess { get; init; }
+    /// <summary>Total history saves gagal (in-memory counter, reset saat app restart).</summary>
+    public long HistorySaveFailure { get; init; }
 }
 
 public record QualityMonitoringStats
@@ -88,6 +92,12 @@ public interface IMonitoringService
 
     /// <summary>Quality stats from persisted chat responses for the last N minutes.</summary>
     Task<QualityMonitoringStats> GetQualityStatsAsync(int lastMinutes = 60, int slowThresholdMs = 30000);
+
+    /// <summary>
+    /// Catat hasil save history (sukses atau gagal).
+    /// Non-blocking — tidak melempar exception.
+    /// </summary>
+    void RecordHistorySave(bool success, string? sessionId);
 }
 
 public record TimeSeriesPoint(DateTime Minute, int Calls, double AvgDurationMs, int TotalTokens);
