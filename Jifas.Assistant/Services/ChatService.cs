@@ -476,7 +476,7 @@ namespace Jifas.Assistant.Services
                 // Context (history list) built above. Cross-session handled in the code below.
 
                 // Build active page context for RAG grounding
-                var activePageContext = BuildActivePageContextFromRequest(request);
+                var activePageContext = BuildActivePageContextFromRequest(request, cancellationToken);
 
                 // Step 3: cari Knowledge Base untuk grounding (tanpa routing chain)
                 var kbSearchStopwatch = Stopwatch.StartNew();
@@ -1272,7 +1272,7 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
         }
 
 
-        private string? BuildActivePageContextFromRequest(ChatRequest? request)
+        private string? BuildActivePageContextFromRequest(ChatRequest? request, CancellationToken cancellationToken = default)
         {
             var ctx = request?.Context;
             if (ctx == null) return null;
@@ -1284,14 +1284,135 @@ Buatlah respons langsung tanpa penjelasan tambahan.";
                 parts.Add($"MODULE:{ctx.ActiveModule}");
             if (!string.IsNullOrWhiteSpace(ctx.PageTitle))
                 parts.Add($"TITLE:{ctx.PageTitle}");
+
+            // Authorization check: SelectedDocumentId harus valid (exists + IsActive).
+            // Kalau tidak valid -> strip DOC: token (tidak boleh bocor ke LLM).
+            // Tidak bisa bedakan "tidak ditemukan" vs "tidak berhak" -> perlakuan sama.
             if (!string.IsNullOrWhiteSpace(ctx.SelectedDocumentId))
-                parts.Add($"DOC:{ctx.SelectedDocumentId}");
+            {
+                var isAuthorized = QueryDocumentAccessAsync(
+                    ctx.SelectedDocumentId,
+                    request?.UserId,
+                    request?.UserCompCode,
+                    cancellationToken).GetAwaiter().GetResult();
+
+                if (isAuthorized)
+                    parts.Add($"DOC:{ctx.SelectedDocumentId}");
+                // else: DOC token tidak ditambahkan — dokumen tidak dipakai
+            }
+
             if (!string.IsNullOrWhiteSpace(ctx.DocumentType))
                 parts.Add($"DOCTYPE:{ctx.DocumentType}");
             if (!string.IsNullOrWhiteSpace(ctx.DocumentStatus))
                 parts.Add($"STATUS:{ctx.DocumentStatus}");
 
             return parts.Count > 0 ? string.Join("|", parts) : null;
+        }
+
+        /// <summary>
+        /// Validasi SelectedDocumentId terhadap database KB.
+        /// Aturan: dokumen harus exists + IsActive (tidak ada kolom ownership company/role di KB).
+        /// Kalau invalid -> logging Warning (userId + compCode + docId + alasan).
+        /// Untuk "tidak ditemukan" dan "tidak berhak" -> perlakuan sama (tidak bisa bedakan).
+        /// internal: dipanggil langsung dari test (tanpa reflection).
+        /// </summary>
+        internal static async Task<bool> ValidateSelectedDocumentIdAsync(
+            IDbContextFactory<JIFAS_AssistantContext> dbFactory,
+            string? docId,
+            string? userId,
+            string? userCompCode,
+            ILoggerService logger,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(docId))
+                return false;
+
+            // SelectedDocumentId adalah Id DB (integer) sebagai string.
+            if (!int.TryParse(docId, out var id))
+            {
+                logger.LogWarning(
+                    "[Authz] SelectedDocumentId format invalid - UserId={UserId}, CompCode={CompCode}, DocId={DocId}",
+                    userId ?? "(null)", userCompCode ?? "(null)", docId);
+                return false;
+            }
+
+            try
+            {
+                await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+                var exists = await db.KnowledgeBaseDocuments
+                    .Where(d => d.Id == id && d.IsActive == true)
+                    .AnyAsync(cancellationToken);
+
+                if (!exists)
+                {
+                    logger.LogWarning(
+                        "[Authz] SelectedDocumentId ditolak - tidak ditemukan atau tidak aktif. " +
+                        "UserId={UserId}, CompCode={CompCode}, DocId={DocId}",
+                        userId ?? "(null)", userCompCode ?? "(null)", docId);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // DB error -> fail-open (tidak блок dokumen, tapi log)
+                logger.LogWarning(
+                    "[Authz] SelectedDocumentId validation DB error - tidak dipakai. " +
+                    "UserId={UserId}, DocId={DocId}, Error={Error}",
+                    userId ?? "(null)", docId, ex.GetType().Name);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Query DB untuk cek apakah dokumen KB aktif dan bisa dipakai oleh caller.
+        /// Protected virtual: subclass di test bisa override untuk kontrol result tanpa DB.
+        /// Aturan authz: dokumen harus exists + IsActive (KB tidak punya kolom ownership company/role).
+        /// </summary>
+        protected virtual async Task<bool> QueryDocumentAccessAsync(
+            string docId,
+            string? userId,
+            string? userCompCode,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(docId))
+                return false;
+
+            if (!int.TryParse(docId, out var id))
+            {
+                _logger.LogWarning(
+                    "[Authz] SelectedDocumentId format invalid - UserId={UserId}, CompCode={CompCode}, DocId={DocId}",
+                    userId ?? "(null)", userCompCode ?? "(null)", docId);
+                return false;
+            }
+
+            try
+            {
+                await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+                var exists = await db.KnowledgeBaseDocuments
+                    .Where(d => d.Id == id && d.IsActive == true)
+                    .AnyAsync(cancellationToken);
+
+                if (!exists)
+                {
+                    _logger.LogWarning(
+                        "[Authz] SelectedDocumentId ditolak - tidak ditemukan atau tidak aktif. " +
+                        "UserId={UserId}, CompCode={CompCode}, DocId={DocId}",
+                        userId ?? "(null)", userCompCode ?? "(null)", docId);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    "[Authz] SelectedDocumentId validation DB error - tidak dipakai. " +
+                    "UserId={UserId}, DocId={DocId}, Error={Error}",
+                    userId ?? "(null)", docId, ex.GetType().Name);
+                return false;
+            }
         }
 
         private static string BuildResponseCacheKey(string message, ChatRequest? request, string knowledgeVersion = "")
