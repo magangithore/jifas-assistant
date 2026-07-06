@@ -62,7 +62,7 @@ namespace Jifas.Assistant.Pages.Admin
                 authProperties);
 
             return string.IsNullOrWhiteSpace(returnUrl) 
-                ? RedirectToPage("/Admin/Monitoring")
+                ? Redirect("/admin/monitoring")
                 : LocalRedirect(returnUrl);
         }
     }
