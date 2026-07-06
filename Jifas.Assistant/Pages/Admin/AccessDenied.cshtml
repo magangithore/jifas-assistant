@@ -1,0 +1,49 @@
+@page
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akses Ditolak - Monitoring JIFAS</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Segoe UI", Arial, system-ui, sans-serif;
+            background: #f0f2f5; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .card {
+            background: white; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            padding: 48px 40px; text-align: center; max-width: 480px;
+        }
+        .icon {
+            width: 64px; height: 64px; margin: 0 auto 24px;
+            background: #fef2f2; border-radius: 50%; display: grid; place-items: center;
+        }
+        .icon svg { color: #b91c1c; width: 32px; height: 32px; }
+        h1 { font-size: 24px; color: #1f2937; margin-bottom: 12px; }
+        p { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 32px; }
+        a {
+            display: inline-block; padding: 12px 24px; background: #667eea;
+            color: white; text-decoration: none; border-radius: 8px;
+            font-weight: 600; transition: background 0.2s;
+        }
+        a:hover { background: #5568d3; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+        </div>
+        <h1>Akses Ditolak</h1>
+        <p>Anda tidak memiliki izin untuk mengakses halaman ini. Dashboard monitoring hanya dapat diakses oleh administrator sistem dengan API Key yang valid.</p>
+        <a href="/Admin/Login">Login dengan Admin API Key</a>
+    </div>
+</body>
+</html>

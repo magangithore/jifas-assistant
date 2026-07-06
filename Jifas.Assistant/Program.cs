@@ -73,6 +73,9 @@ builder.Services.AddControllersWithViews()
         options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
     });
 
+// Razor Pages untuk admin UI (monitoring dashboard)
+builder.Services.AddRazorPages();
+
 // Kompresi response membantu dashboard dan payload JSON besar tanpa mengubah kontrak API.
 if (builder.Configuration.GetValue<bool>("Performance:EnableCompressionResponse"))
 {
@@ -106,36 +109,62 @@ var jwtAuthority = builder.Configuration["Jwt:Authority"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 var jwtSigningKey = builder.Configuration["Jwt:SigningKey"];
 
+// Cookie authentication for admin UI (monitoring dashboard)
+var cookieEnabled = builder.Configuration.GetValue<bool>("Cookie:Enabled", true);
+var authBuilder = builder.Services.AddAuthentication(options =>
+{
+    if (cookieEnabled)
+    {
+        options.DefaultScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
+    }
+    else if (jwtEnabled)
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }
+});
+
+if (cookieEnabled)
+{
+    authBuilder.AddCookie(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.LoginPath = "/Admin/Login";
+        options.AccessDeniedPath = "/Admin/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? Microsoft.AspNetCore.Http.CookieSecurePolicy.None
+            : Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    });
+}
+
 if (jwtEnabled)
 {
-    builder.Services
-        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
+    authBuilder.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.RequireHttpsMetadata = builder.Configuration.GetValue<bool>("Jwt:RequireHttpsMetadata");
+        options.Authority = !string.IsNullOrWhiteSpace(jwtAuthority) ? jwtAuthority : null;
+        options.Audience = jwtAudience;
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            options.RequireHttpsMetadata = builder.Configuration.GetValue<bool>("Jwt:RequireHttpsMetadata");
-            options.Authority = !string.IsNullOrWhiteSpace(jwtAuthority) ? jwtAuthority : null;
-            options.Audience = jwtAudience;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = builder.Configuration.GetValue<bool>("Jwt:ValidateIssuer", true),
-                ValidateAudience = builder.Configuration.GetValue<bool>("Jwt:ValidateAudience", true),
-                ValidateLifetime = builder.Configuration.GetValue<bool>("Jwt:ValidateLifetime", true),
-                ValidateIssuerSigningKey = true,
-                ValidAudience = jwtAudience,
-                ClockSkew = TimeSpan.FromSeconds(builder.Configuration.GetValue<int>("Jwt:ClockSkewSeconds", 30))
-            };
+            ValidateIssuer = builder.Configuration.GetValue<bool>("Jwt:ValidateIssuer", true),
+            ValidateAudience = builder.Configuration.GetValue<bool>("Jwt:ValidateAudience", true),
+            ValidateLifetime = builder.Configuration.GetValue<bool>("Jwt:ValidateLifetime", true),
+            ValidateIssuerSigningKey = true,
+            ValidAudience = jwtAudience,
+            ClockSkew = TimeSpan.FromSeconds(builder.Configuration.GetValue<int>("Jwt:ClockSkewSeconds", 30))
+        };
 
-            if (!string.IsNullOrWhiteSpace(jwtAuthority))
-                options.TokenValidationParameters.ValidIssuer = jwtAuthority;
+        if (!string.IsNullOrWhiteSpace(jwtAuthority))
+            options.TokenValidationParameters.ValidIssuer = jwtAuthority;
 
-            if (!string.IsNullOrWhiteSpace(jwtSigningKey))
-                options.TokenValidationParameters.IssuerSigningKey =
-                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey));
-        });
-}
-else
-{
-    builder.Services.AddAuthentication();
+        if (!string.IsNullOrWhiteSpace(jwtSigningKey))
+            options.TokenValidationParameters.IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey));
+    });
 }
 
 builder.Services.AddHttpContextAccessor();
@@ -467,6 +496,7 @@ app.UseAuthorization();
 
 // Endpoint utama API, health check Docker, dan hub monitoring.
 app.MapControllers();
+app.MapRazorPages();
 app.MapHealthChecks("/health");
 app.MapHub<MonitoringHub>("/hubs/monitoring");
 

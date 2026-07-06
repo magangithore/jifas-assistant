@@ -16,7 +16,7 @@ namespace Jifas.Assistant.Services
 
     public sealed class AdminAccessAuthorizationHandler : AuthorizationHandler<AdminAccessRequirement>
     {
-        private static readonly string[] AllowedRoles = { "Admin", "WMTR", "JIFAS_ADMIN" };
+        private static readonly string[] AllowedRoles = { "Admin", "WMTR", "JIFAS_ADMIN", "KnowledgeBaseAdmin" };
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
 

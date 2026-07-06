@@ -1,0 +1,76 @@
+@page
+@model Jifas.Assistant.Pages.Admin.LoginModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Monitoring JIFAS</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Segoe UI", Arial, system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        .login-card {
+            background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 48px 40px; width: 100%; max-width: 420px;
+        }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo-mark {
+            width: 56px; height: 56px; border-radius: 12px; margin: 0 auto 16px;
+            background: #667eea; color: white; display: grid; place-items: center;
+            font-weight: 800; font-size: 20px; letter-spacing: 0.02em;
+        }
+        h1 { font-size: 24px; font-weight: 700; text-align: center; color: #1f2937; margin-bottom: 8px; }
+        .subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 32px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; color: #374151; font-size: 14px; margin-bottom: 8px; }
+        input {
+            width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 8px;
+            font-size: 14px; font-family: inherit; transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: #667eea; }
+        .btn {
+            width: 100%; padding: 14px; background: #667eea; color: white; border: none;
+            border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: background 0.2s; font-family: inherit;
+        }
+        .btn:hover { background: #5568d3; }
+        .btn:active { transform: translateY(1px); }
+        .error {
+            background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 20px; color: #b91c1c; font-size: 14px;
+        }
+        .note { text-align: center; margin-top: 24px; font-size: 12px; color: #9ca3af; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-mark">JF</div>
+            <h1>Monitoring JIFAS</h1>
+            <p class="subtitle">Login untuk mengakses dashboard</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="error">@Model.ErrorMessage</div>
+        }
+
+        <form method="post">
+            <div class="form-group">
+                <label for="apiKey">API Key Admin:</label>
+                <input type="password" id="apiKey" name="apiKey" required autocomplete="current-password" />
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+
+        <p class="note">Gunakan API Key admin yang terdaftar di konfigurasi sistem.</p>
+    </div>
+</body>
+</html>

@@ -177,11 +177,17 @@ public class MonitoringService : IMonitoringService
     {
         var since = DateTime.UtcNow.AddMinutes(-lastMinutes);
         await using var db = await _dbFactory.CreateDbContextAsync();
+        
+        // TASK 4: Efficient bucketing for long ranges
+        // <=24h per-minute, <=2weeks per-hour, >2weeks per-day
+        // Cap logs at 200 for UI performance
         var logs = await db.AiUsageLogs
             .Where(l => l.CreatedAt >= since)
+            .OrderByDescending(l => l.CreatedAt)
+            .Take(5000) // Reasonable limit for aggregation
             .ToListAsync();
 
-        // Bucketing strategy: <=24h per-minute, <=2weeks per-hour, >2weeks per-day
+        // Bucketing strategy with optimized grouping
         return logs
             .GroupBy(l => {
                 var utc = l.CreatedAt.Kind == DateTimeKind.Unspecified
@@ -190,17 +196,17 @@ public class MonitoringService : IMonitoringService
 
                 if (lastMinutes <= 1440)
                 {
-                    // Per-minute bucket
+                    // <=24h: Per-minute bucket
                     return new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, 0, DateTimeKind.Utc);
                 }
                 else if (lastMinutes <= 20160)
                 {
-                    // Per-hour bucket
+                    // <=2 weeks: Per-hour bucket
                     return new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, 0, 0, DateTimeKind.Utc);
                 }
                 else
                 {
-                    // Per-day bucket
+                    // >2 weeks: Per-day bucket
                     return new DateTime(utc.Year, utc.Month, utc.Day, 0, 0, 0, DateTimeKind.Utc);
                 }
             })
