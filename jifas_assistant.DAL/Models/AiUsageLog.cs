@@ -41,7 +41,10 @@ public class AiUsageLog
     public int TotalTokens { get; set; }        // sum
 
     // ── Timing (ms) ───────────────────────────────────────────
-    public long TotalDurationMs { get; set; }   // total_duration / 1_000_000
+    // End-to-end duration from ChatService stopwatch (all routes: AI, cache, validation, etc.)
+    public long TotalDurationMs { get; set; }
+    // Ollama API duration: preprocessing + inference + postprocessing (0 for non-LLM routes)
+    public long AiDurationMs { get; set; }
     public long LoadDurationMs { get; set; }    // load_duration  / 1_000_000
     public long PromptEvalDurationMs { get; set; }  // prompt_eval_duration / 1_000_000
     public long EvalDurationMs { get; set; }    // eval_duration  / 1_000_000

@@ -1,3 +1,4 @@
+﻿@{ Layout = null; }
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -5,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Monitoring Chatbot JIFAS</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
 <style>
   :root {
     --bg: #f0f2f5;
@@ -127,7 +128,7 @@
   }
   .status-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; flex-shrink: 0; }
   .status.disconnected .status-dot { animation: pulse-red 1.8s ease-in-out infinite; }
-  @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.35} }
+  @@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.35} }
 
   main { max-width: 1480px; margin: 0 auto; padding: 20px 24px 40px; }
 
@@ -379,17 +380,17 @@
     border-radius: var(--radius-sm); text-align: center;
   }
 
-  @media (prefers-reduced-motion: reduce) {
+  @@media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
 
-  @media (max-width: 1200px) {
+  @@media (max-width: 1200px) {
     .summary-band { grid-template-columns: repeat(2, minmax(200px, 1fr)); }
     .kpi-grid, .insight-grid, .guide-band { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
     .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
   }
 
-  @media (max-width: 760px) {
+  @@media (max-width: 760px) {
     .topbar { align-items: flex-start; flex-direction: column; padding: 12px 16px; }
     .toolbar { width: 100%; justify-content: flex-start; }
     main { padding: 16px; }
@@ -401,7 +402,7 @@
     .insight-value { font-size: 18px; }
   }
 
-  @media (max-width: 520px) {
+  @@media (max-width: 520px) {
     .summary-band, .kpi-grid, .insight-grid, .guide-band { grid-template-columns: 1fr; }
   }
 </style>
@@ -739,7 +740,7 @@ let logSearchText = '';
 let logTypeFilter = 'all';
 let prefersReducedMotion = false;
 
-const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8888' : '';
+const API_BASE = "";
 const JAKARTA_TZ = 'Asia/Jakarta';
 const chartFont = { family: '"Segoe UI", Arial, system-ui, sans-serif', size: 11 };
 

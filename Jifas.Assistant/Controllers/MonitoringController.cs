@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Jifas.Assistant.Services;
 using jifas_assistant.DAL.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Jifas.Assistant.Controllers;
@@ -13,6 +14,7 @@ namespace Jifas.Assistant.Controllers;
 /// appends the 'Z' suffix and the browser parses them correctly in any timezone.
 /// </summary>
 [ApiController]
+[Authorize(Policy = "KnowledgeBaseAdmin")]
 [Route("api/[controller]")]
 public class MonitoringController : ControllerBase
 {
@@ -131,6 +133,7 @@ public class MonitoringController : ControllerBase
             CompletionTokens = l.CompletionTokens,
             TotalTokens = l.TotalTokens,
             TotalDurationMs = l.TotalDurationMs,
+            AiDurationMs = l.AiDurationMs,
             LoadDurationMs = l.LoadDurationMs,
             PromptEvalDurationMs = l.PromptEvalDurationMs,
             EvalDurationMs = l.EvalDurationMs,

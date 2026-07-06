@@ -21,7 +21,10 @@ public record AiCallMetrics
     public int CompletionTokens { get; init; }
 
     // Timing (ms)
+    // End-to-end: from ChatService stopwatch start to response ready (all routes)
     public long TotalDurationMs { get; init; }
+    // Ollama API wall-clock: preprocessing + inference + postprocessing (0 for cache/non-LLM)
+    public long AiDurationMs { get; init; }
     public long LoadDurationMs { get; init; }
     public long PromptEvalDurationMs { get; init; }
     public long EvalDurationMs { get; init; }
@@ -44,6 +47,7 @@ public record MonitoringStats
     public long ErrorCalls { get; init; }
     public double ErrorRate { get; init; }
     public double AvgTotalDurationMs { get; init; }
+    public double AvgAiDurationMs { get; init; }
     public double AvgPromptTokens { get; init; }
     public double AvgCompletionTokens { get; init; }
     public double AvgTokensPerSecond { get; init; }
@@ -100,4 +104,4 @@ public interface IMonitoringService
     void RecordHistorySave(bool success, string? sessionId);
 }
 
-public record TimeSeriesPoint(DateTime Minute, int Calls, double AvgDurationMs, int TotalTokens);
+public record TimeSeriesPoint(DateTime Minute, int Calls, double AvgDurationMs, double AvgAiDurationMs, int TotalTokens);

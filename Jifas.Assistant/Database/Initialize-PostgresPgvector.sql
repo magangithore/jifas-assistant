@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS "AiUsageLogs" (
     "CompletionTokens" integer NOT NULL DEFAULT 0,
     "TotalTokens" integer NOT NULL DEFAULT 0,
     "TotalDurationMs" bigint NOT NULL DEFAULT 0,
+    "AiDurationMs" bigint NOT NULL DEFAULT 0,
     "LoadDurationMs" bigint NOT NULL DEFAULT 0,
     "PromptEvalDurationMs" bigint NOT NULL DEFAULT 0,
     "EvalDurationMs" bigint NOT NULL DEFAULT 0,
@@ -142,6 +143,8 @@ CREATE TABLE IF NOT EXISTS "LearningCandidateAuditLogs" (
 
 ALTER TABLE "KnowledgeBaseChunks"
 ADD COLUMN IF NOT EXISTS "EmbeddingVector" vector(2560);
+
+ALTER TABLE "AiUsageLogs" ADD COLUMN IF NOT EXISTS "AiDurationMs" bigint NOT NULL DEFAULT 0;
 
 DO $$
 BEGIN

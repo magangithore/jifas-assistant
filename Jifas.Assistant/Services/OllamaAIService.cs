@@ -428,6 +428,7 @@ namespace Jifas.Assistant.Services
                     CallType    = _currentCallType.Value ?? "chat",
                     PromptLengthChars = prompt.Length,
                     TotalDurationMs   = sw.ElapsedMilliseconds,
+                    AiDurationMs      = sw.ElapsedMilliseconds,
                     IsError     = true,
                     ErrorMessage = errorMsg,
                     CreatedAt   = DateTime.UtcNow
@@ -444,6 +445,7 @@ namespace Jifas.Assistant.Services
                     CallType    = _currentCallType.Value ?? "chat",
                     PromptLengthChars = prompt.Length,
                     TotalDurationMs   = sw.ElapsedMilliseconds,
+                    AiDurationMs      = sw.ElapsedMilliseconds,
                     IsError     = true,
                     ErrorMessage = ex.Message,
                     CreatedAt   = DateTime.UtcNow
@@ -490,7 +492,8 @@ namespace Jifas.Assistant.Services
                     CallType             = _currentCallType.Value ?? "chat",
                     PromptTokens         = promptTokens,
                     CompletionTokens     = completionTokens,
-                    TotalDurationMs      = NsToMs("total_duration") > 0 ? NsToMs("total_duration") : wallClockMs,
+                    TotalDurationMs      = wallClockMs,        // end-to-end: ChatService stopwatch
+                    AiDurationMs         = NsToMs("total_duration") > 0 ? NsToMs("total_duration") : wallClockMs,
                     LoadDurationMs       = NsToMs("load_duration"),
                     PromptEvalDurationMs = NsToMs("prompt_eval_duration"),
                     EvalDurationMs       = evalDurationMs,

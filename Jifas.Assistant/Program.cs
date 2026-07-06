@@ -65,8 +65,8 @@ builder.Services.AddDbContextFactory<JIFAS_AssistantContext>((sp, options) =>
     ConfigureJifasDbContext(options, builder.Configuration);
 });
 
-// Controller API memakai Newtonsoft agar kontrak response lama tetap kompatibel.
-builder.Services.AddControllers()
+// Controller API dan Razor views memakai Newtonsoft agar kontrak response lama tetap kompatibel.
+builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;

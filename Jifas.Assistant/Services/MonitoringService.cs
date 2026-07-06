@@ -61,6 +61,7 @@ public class MonitoringService : IMonitoringService
                 CompletionTokens = m.CompletionTokens,
                 TotalTokens = m.PromptTokens + m.CompletionTokens,
                 TotalDurationMs = m.TotalDurationMs,
+                AiDurationMs = m.AiDurationMs,
                 LoadDurationMs = m.LoadDurationMs,
                 PromptEvalDurationMs = m.PromptEvalDurationMs,
                 EvalDurationMs = m.EvalDurationMs,
@@ -88,6 +89,7 @@ public class MonitoringService : IMonitoringService
                 completionTokens = log.CompletionTokens,
                 totalTokens = log.TotalTokens,
                 totalDurationMs = log.TotalDurationMs,
+                aiDurationMs = log.AiDurationMs,
                 loadDurationMs = log.LoadDurationMs,
                 promptEvalDurationMs = log.PromptEvalDurationMs,
                 evalDurationMs = log.EvalDurationMs,
@@ -149,6 +151,7 @@ public class MonitoringService : IMonitoringService
             ErrorCalls = errors,
             ErrorRate = Math.Round(errors / (double)logs.Count * 100, 1),
             AvgTotalDurationMs = Math.Round(logs.Average(l => l.TotalDurationMs), 0),
+            AvgAiDurationMs = Math.Round(logs.Average(l => l.AiDurationMs), 0),
             AvgPromptTokens = Math.Round(logs.Average(l => l.PromptTokens), 1),
             AvgCompletionTokens = Math.Round(logs.Average(l => l.CompletionTokens), 1),
             AvgTokensPerSecond = avgTokensPerSecond,
@@ -178,19 +181,35 @@ public class MonitoringService : IMonitoringService
             .Where(l => l.CreatedAt >= since)
             .ToListAsync();
 
+        // Bucketing strategy: <=24h per-minute, <=2weeks per-hour, >2weeks per-day
         return logs
             .GroupBy(l => {
-                // FIXED: Handle DateTimeKind.Unspecified properly - convert to UTC before grouping
                 var utc = l.CreatedAt.Kind == DateTimeKind.Unspecified
                     ? DateTime.SpecifyKind(l.CreatedAt, DateTimeKind.Utc)
                     : l.CreatedAt.ToUniversalTime();
-                return new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, 0, DateTimeKind.Utc);
+
+                if (lastMinutes <= 1440)
+                {
+                    // Per-minute bucket
+                    return new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute, 0, DateTimeKind.Utc);
+                }
+                else if (lastMinutes <= 20160)
+                {
+                    // Per-hour bucket
+                    return new DateTime(utc.Year, utc.Month, utc.Day, utc.Hour, 0, 0, DateTimeKind.Utc);
+                }
+                else
+                {
+                    // Per-day bucket
+                    return new DateTime(utc.Year, utc.Month, utc.Day, 0, 0, 0, DateTimeKind.Utc);
+                }
             })
             .OrderBy(g => g.Key)
             .Select(g => new TimeSeriesPoint(
                 g.Key,
                 g.Count(),
                 Math.Round(g.Average(l => l.TotalDurationMs), 0),
+                Math.Round(g.Average(l => l.AiDurationMs), 0),
                 g.Sum(l => l.TotalTokens)))
             .ToList();
     }
