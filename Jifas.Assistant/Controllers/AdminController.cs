@@ -19,5 +19,14 @@ namespace Jifas.Assistant.Controllers
         {
             return View();
         }
+
+        /// <summary>
+        /// Dashboard AI Learning - manage kandidat, approval, dan publish knowledge.
+        /// </summary>
+        [HttpGet("learning")]
+        public IActionResult Learning()
+        {
+            return View();
+        }
     }
 }
