@@ -1,0 +1,1070 @@
+@page "/admin/learning"
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JIFAS AI Learning Admin</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f6fb;
+      --bg-grad: radial-gradient(1200px 600px at 100% -10%, #e8eefc 0%, transparent 60%);
+      --panel: #ffffff;
+      --panel-2: #f1f5fa;
+      --panel-3: #e9eef5;
+      --text: #131c2e;
+      --muted: #687588;
+      --faint: #9aa6b8;
+      --line: #e2e8f1;
+      --line-strong: #cfd8e5;
+      --brand: #2563eb;
+      --brand-soft: #e7efff;
+      --teal: #0f766e;
+      --warn: #b45309;
+      --danger: #c0392b;
+      --ok: #157347;
+      --info: #0369a1;
+      --radius: 12px;
+      --radius-sm: 9px;
+      --sp: 8px;
+      --shadow-sm: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04);
+      --shadow-md: 0 8px 24px rgba(16,24,40,.08);
+      --shadow-lg: 0 20px 48px rgba(16,24,40,.14);
+      --font: "Inter", "Segoe UI", system-ui, Arial, sans-serif;
+    }
+    [data-theme="dark"] {
+      --bg: #0a0f1a;
+      --bg-grad: radial-gradient(1100px 560px at 100% -10%, #15233f 0%, transparent 55%);
+      --panel: #111a2b;
+      --panel-2: #16213a;
+      --panel-3: #1d2b45;
+      --text: #e8eef9;
+      --muted: #93a1ba;
+      --faint: #67768f;
+      --line: #233149;
+      --line-strong: #2e405d;
+      --brand: #6ea8ff;
+      --brand-soft: #18294a;
+      --teal: #2dd4bf;
+      --warn: #f5a623;
+      --danger: #f87171;
+      --ok: #4ade80;
+      --info: #38bdf8;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.3);
+      --shadow-md: 0 10px 28px rgba(0,0,0,.35);
+      --shadow-lg: 0 24px 56px rgba(0,0,0,.5);
+    }
+    /* ── Auth Gate ── */
+    #auth-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #auth-overlay.hidden { display: none; }
+    .auth-card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow-lg);
+      padding: 36px 40px; width: 380px; max-width: 95vw;
+      text-align: center;
+    }
+    .auth-card .lock-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--brand-soft); color: var(--brand);
+      display: grid; place-items: center; margin: 0 auto 20px;
+      font-size: 22px;
+    }
+    .auth-card h2 { margin: 0 0 6px; font-size: 19px; }
+    .auth-card p  { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .auth-card input {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm); background: var(--panel-2);
+      color: var(--text); font: inherit; font-size: 14px;
+      margin-bottom: 12px; box-sizing: border-box;
+      transition: border-color .15s;
+    }
+    .auth-card input:focus { border-color: var(--brand); outline: none; }
+    .auth-card button {
+      width: 100%; height: 38px; background: var(--brand);
+      border: none; border-radius: var(--radius-sm); color: #fff;
+      font: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-bottom: 10px;
+      transition: filter .15s;
+    }
+    .auth-card button:hover { filter: brightness(1.06); }
+    .auth-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #auth-error {
+      color: var(--danger); font-size: 12px;
+      min-height: 18px; margin-bottom: 4px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      background-image: var(--bg-grad);
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -.01em; }
+    h1 { font-size: 18px; }
+    h2 { font-size: 15px; }
+    .sub { color: var(--muted); font-size: 12.5px; }
+    .tiny { color: var(--faint); font-size: 11.5px; }
+    .micro {
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--faint); font-weight: 700;
+    }
+
+    /* ---------- Controls ---------- */
+    input, select, textarea, button {
+      font: inherit; color: var(--text);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    input, select { height: 36px; padding: 0 11px; }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--brand);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent);
+    }
+    textarea {
+      width: 100%; min-height: 120px; padding: 10px 12px; resize: vertical;
+      line-height: 1.55;
+    }
+    button {
+      height: 36px; padding: 0 14px; cursor: pointer; font-weight: 650;
+      display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    }
+    button:hover { border-color: var(--line-strong); background: var(--panel-2); }
+    button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+    button.primary:hover { filter: brightness(1.06); background: var(--brand); }
+    button.success { background: var(--ok); border-color: var(--ok); color: #fff; }
+    button.success:hover { filter: brightness(1.06); background: var(--ok); }
+    button.warning { background: transparent; border-color: var(--warn); color: var(--warn); }
+    button.warning:hover { background: color-mix(in srgb, var(--warn) 12%, transparent); }
+    button.ghost { background: transparent; }
+    button:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+    button.icon { padding: 0; width: 36px; justify-content: center; }
+
+    /* ---------- Header ---------- */
+    header {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 12px 24px;
+      background: color-mix(in srgb, var(--panel) 80%, transparent);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px) saturate(140%);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--brand), color-mix(in srgb, var(--brand) 60%, var(--teal)));
+      color: #fff; font-weight: 800; font-size: 14px; box-shadow: var(--shadow-sm);
+    }
+    .toolbar { display: flex; gap: 8px; align-items: center; }
+
+    /* Connection popover */
+    .popover { position: relative; }
+    .popover > summary {
+      list-style: none; cursor: pointer; height: 36px; padding: 0 12px;
+      display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 13px;
+      border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--panel);
+    }
+    .popover > summary::-webkit-details-marker { display: none; }
+    .popover[open] > summary { border-color: var(--brand); }
+    .popover-body {
+      position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
+      width: 320px; padding: 14px; display: grid; gap: 10px;
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    }
+    .popover-body label { display: grid; gap: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+    .dot.live { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+    .dot.down { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 25%, transparent); }
+
+    main { padding: 18px 24px 32px; max-width: 1500px; margin: 0 auto; }
+
+    /* ---------- Help (collapsible) ---------- */
+    .help { margin-bottom: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow-sm); }
+    .help > summary {
+      list-style: none; cursor: pointer; padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+      font-weight: 650; font-size: 13.5px;
+    }
+    .help > summary::-webkit-details-marker { display: none; }
+    .help > summary .chev { margin-left: auto; transition: transform .2s; color: var(--muted); }
+    .help[open] > summary .chev { transform: rotate(180deg); }
+    .help-body { padding: 0 16px 16px; display: grid; gap: 14px; }
+    .guide { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .guide-card { padding: 13px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+    .guide-card strong { display: block; margin-bottom: 4px; font-size: 13px; }
+    .guide-card p { margin: 0; color: var(--muted); font-size: 12.5px; }
+    .workflow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .step { padding: 11px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+    .step b { display: block; font-size: 12.5px; margin-bottom: 3px; }
+    .step span { color: var(--muted); font-size: 11.5px; }
+
+    /* ---------- Stats ---------- */
+    .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat {
+      position: relative; padding: 13px 14px; background: var(--panel);
+      border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .stat::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--faint); }
+    .stat.act-warn::before { background: var(--warn); }
+    .stat.act-brand::before { background: var(--brand); }
+    .stat.act-danger::before { background: var(--danger); }
+    .stat.act-ok::before { background: var(--ok); }
+    .stat label { display: block; margin-bottom: 7px; }
+    .stat .num { font-size: 24px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+
+    /* ---------- Layout ---------- */
+    .layout { display: grid; grid-template-columns: minmax(360px, .9fr) minmax(440px, 1.1fr); gap: 16px; align-items: start; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .panel-head.sub-head { padding-top: 10px; padding-bottom: 10px; background: var(--panel-2); }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .filters input { min-width: 150px; }
+
+    /* ---------- List ---------- */
+    .list { max-height: calc(100vh - 240px); overflow: auto; }
+    .row {
+      position: relative; display: grid; grid-template-columns: 1fr auto; gap: 12px;
+      padding: 13px 16px 13px 18px; border-bottom: 1px solid var(--line); cursor: pointer;
+      transition: background .12s;
+    }
+    .row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; }
+    .row.s-NeedsEdit::before { background: var(--warn); }
+    .row.s-ReadyForPublish::before { background: var(--brand); }
+    .row.s-Published::before { background: var(--ok); }
+    .row.s-PublishFailed::before { background: var(--danger); }
+    .row.s-Archived::before { background: var(--faint); }
+    .row:hover { background: var(--panel-2); }
+    .row.active { background: var(--brand-soft); }
+    .q { font-weight: 650; margin-bottom: 6px; word-break: break-word; font-size: 13.5px; }
+    .meta { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 11.5px; }
+    .id { color: var(--faint); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px; min-height: 22px; padding: 1px 9px;
+      border-radius: 999px; background: var(--panel-3); color: var(--text); font-size: 11px; font-weight: 650;
+      border: 1px solid transparent;
+    }
+    .pill.NeedsEdit { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+    .pill.ReadyForPublish { color: var(--brand); background: color-mix(in srgb, var(--brand) 14%, transparent); }
+    .pill.Published { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+    .pill.PublishFailed { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+    .pill.Archived { color: var(--muted); }
+    .pill.info { color: var(--info); background: color-mix(in srgb, var(--info) 14%, transparent); }
+    .pill.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+
+    /* ---------- Editor ---------- */
+    .editor { display: flex; flex-direction: column; max-height: calc(100vh - 156px); }
+    .editor-body { padding: 16px; display: grid; gap: 14px; overflow: auto; }
+    .decision {
+      display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--brand) 7%, var(--panel));
+      border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--line));
+    }
+    .decision b { font-size: 13px; }
+    .decision span { font-size: 12.5px; color: var(--muted); }
+
+    .compare { display: grid; gap: 10px; }
+    .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+    .side { display: grid; gap: 6px; }
+    .side > .micro { display: flex; justify-content: space-between; align-items: center; }
+    .readonly {
+      padding: 10px 12px; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm);
+      background: var(--panel-2); color: var(--muted); white-space: pre-wrap;
+      max-height: 240px; overflow: auto; font-size: 13px; min-height: 36px;
+    }
+    .vchips { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 2px; }
+    .vchip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 650; }
+    .vchip.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
+    .vchip.bad { color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, transparent); }
+    .vchip.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 13%, transparent); }
+
+    .field { display: grid; gap: 6px; }
+    .field > label { display: flex; justify-content: space-between; gap: 10px; }
+    .preview {
+      padding: 11px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+      background: var(--panel-2); white-space: pre-wrap; max-height: 160px; overflow: auto; font-size: 13px;
+    }
+    .meta-section { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel-2); }
+    .meta-section > summary { list-style: none; cursor: pointer; padding: 11px 13px; font-weight: 650; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+    .meta-section > summary::-webkit-details-marker { display: none; }
+    .meta-section > summary .chev { margin-left: auto; transition: transform .2s; color: var(--muted); }
+    .meta-section[open] > summary .chev { transform: rotate(180deg); }
+    .meta-section-body { padding: 0 13px 13px; display: grid; gap: 12px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .checkbox-pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border: 1px solid var(--line-strong); border-radius: 999px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .flags { display: flex; gap: 7px; flex-wrap: wrap; }
+
+    .editor-actions {
+      position: sticky; bottom: 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      padding: 12px 16px; border-top: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(6px);
+    }
+    .editor-actions .spacer { flex: 1; }
+
+    .empty { padding: 40px 24px; color: var(--muted); display: grid; gap: 8px; place-items: center; text-align: center; }
+    .empty .big { font-size: 32px; opacity: .5; }
+    .empty strong { color: var(--text); }
+
+    /* ---------- Toasts ---------- */
+    .toast-host { position: fixed; top: 70px; right: 20px; z-index: 50; display: grid; gap: 10px; width: min(360px, calc(100vw - 40px)); }
+    .toast {
+      padding: 11px 14px; border-radius: var(--radius-sm); background: var(--panel);
+      border: 1px solid var(--line); border-left: 3px solid var(--brand);
+      box-shadow: var(--shadow-lg); font-size: 13px; animation: slideIn .22s ease;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .toast.ok { border-left-color: var(--ok); }
+    .toast.error { border-left-color: var(--danger); }
+    .toast .ic { font-weight: 800; }
+    .toast.ok .ic { color: var(--ok); }
+    .toast.error .ic { color: var(--danger); }
+    @@keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+    @@media (max-width: 1180px) {
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .layout { grid-template-columns: 1fr; }
+      .editor, .list { max-height: none; }
+      .workflow { grid-template-columns: 1fr 1fr; }
+    }
+    @@media (max-width: 720px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .guide, .workflow, .compare-row, .form-grid { grid-template-columns: 1fr; }
+      main { padding: 14px; }
+      header { padding: 10px 14px; }
+    }
+
+    /* ---------- Confirm modal ---------- */
+    .modal-host {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: color-mix(in srgb, #0a0f1a 55%, transparent);
+      backdrop-filter: blur(3px);
+    }
+    .modal-host.show { display: flex; animation: modalFade .15s ease; }
+    .modal {
+      width: min(440px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalPop .18s ease;
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 16px 18px 0;
+    }
+    .modal-ic {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      font-weight: 800;
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+    .modal.danger .modal-ic { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+    .modal.success .modal-ic { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+    .modal.warning .modal-ic { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+    .modal-head h3 { margin: 0; font-size: 15px; }
+    .modal-body { padding: 9px 18px 4px 63px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 9px;
+      padding: 16px 18px 18px;
+    }
+    .modal-actions button { min-width: 94px; justify-content: center; }
+    .confirm-ok.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .confirm-ok.danger:hover { filter: brightness(1.06); background: var(--danger); }
+    @@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes modalPop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body data-theme="dark">
+<!-- Auth Gate -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="lock-icon">&#x1F512;</div>
+    <h2>AI Learning Admin</h2>
+    <p>Masukkan Admin API Key untuk mengakses panel kurasi JIFAS AI Learning.</p>
+    <input type="password" id="auth-key-input" placeholder="X-Admin-Api-Key" autocomplete="off" />
+    <button id="auth-submit-btn">Masuk</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+  <header>
+    <div class="brand">
+      <div class="logo">AI</div>
+      <div>
+        <h1>JIFAS AI Learning</h1>
+        <div class="sub">Kurasi jawaban chatbot sebelum jadi Knowledge Base resmi</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <details class="popover" id="connPop">
+        <summary><span class="dot" id="connDot"></span> Koneksi</summary>
+        <div class="popover-body">
+          <div class="micro">Pengaturan koneksi</div>
+          <label>
+            <span class="tiny">Admin API key</span>
+            <input id="apiKey" type="password" placeholder="X-Admin-Api-Key">
+          </label>
+          <button class="primary" id="saveKey">Simpan akses</button>
+          <div class="tiny">Disimpan di browser. Key dipakai untuk akses API learning.</div>
+        </div>
+      </details>
+      <button class="icon ghost" id="themeToggle" title="Ganti tema">🌙</button>
+      <button class="primary" id="refreshBtn">↻ Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <details class="help">
+      <summary>📘 Panduan kerja admin & alur AI Learning <span class="chev">▾</span></summary>
+      <div class="help-body">
+        <div class="guide">
+          <div class="guide-card">
+            <strong>Yang perlu dikerjakan admin</strong>
+            <p>Fokus ke status <b>Perlu diedit</b>. Rapikan jawaban final, hapus data sensitif, lalu tandai siap publish.</p>
+          </div>
+          <div class="guide-card">
+            <strong>Cara jawaban dipakai chatbot</strong>
+            <p>Setelah publish, pertanyaan yang sama memakai jawaban final admin. Pertanyaan mirip memakainya sebagai sumber utama.</p>
+          </div>
+        </div>
+        <div class="workflow">
+          <div class="step"><b>1. Ambil Chat</b><span>Collector memilih percakapan layak kurasi.</span></div>
+          <div class="step"><b>2. Edit Jawaban</b><span>Rapikan pertanyaan, jawaban, kategori, tags.</span></div>
+          <div class="step"><b>3. Cek Aman</b><span>Jawaban final wajib bersih dari data sensitif.</span></div>
+          <div class="step"><b>4. Siap Publish</b><span>Masuk antrean scheduler / manual publish.</span></div>
+          <div class="step"><b>5. Jadi KB</b><span>Dipakai chatbot sebagai AI Learning resmi.</span></div>
+        </div>
+      </div>
+    </details>
+
+    <section class="stats" id="stats"></section>
+
+    <section class="layout">
+      <!-- LIST -->
+      <div class="card">
+        <div class="panel-head">
+          <div>
+            <h2>Daftar Kandidat</h2>
+            <div class="sub" id="countLabel">0 data</div>
+          </div>
+          <div class="filters">
+            <select id="statusFilter">
+              <option value="">Semua status</option>
+              <option value="NeedsEdit">Perlu diedit</option>
+              <option value="ReadyForPublish">Siap publish</option>
+              <option value="Published">Sudah publish</option>
+              <option value="PublishFailed">Gagal publish</option>
+              <option value="Archived">Arsip</option>
+            </select>
+            <input id="searchBox" placeholder="🔍 Cari pertanyaan">
+          </div>
+        </div>
+        <div class="panel-head sub-head">
+          <button id="collectBtn">⬇ Ambil dari chat</button>
+          <button id="publishBtn" class="success">⬆ Publish yang siap</button>
+        </div>
+        <div class="list" id="candidateList"></div>
+      </div>
+
+      <!-- EDITOR -->
+      <div class="card editor">
+        <div class="panel-head">
+          <div>
+            <h2>Editor Knowledge</h2>
+            <div class="sub">Edit versi resmi yang dipakai chatbot.</div>
+          </div>
+          <span class="pill" id="detailStatus">Belum dipilih</span>
+        </div>
+        <div class="editor-body" id="detailBody">
+          <div class="empty">
+            <div class="big">📝</div>
+            <strong>Belum ada kandidat dipilih</strong>
+            <span class="sub">Pilih salah satu kandidat dari daftar untuk mulai mengedit.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-host" id="toastHost"></div>
+  <div class="modal-host" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal" id="confirmCard">
+      <div class="modal-head">
+        <div class="modal-ic" id="confirmIcon">?</div>
+        <h3 id="confirmTitle">Konfirmasi</h3>
+      </div>
+      <div class="modal-body" id="confirmMessage"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="confirmCancel" type="button">Batal</button>
+        <button class="primary confirm-ok" id="confirmOk" type="button">Lanjut</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Auth Gate ──
+    const _authOverlay = document.getElementById('auth-overlay');
+    const _authInput   = document.getElementById('auth-key-input');
+    const _authBtn     = document.getElementById('auth-submit-btn');
+    const _authError   = document.getElementById('auth-error');
+
+    function getAdminKey() { return localStorage.getItem('jifas-learning-admin-key') || ''; }
+
+    async function verifyAdminKey(key) {
+      if (!key) return false;
+      try {
+        const res = await fetch(`/api/learning/stats`, {
+          headers: { 'X-Admin-Api-Key': key, 'Content-Type': 'application/json', 'X-Admin-User': 'learning-admin-ui' }
+        });
+        return res.ok;
+      } catch { return false; }
+    }
+
+    async function attemptLogin() {
+      const key = _authInput.value.trim();
+      _authError.textContent = '';
+      _authBtn.disabled = true; _authBtn.textContent = 'Memverifikasi...';
+      const ok = await verifyAdminKey(key);
+      if (ok) {
+        localStorage.setItem('jifas-learning-admin-key', key);
+        _authOverlay.classList.add('hidden');
+        initApp();
+      } else {
+        _authError.textContent = 'API Key tidak valid. Akses ditolak.';
+        _authBtn.disabled = false; _authBtn.textContent = 'Masuk';
+        _authInput.focus();
+      }
+    }
+    _authBtn.addEventListener('click', attemptLogin);
+    _authInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+
+    function initApp() { loadAll(); }
+
+    (async () => {
+      const stored = getAdminKey();
+      if (stored && await verifyAdminKey(stored)) {
+        _authOverlay.classList.add('hidden');
+        initApp();
+      } else {
+        localStorage.removeItem('jifas-learning-admin-key');
+        _authOverlay.classList.remove('hidden');
+        _authInput.focus();
+      }
+    })();
+
+    const state = { candidates: [], selected: null };
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      apiKey: $('apiKey'), saveKey: $('saveKey'),
+      refreshBtn: $('refreshBtn'), themeToggle: $('themeToggle'),
+      collectBtn: $('collectBtn'), publishBtn: $('publishBtn'),
+      statusFilter: $('statusFilter'), searchBox: $('searchBox'),
+      stats: $('stats'), list: $('candidateList'),
+      detail: $('detailBody'), detailStatus: $('detailStatus'),
+      countLabel: $('countLabel'), toastHost: $('toastHost'),
+      connDot: $('connDot'), connPop: $('connPop'),
+    };
+
+    /* ---------- Connection helpers ---------- */
+    function defaultApiBase() {
+      if (location.protocol === 'http:' || location.protocol === 'https:') return location.origin;
+      return 'http://localhost:8888';
+    }
+    function cleanBaseUrl(value) { return String(value || '').trim().replace(/\/+$/, ''); }
+    els.apiKey.value = localStorage.getItem('jifas-learning-admin-key') || '';
+
+    function headers() {
+      return {
+        'Content-Type': 'application/json',
+        'X-Admin-Api-Key': getAdminKey(),
+        'X-Admin-User': 'learning-admin-ui'
+      };
+    }
+    function setConn(status) {
+      els.connDot.className = 'dot' + (status === 'live' ? ' live' : status === 'down' ? ' down' : '');
+    }
+
+    /* ---------- Toast ---------- */
+    function toast(message, type = '') {
+      const ic = type === 'ok' ? '✓' : type === 'error' ? '!' : 'ℹ';
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.innerHTML = `<span class="ic">${ic}</span><span>${esc(message)}</span>`;
+      els.toastHost.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(16px)'; el.style.transition = 'all .25s'; setTimeout(() => el.remove(), 260); }, type === 'error' ? 6500 : 3800);
+    }
+    const setNotice = toast; // backward-compatible
+
+    /* ---------- Confirm modal ---------- */
+    function confirmModal(opts = {}) {
+      const cfg = typeof opts === 'string' ? { message: opts } : opts;
+      const {
+        title = 'Konfirmasi',
+        message = '',
+        confirmText = 'Lanjut',
+        cancelText = 'Batal',
+        variant = 'primary',
+        icon
+      } = cfg;
+      const icons = { primary: 'ℹ', success: '✓', danger: '!', warning: '⚠' };
+
+      return new Promise(resolve => {
+        const host = $('confirmModal');
+        const card = $('confirmCard');
+        const okBtn = $('confirmOk');
+        const cancelBtn = $('confirmCancel');
+
+        card.className = 'modal ' + variant;
+        $('confirmIcon').textContent = icon || icons[variant] || '?';
+        $('confirmTitle').textContent = title;
+        $('confirmMessage').textContent = message;
+        okBtn.textContent = confirmText;
+        cancelBtn.textContent = cancelText;
+        okBtn.className = 'confirm-ok ' + (variant === 'danger' ? 'danger' : variant === 'success' ? 'success' : 'primary');
+        host.classList.add('show');
+        requestAnimationFrame(() => okBtn.focus());
+
+        const cleanup = (result) => {
+          host.classList.remove('show');
+          okBtn.removeEventListener('click', onOk);
+          cancelBtn.removeEventListener('click', onCancel);
+          host.removeEventListener('mousedown', onBackdrop);
+          document.removeEventListener('keydown', onKey);
+          resolve(result);
+        };
+        const onOk = () => cleanup(true);
+        const onCancel = () => cleanup(false);
+        const onBackdrop = (e) => { if (e.target === host) cleanup(false); };
+        const onKey = (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            cleanup(false);
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            cleanup(true);
+          }
+        };
+
+        okBtn.addEventListener('click', onOk);
+        cancelBtn.addEventListener('click', onCancel);
+        host.addEventListener('mousedown', onBackdrop);
+        document.addEventListener('keydown', onKey);
+      });
+    }
+
+    /* ---------- API ---------- */
+    function apiUrl(path) {
+      if (/^https?:\/\//i.test(path)) return path;
+      return `${location.origin}${path}`;
+    }
+    function parseMaybeJson(text) { if (!text) return {}; try { return JSON.parse(text); } catch { return { raw: text }; } }
+    function httpErrorMessage(res, data, target) {
+      const detail = data?.error || data?.message || data?.raw || '';
+      if (res.status === 401 || res.status === 403) return `HTTP ${res.status}: Admin API key tidak valid atau belum diisi. Cek key di .env.`;
+      if (res.status === 421) return `HTTP 421: salah host/protocol. Pastikan panel diakses dari server yang sama dengan API.`;
+      if (res.status === 429) return `HTTP 429: terlalu banyak request. Tunggu sebentar, jangan klik collect/publish berulang.`;
+      return `HTTP ${res.status} dari ${target}${detail ? `: ${String(detail).slice(0, 260)}` : ''}`;
+    }
+    async function api(path, options = {}) {
+      const target = apiUrl(path);
+      let res;
+      try {
+        res = await fetch(target, { ...options, cache: 'no-store', headers: { ...headers(), ...(options.headers || {}) } });
+      } catch {
+        setConn('down');
+        throw new Error(`Tidak bisa terhubung ke ${target}. Pastikan Docker/API JIFAS Assistant hidup.`);
+      }
+      const text = await res.text();
+      const data = parseMaybeJson(text);
+      if (!res.ok) { setConn('down'); throw new Error(httpErrorMessage(res, data, target)); }
+      setConn('live');
+      return data;
+    }
+
+    /* ---------- Utils ---------- */
+    function fmtNumber(v) { return new Intl.NumberFormat('id-ID').format(v || 0); }
+    function fmtTimeAgo(iso) {
+      if (!iso) return '-';
+      var diff = (Date.now() - new Date(iso).getTime()) / 1000;
+      if (diff < 60) return Math.floor(diff) + ' detik lalu';
+      if (diff < 3600) return Math.floor(diff / 60) + ' menit lalu';
+      if (diff < 86400) return Math.floor(diff / 3600) + ' jam lalu';
+      if (diff < 2592000) return Math.floor(diff / 86400) + ' hari lalu';
+      return Math.floor(diff / 2592000) + ' bulan lalu';
+    }
+    function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function statusLabel(s) {
+      return ({ NeedsEdit: 'Perlu diedit', ReadyForPublish: 'Siap publish', Published: 'Sudah publish', PublishFailed: 'Gagal publish', Archived: 'Arsip' })[s] || s || '-';
+    }
+    function routePreview(item) {
+      if (!item) return '-';
+      if (item.status === 'Published') return 'Chatbot menjawab sebagai AI Learning Exact untuk pertanyaan sama, atau Similar untuk pertanyaan sangat mirip.';
+      if (item.status === 'ReadyForPublish') return 'Menunggu scheduler/manual publish. Setelah publish, jawaban final masuk KB dan cache lama diganti versi baru.';
+      if (item.status === 'NeedsEdit') return 'Belum dipakai chatbot. Edit jawaban final, pastikan aman, lalu tandai siap publish.';
+      if (item.status === 'PublishFailed') return 'Belum masuk KB. Baca error publish, perbaiki isinya, lalu tandai siap publish ulang.';
+      return 'Kandidat ini tidak aktif dipakai chatbot.';
+    }
+
+    /* ---------- Validation ---------- */
+    function answerValidation(item) {
+      const q = $('editedQuestion')?.value ?? item?.editedQuestion ?? item?.originalQuestion ?? '';
+      const a = $('editedAnswer')?.value ?? item?.editedAnswer ?? item?.originalAnswer ?? '';
+      const sensitive = $('containsSensitive')?.checked ?? item?.containsSensitiveData;
+      return {
+        questionOk: q.trim().length >= 8,
+        answerOk: a.trim().length >= 120,
+        tagOk: ($('tags')?.value ?? item?.tags ?? '').toLowerCase().includes('ai-learning'),
+        sensitiveOk: !sensitive,
+        questionLength: q.trim().length,
+        answerLength: a.trim().length
+      };
+    }
+    function renderValidation(item) {
+      const v = answerValidation(item);
+      const box = $('validationBox');
+      if (box) {
+        box.innerHTML = `
+          <span class="vchip ${v.questionOk ? 'ok' : 'bad'}">${v.questionOk ? '✓' : '!'} Pertanyaan ${fmtNumber(v.questionLength)}/8</span>
+          <span class="vchip ${v.answerOk ? 'ok' : 'bad'}">${v.answerOk ? '✓' : '!'} Jawaban ${fmtNumber(v.answerLength)}/120</span>
+          <span class="vchip ${v.tagOk ? 'ok' : 'warn'}">${v.tagOk ? '✓' : '○'} tag ai-learning</span>
+          <span class="vchip ${v.sensitiveOk ? 'ok' : 'bad'}">${v.sensitiveOk ? '✓' : '!'} bebas data sensitif</span>`;
+      }
+      const preview = $('finalPreview');
+      if (preview) preview.textContent = $('editedAnswer')?.value?.trim() || 'Belum ada jawaban final.';
+      const readyBtn = $('markReady');
+      if (readyBtn) {
+        readyBtn.disabled = !(v.questionOk && v.answerOk && v.sensitiveOk);
+        readyBtn.title = readyBtn.disabled ? 'Lengkapi validasi dulu sebelum tandai siap publish.' : 'Valid, bisa masuk antrean publish.';
+      }
+    }
+
+    /* ---------- Load ---------- */
+    async function loadAll() {
+      try {
+        const query = new URLSearchParams({ status: els.statusFilter.value, search: els.searchBox.value, pageSize: '50' });
+        const [stats, candidates] = await Promise.all([
+          api('/api/learning/stats'),
+          api(`/api/learning/candidates?${query}`)
+        ]);
+        renderStats(stats);
+        state.candidates = candidates.items || [];
+        renderList(candidates.total || 0);
+        toast('Data learning berhasil dimuat.', 'ok');
+      } catch (err) {
+        toast(`Gagal memuat data: ${err.message}`, 'error');
+      }
+    }
+    function renderStats(stats) {
+      const cards = [
+        ['Perlu Diedit', stats.needsEdit, 'act-warn'],
+        ['Siap Publish', stats.readyForPublish, 'act-brand'],
+        ['Gagal Publish', stats.publishFailed, 'act-danger'],
+        ['Sudah Publish', stats.published, 'act-ok'],
+        ['Arsip', stats.archived, ''],
+        ['Publish Hari Ini', stats.publishedToday, '']
+      ];
+      els.stats.innerHTML = cards.map(([label, value, cls]) => `
+        <div class="stat ${cls}">
+          <label class="micro">${label}</label>
+          <div class="num">${fmtNumber(value)}</div>
+        </div>`).join('');
+    }
+    function renderList(total) {
+      els.countLabel.textContent = `${fmtNumber(state.candidates.length)} dari ${fmtNumber(total)} data`;
+      if (!state.candidates.length) {
+        const filterLabel = els.statusFilter.value ? statusLabel(els.statusFilter.value) : 'filter ini';
+        els.list.innerHTML = `
+          <div class="empty">
+            <div class="big">🗂️</div>
+            <strong>Belum ada kandidat untuk ${esc(filterLabel)}.</strong>
+            <span class="sub">Klik “Ambil dari chat” untuk kandidat baru, atau ubah filter status.</span>
+          </div>`;
+        return;
+      }
+      els.list.innerHTML = state.candidates.map(item => `
+        <div class="row s-${item.status} ${state.selected?.id === item.id ? 'active' : ''}" data-id="${item.id}">
+          <div>
+            <div class="q">${esc(item.effectiveQuestion || item.originalQuestion)}</div>
+            <div class="meta">
+              <span class="pill ${item.status}">${esc(statusLabel(item.status))}</span>
+              <span>${esc(item.category)}</span>
+              <span>freq ${fmtNumber(item.frequency)}</span>
+              <span>total ${fmtNumber(item.totalFrequency || item.frequency)}</span>
+              <span>terakhir ${fmtTimeAgo(item.lastSeenAt)}</span>
+              <span>conf ${item.confidenceScore == null ? '-' : Math.round(item.confidenceScore * 100) + '%'}</span>
+              ${item.containsSensitiveData ? '<span class="pill warn">⚠ sensitif</span>' : ''}
+            </div>
+          </div>
+          <span class="id">#${item.id}</span>
+        </div>`).join('');
+      els.list.querySelectorAll('.row').forEach(row => row.addEventListener('click', () => selectCandidate(Number(row.dataset.id))));
+    }
+
+    async function selectCandidate(id) {
+      try {
+        state.selected = await api(`/api/learning/candidates/${id}`);
+        renderDetail();
+        renderList(state.candidates.length);
+      } catch (err) { toast(`Gagal membuka kandidat: ${err.message}`, 'error'); }
+    }
+    async function reloadSelected() {
+      if (!state.selected?.id) return;
+      state.selected = await api(`/api/learning/candidates/${state.selected.id}`);
+      renderDetail();
+      renderList(state.candidates.length);
+    }
+
+    function renderDetail() {
+      const item = state.selected;
+      if (!item) return;
+      els.detailStatus.textContent = statusLabel(item.status);
+      els.detailStatus.className = `pill ${item.status}`;
+      els.detail.innerHTML = `
+        ${item.containsSensitiveData ? `
+        <div style="padding:12px 14px;border-radius:var(--radius-sm);background:color-mix(in srgb,var(--danger) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));display:grid;gap:6px">
+          <b style="font-size:13px;color:var(--danger)">&#9888; Data Sensitif Terdeteksi</b>
+          <span style="font-size:12.5px;color:var(--muted)">${esc(item.sensitiveReason || 'Jawaban mengandung pola data sensitif (email, nomor invoice, NPWP, dsb). Harap hapus/mask sebelum publish.')}</span>
+        </div>` : ''}
+        <div class="decision">
+          <b>Cara chatbot memakai kandidat ini</b>
+          <span>${esc(routePreview(item))}</span>
+          <div class="flags">
+            <span class="pill info">Exact: pertanyaan sama</span>
+            <span class="pill info">Similar: pertanyaan mirip kuat</span>
+            <span class="pill info">Cache aktif setelah publish</span>
+          </div>
+        </div>
+
+        <div class="compare">
+          <div class="compare-row">
+            <div class="side">
+              <div class="micro">Pertanyaan asli</div>
+              <div class="readonly">${esc(item.originalQuestion)}</div>
+            </div>
+            <div class="side">
+              <div class="micro"><span>Pertanyaan final</span><span class="tiny">boleh dirapikan</span></div>
+              <textarea id="editedQuestion" style="min-height:64px">${esc(item.editedQuestion || item.originalQuestion)}</textarea>
+            </div>
+          </div>
+          <div class="compare-row">
+            <div class="side">
+              <div class="micro">Jawaban asli</div>
+              <div class="readonly">${esc(item.originalAnswer)}</div>
+            </div>
+            <div class="side">
+              <div class="micro"><span>Jawaban final</span><span class="tiny">wajib bersih sensitif</span></div>
+              <textarea id="editedAnswer" style="min-height:200px">${esc(item.editedAnswer || item.originalAnswer)}</textarea>
+            </div>
+          </div>
+          <div class="vchips" id="validationBox"></div>
+        </div>
+
+        <details class="meta-section">
+          <summary>Metadata & review <span class="chev">▾</span></summary>
+          <div class="meta-section-body">
+            <div class="form-grid">
+              <div class="field">
+                <label class="micro"><span>Category</span><span class="tiny">modul/topik</span></label>
+                <input id="category" value="${esc(item.category || 'AI Learning')}">
+                <div class="tiny">Contoh: Payment, Invoice, PUM, Report. Dipakai filter & ranking KB.</div>
+              </div>
+              <div class="field">
+                <label class="micro"><span>Tags</span><span class="tiny">pisah koma</span></label>
+                <input id="tags" value="${esc(item.tags || 'ai-learning,approved,reviewed')}">
+                <div class="tiny">Biarkan ai-learning, approved, reviewed tetap ada.</div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="micro">Catatan review</label>
+              <textarea id="reviewNotes" style="min-height:80px">${esc(item.reviewNotes || '')}</textarea>
+            </div>
+            <div class="field">
+              <label class="micro"><span>Alasan sensitif</span><span class="tiny">otomatis/manual</span></label>
+              <input id="sensitiveReason" value="${esc(item.sensitiveReason || '')}">
+            </div>
+            <div class="flags">
+              <span class="pill">Source: ${esc(item.source || '-')}</span>
+              <span class="pill">Quality: ${item.qualityScore == null ? '-' : Math.round(item.qualityScore * 100) + '%'}</span>
+              <span class="pill">Flags: ${esc(item.flags || '-')}</span>
+              <label class="checkbox-pill"><input id="containsSensitive" type="checkbox" ${item.containsSensitiveData ? 'checked' : ''}> Mengandung data sensitif</label>
+            </div>
+          </div>
+        </details>
+
+        <div class="field">
+          <label class="micro"><span>Preview jawaban yang dipakai chatbot</span><span class="tiny">setelah publish</span></label>
+          <div class="preview" id="finalPreview">${esc(item.editedAnswer || item.originalAnswer || 'Belum ada jawaban final.')}</div>
+        </div>
+      `;
+
+      // Sticky action bar (outside scroll body)
+      let bar = els.detail.parentElement.querySelector('.editor-actions');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'editor-actions';
+        els.detail.parentElement.appendChild(bar);
+      }
+      bar.innerHTML = `
+        <button class="warning ghost" id="archiveBtn">🗄 Arsipkan</button>
+        <span class="spacer"></span>
+        <button id="saveEdit">💾 Simpan Edit</button>
+        <button class="success" id="markReady">✓ Tandai Siap Publish</button>`;
+
+      $('saveEdit').addEventListener('click', saveEdit);
+      $('markReady').addEventListener('click', markReady);
+      $('archiveBtn').addEventListener('click', archiveCandidate);
+      ['editedQuestion', 'editedAnswer', 'containsSensitive', 'tags'].forEach(id => {
+        const e = $(id);
+        e.addEventListener('input', () => renderValidation(item));
+        e.addEventListener('change', () => renderValidation(item));
+      });
+      renderValidation(item);
+    }
+
+    function currentEditPayload() {
+      const sensitive = $('containsSensitive').checked;
+      return {
+        editedQuestion: $('editedQuestion').value,
+        editedAnswer: $('editedAnswer').value,
+        category: $('category').value,
+        tags: $('tags').value,
+        reviewNotes: $('reviewNotes').value,
+        containsSensitiveData: sensitive,
+        sensitiveReason: sensitive ? ($('sensitiveReason').value || 'Admin masih menandai jawaban sensitif.') : ''
+      };
+    }
+
+    async function saveEdit() {
+      if (!state.selected) return;
+      const button = $('saveEdit');
+      try {
+        if (button) { button.disabled = true; button.textContent = 'Menyimpan...'; }
+        state.selected = await api(`/api/learning/candidates/${state.selected.id}/edit`, { method: 'PUT', body: JSON.stringify(currentEditPayload()) });
+        toast('Edit tersimpan.', 'ok');
+        await loadAll();
+        await reloadSelected();
+      } catch (err) {
+        toast(`Gagal simpan edit: ${err.message}`, 'error');
+        throw err;
+      } finally {
+        const b = $('saveEdit');
+        if (b) { b.disabled = false; b.textContent = '💾 Simpan Edit'; }
+      }
+    }
+    async function markReady() {
+      if (!state.selected) return;
+      if (!await confirmModal({
+        title: 'Tandai siap publish',
+        message: 'Tandai kandidat ini siap publish? Setelah itu scheduler/manual publish bisa memasukkan jawaban final ke Knowledge Base.',
+        confirmText: 'Ya, tandai',
+        variant: 'success'
+      })) return;
+      try {
+        await saveEdit();
+        state.selected = await api(`/api/learning/candidates/${state.selected.id}/ready`, { method: 'POST' });
+        toast('Kandidat siap dipublish scheduler.', 'ok');
+        await loadAll();
+        await reloadSelected();
+      } catch (err) { toast(`Gagal tandai ready: ${err.message}`, 'error'); }
+    }
+    async function archiveCandidate() {
+      if (!state.selected) return;
+      if (!await confirmModal({
+        title: 'Arsipkan kandidat',
+        message: 'Arsipkan kandidat ini? Data tetap tersimpan untuk audit, tetapi tidak dipakai chatbot.',
+        confirmText: 'Ya, arsipkan',
+        variant: 'danger'
+      })) return;
+      try {
+        state.selected = await api(`/api/learning/candidates/${state.selected.id}/archive`, { method: 'POST', body: JSON.stringify({ notes: 'Diarsipkan dari admin panel.' }) });
+        toast('Kandidat diarsipkan, tidak dihapus.', 'ok');
+        await loadAll();
+        await reloadSelected();
+      } catch (err) { toast(`Gagal arsip: ${err.message}`, 'error'); }
+    }
+
+    /* ---------- Events ---------- */
+    // Auth key is saved via auth gate. SaveKey now only closes the popover.
+    els.saveKey.addEventListener('click', () => {
+      localStorage.setItem('jifas-learning-admin-key', els.apiKey.value);
+      els.connPop.open = false;
+      toast('Admin API key disimpan di browser.', 'ok');
+      loadAll();
+    });
+    els.refreshBtn.addEventListener('click', loadAll);
+    els.statusFilter.addEventListener('change', loadAll);
+    els.searchBox.addEventListener('input', () => { clearTimeout(window.searchTimer); window.searchTimer = setTimeout(loadAll, 350); });
+
+    els.collectBtn.addEventListener('click', async () => {
+      if (!await confirmModal({
+        title: 'Ambil kandidat dari chat',
+        message: 'Ambil kandidat baru dari chat history sekarang? Proses ini hanya membuat antrean review, tidak langsung publish.',
+        confirmText: 'Ya, ambil',
+        variant: 'primary'
+      })) return;
+      els.collectBtn.disabled = true; els.collectBtn.textContent = 'Mengambil...';
+      try {
+        const r = await api('/api/learning/collect/run', { method: 'POST', body: JSON.stringify({ scanLimit: 250 }) });
+        toast(`Collector selesai: ${r.created} baru, ${r.updated} update, ${r.skipped} skip.`, 'ok');
+        await loadAll();
+      } catch (err) { toast(`Collector gagal: ${err.message}`, 'error'); }
+      finally { els.collectBtn.disabled = false; els.collectBtn.textContent = '⬇ Ambil dari chat'; }
+    });
+    els.publishBtn.addEventListener('click', async () => {
+      if (!await confirmModal({
+        title: 'Publish kandidat siap',
+        message: 'Publish semua kandidat berstatus Siap Publish? Jawaban masuk Knowledge Base dan cache terkait diperbarui.',
+        confirmText: 'Ya, publish',
+        variant: 'success'
+      })) return;
+      els.publishBtn.disabled = true; els.publishBtn.textContent = 'Mempublish...';
+      try {
+        const r = await api('/api/learning/publish/run', { method: 'POST', body: JSON.stringify({ limit: 10 }) });
+        toast(`Publish selesai: ${r.published} published, ${r.failed} failed.`, r.failed ? 'error' : 'ok');
+        await loadAll();
+      } catch (err) { toast(`Publish gagal: ${err.message}`, 'error'); }
+      finally { els.publishBtn.disabled = false; els.publishBtn.textContent = '⬆ Publish yang siap'; }
+    });
+
+    els.themeToggle.addEventListener('click', () => {
+      const dark = document.body.dataset.theme === 'dark';
+      document.body.dataset.theme = dark ? 'light' : 'dark';
+      els.themeToggle.textContent = dark ? '☀️' : '🌙';
+      localStorage.setItem('jifas-learning-theme', document.body.dataset.theme);
+    });
+    // restore theme
+    const savedTheme = localStorage.getItem('jifas-learning-theme');
+    if (savedTheme) { document.body.dataset.theme = savedTheme; els.themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️'; }
+  </script>
+</body>
+</html>

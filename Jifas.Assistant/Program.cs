@@ -497,6 +497,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
+// Admin dashboard redirects — sebelum MapControllers/MapRazorPages agar tidak terblok static files.
+app.MapGet("/admin/monitoring", () => TypedResults.Redirect("/monitoring/index.html", permanent: false));
+
 // Endpoint utama API, health check Docker, dan hub monitoring.
 app.MapControllers();
 app.MapRazorPages();
