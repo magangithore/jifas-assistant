@@ -73,8 +73,9 @@ builder.Services.AddControllersWithViews()
         options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
     });
 
-// Razor Pages untuk admin UI (monitoring dashboard)
-builder.Services.AddRazorPages();
+// Razor Pages untuk admin UI (monitoring dashboard).
+builder.Services.AddRazorPages()
+    .AddRazorRuntimeCompilation();
 
 // Kompresi response membantu dashboard dan payload JSON besar tanpa mengubah kontrak API.
 if (builder.Configuration.GetValue<bool>("Performance:EnableCompressionResponse"))
@@ -484,14 +485,16 @@ else
     }
 }
 
-// CORS harus berada sebelum endpoint agar request frontend dan SignalR diterima.
+// Monitoring dashboard: serve via Razor Pages + static HTML dengan auth gate.
+// Monitoring: gunakan Razor Pages jika ditemukan, fallback ke redirect static HTML.
+// app.MapGet("/admin/monitoring", () => TypedResults.Redirect("/monitoring/index.html", permanent: false));
+
 app.UseCors("ConfiguredCors");
 
 // Static files untuk asset dashboard/monitoring.
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseAuthorization();
 
 // Endpoint utama API, health check Docker, dan hub monitoring.
@@ -513,8 +516,8 @@ if (app.Environment.IsDevelopment())
 }
 
 // Endpoint informasi sederhana untuk cek cepat dari browser.
-app.MapGet("/", () => new 
-{ 
+app.MapGet("/", () => new
+{
     message = "JIFAS AI Assistant API v1.0",
     status = "running",
     documentation = "/swagger"

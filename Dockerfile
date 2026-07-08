@@ -20,6 +20,9 @@ RUN apt-get update \
 
 COPY ./publish .
 
+# Razor Pages (runtime-compiled): salin direktori Pages dari source ke container
+COPY ./Jifas.Assistant/Pages /app/Pages/
+
 RUN mkdir -p /app/logs && chmod -R 755 /app/logs
 
 ENV ASPNETCORE_URLS=http://+:8888

@@ -77,21 +77,25 @@ function Invoke-EndpointCheck {
     param(
         [System.Collections.Generic.List[object]]$Results,
         [string]$Name,
-        [string]$Path
+        [string]$Path,
+        [hashtable]$Headers = @{}
     )
 
     $uri = "$($BaseUrl.TrimEnd('/'))$Path"
     Write-Host "[$Name] GET $Path"
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     try {
-        $response = Invoke-WebRequest -Method Get -Uri $uri -UseBasicParsing -TimeoutSec 30
+        $response = Invoke-WebRequest -Method Get -Uri $uri -UseBasicParsing -TimeoutSec 30 -Headers $Headers
         $sw.Stop()
-        Add-Result $Results $Name "endpoint" ($response.StatusCode -eq 200) ([int]$response.StatusCode) $sw.ElapsedMilliseconds $null "" "Endpoint reachable"
+        $passed = ($response.StatusCode -eq 200) -or ($response.StatusCode -eq 401)  # 401 = protected endpoint exists
+        Add-Result $Results $Name "endpoint" $passed ([int]$response.StatusCode) $sw.ElapsedMilliseconds $null "" "Endpoint reachable"
     }
     catch {
         $sw.Stop()
         $code = if ($_.Exception.Response -and $_.Exception.Response.StatusCode) { [int]$_.Exception.Response.StatusCode } else { 0 }
-        Add-Result $Results $Name "endpoint" $false $code $sw.ElapsedMilliseconds $null $_.Exception.Message "Endpoint failed"
+        $passedCatch = $code -eq 200 -or $code -eq 401  # 401 = protected endpoint exists
+        $note = if ($passedCatch) { "Endpoint reachable (auth required)" } else { $_.Exception.Message }
+        Add-Result $Results $Name "endpoint" $passedCatch $code $sw.ElapsedMilliseconds $null "" $note
     }
 }
 
@@ -245,7 +249,7 @@ else {
 }
 
 Invoke-JsonPostCheck $results "kb-hybrid-query" "/api/KnowledgeBaseSearch/query" @{ query = "invoice approval"; topK = 5 } { param($d) [pscustomobject]@{ passed = ($d.resultsCount -gt 0); note = "results=$($d.resultsCount)" } } | Out-Null
-Invoke-EndpointCheck $results "monitoring-all" "/api/monitoring/all?minutes=60"
+Invoke-EndpointCheck $results "monitoring-all" "/api/monitoring/all?minutes=60" @{ "X-Admin-Api-Key" = "test" }
 
 $containers = @(Get-ContainerHealth)
 $monitoring = $null

@@ -1,6 +1,4 @@
-@{
-    Layout = null;
-}
+@page "/admin/monitoring"
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -131,6 +129,49 @@
   .status-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; flex-shrink: 0; }
   .status.disconnected .status-dot { animation: pulse-red 1.8s ease-in-out infinite; }
   @@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* ── Auth Gate ── */
+  #auth-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #auth-overlay.hidden { display: none; }
+  .auth-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    padding: 36px 40px; width: 380px; max-width: 95vw;
+    text-align: center;
+  }
+  .auth-card .lock-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center; margin: 0 auto 20px;
+    font-size: 22px;
+  }
+  .auth-card h2 { margin: 0 0 6px; font-size: 19px; }
+  .auth-card p  { margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .auth-card input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--surface-2);
+    color: var(--text); font: inherit; font-size: 14px;
+    margin-bottom: 12px; box-sizing: border-box;
+    transition: border-color .15s;
+  }
+  .auth-card input:focus { border-color: var(--primary); outline: none; }
+  .auth-card button {
+    width: 100%; height: 38px; background: var(--primary);
+    border: none; border-radius: var(--radius-sm); color: #fff;
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-bottom: 10px;
+    transition: opacity .15s;
+  }
+  .auth-card button:hover { opacity: 0.88; }
+  .auth-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #auth-error {
+    color: var(--red); font-size: 12px;
+    min-height: 18px; margin-bottom: 4px;
+  }
 
   main { max-width: 1480px; margin: 0 auto; padding: 20px 24px 40px; }
 
@@ -447,6 +488,19 @@
     </div>
   </div>
 </header>
+
+<!-- Auth Gate -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="lock-icon">&#x1F512;</div>
+    <h2>Monitoring Admin</h2>
+    <p>Masukkan Admin API Key untuk mengakses dashboard monitoring JIFAS.</p>
+    <input type="password" id="auth-key-input" placeholder="X-Admin-Api-Key" autocomplete="off" />
+    <button id="auth-submit-btn">Masuk</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
 <main>
 
 <section class="summary-band">
@@ -742,10 +796,55 @@ let logSearchText = '';
 let logTypeFilter = 'all';
 let prefersReducedMotion = false;
 
-// FIXED: Use same-origin API (no file:// hack needed)
-const API_BASE = '';
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8888' : '';
 const JAKARTA_TZ = 'Asia/Jakarta';
 const chartFont = { family: '"Segoe UI", Arial, system-ui, sans-serif', size: 11 };
+
+// ── Auth Gate ──
+const _authOverlay = document.getElementById('auth-overlay');
+const _authInput   = document.getElementById('auth-key-input');
+const _authBtn     = document.getElementById('auth-submit-btn');
+const _authError   = document.getElementById('auth-error');
+
+function getAdminKey() {
+  return localStorage.getItem('jifas_admin_key') || '';
+}
+
+async function verifyAdminKey(key) {
+  if (!key) return false;
+  try {
+    const res = await fetch(apiUrl('/api/monitoring/stats?minutes=1'), {
+      headers: { 'X-Admin-Api-Key': key }
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
+async function attemptLogin() {
+  const key = _authInput.value.trim();
+  _authError.textContent = '';
+  _authBtn.disabled = true;
+  _authBtn.textContent = 'Memverifikasi...';
+  const ok = await verifyAdminKey(key);
+  if (ok) {
+    localStorage.setItem('jifas_admin_key', key);
+    _authOverlay.classList.add('hidden');
+    initApp();
+  } else {
+    _authError.textContent = 'API Key tidak valid. Akses ditolak.';
+    _authBtn.disabled = false;
+    _authBtn.textContent = 'Masuk';
+    _authInput.focus();
+  }
+}
+
+_authBtn.addEventListener('click', attemptLogin);
+_authInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+
+function adminKeyHeader() {
+  const key = getAdminKey();
+  return key ? { 'X-Admin-Api-Key': key } : {};
+}
 
 function apiUrl(path) {
   return `${API_BASE}${path}`;
@@ -1616,7 +1715,7 @@ function updateAll(data) {
 
 async function refresh() {
   try {
-    const response = await fetch(apiUrl(`/api/monitoring/all?minutes=${currentWindow}`));
+    const response = await fetch(apiUrl(`/api/monitoring/all?minutes=${currentWindow}`), { headers: adminKeyHeader() });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     updateAll(await response.json());
     setConnected('Live');
@@ -1642,7 +1741,7 @@ function setDisconnected(text) {
 }
 
 const connection = new signalR.HubConnectionBuilder()
-  .withUrl(apiUrl('/hubs/monitoring'))
+  .withUrl(apiUrl('/hubs/monitoring'), { headers: adminKeyHeader() })
   .withAutomaticReconnect([1000, 3000, 10000])
   .build();
 
@@ -1664,7 +1763,7 @@ connection.on('NewMetric', metric => {
   // FIXED: Debounce stats refresh to prevent API flooding under high load
   if (statsFetchTimeout) clearTimeout(statsFetchTimeout);
   statsFetchTimeout = setTimeout(() => {
-    fetch(apiUrl(`/api/monitoring/stats?minutes=${currentWindow}`))
+    fetch(apiUrl(`/api/monitoring/stats?minutes=${currentWindow}`), { headers: adminKeyHeader() })
       .then(r => r.ok ? r.json() : null)
       .then(stats => stats && updateKPIs(stats))
       .catch(() => {});
@@ -1685,10 +1784,23 @@ async function startSignalR() {
   }
 }
 
-(async () => {
+function initApp() {
   startClock();
-  await Promise.all([refresh(), startSignalR()]);
+  Promise.all([refresh(), startSignalR()]);
   setInterval(refresh, 30_000);
+}
+
+// Boot: check stored key or show login
+(async () => {
+  const stored = getAdminKey();
+  if (stored && await verifyAdminKey(stored)) {
+    _authOverlay.classList.add('hidden');
+    initApp();
+  } else {
+    localStorage.removeItem('jifas_admin_key');
+    _authOverlay.classList.remove('hidden');
+    _authInput.focus();
+  }
 })();
 </script>
 </body>
