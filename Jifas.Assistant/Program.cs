@@ -485,9 +485,7 @@ else
     }
 }
 
-// Monitoring dashboard: serve via Razor Pages + static HTML dengan auth gate.
-// Monitoring: gunakan Razor Pages jika ditemukan, fallback ke redirect static HTML.
-// app.MapGet("/admin/monitoring", () => TypedResults.Redirect("/monitoring/index.html", permanent: false));
+// Monitoring dashboard: serve via Razor Pages dengan auth gate.
 
 app.UseCors("ConfiguredCors");
 
@@ -497,8 +495,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
-// Admin dashboard redirects — sebelum MapControllers/MapRazorPages agar tidak terblok static files.
-app.MapGet("/admin/monitoring", () => TypedResults.Redirect("/monitoring/index.html", permanent: false));
+// Admin dashboard route dilayani oleh Razor Pages (Pages/Admin/).
 
 // Endpoint utama API, health check Docker, dan hub monitoring.
 app.MapControllers();
