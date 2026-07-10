@@ -190,7 +190,7 @@ $cacheAssert = { param($d) [pscustomobject]@{ passed = ($d.success -eq $true -an
 Invoke-EndpointCheck $results "health-api" "/health"
 Invoke-EndpointCheck $results "health-chat" "/api/chat/health"
 Invoke-EndpointCheck $results "health-kb-search" "/api/KnowledgeBaseSearch/health"
-Invoke-EndpointCheck $results "monitoring-dashboard" "/monitoring/index.html"
+Invoke-EndpointCheck $results "monitoring-dashboard" "/admin/monitoring"
 Invoke-EndpointCheck $results "kb-stats" "/api/kb/stats"
 
 Invoke-ChatCheck $results "kb-overview" "Apa itu JIFAS?" "$userBase-a" "smoke-$runId-kb-a" $kbAssert | Out-Null
