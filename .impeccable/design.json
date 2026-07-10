@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-10T00:00:00.000Z",
+  "title": "Design System: JIFAS Operations Console",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Corporate Blue", "canonical": "#2454d6", "tonalRamp": ["#1a3fa8", "#2454d6", "#3a66e0", "#5b8df5", "#8ab3ff", "#bcd4ff", "#d9e5ff", "#eef2ff"] },
+      "primary-soft": { "role": "primary", "displayName": "Corporate Blue Soft", "canonical": "#eef2ff", "tonalRamp": [] },
+      "green": { "role": "success", "displayName": "Success Green", "canonical": "#15803d", "tonalRamp": ["#0d5c2a", "#15803d", "#1a9a4a", "#34d058", "#6ee7a0", "#a5f3c5", "#d1fae5", "#edf7f0"] },
+      "green-soft": { "role": "success", "displayName": "Success Green Soft", "canonical": "#edf7f0", "tonalRamp": [] },
+      "yellow": { "role": "warning", "displayName": "Warning Amber", "canonical": "#a16207", "tonalRamp": ["#7c4d04", "#a16207", "#c47a0a", "#e8b824", "#f5c842", "#f9df73", "#fdf0a5", "#fefce8"] },
+      "yellow-soft": { "role": "warning", "displayName": "Warning Amber Soft", "canonical": "#fefce8", "tonalRamp": [] },
+      "red": { "role": "error", "displayName": "Error Red", "canonical": "#b91c1c", "tonalRamp": ["#8b1515", "#b91c1c", "#d13535", "#f05252", "#f87171", "#fca5a5", "#fecaca", "#fef2f2"] },
+      "red-soft": { "role": "error", "displayName": "Error Red Soft", "canonical": "#fef2f2", "tonalRamp": [] },
+      "cyan": { "role": "info", "displayName": "Cache Cyan", "canonical": "#0e7490", "tonalRamp": ["#0a5668", "#0e7490", "#108ca8", "#22d3ee", "#67e8f9", "#a5f3fa", "#cffafe", "#ecfeff"] },
+      "cyan-soft": { "role": "info", "displayName": "Cache Cyan Soft", "canonical": "#ecfeff", "tonalRamp": [] },
+      "neutral-bg": { "role": "neutral", "displayName": "Neutral Background", "canonical": "#f0f2f5", "tonalRamp": [] },
+      "surface": { "role": "neutral", "displayName": "Surface White", "canonical": "#ffffff", "tonalRamp": [] },
+      "surface-2": { "role": "neutral", "displayName": "Surface 2", "canonical": "#f8f9fb", "tonalRamp": [] },
+      "text": { "role": "ink", "displayName": "Text Primary", "canonical": "#111827", "tonalRamp": [] },
+      "muted": { "role": "ink", "displayName": "Muted", "canonical": "#6b7280", "tonalRamp": [] },
+      "muted-2": { "role": "ink", "displayName": "Muted 2", "canonical": "#9ca3af", "tonalRamp": [] },
+      "border": { "role": "border", "displayName": "Border", "canonical": "#dde1e9", "tonalRamp": [] },
+      "border-strong": { "role": "border", "displayName": "Border Strong", "canonical": "#bcc3ce", "tonalRamp": [] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Metric KPI values — 34px, 800 weight, tabular-nums." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings, card titles — 16px, 700 weight." },
+      "body": { "displayName": "Body", "purpose": "Paragraph text — 14px, 400 weight, 1.5 line-height." },
+      "label": { "displayName": "Label", "purpose": "Table header, metric label, chip — 10px, 700 weight, uppercase, 0.08em tracking." },
+      "mono": { "displayName": "Mono", "purpose": "Timestamps, token count, duration, correlation ID — 12px monospace." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 1px 3px rgba(15, 23, 42, 0.06)", "purpose": "Card hover. Interaction signal only." },
+      { "name": "shadow-md", "value": "0 4px 16px rgba(15, 23, 42, 0.08)", "purpose": "Panel lift. Active foreground." },
+      { "name": "shadow-lg", "value": "0 8px 32px rgba(15, 23, 42, 0.1)", "purpose": "Overlay lift. Auth card." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "ease-out-quart", "value": "cubic-bezier(0.25, 0.46, 0.45, 0.94)", "purpose": "Chart animation ease-out." },
+      { "name": "pulse-red", "value": "ease-in-out 1.8s infinite", "purpose": "Status disconnected dot pulse animation." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "520px" },
+      { "name": "md", "value": "760px" },
+      { "name": "lg", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Metric Card",
+      "kind": "card",
+      "refersTo": "metric-card",
+      "description": "Primary KPI display — large value, label, foot note. Corner radius 10px, border 1px, hover shadow-sm.",
+      "html": "<div class=\"ds-metric-card\"><div class=\"metric-label\">TOTAL REQUEST</div><div class=\"ds-metric-value\">1.284</div><div class=\"ds-metric-foot\">60 menit terakhir</div></div>",
+      "css": ".ds-metric-card { background: #fff; border: 1px solid #dde1e9; border-radius: 10px; padding: 16px 18px; transition: box-shadow 0.18s ease, border-color 0.18s ease; } .ds-metric-card:hover { box-shadow: 0 1px 3px rgba(15,23,42,0.06); border-color: #bcc3ce; } .ds-metric-value { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; line-height: 1; color: #111827; margin-top: 5px; } .ds-metric-foot { color: #6b7280; font-size: 11px; margin-top: 5px; line-height: 1.4; } .ds-metric-card[data-accent=\"primary\"] { border-top: 3px solid #2454d6; } .ds-metric-card[data-accent=\"red\"] { border-top: 3px solid #b91c1c; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Inline status indicator. Pill shape, 11px bold. Semantic color variants.",
+      "html": "<span class=\"ds-chip ds-chip-ok\">Volume: 128 req</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 700; background: #f8f9fb; border: 1px solid #dde1e9; color: #6b7280; white-space: nowrap; } .ds-chip-ok { background: #edf7f0; border-color: rgba(21,128,61,0.4); color: #15803d; } .ds-chip-warn { background: #fefce8; border-color: rgba(161,98,7,0.4); color: #a16207; } .ds-chip-err { background: #fef2f2; border-color: rgba(185,28,28,0.4); color: #b91c1c; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "badge",
+      "refersTo": "badge-ok",
+      "description": "Table status badge. Pill, 10px 800 weight. Three semantic variants.",
+      "html": "<span class=\"ds-badge ds-badge-ok\">OK</span><span class=\"ds-badge ds-badge-err\">Error</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; min-height: 20px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.03em; white-space: nowrap; } .ds-badge-ok { background: #edf7f0; color: #15803d; } .ds-badge-err { background: #fef2f2; color: #b91c1c; } .ds-badge-warn { background: #fefce8; color: #a16207; } .ds-badge-type { background: #eef2ff; color: #2454d6; }"
+    },
+    {
+      "name": "Data Table Cell",
+      "kind": "custom",
+      "description": "Table with alternating rows, sticky header, mono numeric cells.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>WAKTU</th><th class=\"ds-num\">INPUT</th><th class=\"ds-num\">OUTPUT</th><th class=\"ds-num\">DURASI</th><th>STATUS</th></tr></thead><tbody><tr><td class=\"ds-mono\">10 Jul 14:32</td><td class=\"ds-num ds-mono\">3.200</td><td class=\"ds-num ds-mono\">892</td><td class=\"ds-num ds-mono\">4.2 dtk</td><td><span class=\"ds-badge ds-badge-ok\">OK</span></td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; min-width: 800px; } .ds-table th { text-align: left; padding: 10px 12px; background: #f8f9fb; color: #6b7280; border-bottom: 1px solid #dde1e9; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; position: sticky; top: 0; z-index: 1; } .ds-table td { padding: 8px 12px; border-bottom: 1px solid #dde1e9; color: #111827; font-size: 13px; } .ds-table td.ds-num { font-variant-numeric: tabular-nums; font-family: \"Cascadia Code\", \"Cascadia Mono\", Consolas, monospace; font-size: 12px; text-align: right; } .ds-table td.ds-mono { font-family: \"Cascadia Code\", \"Cascadia Mono\", Consolas, monospace; font-size: 12px; } .ds-table tbody tr:nth-child(even) td { background: color-mix(in srgb, #f8f9fb 45%, #fff); } .ds-table tbody tr:hover td { background: rgba(91,141,245,0.08); }"
+    },
+    {
+      "name": "Auth Overlay",
+      "kind": "custom",
+      "description": "Login gate for admin pages. Centered card, password input, primary button.",
+      "html": "<div id=\"auth-overlay\"><div class=\"ds-auth-card\"><div class=\"ds-lock-icon\">&#x1F512;</div><h2>Monitoring Admin</h2><input type=\"password\" placeholder=\"X-Admin-Api-Key\" autocomplete=\"off\"/><button>Masuk</button></div></div>",
+      "css": "#auth-overlay { position: fixed; inset: 0; z-index: 1000; background: #f0f2f5; display: flex; align-items: center; justify-content: center; } .ds-auth-card { background: #fff; border: 1px solid #dde1e9; border-radius: 10px; box-shadow: 0 8px 32px rgba(15,23,42,0.1); padding: 36px 40px; width: 380px; max-width: 95vw; text-align: center; } .ds-lock-icon { width: 52px; height: 52px; border-radius: 14px; background: #eef2ff; color: #2454d6; display: grid; place-items: center; margin: 0 auto 20px; font-size: 22px; } .ds-auth-card input { width: 100%; padding: 10px 14px; border: 1px solid #dde1e9; border-radius: 6px; background: #f8f9fb; color: #111827; font: inherit; font-size: 14px; margin-bottom: 12px; box-sizing: border-box; transition: border-color 0.15s; } .ds-auth-card input:focus { border-color: #2454d6; outline: none; } .ds-auth-card button { width: 100%; height: 38px; background: #2454d6; border: none; border-radius: 6px; color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; } .ds-auth-card button:hover { opacity: 0.88; }"
+    },
+    {
+      "name": "Chart Panel",
+      "kind": "custom",
+      "description": "Chart.js container panel. Header, summary strip, canvas area.",
+      "html": "<div class=\"ds-chart-panel\"><div class=\"ds-panel-header\"><h3>Request dan waktu tunggu</h3></div><div class=\"ds-chart-summary\"><div class=\"ds-chart-summary-item\"><span>Total request</span><strong>128</strong></div></div><div class=\"ds-chart-wrap\"><canvas></canvas></div></div>",
+      "css": ".ds-chart-panel { background: #fff; border: 1px solid #dde1e9; border-radius: 10px; box-shadow: 0 1px 3px rgba(15,23,42,0.06); overflow: hidden; } .ds-chart-panel:hover { border-color: #bcc3ce; } .ds-panel-header { padding: 14px 18px 0; } .ds-panel-header h3 { margin: 0; font-size: 13px; font-weight: 700; } .ds-chart-summary { margin: 12px 18px 0; padding: 10px 0; display: flex; gap: 0; align-items: center; flex-wrap: wrap; border-top: 1px solid #dde1e9; border-bottom: 1px solid #dde1e9; } .ds-chart-summary-item { min-width: 135px; padding: 2px 18px 2px 0; margin-right: 18px; border-right: 1px solid #dde1e9; } .ds-chart-summary-item:last-child { border-right: 0; margin-right: 0; } .ds-chart-summary-item span { display: block; color: #6b7280; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; } .ds-chart-summary-item strong { display: block; font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 700; line-height: 1.25; } .ds-chart-wrap { position: relative; height: 230px; padding: 12px 16px 14px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Operations Console",
+    "overview": "JIFAS Operations Console adalah instrument panel enterprise-grade untuk monitoring chatbot AI dan administrasi. Setiap elemen visual ada karena data membutuhkannya — chrome nol, noise nol, signal maksimal. Color-as-signal bukan decoration. Shadow is interaction signal. Flat at rest. Numbers first, chrome never.",
+    "keyCharacteristics": [
+      "Color-as-signal, bukan decoration. Warna carry information bukan atmosphere.",
+      "Information hierarchy absolute — metric paling penting di atas, detail di bawah.",
+      "Zero-click insight — ringkasan kondisi langsung visible tanpa interaksi.",
+      "Dense but breathable — banyak data, cukup spacing untuk scan cepat.",
+      "Flat at rest. Shadows only on hover. Interaction is intentional."
+    ],
+    "rules": [
+      { "name": "The Signal Doctrine", "body": "Warna hanya muncul di tiga konteks: status (OK/err/warn), interactive (button, link, focus), dan semantic (cache=cyan). Tidak ada fourth use case.", "section": "colors" },
+      { "name": "The Muted Ceiling", "body": "--muted tidak pernah turun dari #6b7280 untuk body text. Light grey untuk elegance adalah anti-pattern.", "section": "colors" },
+      { "name": "The Mono for Data Rule", "body": "Semua field numerik yang bukan metric card (timestamp, token count, duration) wajib menggunakan font mono.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Semua surface flat saat render. Shadow hanya muncul pada hover atau elevation change.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use color exclusively for status signal. Blue = interactive. Green = OK. Red = error. Amber = warning. Cyan = cache.",
+      "Do use tabular-nums pada semua metric value dan monospace cells.",
+      "Do keep metric values large and bold (34px display) — angka harus bisa dibaca dari 2 meter.",
+      "Do use right-align for numeric table columns.",
+      "Do implement dark mode toggle."
+    ],
+    "donts": [
+      "Don't use --muted below #6b7280 for body text. Light grey for elegance fails WCAG 4.5:1.",
+      "Don't use decorative shadow. Shadow is only for hover response and overlay.",
+      "Don't use gradient backgrounds anywhere. Surface is solid.",
+      "Don't use gradient text. Single solid color for all headings.",
+      "Don't use glassmorphism. Backdrop blur is not used.",
+      "Don't use emoji in data labels. Status should be conveyed through color/badge.",
+      "Don't use tooltip untuk informasi kritis. Semua data harus visible tanpa hover.",
+      "Don't mix font families. Segoe UI everywhere, mono for data."
+    ]
+  }
+}

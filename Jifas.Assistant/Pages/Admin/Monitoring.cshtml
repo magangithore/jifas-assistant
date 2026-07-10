@@ -468,26 +468,23 @@
     <div class="toolbar">
       <span id="wib-clock" class="clock">-</span>
       <select aria-label="Rentang waktu" onchange="changeWindow(this.value)">
-        <optgroup label="Jam">
-          <option value="15">15 menit terakhir</option>
-          <option value="60" selected>60 menit terakhir</option>
-          <option value="180">3 jam terakhir</option>
-          <option value="720">12 jam terakhir</option>
-          <option value="1440">24 jam terakhir</option>
-        </optgroup>
-        <optgroup label="Hari">
-          <option value="4320">3 hari terakhir</option>
-          <option value="10080">1 minggu terakhir</option>
-          <option value="20160">2 minggu terakhir</option>
-        </optgroup>
-        <optgroup label="Bulan">
-          <option value="43200">1 bulan terakhir</option>
-          <option value="129600">3 bulan terakhir</option>
+        <option value="15">15 menit</option>
+        <option value="60" selected>1 jam</option>
+        <option value="1440">24 jam</option>
+        <option value="10080">1 minggu</option>
+        <optgroup label="More">
+          <option value="180">3 jam</option>
+          <option value="720">12 jam</option>
+          <option value="4320">3 hari</option>
+          <option value="20160">2 minggu</option>
+          <option value="43200">1 bulan</option>
+          <option value="129600">3 bulan</option>
         </optgroup>
       </select>
       <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">Light mode</button>
-      <button class="primary" onclick="refresh()">Refresh</button>
-      <span id="status-badge" class="status"><span class="status-dot"></span><span id="status-text">Live</span></span>
+      <button id="logout-btn" onclick="logout()" style="display:none">Keluar</button>
+      <button class="primary" onclick="refresh()" title="Tekan R untuk refresh">Refresh <kbd style="font-size:11px;border:1px solid rgba(255,255,255,0.35);border-radius:3px;padding:1px 5px;margin-left:4px;font-family:inherit">R</kbd></button>
+      <span id="status-badge" class="status" onclick="manualReconnect()" style="cursor:default" title="Klik untuk reconnect"><span class="status-dot"></span><span id="status-text">Live</span></span>
     </div>
   </div>
 </header>
@@ -495,7 +492,7 @@
 <!-- Auth Gate -->
 <div id="auth-overlay">
   <div class="auth-card">
-    <div class="lock-icon">&#x1F512;</div>
+    <div class="lock-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
     <h2>Monitoring Admin</h2>
     <p>Masukkan Admin API Key untuk mengakses dashboard monitoring JIFAS.</p>
     <input type="password" id="auth-key-input" placeholder="X-Admin-Api-Key" autocomplete="off" />
@@ -832,6 +829,7 @@ async function attemptLogin() {
   if (ok) {
     localStorage.setItem('jifas_admin_key', key);
     _authOverlay.classList.add('hidden');
+    el('logout-btn').style.display = '';
     initApp();
   } else {
     _authError.textContent = 'API Key tidak valid. Akses ditolak.';
@@ -843,6 +841,18 @@ async function attemptLogin() {
 
 _authBtn.addEventListener('click', attemptLogin);
 _authInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !_authOverlay.classList.contains('hidden')) {
+    _authInput.focus();
+  }
+});
+
+function logout() {
+  localStorage.removeItem('jifas_admin_key');
+  _authOverlay.classList.remove('hidden');
+  _authInput.value = '';
+  _authInput.focus();
+}
 
 function adminKeyHeader() {
   const key = getAdminKey();
@@ -1063,7 +1073,7 @@ function initTheme() {
   const saved = localStorage.getItem('jifas-monitoring-theme');
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  setTheme(queryTheme || saved || (prefersDark ? 'dark' : 'light'));
+  setTheme(queryTheme || saved || 'light');
 }
 
 function toggleTheme() {
@@ -1735,11 +1745,13 @@ function changeWindow(value) {
 
 function setConnected(text) {
   el('status-badge').className = 'status';
+  el('status-badge').style.cursor = 'default';
   el('status-text').textContent = text;
 }
 
 function setDisconnected(text) {
   el('status-badge').className = 'status disconnected';
+  el('status-badge').style.cursor = 'pointer';
   el('status-text').textContent = text;
 }
 
@@ -1747,6 +1759,18 @@ const connection = new signalR.HubConnectionBuilder()
   .withUrl(apiUrl('/hubs/monitoring'), { headers: adminKeyHeader() })
   .withAutomaticReconnect([1000, 3000, 10000])
   .build();
+
+async function manualReconnect() {
+  if (connection.state !== 'Disconnected') return;
+  try {
+    setDisconnected('Reconnect...');
+    await connection.start();
+    setConnected('Live');
+    refresh();
+  } catch {
+    setDisconnected('Reconnect failed');
+  }
+}
 
 let statsFetchTimeout = null; // FIXED: Debounce timer for stats refresh
 
@@ -1798,6 +1822,7 @@ function initApp() {
   const stored = getAdminKey();
   if (stored && await verifyAdminKey(stored)) {
     _authOverlay.classList.add('hidden');
+    el('logout-btn').style.display = '';
     initApp();
   } else {
     localStorage.removeItem('jifas_admin_key');

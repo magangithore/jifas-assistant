@@ -1,0 +1,9 @@
+{
+  "files": [
+    "Jifas.Assistant/Pages/Admin/Monitoring.cshtml",
+    "Jifas.Assistant/Pages/Admin/Learning.cshtml"
+  ],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}
