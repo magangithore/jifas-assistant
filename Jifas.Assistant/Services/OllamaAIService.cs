@@ -162,7 +162,7 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[OllamaAIService] Error in conversational response: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error in conversational response", ex);
                 return "Maaf, terjadi kesalahan dalam memproses permintaan Anda.";
             }
         }
@@ -282,7 +282,7 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[OllamaAIService] Error generating response: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error generating response", ex);
                 return "Maaf, terjadi kesalahan dalam memproses permintaan Anda.";
             }
         }
@@ -438,7 +438,7 @@ namespace Jifas.Assistant.Services
             catch (Exception ex)
             {
                 sw.Stop();
-                _logger.LogError("[OllamaAIService] Error calling Ollama API: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error calling Ollama API", ex);
                 await _monitoring.RecordAsync(new AiCallMetrics
                 {
                     Model       = _model,
@@ -493,7 +493,7 @@ namespace Jifas.Assistant.Services
                     PromptTokens         = promptTokens,
                     CompletionTokens     = completionTokens,
                     TotalDurationMs      = wallClockMs,        // end-to-end: ChatService stopwatch
-                    AiDurationMs         = NsToMs("total_duration") > 0 ? NsToMs("total_duration") : wallClockMs,
+                    AiDurationMs         = NsToMs("total_duration") is var aiMs and > 0 ? aiMs : wallClockMs,
                     LoadDurationMs       = NsToMs("load_duration"),
                     PromptEvalDurationMs = NsToMs("prompt_eval_duration"),
                     EvalDurationMs       = evalDurationMs,
@@ -542,7 +542,7 @@ namespace Jifas.Assistant.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("[OllamaAIService] Error parsing Ollama response: {0}", ex, new object[] { ex.Message });
+                _logger.LogError("[OllamaAIService] Error parsing Ollama response", ex);
                 return string.Empty;
             }
         }
@@ -766,17 +766,6 @@ namespace Jifas.Assistant.Services
             s.AppendLine("Kamu adalah wajah digital JIFAS - bantu user dengan penuh keyakinan, keakuratan, dan empati.");
             return s.ToString();
         }
-
-        private string BuildNoResultsMessage(string query) =>
-            $"Maaf, saya tidak menemukan informasi tentang '{query}' di sistem JIFAS. " +
-            "Silakan coba dengan kata kunci berbeda, atau hubungi Tim IT Help Desk di it@jababeka.com untuk bantuan lebih lanjut.";
-
-        private static string TruncateForContext(string text, int maxLength) =>
-            text?.Length > maxLength ? text.Substring(0, maxLength) + "..." : text ?? string.Empty;
     }
 }
-
-
-
-
 
