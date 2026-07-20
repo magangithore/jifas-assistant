@@ -749,7 +749,7 @@
     <div class="table-header">
       <h3>Daftar Request Chatbot</h3>
       <div class="table-actions">
-        <input id="log-search" class="filter-input" type="search" placeholder="Cari user, modul, atau tipe..." oninput="updateLogFilter()" />
+        <input id="log-search" class="filter-input" type="text" placeholder="Cari user, modul, atau tipe..." oninput="updateLogFilter()" />
         <select id="type-filter" class="type-filter" onchange="updateLogFilter()" aria-label="Filter tipe request">
           <option value="all">Semua tipe</option>
           <option value="chat">AI</option>
@@ -1628,11 +1628,13 @@ function getFilteredLogs(logs) {
 function updateLogFilter() {
   logSearchText = el('log-search')?.value || '';
   logTypeFilter = el('type-filter')?.value || 'all';
+  if (!Array.isArray(allLogs) || !allLogs.length) return; // Guard: jangan re-render jika data kosong
   renderTable(allLogs);
 }
 
 function renderTable(logs) {
-  const filtered = getFilteredLogs(logs);
+  const safeLogs = Array.isArray(logs) ? logs : [];
+  const filtered = getFilteredLogs(safeLogs);
   el('log-count').textContent = `${fmtNumber(filtered.length)} dari ${fmtNumber(logs.length)} data`;
   const visibleRows = filtered.slice(0, 200);
   const cacheRows = visibleRows.filter(isCacheHitLog).length;
@@ -1726,7 +1728,11 @@ function updateAll(data) {
   el('last-refresh').textContent = `Terakhir refresh ${fmtTime(new Date().toISOString())} WIB`;
 }
 
+let refreshPending = false;
+
 async function refresh() {
+  if (refreshPending) return;
+  refreshPending = true;
   try {
     const response = await fetch(apiUrl(`/api/monitoring/all?minutes=${currentWindow}`), { headers: adminKeyHeader() });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1735,6 +1741,8 @@ async function refresh() {
   } catch (error) {
     console.error('Refresh error:', error);
     setDisconnected('API error');
+  } finally {
+    refreshPending = false;
   }
 }
 
@@ -1811,10 +1819,12 @@ async function startSignalR() {
   }
 }
 
+let refreshTimer = null;
+
 function initApp() {
   startClock();
   Promise.all([refresh(), startSignalR()]);
-  setInterval(refresh, 30_000);
+  refreshTimer = setInterval(refresh, 30_000);
 }
 
 // Boot: check stored key or show login
